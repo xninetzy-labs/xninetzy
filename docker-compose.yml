@@ -1,0 +1,28 @@
+services:
+  ai:
+    build:
+      context: ./services/ai
+    env_file:
+      - .env
+    ports:
+      - "8000:8000"
+
+  wa-enggine:
+    build:
+      context: ./services/wa-enggine
+    env_file:
+      - .env
+    environment:
+      WA_AUTH_DIR: /app/sessions
+      AI_BASE_URL: http://ai:8000
+      AI_CHAT_ENDPOINT: /api/chat
+      AI_TIMEOUT_MS: "60000"
+      WA_PAIRING_WAIT_MS: "90000"
+      WA_PAIRING_RECONNECT_DELAY_MS: "30000"
+      WA_GROUP_TRIGGER_MODE: mention_or_prefix
+      WA_COMMAND_PREFIX: "!"
+    depends_on:
+      - ai
+    restart: unless-stopped
+    volumes:
+      - ./services/wa-enggine/sessions:/app/sessions

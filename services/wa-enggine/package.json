@@ -1,0 +1,27 @@
+{
+  "name": "xninetzy-wa-enggine",
+  "version": "0.1.0",
+  "description": "WhatsApp worker for Xninetzy AI",
+  "main": "dist/app.js",
+  "packageManager": "yarn@1.22.22",
+  "license": "MIT",
+  "scripts": {
+    "dev": "tsx watch src/app.ts",
+    "build": "tsc",
+    "start": "node dist/app.js"
+  },
+  "dependencies": {
+    "@hapi/boom": "^10.0.1",
+    "@whiskeysockets/baileys": "7.0.0-rc13",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0",
+    "qrcode-terminal": "^0.12.0"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/qrcode-terminal": "^0.12.2",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}

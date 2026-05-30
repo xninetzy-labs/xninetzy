@@ -1,0 +1,131 @@
+# =========================
+# Xninetzy AI - Root Gitignore
+# =========================
+
+# =========================
+# Environment files
+# =========================
+.env
+.env.*
+!.env.example
+
+# =========================
+# Node.js / TypeScript
+# =========================
+node_modules/
+**/node_modules/
+
+dist/
+**/dist/
+
+build/
+**/build/
+
+coverage/
+**/coverage/
+
+.npm/
+.pnpm-store/
+.yarn/
+.yarn-cache/
+.turbo/
+.cache/
+
+*.tsbuildinfo
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# =========================
+# Python / FastAPI / uv
+# =========================
+__pycache__/
+**/__pycache__/
+
+*.py[cod]
+*$py.class
+
+.python-version
+
+.venv/
+venv/
+env/
+ENV/
+**/.venv/
+**/venv/
+
+# uv cache / local artifacts
+.uv-cache/
+**/.uv-cache/
+
+# boleh commit uv.lock untuk reproducible build
+# kalau kamu TIDAK mau commit uv.lock, uncomment ini:
+# uv.lock
+# **/uv.lock
+
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+
+# =========================
+# WhatsApp Baileys session
+# =========================
+sessions/
+**/sessions/
+
+auth_info_baileys/
+**/auth_info_baileys/
+
+creds.json
+**/creds.json
+
+# =========================
+# Docker
+# =========================
+docker-compose.override.yml
+
+# =========================
+# OS / Editor
+# =========================
+.DS_Store
+Thumbs.db
+
+.vscode/
+!.vscode/extensions.json
+!.vscode/settings.example.json
+
+.idea/
+
+# =========================
+# Temporary files
+# =========================
+tmp/
+temp/
+.tmp/
+*.tmp
+*.bak
+*.swp
+*.swo
+
+# =========================
+# Local database files
+# =========================
+*.sqlite
+*.sqlite3
+*.db
+
+# =========================
+# Secrets / keys
+# =========================
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx

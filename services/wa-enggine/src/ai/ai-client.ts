@@ -1,103 +1,58 @@
-import axios from "axios";
-
+import axios, { AxiosError } from "axios";
 import { env } from "../config/env";
-import type { AIChatResponse, ChatPayload } from "../types/message";
 import { logger } from "../utils/logger";
-
-const fallbackReply = "Maaf, Xninetzy AI lagi error sebentar. Coba ulangi lagi ya.";
+import type { AIChatPayload, AIChatResponse } from "../types/ai";
 
 const client = axios.create({
-  baseURL: env.AI_BASE_URL,
-  timeout: env.AI_TIMEOUT_MS,
+  baseURL: env.AI_API_URL,
+  timeout: env.AI_TIMEOUT_MS || 60_000,
 });
 
-type FlexibleAIChatResponse = AIChatResponse & {
-  response?: string;
-  message?: string;
-  text?: string;
-  data?: {
-    reply?: string;
-    response?: string;
-    message?: string;
-    text?: string;
-  };
-};
-
 export async function sendChatToAI(
-  payload: ChatPayload,
-  context?: { traceId?: string; messageId?: string | null }
+  payload: AIChatPayload,
 ): Promise<AIChatResponse> {
   const startedAt = Date.now();
 
   logger.info(
     {
       step: "ai_request_start",
-      traceId: context?.traceId,
-      messageId: context?.messageId,
-      url: `${env.AI_BASE_URL}${env.AI_CHAT_ENDPOINT}`,
+      url: `${env.AI_API_URL}/api/chat`,
       chatType: payload.chat_type,
       textLength: payload.message.length,
+      hasSenderId: Boolean(payload.sender_id),
     },
-    "Sending WhatsApp message to AI service"
+    "Sending WhatsApp message to AI service",
   );
 
   try {
-    const response = await client.post<FlexibleAIChatResponse>(env.AI_CHAT_ENDPOINT, payload);
+    const response = await client.post<AIChatResponse>("/api/chat", payload);
 
     logger.info(
       {
         step: "ai_response_received",
-        traceId: context?.traceId,
-        messageId: context?.messageId,
         status: response.status,
         durationMs: Date.now() - startedAt,
-        bodyKeys: Object.keys(response.data || {}),
       },
-      "AI service response received"
+      "AI service response received",
     );
 
-    const reply = extractAiReply(response.data);
-    if (!reply) {
-      logger.error(
-        {
-          step: "ai_reply_missing",
-          traceId: context?.traceId,
-          messageId: context?.messageId,
-          responseKeys: Object.keys(response.data || {}),
-        },
-        "AI response does not contain reply text"
-      );
-
-      return { reply: fallbackReply };
-    }
-
-    return { reply };
+    return response.data;
   } catch (error) {
+    const err = error as AxiosError;
+
     logger.error(
       {
         step: "ai_request_failed",
-        traceId: context?.traceId,
-        messageId: context?.messageId,
         durationMs: Date.now() - startedAt,
-        err: error,
+        status: err.response?.status,
+        code: err.code,
+        responseData: err.response?.data,
       },
-      "AI service request failed"
+      "AI service request failed",
     );
-    return { reply: fallbackReply };
+
+    return {
+      reply: "Maaf, Xninetzy AI lagi error sebentar. Coba ulangi lagi ya.",
+    };
   }
-}
-
-function extractAiReply(data: FlexibleAIChatResponse): string | null {
-  const reply =
-    data.reply ||
-    data.response ||
-    data.message ||
-    data.text ||
-    data.data?.reply ||
-    data.data?.response ||
-    data.data?.message ||
-    data.data?.text ||
-    null;
-
-  return typeof reply === "string" && reply.trim().length > 0 ? reply.trim() : null;
 }

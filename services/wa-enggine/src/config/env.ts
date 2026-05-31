@@ -47,7 +47,7 @@ export const env = {
   WA_GROUP_TRIGGER_MODE: process.env.WA_GROUP_TRIGGER_MODE ?? "mention_or_prefix",
   WA_COMMAND_PREFIX: process.env.WA_COMMAND_PREFIX ?? "!",
   WA_GROUP_ALLOW_ALL: process.env.WA_GROUP_ALLOW_ALL === "true",
-  WA_GROUP_TREAT_ANY_MENTION_AS_BOT: process.env.WA_GROUP_TREAT_ANY_MENTION_AS_BOT !== "false",
+  WA_GROUP_TREAT_ANY_MENTION_AS_BOT: process.env.WA_GROUP_TREAT_ANY_MENTION_AS_BOT === "true",
   AI_BASE_URL: process.env.AI_BASE_URL ?? process.env.AI_API_URL ?? "http://ai:8000",
   AI_CHAT_ENDPOINT: process.env.AI_CHAT_ENDPOINT ?? "/api/chat",
   AI_TIMEOUT_MS: parseNumber(process.env.AI_TIMEOUT_MS, 60_000),

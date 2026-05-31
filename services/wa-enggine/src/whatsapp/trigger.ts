@@ -1,6 +1,4 @@
 import type { WAMessage, proto } from "@whiskeysockets/baileys";
-import { env } from "../config/env";
-import { logger } from "../utils/logger";
 import { getBotIdentity, isSameWaIdentity, normalizeDigits } from "../utils/jid";
 import { getMessageContextInfo } from "./message-parser";
 
@@ -194,11 +192,9 @@ function detectBotMention(params: {
     possibleBotJids.some((botJid) => isSameWaIdentity(contextInfo?.participant, botJid));
     
   const mentionedByText = textMentionsBot(text, botIdentity.number);
-  const mentionedByAnyContext =
-    env.WA_GROUP_TREAT_ANY_MENTION_AS_BOT && !mentionedByContext && !mentionedByText && mentionedJids.length > 0;
 
   return {
-    isMentioned: mentionedByContext || mentionedByText || mentionedByAnyContext,
+    isMentioned: mentionedByContext || mentionedByText,
     mentionedJids,
   };
 }

@@ -11,6 +11,34 @@ function participantResult(result: unknown): Record<string, unknown> {
 export const groupTools: McpTool[] = [
   {
     definition: {
+      name: "wa_get_group_admins",
+      description: "Ambil daftar JID admin grup saja.",
+      inputSchema: { type: "object", properties: { group_jid: groupParam }, required: ["group_jid"] },
+    },
+    async handler(input, { sock }) {
+      const metadata = await sock.groupMetadata(requireString(input, "group_jid"));
+      return {
+        group_jid: metadata.id,
+        subject: metadata.subject,
+        admins: metadata.participants.filter((p) => Boolean(p.admin)).map((p) => p.id),
+      };
+    },
+  },
+  {
+    definition: {
+      name: "wa_is_group_admin",
+      description: "Cek apakah member adalah admin grup.",
+      inputSchema: { type: "object", properties: { group_jid: groupParam, member_jid: memberParam }, required: ["group_jid", "member_jid"] },
+    },
+    async handler(input, { sock }) {
+      const memberJid = requireString(input, "member_jid");
+      const metadata = await sock.groupMetadata(requireString(input, "group_jid"));
+      const admins = metadata.participants.filter((p) => Boolean(p.admin)).map((p) => p.id);
+      return { is_group_admin: admins.includes(memberJid) };
+    },
+  },
+  {
+    definition: {
       name: "get_group_metadata",
       description: "Ambil metadata lengkap grup.",
       inputSchema: { type: "object", properties: { group_jid: groupParam }, required: ["group_jid"] },

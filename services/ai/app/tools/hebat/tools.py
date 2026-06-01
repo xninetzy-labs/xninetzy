@@ -10,7 +10,7 @@ from langchain_core.tools import tool
 
 from app.core.config import get_settings
 from app.core.logging import logging
-from app.tools.hebat.browser_session import check_session_valid, login_with_credentials
+from app.tools.hebat.browser_session import check_session_valid, debug_login_with_credentials, login_with_credentials
 from app.tools.hebat.models import ActivityType, HebatActivity, HebatAssignment, HebatCourse, HebatFile, UploadStatus
 from app.tools.hebat.moodle_client import (
     download_file,
@@ -80,6 +80,45 @@ async def hebat_login_status(chat_id: str) -> str:
     if is_valid:
         return f"✅ Sudah login HEBAT sebagai *{profile_name or 'User'}*."
     return "❌ Belum login HEBAT. Ketik 'login hebat' untuk memulai."
+
+
+@tool
+async def hebat_login_status_verbose(chat_id: str) -> str:
+    """Cek status session HEBAT dengan detail aman."""
+    is_valid, profile_name = await check_session_valid(chat_id)
+    session = get_session(chat_id)
+    lines = ["*HEBAT Login Status*"]
+    lines.append(f"• Session aktif: {'ya' if is_valid else 'tidak'}")
+    lines.append(f"• Profile: {profile_name or (session or {}).get('profile_name') or '-'}")
+    lines.append(f"• Storage state: {'ada' if (session or {}).get('storage_state_path') else 'tidak ada'}")
+    lines.append("• Secret/cookie/token: disembunyikan")
+    return "\n".join(lines)
+
+
+@tool
+async def hebat_debug_login(chat_id: str = "system") -> str:
+    """Debug login HEBAT secara aman tanpa menampilkan password/cookie/token."""
+    s = get_settings()
+    result = await debug_login_with_credentials(chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD)
+    lines = ["*HEBAT Debug Login*"]
+    lines.append(f"• Env username: {'terbaca' if result['env_username_read'] else 'kosong'}")
+    lines.append(f"• Env password: {'tersedia' if result['env_password_available'] else 'kosong'}")
+    lines.append(f"• Login URL: {result['login_url']}")
+    lines.append(f"• HTTP status: {result.get('http_status') or '-'}")
+    lines.append(f"• Redirect chain: {'ada' if result.get('redirect_chain') else 'tidak'}")
+    lines.append(f"• Token ditemukan: {'ya' if result.get('login_token_found') else 'tidak'}")
+    lines.append(f"• Cookie session: {'ada' if result.get('session_cookie_saved') else 'tidak'}")
+    lines.append(f"• Login success indicator: {'ya' if result.get('login_success_indicator') else 'tidak'}")
+    if result.get("parser_error"):
+        lines.append(f"• Error parser: {result['parser_error'][:180]}")
+    lines.append(f"• Dugaan masalah: {result.get('problem_guess') or '-'}")
+    try:
+        from app.notifications.admin_notifier import notify_admin
+        event = "hebat_login_debug_done" if result.get("login_success_indicator") else "hebat_login_debug_failed"
+        await notify_admin(event, {"status": result.get("problem_guess")}, "high" if event.endswith("failed") else "medium")
+    except Exception:
+        pass
+    return "\n".join(lines)
 
 
 # ─── 2. Start Login ───────────────────────────────────────────────────────────

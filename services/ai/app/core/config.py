@@ -52,6 +52,23 @@ class Settings(BaseSettings):
     HEBAT_USERNAME: str = ""
     HEBAT_PASSWORD: str = ""
     HEBAT_NOTIFY_CHAT_ID: str = ""
+    HEBAT_AUTO_LOGIN: bool = True
+
+    # Admin / owner policy
+    ADMIN_JID: str = ""
+    ADMIN_NAMES: str = "misbahul,misbahul muttaqin"
+    DEEP_RESEARCH_ADMIN_ONLY: bool = True
+    DEEP_RESEARCH_ALLOW_GROUP_ADMINS: bool = True
+    DEEP_RESEARCH_ALLOW_ADMIN_NAMES: bool = True
+
+    # Human-in-the-loop approvals
+    HITL_ENABLED: bool = True
+    HITL_REQUIRE_FOR_RESEARCH_SAVE: bool = True
+    HITL_REQUIRE_FOR_ROADMAP_ACTIVATION: bool = True
+    HITL_REQUIRE_FOR_HEBAT_UPLOAD: bool = True
+    HITL_REQUIRE_FOR_BULK_TASK_CREATE: bool = True
+    HITL_REQUIRE_FOR_OBSIDIAN_WRITE: bool = False
+    HITL_REQUIRE_FOR_GRAPH_RAG_WRITE: bool = True
 
     def hebat_reminder_hours(self) -> list[int]:
         return [int(h.strip()) for h in self.HEBAT_REMINDER_BEFORE_HOURS.split(",") if h.strip().isdigit()]

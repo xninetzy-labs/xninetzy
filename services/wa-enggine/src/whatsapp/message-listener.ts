@@ -6,7 +6,6 @@ import { logger } from "../utils/logger";
 import {
   extractMessageText,
   getChatType,
-  getMessageKinds,
 } from "./message-parser";
 import { shouldProcessMessage } from "./trigger";
 import { sendWhatsAppReply } from "./reply-context";
@@ -141,6 +140,10 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
       return;
     }
 
+    const groupMeta = chatType === "group"
+      ? await resolveGroupAdminMetadata(sock, remoteJid, message.key.participant || undefined)
+      : { groupName: null, groupAdmins: [], isGroupAdmin: false };
+
     const payload = buildAIChatPayload({
       remoteJid,
       msg: message,
@@ -152,6 +155,9 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
       isReplyToBot: trigger.isReplyToBot,
       traceId,
       messageId,
+      groupName: groupMeta.groupName,
+      groupAdmins: groupMeta.groupAdmins,
+      isGroupAdmin: groupMeta.isGroupAdmin,
     });
 
     logger.info(
@@ -203,6 +209,27 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
     );
 
     await sendFallbackReply(sock, remoteJid, chatType, traceId, messageId);
+  }
+}
+
+async function resolveGroupAdminMetadata(
+  sock: WASocket,
+  groupJid: string,
+  participantJid?: string,
+): Promise<{ groupName: string | null; groupAdmins: string[]; isGroupAdmin: boolean }> {
+  try {
+    const metadata = await sock.groupMetadata(groupJid);
+    const admins = metadata.participants
+      .filter((p) => Boolean(p.admin))
+      .map((p) => p.id);
+    return {
+      groupName: metadata.subject || null,
+      groupAdmins: admins,
+      isGroupAdmin: Boolean(participantJid && admins.includes(participantJid)),
+    };
+  } catch (error) {
+    logger.warn({ step: "group_admin_metadata_failed", groupJid: maskJid(groupJid), err: error }, "Failed to resolve group admin metadata");
+    return { groupName: null, groupAdmins: [], isGroupAdmin: false };
   }
 }
 

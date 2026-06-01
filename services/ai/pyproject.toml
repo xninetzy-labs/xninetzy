@@ -19,6 +19,9 @@ dependencies = [
     "pypdf>=4.0",
     "numpy>=2.4.6",
     "faiss-cpu>=1.8",
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "python-pptx>=0.6",
 ]
 
 [tool.uv]

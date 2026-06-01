@@ -38,6 +38,45 @@ async def agent_node(state: AgentState) -> dict:
     except Exception:
         pass
 
+    # Build media context so the agent knows a file is attached and how to read it
+    media_context = ""
+    media = metadata.get("media") or {}
+    if media.get("hasMedia"):
+        msg_id = media.get("messageId") or metadata.get("messageId") or ""
+        media_context = (
+            "\n[Media Attached]\n"
+            f"type={media.get('mediaType')} filename={media.get('filename') or '-'} "
+            f"mime={media.get('mimetype') or '-'} message_id={msg_id}\n"
+            "Jika tipe dokumen dan user bertanya tentang isinya, panggil "
+            f"media_read_document(chat_id='{state.get('chat_id','')}', message_id='{msg_id}') "
+            "lebih dulu sebelum menjawab.\n"
+        )
+
+    # Inject user rules + style profile (defense system), best-effort
+    user_key = state.get("sender_id") or state.get("chat_id") or "default"
+    rules_context = ""
+    style_context = ""
+    try:
+        from app.rules.store import format_rules_for_prompt, get_active_rules
+        rules_context = format_rules_for_prompt(get_active_rules(user_key, limit=20))
+    except Exception:
+        pass
+    try:
+        from app.style.store import format_style_for_prompt
+        style_context = format_style_for_prompt(user_key)
+    except Exception:
+        pass
+
+    # Inject relevant semantic memory for this message, best-effort
+    memory_context = ""
+    try:
+        from app.memory.memory_store import format_memories_for_prompt, search_memories
+        memory_context = format_memories_for_prompt(
+            search_memories(user_key, state.get("message", ""), limit=5)
+        )
+    except Exception:
+        pass
+
     system_content = AGENT_PROMPT.format(
         bot_name=settings.BOT_NAME,
         bot_owner=settings.BOT_OWNER,
@@ -51,6 +90,10 @@ async def agent_node(state: AgentState) -> dict:
         quoted_participant=metadata.get("quotedParticipantJid") or metadata.get("participantJid") or "",
         is_reply_to_bot=metadata.get("isReplyToBot", False),
         personal_context=personal_context,
+        media_context=media_context,
+        rules_context=rules_context,
+        style_context=style_context,
+        memory_context=memory_context,
     )
 
     messages_with_system = [SystemMessage(content=system_content)] + list(state.get("messages") or [])

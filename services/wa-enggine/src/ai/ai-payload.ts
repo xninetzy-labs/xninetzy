@@ -15,6 +15,8 @@ type BuildAIChatPayloadParams = {
   traceId: string;
   messageId?: string | null;
   groupName?: string | null;
+  groupAdmins?: string[];
+  isGroupAdmin?: boolean;
 };
 
 export function resolveSenderId(params: {
@@ -50,6 +52,8 @@ export function buildAIChatPayload(
     traceId,
     messageId,
     groupName,
+    groupAdmins,
+    isGroupAdmin,
   } = params;
 
   const senderId = resolveSenderId({ remoteJid, msg, chatType });
@@ -88,6 +92,11 @@ export function buildAIChatPayload(
       isGroup: chatType === "group",
       groupJid: chatType === "group" ? remoteJid : undefined,
       participantJid: msg.key.participant || null,
+      senderJid: senderId,
+      senderName: resolveSenderName(msg),
+      isGroupAdmin: Boolean(isGroupAdmin),
+      senderIsGroupAdmin: Boolean(isGroupAdmin),
+      groupAdmins: groupAdmins ?? [],
       quotedMessageId: contextInfo?.stanzaId || null,
       quotedParticipantJid: contextInfo?.participant || null,
       quotedMessageText,

@@ -9,6 +9,7 @@ from app.api.routes.reminders import router as reminders_router
 from app.core.config import get_settings
 from app.core.logging import configure_logging, logging
 from app.db.sqlite import init_db
+from app.db.migrations import run_migrations
 from app.reminders.scheduler import reminder_loop
 
 configure_logging()
@@ -28,48 +29,72 @@ if settings.AGENT_DEBUG_ENDPOINTS:
 @app.on_event("startup")
 async def startup() -> None:
     init_db()
+    run_migrations()
     asyncio.create_task(reminder_loop())
-    if settings.HEBAT_USERNAME and settings.HEBAT_NOTIFY_CHAT_ID:
+    if settings.HEBAT_AUTO_LOGIN and settings.HEBAT_USERNAME and settings.HEBAT_PASSWORD:
         asyncio.create_task(_hebat_startup_task())
+    elif settings.HEBAT_AUTO_LOGIN:
+        logger.warning("HEBAT auto-login enabled but HEBAT_USERNAME/HEBAT_PASSWORD missing in env")
+
+
+def _hebat_session_chat_id(s) -> str | None:
+    """Resolve the chat id used to key the HEBAT browser session/profile."""
+    raw = (s.HEBAT_NOTIFY_CHAT_ID or s.ADMIN_JID or "").strip()
+    if not raw:
+        return None
+    if not raw.endswith(("@s.whatsapp.net", "@g.us")):
+        raw = raw + "@s.whatsapp.net"
+    return raw
 
 
 async def _hebat_startup_task() -> None:
-    """Auto-login to HEBAT and send digest to admin on startup."""
-    await asyncio.sleep(5)  # Wait for service to be fully ready
+    """Auto-login to HEBAT on startup (credentials from env), verify, then notify admin."""
+    await asyncio.sleep(5)  # let the service finish booting
     s = get_settings()
-    chat_id = s.HEBAT_NOTIFY_CHAT_ID
-    if not chat_id.endswith(("@s.whatsapp.net", "@g.us")):
-        chat_id = chat_id + "@s.whatsapp.net"
+    chat_id = _hebat_session_chat_id(s)
+    if not chat_id:
+        logger.warning(
+            "HEBAT auto-login skipped: set HEBAT_NOTIFY_CHAT_ID or ADMIN_JID to key the session"
+        )
+        return
+    notify_id = chat_id if s.HEBAT_NOTIFY_CHAT_ID else None
 
     try:
-        from app.tools.hebat.browser_session import check_session_valid, login_with_credentials
-        from app.tools.hebat.storage import get_session
+        from app.tools.hebat.browser_session import ensure_hebat_session
 
-        logger.info("HEBAT startup: checking session for %s", chat_id)
-        is_valid, profile_name = await check_session_valid(chat_id)
+        logger.info("HEBAT auto-login starting (chat_id=%s)", chat_id)
+        ok, profile, courses = await ensure_hebat_session(
+            chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD
+        )
+        if not ok:
+            logger.error("HEBAT auto-login failed after retries")
+            if notify_id:
+                await _notify_wa(
+                    notify_id,
+                    "⚠️ Xninetzy AI: Auto-login HEBAT gagal setelah beberapa percobaan. "
+                    "Cek kredensial atau koneksi ke HEBAT.",
+                )
+            return
 
-        if not is_valid:
-            logger.info("HEBAT startup: session invalid, auto-login...")
-            success = await login_with_credentials(chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD)
-            if not success:
-                await _notify_wa(chat_id, "⚠️ Xninetzy AI: Auto-login HEBAT gagal. Cek kredensial di .env")
-                return
-            session = get_session(chat_id)
-            profile_name = session.get("profile_name") if session else s.HEBAT_USERNAME
-            logger.info("HEBAT startup: login success, profile=%s", profile_name)
+        logger.info("HEBAT auto-login OK (profile=%s, courses=%d)", profile, courses)
+        if notify_id:
+            from app.tools.hebat.tools import hebat_academic_digest
 
-        # Send startup digest
-        from app.tools.hebat.tools import hebat_academic_digest
-        digest = hebat_academic_digest.invoke({"chat_id": chat_id, "days_ahead": 7})
-        startup_msg = f"🤖 *Xninetzy AI Online*\n\nSesi HEBAT aktif sebagai *{profile_name}*\n\n{digest}"
-        await _notify_wa(chat_id, startup_msg)
+            digest = hebat_academic_digest.invoke({"chat_id": chat_id, "days_ahead": 7})
+            await _notify_wa(
+                notify_id,
+                f"🤖 *Xninetzy AI Online*\n\n"
+                f"Sesi HEBAT aktif sebagai *{profile or s.HEBAT_USERNAME}* ({courses} course)\n\n"
+                f"{digest}",
+            )
 
     except Exception as e:
         logger.error("HEBAT startup task failed: %s", e)
-        try:
-            await _notify_wa(chat_id, f"⚠️ Xninetzy AI: Startup HEBAT error — {e}")
-        except Exception:
-            pass
+        if notify_id:
+            try:
+                await _notify_wa(notify_id, f"⚠️ Xninetzy AI: Startup HEBAT error — {e}")
+            except Exception:
+                pass
 
 
 async def _notify_wa(chat_id: str, text: str) -> None:

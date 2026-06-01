@@ -38,5 +38,17 @@ services:
       - ./services/wa-enggine/sessions:/app/sessions
       - wa-media:/app/data/wa-media      # shared with ai service
 
+  cli:
+    build:
+      context: ./apps/cli
+    env_file:
+      - .env
+    profiles:
+      - tools
+    stdin_open: true
+    tty: true
+    environment:
+      XNINETZY_AI_URL: http://ai:8000
+
 volumes:
   wa-media:

@@ -49,7 +49,9 @@ async def _get(chat_id: str, url: str) -> str | None:
 async def fetch_courses(chat_id: str) -> list[dict]:
     s = get_settings()
     url = s.HEBAT_BASE_URL + "/my/courses.php"
-    html = await _get(chat_id, url)
+    # The "My courses" page renders its course cards client-side via JavaScript,
+    # so a raw httpx fetch returns 0 courses. Use the JS-capable Playwright path.
+    html = await get_page_html(chat_id, url)
     if not html or is_logged_out(html):
         return []
     return parse_courses(html)

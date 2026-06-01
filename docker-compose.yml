@@ -6,6 +6,9 @@ services:
       - .env
     ports:
       - "8000:8000"
+    volumes:
+      - ./services/ai/data:/app/data
+      - ~/Documents/xninetzy:/app/obsidian-vault
 
   wa-enggine:
     build:
@@ -17,6 +20,9 @@ services:
       AI_BASE_URL: http://ai:8000
       AI_CHAT_ENDPOINT: /api/chat
       AI_TIMEOUT_MS: "60000"
+      MCP_SERVER_ENABLED: "true"
+      MCP_HOST: 0.0.0.0
+      MCP_PORT: "8081"
       WA_PAIRING_WAIT_MS: "90000"
       WA_PAIRING_RECONNECT_DELAY_MS: "30000"
       WA_GROUP_TRIGGER_MODE: mention_or_prefix
@@ -24,5 +30,7 @@ services:
     depends_on:
       - ai
     restart: unless-stopped
+    ports:
+      - "8081:8081"
     volumes:
       - ./services/wa-enggine/sessions:/app/sessions

@@ -52,6 +52,10 @@ export const env = {
   AI_CHAT_ENDPOINT: process.env.AI_CHAT_ENDPOINT ?? "/api/chat",
   AI_TIMEOUT_MS: parseNumber(process.env.AI_TIMEOUT_MS, 60_000),
   AI_API_URL: process.env.AI_BASE_URL ?? process.env.AI_API_URL ?? "http://ai:8000",
+  MCP_SERVER_ENABLED: process.env.MCP_SERVER_ENABLED !== "false",
+  MCP_HOST: process.env.MCP_HOST ?? "0.0.0.0",
+  MCP_PORT: parseNumber(process.env.MCP_PORT, 8081),
+  MCP_API_KEY: process.env.WA_MCP_API_KEY ?? process.env.MCP_API_KEY ?? "",
   BOT_NAME: process.env.BOT_NAME ?? "Xninetzy AI",
   BOT_OWNER: process.env.BOT_OWNER ?? "Misbahul Muttaqin",
 };

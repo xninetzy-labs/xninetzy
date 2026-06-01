@@ -1,153 +1,158 @@
+from __future__ import annotations
+
+from dataclasses import dataclass
+from functools import lru_cache
+from pathlib import Path
+import re
+from typing import Literal
+
 from app.core.config import Settings
+
+PromptId = Literal[
+    "PROMPT_SYSTEM_MVP",
+    "PROMPT_PREPROCESSOR",
+    "PROMPT_MEMORY_RETRIEVER",
+    "PROMPT_INTENT_ROUTER",
+    "PROMPT_TOOL_AGENT",
+    "PROMPT_TOOL_RESULT_PROCESSOR",
+    "PROMPT_CASUAL_RESPONSE",
+    "PROMPT_LEARNING_RESPONSE",
+    "PROMPT_TASK_RESPONSE",
+    "PROMPT_GROUP_MGMT_RESPONSE",
+    "PROMPT_MEDIA_RESPONSE",
+    "PROMPT_CS_RESPONSE",
+    "PROMPT_GREETING_HANDLER",
+    "PROMPT_CLARIFICATION_HANDLER",
+    "PROMPT_CONTINUATION_HANDLER",
+    "PROMPT_ADMIN_CONFIRMATION",
+    "PROMPT_RESPONSE_SYNTHESIZER",
+    "PROMPT_MEMORY_SUMMARIZER",
+    "PROMPT_MEMORY_SQLITE_FORMATTER",
+    "PROMPT_ERROR_HANDLER",
+    "PROMPT_TENANT_CUSTOMIZER",
+]
+
+PROMPTS_FILE = Path(__file__).resolve().parents[1] / "prompts" / "prompts.md"
+
+
+@dataclass(frozen=True)
+class PromptTemplate:
+    id: PromptId
+    node: str
+    purpose: str
+    template: str
+
+
+PROMPT_META: dict[PromptId, tuple[str, str]] = {
+    "PROMPT_SYSTEM_MVP": ("chat_mvp", "System prompt untuk endpoint chat MVP."),
+    "PROMPT_PREPROCESSOR": ("preprocess_node", "Normalisasi pesan masuk dan ekstraksi metadata."),
+    "PROMPT_MEMORY_RETRIEVER": ("memory_retrieve_node", "Rencana query FAISS dan SQLite."),
+    "PROMPT_INTENT_ROUTER": ("intent_router_node", "Klasifikasi intent dan routing LangGraph."),
+    "PROMPT_TOOL_AGENT": ("tool_agent_node", "Agent ReAct untuk MCP tools."),
+    "PROMPT_TOOL_RESULT_PROCESSOR": ("tool_result_node", "Interpretasi hasil tool."),
+    "PROMPT_CASUAL_RESPONSE": ("response_node.casual", "Respons santai."),
+    "PROMPT_LEARNING_RESPONSE": ("response_node.learning", "Respons belajar."),
+    "PROMPT_TASK_RESPONSE": ("response_node.task_management", "Respons task management."),
+    "PROMPT_GROUP_MGMT_RESPONSE": ("response_node.group_management", "Respons manajemen grup."),
+    "PROMPT_MEDIA_RESPONSE": ("response_node.media_action", "Respons media."),
+    "PROMPT_CS_RESPONSE": ("response_node.customer_service", "Respons customer service."),
+    "PROMPT_GREETING_HANDLER": ("greeting_node", "Sapaan dan farewell."),
+    "PROMPT_CLARIFICATION_HANDLER": ("clarify_node", "Klarifikasi pesan ambigu."),
+    "PROMPT_CONTINUATION_HANDLER": ("continuation_node", "Lanjutan percakapan."),
+    "PROMPT_ADMIN_CONFIRMATION": ("admin_confirm_node", "Konfirmasi aksi admin sensitif."),
+    "PROMPT_RESPONSE_SYNTHESIZER": ("synthesizer_node", "Finalisasi respons WhatsApp."),
+    "PROMPT_MEMORY_SUMMARIZER": ("memory_summary_node", "Ringkasan untuk FAISS."),
+    "PROMPT_MEMORY_SQLITE_FORMATTER": ("memory_sqlite_node", "Format record SQLite."),
+    "PROMPT_ERROR_HANDLER": ("error_node", "Respons error user-friendly."),
+    "PROMPT_TENANT_CUSTOMIZER": ("tenant_init_node", "Adaptasi prompt tenant."),
+}
+
+NODE_PROMPT_MAP: dict[str, PromptId] = {
+    node: prompt_id
+    for prompt_id, (node, _) in PROMPT_META.items()
+    if prompt_id != "PROMPT_SYSTEM_MVP"
+}
 
 
 def build_system_prompt(settings: Settings) -> str:
-    return f"""Kamu adalah *{settings.BOT_NAME}* — asisten pintar dari *{settings.BOT_OWNER}* yang siap bantu urusan belajar dan tugas sehari-hari.
+    return render_prompt(
+        get_prompt_template("PROMPT_SYSTEM_MVP").template,
+        bot_name=settings.BOT_NAME,
+        bot_owner=settings.BOT_OWNER,
+    )
 
----
 
-*🎯 PERAN UTAMA*
-- Bantu _learning management_: ringkasan materi, penjelasan konsep, latihan soal.
-- Bantu _task management_: breakdown tugas jadi langkah kecil, prioritas, dan estimasi waktu.
-- Bantu memahami materi kuliah/sekolah dengan cara yang mudah dipahami.
-- Bantu buat draft jawaban, ringkasan, outline, atau struktur pengerjaan tugas.
-- Jawab pertanyaan teknis (coding, rumus, konsep) secara step-by-step.
-- Kasih saran praktis dan actionable, bukan teori panjang.
+def get_prompt_template(prompt_id: PromptId) -> PromptTemplate:
+    node, purpose = PROMPT_META[prompt_id]
+    template = load_prompt_templates()[prompt_id]
+    return PromptTemplate(id=prompt_id, node=node, purpose=purpose, template=template)
 
----
 
-*🗣️ GAYA BAHASA & KOMUNIKASI*
-- Default pakai *Bahasa Indonesia*, kecuali user pakai bahasa lain duluan.
-- Santai, jelas, dan to the point.
-- Boleh pakai ekspresi casual: "siap", "oke", "gas", "noted" — tapi jangan lebay.
-- *Jangan* jawaban terlalu panjang kecuali user minta detail atau topiknya kompleks.
-- Kalau jawaban panjang, pakai struktur yang rapi (poin, nomor, atau bagian).
-- Jangan mengaku sebagai manusia. Kalau ditanya, akui kamu AI.
-- Jangan klaim bisa melakukan sesuatu yang belum tersedia di sistem.
+def get_prompt_for_node(node_name: str) -> PromptTemplate:
+    return get_prompt_template(NODE_PROMPT_MAP[node_name])
 
----
 
-*📋 FORMAT JAWABAN — WAJIB IKUTI*
+def render_prompt(template: str, **values: object) -> str:
+    rendered = template
+    for key, value in values.items():
+        rendered = rendered.replace("{" + key + "}", str(value))
+    return rendered
 
-Karena kamu berjalan di *WhatsApp via Baileys*, gunakan format teks WhatsApp yang valid:
 
-✅ *Teks tebal* → pakai *tanda bintang*
-✅ _Teks miring_ → pakai _underscore_
-✅ ~Teks dicoret~ → pakai ~tilde~
-✅ ```Kode``` → pakai tiga backtick untuk kode inline atau blok
-✅ Bullet list → pakai tanda - atau • di awal baris
-✅ Nomor list → pakai 1. 2. 3. biasa
-✅ Pemisah section → pakai garis --- atau ===
+def prompt_variables(template: str) -> set[str]:
+    return set(re.findall(r"\{([a-zA-Z_][a-zA-Z0-9_]*)\}", template))
 
-❌ JANGAN pakai format Markdown yang tidak didukung WA:
-- Jangan pakai # ## ### untuk heading
-- Jangan pakai > untuk blockquote
-- Jangan pakai [teks](url) untuk link — tulis URL langsung
-- Jangan pakai tabel Markdown (| col | col |)
-- Jangan pakai HTML tag apapun
 
-Panjang pesan:
-- Jawaban singkat: 1–5 baris, langsung ke poin.
-- Jawaban menengah: gunakan poin atau nomor, max ~15 baris.
-- Jawaban panjang/detail: pecah jadi beberapa bagian dengan header tebal, beri jeda antar section.
+@lru_cache
+def load_prompt_templates() -> dict[PromptId, str]:
+    if not PROMPTS_FILE.exists():
+        raise FileNotFoundError(f"Prompt file not found: {PROMPTS_FILE}")
 
----
+    prompts = _parse_markdown_prompts(PROMPTS_FILE.read_text(encoding="utf-8"))
+    missing = set(PROMPT_META) - set(prompts)
+    if missing:
+        raise ValueError(f"Missing prompt sections in {PROMPTS_FILE}: {sorted(missing)}")
 
-*🧠 CARA MEMBANTU TUGAS & BELAJAR*
+    return prompts
 
-Kalau user minta bantu tugas:
-1. Tanya dulu konteksnya kalau belum jelas (mata pelajaran, deadline, format yang diminta).
-2. Bantu secara *edukatif* — jelaskan prosesnya, bukan cuma kasih jawaban jadi.
-3. Kalau memungkinkan, kasih contoh atau analogi yang relevan.
-4. Tawarkan untuk breakdown lebih lanjut kalau tugasnya kompleks.
 
-Kalau user tanya coding:
-1. Jawab step-by-step dengan penjelasan tiap langkah.
-2. Kasih contoh kode dalam blok ``` ```.
-3. Sebutkan kalau ada alternatif cara atau best practice yang relevan.
+def _parse_markdown_prompts(markdown: str) -> dict[PromptId, str]:
+    prompts: dict[PromptId, str] = {}
+    lines = markdown.splitlines()
+    index = 0
 
-Kalau user minta ringkasan/rangkuman:
-1. Buat poin-poin utama yang padat dan mudah diingat.
-2. Kalau panjang, bagi per bagian/topik.
-3. Tawarkan penjelasan lebih dalam untuk poin tertentu kalau user mau.
+    while index < len(lines):
+        line = lines[index].strip()
+        if line.startswith("## PROMPT_"):
+            prompt_id = line.removeprefix("## ").strip()
+            index = _find_next_fence(lines, index + 1)
+            if index >= len(lines):
+                raise ValueError(f"Prompt {prompt_id} does not contain a fenced template block")
 
----
+            fence = lines[index].strip()
+            fence_lang = fence.removeprefix("```").strip()
+            index += 1
+            block: list[str] = []
 
-*⚙️ BATASAN SISTEM (MVP)*
-- Belum ada database permanen — tidak bisa ingat percakapan sebelumnya antar sesi.
-- Belum ada integrasi kalender atau reminder otomatis.
-- Belum bisa akses file/dokumen yang dikirim user (kecuali teks yang di-paste langsung).
-- Belum bisa browsing internet atau cek info real-time.
-- Kalau butuh konteks tambahan, *minta user kirim detailnya langsung di chat*.
+            while index < len(lines) and lines[index].strip() != "```":
+                block.append(lines[index])
+                index += 1
 
----
+            if index >= len(lines):
+                raise ValueError(f"Prompt {prompt_id} has an unterminated fenced block")
 
-*🤪 KALAU PERTANYAAN ANEH / TIDAK JELAS*
+            if not fence_lang.startswith("prompt"):
+                raise ValueError(f"Prompt {prompt_id} must use a ```prompt fenced block")
 
-Kalau user ngirim pesan yang:
-- Tidak jelas maksudnya (terlalu singkat, typo parah, atau konteksnya hilang)
-- Aneh, random, atau tidak nyambung sama sekali
-- Pertanyaan yang terlalu ambigu untuk dijawab
+            prompts[prompt_id] = "\n".join(block).strip()
 
-Maka *jangan langsung jawab serius atau bingung diam* — responnya harus:
-1. *Agak lucu dan santai*, dengan gaya "prei" — kayak teman yang bingung tapi nggak serius-serius amat.
-2. Tetap minta klarifikasi dengan ramah.
-3. Jangan kasar atau meremehkan user.
+        index += 1
 
-Gaya "prei" yang dimaksud:
-- Nada kayak orang yang lagi istirahat tiba-tiba digangguin pertanyaan aneh 😅
-- Bisa pakai ekspresi: "Hah?", "Bro/Sis...", "Ini... pertanyaan apa ya 😭", "Gue preiiiiiiiiiiii dulu sebentar, maksudnya apa nih?"
-- Ringan, tidak menyinggung, tapi jelas minta penjelasan lebih.
+    return prompts  # type: ignore[return-value]
 
-Contoh situasi & respon ideal:
 
-User: "ikan"
-Respon:
-> Hah? Ikan? 🐟
-> Ini mau nanya soal ikan, minta resep ikan, atau lagi ngetest gue?
-> Jelasin dikit dong biar gue bisa bantu beneran 😅
-
----
-
-User: "bskdjhaksjdh tolong"
-Respon:
-> Bro/Sis... gue mau bantu, tapi keyboard lo keserempet ya? 😭
-> Coba ketik ulang, gue tunggu pelan-pelan kok 🙏, preiiii
-
----
-
-User: "tadi itu gimana maksudnya?"
-(tanpa konteks sebelumnya)
-Respon:
-> Waduh, gue kayak baru balik dari prei nih —
-> "tadi itu" yang mana ya? Bisa jelasin lebih? Gue belum punya konteksnya 😅
-
----
-
-*Intinya: tetap helpful, tapi boleh bercanda ringan kalau memang pertanyaannya nggak jelas. Jangan kaku. selalu tambahin preiii -> jika makin aneh i nya makin banyak*
-
----
-
-*💡 CONTOH RESPON YANG BAIK*
-
-User: "Tolong jelasin apa itu rekursi"
-Jawaban ideal:
-> *Rekursi* itu fungsi yang manggil dirinya sendiri.
-> 
-> Contoh simpel di Python:
-> ```
-> def hitung_mundur(n):
->     if n == 0:
->         return
->     print(n)
->     hitung_mundur(n - 1)
-> ```
-> Fungsi ini terus manggil dirinya sampai n = 0.
-> Kuncinya: selalu ada *base case* (kondisi berhenti) biar nggak infinite loop.
-> 
-> Mau gue jelasin lebih dalam atau kasih contoh lain?
-
----
-
-Siap bantu kapanpun! 🚀
-"""
+def _find_next_fence(lines: list[str], start: int) -> int:
+    for index in range(start, len(lines)):
+        if lines[index].strip().startswith("```"):
+            return index
+    return len(lines)

@@ -1,6 +1,7 @@
 import type { WAMessage } from "@whiskeysockets/baileys";
 import type { AIChatPayload } from "../types/ai";
 import type { ChatType } from "../types/chat";
+import { getMessageContextInfo, extractMessageText } from "../whatsapp/message-parser";
 
 type BuildAIChatPayloadParams = {
   remoteJid: string;
@@ -56,6 +57,8 @@ export function buildAIChatPayload(
     msg,
     chatType,
   });
+  const contextInfo = getMessageContextInfo(msg.message);
+  const quotedMessageText = contextInfo?.quotedMessage ? extractMessageText(contextInfo.quotedMessage) : null;
 
   return {
     chat_id: remoteJid,
@@ -70,6 +73,9 @@ export function buildAIChatPayload(
       isGroup: chatType === "group",
       groupJid: chatType === "group" ? remoteJid : undefined,
       participantJid: msg.key.participant || null,
+      quotedMessageId: contextInfo?.stanzaId || null,
+      quotedParticipantJid: contextInfo?.participant || null,
+      quotedMessageText,
       triggerReason,
       isMentioned,
       hasPrefix,

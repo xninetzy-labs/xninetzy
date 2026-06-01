@@ -91,6 +91,50 @@ yarn dev
 
 Local dev akan mencoba membaca root `.env` dan memakai fallback session `./sessions`.
 
+## MCP Tool Server
+
+WA engine juga menjalankan HTTP MCP-style tool server di proses yang sama dengan Baileys socket, karena hanya service ini yang punya akses langsung ke WhatsApp.
+
+Default:
+
+```env
+MCP_SERVER_ENABLED=true
+MCP_HOST=0.0.0.0
+MCP_PORT=8081
+MCP_API_KEY=
+```
+
+Endpoint:
+
+```txt
+GET  /health
+GET  /mcp/tools
+POST /mcp/call
+```
+
+Contoh call:
+
+```bash
+curl -X POST http://localhost:8081/mcp/call \
+  -H "Content-Type: application/json" \
+  -d '{
+    "tool": "send_text_message",
+    "input": {
+      "jid": "628xxxxxxxxxx@s.whatsapp.net",
+      "text": "Tes dari MCP"
+    }
+  }'
+```
+
+Jika `MCP_API_KEY` diisi, request ke `/mcp/tools` dan `/mcp/call` harus memakai salah satu header:
+
+```txt
+Authorization: Bearer <key>
+x-api-key: <key>
+```
+
+Tool yang sudah tersedia mencakup kirim pesan/media, polling, kontak, profil, group metadata/member/admin/settings/invite, dan label internal. Tool `download_media`, `get_media_url`, dan memory tools sudah didaftarkan sebagai placeholder eksplisit karena butuh message store/media pipeline atau AI memory service.
+
 ## Reset Session
 
 ```bash

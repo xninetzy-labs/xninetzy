@@ -3,6 +3,7 @@ import { validateEnv } from "./config/env";
 import { startWhatsAppSocket } from "./whatsapp/socket";
 import { logger } from "./utils/logger";
 import fs from "node:fs";
+import { startMcpServer } from "./mcp/server";
 
 async function main(): Promise<void> {
   if (
@@ -30,6 +31,7 @@ async function main(): Promise<void> {
   }
 
   validateEnv();
+  startMcpServer();
 
   logger.info(
     {

@@ -9,6 +9,7 @@ services:
     volumes:
       - ./services/ai/data:/app/data
       - ~/Documents/xninetzy:/app/obsidian-vault
+      - wa-media:/app/data/wa-media      # shared with wa-enggine for media download
 
   wa-enggine:
     build:
@@ -19,7 +20,7 @@ services:
       WA_AUTH_DIR: /app/sessions
       AI_BASE_URL: http://ai:8000
       AI_CHAT_ENDPOINT: /api/chat
-      AI_TIMEOUT_MS: "60000"
+      AI_TIMEOUT_MS: "120000"
       MCP_SERVER_ENABLED: "true"
       MCP_HOST: 0.0.0.0
       MCP_PORT: "8081"
@@ -27,6 +28,7 @@ services:
       WA_PAIRING_RECONNECT_DELAY_MS: "30000"
       WA_GROUP_TRIGGER_MODE: mention_or_prefix
       WA_COMMAND_PREFIX: "!"
+      WA_MEDIA_DIR: /app/data/wa-media
     depends_on:
       - ai
     restart: unless-stopped
@@ -34,3 +36,7 @@ services:
       - "8081:8081"
     volumes:
       - ./services/wa-enggine/sessions:/app/sessions
+      - wa-media:/app/data/wa-media      # shared with ai service
+
+volumes:
+  wa-media:

@@ -13,6 +13,7 @@ import { sendWhatsAppReply } from "./reply-context";
 import { sendTextMessage } from "./message-sender";
 import { createTraceId, maskJid } from "../utils/observability";
 import { isProcessableChatType } from "../types/chat";
+import { cacheMessage } from "./socket-state";
 
 const botSentMessageIds = new Set<string>();
 const MAX_TRACKED_BOT_MESSAGES = 500;
@@ -29,6 +30,8 @@ export function registerMessageListener(sock: WASocket): void {
     );
 
     for (const message of messages) {
+      // Cache all messages for MCP media download
+      cacheMessage(message);
       await handleIncomingMessage(sock, message).catch((error) => {
         logger.error(
           {

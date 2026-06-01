@@ -10,6 +10,7 @@ class Settings(BaseSettings):
     DEEPSEEK_API_KEY: str = Field(..., min_length=1)
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
     DEEPSEEK_MODEL: str = "deepseek-v4-flash"
+    DEEPSEEK_PRO_MODEL: str = "deepseek-v4-pro"
     BOT_NAME: str = "Xninetzy AI"
     BOT_OWNER: str = "Misbahul Muttaqin"
     AI_API_KEY: str = ""
@@ -17,8 +18,9 @@ class Settings(BaseSettings):
     DATA_DIR: str = "/app/data"
     SQLITE_PATH: str = "/app/data/xninetzy.sqlite3"
 
-    SKILLS_ENABLED: bool = True
-    SKILL_DEBUG_ENDPOINTS: bool = True
+    AGENT_MAX_ITERATIONS: int = 10
+    CHAT_HISTORY_LIMIT: int = 20
+    AGENT_DEBUG_ENDPOINTS: bool = True
 
     OBSIDIAN_ENABLED: bool = True
     OBSIDIAN_VAULT_HOST_PATH: str = "~/Documents/xninetzy"
@@ -34,8 +36,55 @@ class Settings(BaseSettings):
     WA_MCP_BASE_URL: str = "http://wa-enggine:8081"
     WA_MCP_API_KEY: str = ""
 
-    WORKFLOW_ENABLED: bool = True
-    WORKFLOW_REQUIRE_CONFIRMATION: bool = True
+    # HEBAT / Moodle integration
+    HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"
+    HEBAT_LOGIN_URL: str = "https://hebat.elearning.unair.ac.id/login/index.php"
+    HEBAT_DATA_DIR: str = "/app/data/hebat"
+    HEBAT_DOWNLOAD_DIR: str = "/app/data/hebat/downloads"
+    HEBAT_BROWSER_HEADLESS: bool = True
+    HEBAT_ALLOW_AUTO_SUBMIT: bool = False
+    HEBAT_REQUIRE_CONFIRMATION: bool = True
+    HEBAT_MAX_UPLOAD_BYTES: int = 5_242_880
+    HEBAT_SYNC_INTERVAL_MINUTES: int = 60
+    HEBAT_REMINDER_BEFORE_HOURS: str = "24,6,1"
+    HEBAT_ALLOWED_FILE_TYPES: str = ".pdf"
+    HEBAT_RATE_LIMIT_SECONDS: float = 2.0
+    HEBAT_USERNAME: str = ""
+    HEBAT_PASSWORD: str = ""
+    HEBAT_NOTIFY_CHAT_ID: str = ""
+
+    def hebat_reminder_hours(self) -> list[int]:
+        return [int(h.strip()) for h in self.HEBAT_REMINDER_BEFORE_HOURS.split(",") if h.strip().isdigit()]
+
+    # Knowledge / Vector memory
+    KNOWLEDGE_ENABLED: bool = True
+    VECTOR_STORE: str = "faiss"
+    VECTOR_DATA_DIR: str = "/app/data/vector"
+    EMBEDDING_PROVIDER: str = "sentence_transformers"
+    EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    RAG_TOP_K: int = 5
+
+    # Graph memory
+    NEO4J_ENABLED: bool = False
+    NEO4J_URI: str = "bolt://neo4j:7687"
+    NEO4J_USERNAME: str = "neo4j"
+    NEO4J_PASSWORD: str = "password"
+
+    # External research
+    WEB_SEARCH_PROVIDER: str = "tavily"
+    TAVILY_API_KEY: str = ""
+    SERPER_API_KEY: str = ""
+    YOUTUBE_API_KEY: str = ""
+
+    # Life OS
+    LIFE_OS_ENABLED: bool = True
+    DAILY_REVIEW_ENABLED: bool = True
+    AUTO_APPEND_DAILY_NOTE: bool = True
+
+    # Safety
+    REQUIRE_CONFIRMATION_FOR_IMPORTANT_ACTIONS: bool = True
+    ALLOW_AUTONOMOUS_UPLOAD: bool = False
+    ALLOW_AUTONOMOUS_DELETE: bool = False
 
 
 @lru_cache

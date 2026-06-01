@@ -1,6 +1,6 @@
 import http from "node:http";
 import { env } from "../config/env";
-import { getCurrentSocket } from "../whatsapp/socket-state";
+import { getCurrentSocket, getRecentMessages } from "../whatsapp/socket-state";
 import { logger } from "../utils/logger";
 import { getTool, listToolDefinitions } from "./tool-registry";
 import type { McpCallRequest, McpCallResponse } from "./types";
@@ -36,7 +36,8 @@ async function routeRequest(req: http.IncomingMessage, res: http.ServerResponse)
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
 
   if (url.pathname === "/health") {
-    sendJson(res, 200, { status: "ok", socket_ready: Boolean(getCurrentSocket()) });
+    sendJson(res, 200, { status:
+       "ok", socket_ready: Boolean(getCurrentSocket()) });
     return;
   }
 
@@ -90,7 +91,7 @@ async function callTool(body: unknown): Promise<McpCallResponse> {
   }
 
   try {
-    const result = await tool.handler(body.input ?? {}, { sock });
+    const result = await tool.handler(body.input ?? {}, { sock, recentMessages: getRecentMessages() });
     return { success: true, tool: body.tool, result };
   } catch (error) {
     const message = error instanceof Error ? error.message : "Tool execution failed";

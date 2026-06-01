@@ -52,13 +52,28 @@ export function buildAIChatPayload(
     groupName,
   } = params;
 
-  const senderId = resolveSenderId({
-    remoteJid,
-    msg,
-    chatType,
-  });
+  const senderId = resolveSenderId({ remoteJid, msg, chatType });
   const contextInfo = getMessageContextInfo(msg.message);
   const quotedMessageText = contextInfo?.quotedMessage ? extractMessageText(contextInfo.quotedMessage) : null;
+
+  // Media metadata (document/image/video/audio)
+  const rawMsg = msg.message;
+  const docMsg = rawMsg?.documentMessage;
+  const imgMsg = rawMsg?.imageMessage;
+  const vidMsg = rawMsg?.videoMessage;
+  const audMsg = rawMsg?.audioMessage;
+  const hasMedia = Boolean(docMsg ?? imgMsg ?? vidMsg ?? audMsg);
+  const media = hasMedia
+    ? {
+        hasMedia: true,
+        mediaType: docMsg ? "document" : imgMsg ? "image" : vidMsg ? "video" : "audio",
+        filename: docMsg?.fileName ?? null,
+        mimetype: docMsg?.mimetype ?? imgMsg?.mimetype ?? vidMsg?.mimetype ?? null,
+        fileLength: Number(docMsg?.fileLength ?? imgMsg?.fileLength ?? vidMsg?.fileLength ?? 0),
+        messageId,
+        caption: docMsg?.caption ?? imgMsg?.caption ?? vidMsg?.caption ?? null,
+      }
+    : null;
 
   return {
     chat_id: remoteJid,
@@ -80,6 +95,7 @@ export function buildAIChatPayload(
       isMentioned,
       hasPrefix,
       isReplyToBot: Boolean(isReplyToBot),
+      media,
     },
   };
 }

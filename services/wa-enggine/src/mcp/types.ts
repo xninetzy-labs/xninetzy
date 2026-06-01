@@ -1,4 +1,4 @@
-import type { WASocket } from "@whiskeysockets/baileys";
+import type { WASocket, WAMessage } from "@whiskeysockets/baileys";
 
 export interface McpToolSchema {
   type: "object";
@@ -14,6 +14,7 @@ export interface McpToolDefinition {
 
 export interface McpToolContext {
   sock: WASocket;
+  recentMessages?: Map<string, WAMessage>;
 }
 
 export type McpToolHandler = (

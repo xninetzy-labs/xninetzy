@@ -1,7 +1,25 @@
-import type { WASocket } from "@whiskeysockets/baileys";
+import type { WASocket, WAMessage } from "@whiskeysockets/baileys";
 import { logger } from "../utils/logger";
 
 let currentSocket: WASocket | null = null;
+
+// Shared recent message cache for MCP media download
+const MAX_CACHED_MESSAGES = 500;
+const recentMessageCache = new Map<string, WAMessage>();
+
+export function cacheMessage(msg: WAMessage): void {
+  const id = msg.key.id;
+  if (!id) return;
+  recentMessageCache.set(id, msg);
+  if (recentMessageCache.size > MAX_CACHED_MESSAGES) {
+    const oldest = recentMessageCache.keys().next().value;
+    if (oldest) recentMessageCache.delete(oldest);
+  }
+}
+
+export function getRecentMessages(): Map<string, WAMessage> {
+  return recentMessageCache;
+}
 
 export function getCurrentSocket(): WASocket | null {
   return currentSocket;

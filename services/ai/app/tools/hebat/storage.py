@@ -308,6 +308,63 @@ def update_submission_status(token: str, status: UploadStatus,
         )
 
 
+# ─── Downloads ───────────────────────────────────────────────────────────────
+
+def record_download(
+    chat_id: str,
+    *,
+    file_url: str,
+    course_id: str | None = None,
+    cmid: str | None = None,
+    activity_url: str | None = None,
+    final_url: str | None = None,
+    filename: str | None = None,
+    mime_type: str | None = None,
+    local_path: str | None = None,
+    size_bytes: int | None = None,
+    sha256: str | None = None,
+    text_excerpt: str | None = None,
+    summary: str | None = None,
+) -> int:
+    """Persist a downloaded HEBAT file so its content is searchable later."""
+    init_db()
+    with connect() as conn:
+        cur = conn.execute(
+            """
+            INSERT INTO hebat_downloads
+              (chat_id, course_id, cmid, activity_url, file_url, final_url, filename,
+               mime_type, local_path, size_bytes, sha256, text_excerpt, summary, created_at)
+            VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+            """,
+            (chat_id, course_id, cmid, activity_url, file_url, final_url, filename,
+             mime_type, local_path, size_bytes, sha256,
+             (text_excerpt or "")[:4000], (summary or "")[:2000], _now()),
+        )
+        return int(cur.lastrowid or 0)
+
+
+def search_downloads(chat_id: str, query: str | None = None, limit: int = 20) -> list[dict]:
+    """Find previously downloaded HEBAT files by filename / excerpt / summary."""
+    init_db()
+    with connect() as conn:
+        if query:
+            needle = f"%{query}%"
+            rows = conn.execute(
+                """
+                SELECT * FROM hebat_downloads
+                WHERE chat_id=? AND (filename LIKE ? OR text_excerpt LIKE ? OR summary LIKE ?)
+                ORDER BY created_at DESC LIMIT ?
+                """,
+                (chat_id, needle, needle, needle, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM hebat_downloads WHERE chat_id=? ORDER BY created_at DESC LIMIT ?",
+                (chat_id, limit),
+            ).fetchall()
+    return [dict(r) for r in rows]
+
+
 # ─── Audit Log ───────────────────────────────────────────────────────────────
 
 def audit_log(chat_id: str, action: str, status: str,

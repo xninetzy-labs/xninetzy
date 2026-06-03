@@ -264,3 +264,41 @@ def run_migrations() -> None:
     with connect() as conn:
         for statement in statements:
             conn.execute(statement)
+        _migrate_reminders(conn)
+
+
+def _migrate_reminders(conn) -> None:
+    """Add reminder workflow columns to existing local databases."""
+    rows = conn.execute("PRAGMA table_info(reminders)").fetchall()
+    if not rows:
+        return
+    existing = {row["name"] for row in rows}
+    columns = {
+        "user_id": "TEXT",
+        "source": "TEXT DEFAULT 'user'",
+        "source_ref_id": "TEXT",
+        "context_summary": "TEXT",
+        "action_label": "TEXT",
+        "display_time_label": "TEXT",
+        "deadline_label": "TEXT",
+        "offset_label": "TEXT",
+        "source_reason": "TEXT",
+        "raw_user_message": "TEXT",
+        "normalized_task_text": "TEXT",
+        "deadline_at": "TEXT",
+        "priority": "TEXT DEFAULT 'normal'",
+        "reminder_type": "TEXT DEFAULT 'explicit'",
+        "offset_value": "INTEGER",
+        "offset_unit": "TEXT",
+        "metadata_json": "TEXT DEFAULT '{}'",
+        "sent_at": "TEXT",
+        "expired_at": "TEXT",
+        "attempt_count": "INTEGER DEFAULT 0",
+        "last_error": "TEXT",
+        "locked_at": "TEXT",
+    }
+    for name, ddl in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE reminders ADD COLUMN {name} {ddl}")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_reminders_due ON reminders(status, remind_at)")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_reminders_chat ON reminders(chat_id, status)")

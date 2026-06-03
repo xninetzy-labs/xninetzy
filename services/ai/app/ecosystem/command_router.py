@@ -34,7 +34,12 @@ SLASH_COMMANDS: dict[str, str] = {
     "/agent-errors": "lightning_errors",
     "/test-lightning": "lightning_healthcheck",
     "/test-memory": "memory_list",
+    "/workflow-status": "workflow_status",
+    "/workflow-latest": "workflow_latest",
 }
+
+WORKFLOW_RESUME_PATTERN = re.compile(r"^/workflow-resume\s+([\w-]+)$", re.I)
+WORKFLOW_CANCEL_PATTERN = re.compile(r"^/workflow-cancel\s+([\w-]+)$", re.I)
 
 # /helper <topic> → helper_get with topic
 HELPER_PATTERN = re.compile(r"^/helper\s+(\w+)$", re.I)
@@ -87,6 +92,14 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     m = REJECT_PATTERN.match(stripped)
     if m:
         return "hitl_reject", {"approval_id": int(m.group(1))}
+
+    m = WORKFLOW_RESUME_PATTERN.match(stripped)
+    if m:
+        return "workflow_resume", {"workflow_id": m.group(1)}
+
+    m = WORKFLOW_CANCEL_PATTERN.match(stripped)
+    if m:
+        return "workflow_cancel", {"workflow_id": m.group(1)}
 
     m = DEEP_RESEARCH_PATTERN.match(stripped)
     if m:

@@ -1,7 +1,48 @@
-import type { WAMessage } from "@whiskeysockets/baileys";
+import type { WAMessage, proto } from "@whiskeysockets/baileys";
 import type { AIChatPayload } from "../types/ai";
 import type { ChatType } from "../types/chat";
-import { getMessageContextInfo, extractMessageText } from "../whatsapp/message-parser";
+import {
+  getMessageContextInfo,
+  extractMessageText,
+  unwrapMessage,
+} from "../whatsapp/message-parser";
+
+type MediaMeta = {
+  hasMedia: true;
+  mediaType: "document" | "image" | "video" | "audio";
+  filename: string | null;
+  mimetype: string | null;
+  fileLength: number;
+  messageId: string | null;
+  caption: string | null;
+};
+
+/** Extract media metadata from an (unwrapped) message, or null if it has none. */
+function extractMediaMeta(
+  rawMessage: proto.IMessage | null | undefined,
+  messageId: string | null,
+): MediaMeta | null {
+  const message = unwrapMessage(rawMessage);
+  if (!message) return null;
+  const docMsg = message.documentMessage;
+  const imgMsg = message.imageMessage;
+  const vidMsg = message.videoMessage;
+  const audMsg = message.audioMessage;
+  if (!(docMsg || imgMsg || vidMsg || audMsg)) return null;
+
+  return {
+    hasMedia: true,
+    mediaType: docMsg ? "document" : imgMsg ? "image" : vidMsg ? "video" : "audio",
+    filename: docMsg?.fileName ?? null,
+    mimetype:
+      docMsg?.mimetype ?? imgMsg?.mimetype ?? vidMsg?.mimetype ?? audMsg?.mimetype ?? null,
+    fileLength: Number(
+      docMsg?.fileLength ?? imgMsg?.fileLength ?? vidMsg?.fileLength ?? audMsg?.fileLength ?? 0,
+    ),
+    messageId,
+    caption: docMsg?.caption ?? imgMsg?.caption ?? vidMsg?.caption ?? null,
+  };
+}
 
 type BuildAIChatPayloadParams = {
   remoteJid: string;
@@ -60,24 +101,18 @@ export function buildAIChatPayload(
   const contextInfo = getMessageContextInfo(msg.message);
   const quotedMessageText = contextInfo?.quotedMessage ? extractMessageText(contextInfo.quotedMessage) : null;
 
-  // Media metadata (document/image/video/audio)
-  const rawMsg = msg.message;
-  const docMsg = rawMsg?.documentMessage;
-  const imgMsg = rawMsg?.imageMessage;
-  const vidMsg = rawMsg?.videoMessage;
-  const audMsg = rawMsg?.audioMessage;
-  const hasMedia = Boolean(docMsg ?? imgMsg ?? vidMsg ?? audMsg);
-  const media = hasMedia
-    ? {
-        hasMedia: true,
-        mediaType: docMsg ? "document" : imgMsg ? "image" : vidMsg ? "video" : "audio",
-        filename: docMsg?.fileName ?? null,
-        mimetype: docMsg?.mimetype ?? imgMsg?.mimetype ?? vidMsg?.mimetype ?? null,
-        fileLength: Number(docMsg?.fileLength ?? imgMsg?.fileLength ?? vidMsg?.fileLength ?? 0),
-        messageId,
-        caption: docMsg?.caption ?? imgMsg?.caption ?? vidMsg?.caption ?? null,
-      }
+  // Media on the message itself (document/image/video/audio).
+  const media = extractMediaMeta(msg.message, messageId ?? null);
+
+  // Media on a quoted message ("reply to this file and explain it").
+  const quotedMediaBase = contextInfo?.quotedMessage
+    ? extractMediaMeta(contextInfo.quotedMessage, contextInfo.stanzaId ?? null)
     : null;
+  const quotedMedia = quotedMediaBase
+    ? { ...quotedMediaBase, participantJid: contextInfo?.participant ?? null }
+    : null;
+
+  const mentions = (contextInfo?.mentionedJid ?? []).filter(Boolean) as string[];
 
   return {
     chat_id: remoteJid,
@@ -90,6 +125,7 @@ export function buildAIChatPayload(
       traceId,
       messageId,
       isGroup: chatType === "group",
+      chatJid: remoteJid,
       groupJid: chatType === "group" ? remoteJid : undefined,
       participantJid: msg.key.participant || null,
       senderJid: senderId,
@@ -104,7 +140,9 @@ export function buildAIChatPayload(
       isMentioned,
       hasPrefix,
       isReplyToBot: Boolean(isReplyToBot),
+      mentions,
       media,
+      quotedMedia,
     },
   };
 }

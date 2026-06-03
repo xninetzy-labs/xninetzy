@@ -1,12 +1,23 @@
 # Xninetzy CLI
 
-Terminal UI mock untuk Xninetzy.
+Dark fullscreen terminal UI mock untuk Xninetzy.
 
-## Development
+## Current UI
+
+- Full terminal TUI
+- Dark/deep-space background
+- Xninetzy ASCII header
+- Full-width chat area
+- Full-width input area
+- White text
+- Purple logo/border accent
+- Orange node/event horizon accent
+- Local mock chat
+- No AI/API/backend call yet
+
+## Run
 
 ```bash
-cd apps/cli
-yarn install
 yarn dev
 ```
 
@@ -17,44 +28,18 @@ yarn build
 yarn start
 ```
 
-## Link command
+## Link Command
 
 ```bash
 yarn link
 xninetzy
 ```
 
-## Docker Compose
-
-```bash
-docker compose --profile tools run --rm cli
-```
-
-The Compose service reads the root `.env` through `env_file: .env`.
-The local command also searches upward for the repo root `.env` and loads it for future AI/API connection settings.
-
-## Current MVP
-
-- OpenCode-like TUI
-- Xninetzy cosmic purple theme
-- Local mock chat
-- Root `.env` config loader
-- No AI/API call yet
-
-Input:
+## Mock Inputs
 
 ```txt
 halo
-```
-
-Response:
-
-```txt
-hei yoi this is xninetzy
-```
-
-Compatibility alias:
-
-```bash
-chat
+/help
+/status
+/clear
 ```

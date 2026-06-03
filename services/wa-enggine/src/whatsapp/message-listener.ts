@@ -6,6 +6,8 @@ import { logger } from "../utils/logger";
 import {
   extractMessageText,
   getChatType,
+  getMediaType,
+  type MediaKind,
 } from "./message-parser";
 import { shouldProcessMessage } from "./trigger";
 import { sendWhatsAppReply } from "./reply-context";
@@ -87,14 +89,36 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
     }
 
     const rawText = extractMessageText(message.message);
-    if (!rawText) {
+    const mediaType = getMediaType(message.message);
+
+    // Caption-less media must still reach the AI: skip only when there is
+    // neither text nor media. Otherwise synthesize a placeholder caption so the
+    // trigger/payload pipeline treats it like a normal message (the real media
+    // metadata travels in the payload for the AI to download + parse).
+    if (!rawText && !mediaType) {
       logSkipped(traceId, messageId, startedAt, "missing_text");
       return;
     }
 
+    const effectiveText = rawText ?? syntheticMediaText(mediaType);
+
+    if (mediaType) {
+      logger.info(
+        {
+          step: "wa_media_detected",
+          traceId,
+          messageId,
+          chatType,
+          mediaType,
+          hasCaption: Boolean(rawText),
+        },
+        "WhatsApp media detected"
+      );
+    }
+
     const trigger = shouldProcessMessage({
       chatType,
-      text: rawText,
+      text: effectiveText,
       message,
       sock,
       prefix: env.WA_COMMAND_PREFIX,
@@ -267,6 +291,21 @@ async function sendFallbackReply(
     rememberBotMessageId(sentMessage?.key.id);
   } catch (error) {
     logger.error({ step: "fallback_reply_failed", traceId, messageId, err: error }, "Failed to send fallback reply");
+  }
+}
+
+function syntheticMediaText(kind: MediaKind | null): string {
+  switch (kind) {
+    case "image":
+      return "[image uploaded]";
+    case "document":
+      return "[document uploaded]";
+    case "audio":
+      return "[audio uploaded]";
+    case "video":
+      return "[video uploaded]";
+    default:
+      return "[media uploaded]";
   }
 }
 

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from app.core.config import get_settings
 from app.core.logging import logging
-from app.tools.hebat.parsers import is_logged_out, parse_login_page
+from app.tools.hebat.parsers import is_logged_out, looks_like_login_page, parse_login_page
 from app.tools.hebat.storage import audit_log, mark_session_checked, upsert_session
 
 logger = logging.getLogger(__name__)
@@ -242,6 +242,43 @@ async def debug_login_with_credentials(chat_id: str, username: str, password: st
             await browser.close()
 
 
+async def relogin_hebat(chat_id: str) -> bool:
+    """Force a fresh credential login using env credentials, ignoring stale cookies.
+
+    Reads ``HEBAT_USERNAME`` / ``HEBAT_PASSWORD`` from settings (never logged) and
+    rewrites ``storage_state.json`` on success. Emits structured events so the
+    relogin path is observable in logs.
+    """
+    s = get_settings()
+    if not s.HEBAT_USERNAME or not s.HEBAT_PASSWORD:
+        logger.error(
+            "hebat_relogin_failed chat_id=%s reason=missing_credentials "
+            "(set HEBAT_USERNAME / HEBAT_PASSWORD or use SSO login)",
+            chat_id,
+        )
+        return False
+
+    logger.info("hebat_relogin_started chat_id=%s", chat_id)
+    ok = await login_with_credentials(chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD, force=True)
+    if ok:
+        logger.info("hebat_relogin_success chat_id=%s", chat_id)
+    else:
+        logger.error("hebat_relogin_failed chat_id=%s reason=login_rejected", chat_id)
+    return ok
+
+
+async def clear_hebat_session(chat_id: str) -> None:
+    """Drop the stored session so the next request is forced to log in cleanly."""
+    storage_path = _storage_state_path(chat_id)
+    try:
+        if storage_path.exists():
+            storage_path.unlink()
+        logger.info("hebat_session_cleared chat_id=%s", chat_id)
+        audit_log(chat_id, "session_cleared", "success")
+    except Exception as exc:  # pragma: no cover - filesystem edge case
+        logger.warning("clear_hebat_session failed for %s: %s", chat_id, exc)
+
+
 async def check_session_valid(chat_id: str) -> tuple[bool, str | None]:
     """Returns (is_valid, profile_name). Uses stored cookies — no password."""
     if not _PLAYWRIGHT_AVAILABLE:
@@ -282,29 +319,59 @@ async def check_session_valid(chat_id: str) -> tuple[bool, str | None]:
             await browser.close()
 
 
-async def get_page_html(chat_id: str, url: str) -> str | None:
-    """Fetch a Moodle page with stored session. Returns HTML or None if session invalid."""
+async def get_page_html(
+    chat_id: str,
+    url: str,
+    *,
+    force_relogin: bool = False,
+    retry_on_logout: bool = True,
+) -> str | None:
+    """Fetch a Moodle page with the stored session via Playwright.
+
+    Returns rendered HTML, or ``None`` if the session is invalid and relogin
+    fails. When ``retry_on_logout`` is set, a page that comes back as the Moodle
+    login form triggers exactly one relogin + refetch (bounded, never loops).
+    """
     if not _PLAYWRIGHT_AVAILABLE:
         return None
 
     s = get_settings()
+
+    if force_relogin:
+        if not await relogin_hebat(chat_id):
+            return None
+
     storage_path = _storage_state_path(chat_id)
     if not storage_path.exists():
+        # No session yet — try to establish one if creds are present.
+        if retry_on_logout and await relogin_hebat(chat_id):
+            return await get_page_html(chat_id, url, retry_on_logout=False)
         return None
 
     async with async_playwright() as pw:
-        browser = await pw.chromium.launch(headless=True)
+        browser = await pw.chromium.launch(headless=s.HEBAT_BROWSER_HEADLESS)
         try:
             ctx = await browser.new_context(storage_state=str(storage_path))
             page = await ctx.new_page()
             await page.goto(url, wait_until="domcontentloaded", timeout=30_000)
             await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
-            return await page.content()
+            html = await page.content()
         except Exception as e:
             logger.warning("get_page_html failed for %s: %s", url, e)
             return None
         finally:
             await browser.close()
+
+    # Rendered the login form instead of the page? Re-login once and refetch.
+    if retry_on_logout and looks_like_login_page(html):
+        logger.info("hebat_session_expired source=playwright url=%s", url)
+        if await relogin_hebat(chat_id):
+            logger.info("hebat_retry_original_url source=playwright url=%s", url)
+            return await get_page_html(chat_id, url, retry_on_logout=False)
+        logger.error("hebat_get_failed_after_relogin source=playwright url=%s", url)
+        return None
+
+    return html
 
 
 async def get_cookies_for_httpx(chat_id: str) -> list[dict]:

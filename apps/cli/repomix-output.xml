@@ -1,0 +1,958 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files (if enabled)
+5. Multiple file entries, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+</file_summary>
+
+<directory_structure>
+bin/
+  chat
+  xninetzy
+src/
+  components/
+    ChatView.tsx
+    FullScreenShell.tsx
+    Header.tsx
+    InputBox.tsx
+    SpaceBackdrop.tsx
+    StatusBar.tsx
+  config/
+    env.ts
+  hooks/
+    useStdoutDimensions.ts
+  theme/
+    colors.ts
+  app.tsx
+  index.tsx
+  mock.ts
+  types.ts
+Dockerfile
+package.json
+README.md
+tsconfig.json
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="bin/chat">
+#!/usr/bin/env node
+import "./xninetzy";
+</file>
+
+<file path="bin/xninetzy">
+#!/usr/bin/env node
+import("../dist/index.js");
+</file>
+
+<file path="src/components/ChatView.tsx">
+import React from 'react';
+import { Box, Text } from 'ink';
+import type { ChatMessage } from '../types.js';
+import { colors } from '../theme/colors.js';
+
+type ChatViewProps = {
+  messages: ChatMessage[];
+  width: number;
+};
+
+function line(width: number) {
+  return '─'.repeat(Math.max(10, width));
+}
+
+/**
+ * Enhanced Markdown-ish renderer for Ink
+ */
+function SimpleMarkdown({ content }: { content: string }) {
+  let lineText = content;
+  let color: string = colors.text;
+  let bold = false;
+  let prefix = '';
+
+  // Handle Headers
+  if (lineText.startsWith('### ')) {
+    lineText = lineText.slice(4);
+    color = colors.purpleBright;
+    bold = true;
+  } else if (lineText.startsWith('## ')) {
+    lineText = lineText.slice(3);
+    color = colors.purpleBright;
+    bold = true;
+  } else if (lineText.startsWith('# ')) {
+    lineText = lineText.slice(2);
+    color = colors.purpleBright;
+    bold = true;
+  }
+
+  // Handle Lists
+  if (lineText.trim().startsWith('- ') || lineText.trim().startsWith('* ')) {
+    prefix = '  • ';
+    lineText = lineText.trim().slice(2);
+  }
+
+  // Handle inline formatting: **bold**, `code`, *italic*
+  const parts = lineText.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*|_.*?_)/g);
+
+  return (
+    <Box flexDirection="row">
+      {prefix && <Text color={colors.orange}>{prefix}</Text>}
+      <Text color={color} bold={bold}>
+        {parts.map((part, i) => {
+          if (!part) return null;
+          
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return (
+              <Text key={i} bold color={colors.white}>
+                {part.slice(2, -2)}
+              </Text>
+            );
+          }
+          if (part.startsWith('`') && part.endsWith('`')) {
+            return (
+              <Text key={i} color={colors.orangeBright} backgroundColor={colors.backgroundSoft}>
+                {' '}{part.slice(1, -1)}{' '}
+              </Text>
+            );
+          }
+          if ((part.startsWith('*') && part.endsWith('*')) || (part.startsWith('_') && part.endsWith('_'))) {
+            return (
+              <Text key={i} italic color={colors.lavender}>
+                {part.slice(1, -1)}
+              </Text>
+            );
+          }
+          return <Text key={i}>{part}</Text>;
+        })}
+      </Text>
+    </Box>
+  );
+}
+
+export function ChatView({ messages, width }: ChatViewProps) {
+  const visibleMessages = messages
+    .filter((message) => message.role !== 'system')
+    .slice(-10);
+
+  if (visibleMessages.length === 0) {
+    return (
+      <Box width={width} flexDirection="column" paddingX={1}>
+        <Text color={colors.line}>{line(width - 2)}</Text>
+        <Text color={colors.dim}>
+          Local mock session ready. No AI/API/backend calls.
+        </Text>
+        <Text color={colors.line}>{line(width - 2)}</Text>
+      </Box>
+    );
+  }
+
+  return (
+    <Box width={width} flexDirection="column" paddingX={1}>
+      <Text color={colors.line}>{line(width - 2)}</Text>
+
+      {visibleMessages.map((message, index) => {
+        const isUser = message.role === 'user';
+        const label = isUser ? 'You ▸' : '◎ Xninetzy';
+        const labelColor = isUser ? colors.purpleBright : colors.orange;
+        
+        // alignment: User right, Assistant left
+        const alignment = isUser ? 'flex-end' : 'flex-start';
+        // Bubble width: 75% of content width
+        const bubbleWidth = Math.floor(width * 0.75);
+
+        return (
+          <Box
+            key={message.id}
+            flexDirection="column"
+            alignItems={alignment}
+            marginTop={index === 0 ? 0 : 1}
+            width="100%"
+          >
+            <Box flexDirection="column" alignItems={alignment} width={bubbleWidth}>
+              <Text bold color={labelColor}>
+                {label}
+              </Text>
+              
+              <Box 
+                flexDirection="column" 
+                alignItems={alignment}
+                paddingX={1}
+                borderStyle="round"
+                borderColor={isUser ? colors.borderDim : colors.line}
+              >
+                {message.content.split('\n').map((lineText, li) => (
+                  <SimpleMarkdown key={li} content={lineText} />
+                ))}
+              </Box>
+            </Box>
+          </Box>
+        );
+      })}
+
+      <Text color={colors.line}>{line(width - 2)}</Text>
+    </Box>
+  );
+}
+</file>
+
+<file path="src/components/FullScreenShell.tsx">
+import React from 'react';
+import { Box } from 'ink';
+import { useStdoutDimensions } from '../hooks/useStdoutDimensions.js';
+import { colors } from '../theme/colors.js';
+
+type FullScreenShellProps = {
+  children: React.ReactNode;
+};
+
+export function FullScreenShell({ children }: FullScreenShellProps) {
+  const [columns, rows] = useStdoutDimensions();
+
+  return (
+    <Box
+      width={columns}
+      minHeight={rows}
+      flexDirection="column"
+      paddingX={1}
+    >
+      {children}
+    </Box>
+  );
+}
+</file>
+
+<file path="src/components/Header.tsx">
+import React from 'react';
+import { Box, Text } from 'ink';
+import { colors } from '../theme/colors.js';
+
+type HeaderProps = {
+  columns: number;
+  compact?: boolean;
+};
+
+const logo = [
+  '██╗  ██╗███╗   ██╗██╗███╗   ██╗███████╗████████╗███████╗██╗   ██╗',
+  '╚██╗██╔╝████╗  ██║██║████╗  ██║██╔════╝╚══██╔══╝╚══███╔╝╚██╗ ██╔╝',
+  ' ╚███╔╝ ██╔██╗ ██║██║██╔██╗ ██║█████╗     ██║     ███╔╝  ╚████╔╝ ',
+  ' ██╔██╗ ██║╚██╗██║██║██║╚██╗██║██╔══╝     ██║    ███╔╝    ╚██╔╝  ',
+  '██╔╝ ██╗██║ ╚████║██║██║ ╚████║███████╗   ██║   ███████╗   ██║   ',
+  '╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝   '
+];
+
+export function Header({ columns, compact = false }: HeaderProps) {
+  const useCompact = compact || columns < 96;
+
+  return (
+    <Box flexDirection="column" alignItems="center" width="100%">
+      {useCompact ? (
+        <Text bold color={colors.purpleBright}>X N I N E T Z Y</Text>
+      ) : (
+        <Box flexDirection="column" alignItems="center">
+          {logo.map((line, index) => (
+            <Text key={index} bold color={colors.purpleBright}>
+              {line}
+            </Text>
+          ))}
+        </Box>
+      )}
+
+      <Text color={colors.white}>
+        future-ready AI session shell · local mock · cosmos
+      </Text>
+
+      <Text color={colors.orange}>
+        ───── ◎ event horizon ◎ ─────
+      </Text>
+    </Box>
+  );
+}
+</file>
+
+<file path="src/components/InputBox.tsx">
+import React from 'react';
+import { Box, Text } from 'ink';
+import TextInput from 'ink-text-input';
+import { colors } from '../theme/colors.js';
+
+type InputBoxProps = {
+  value: string;
+  onChange: (value: string) => void;
+  onSubmit: (value: string) => void;
+  width: number;
+};
+
+export function InputBox({ value, onChange, onSubmit, width }: InputBoxProps) {
+  // Logic to split huge input into [Summary] + [Editable Part]
+  // We treat everything before the last newline as the "Huge Part" if it's large.
+  
+  const lastNewlineIndex = value.lastIndexOf('\n');
+  
+  let prefix = '';
+  let activePart = value;
+  
+  if (lastNewlineIndex !== -1) {
+    prefix = value.slice(0, lastNewlineIndex);
+    activePart = value.slice(lastNewlineIndex + 1);
+  }
+
+  const prefixLines = prefix ? prefix.split('\n').length : 0;
+  const prefixChars = prefix.length;
+  
+  // Only show summary if the prefix is significant
+  const showSummary = prefixLines > 3 || prefixChars > 200;
+
+  const handleActivePartChange = (newValue: string) => {
+    if (showSummary) {
+      onChange(prefix + '\n' + newValue);
+    } else {
+      onChange(newValue);
+    }
+  };
+
+  const handleActivePartSubmit = (activeValue: string) => {
+    if (showSummary) {
+      onSubmit(prefix + '\n' + activeValue);
+    } else {
+      onSubmit(activeValue);
+    }
+  };
+
+  return (
+    <Box width={width} flexDirection="column" paddingX={1}>
+      <Box
+        width={width - 2}
+        borderStyle="single"
+        borderColor={showSummary ? colors.orange : colors.border}
+        paddingX={1}
+      >
+        <Text color={colors.orange}>◎ </Text>
+        
+        {showSummary && (
+          <Box marginRight={1}>
+            <Text color={colors.orangeBright} bold>
+              [{prefixLines} lines] 
+            </Text>
+            <Text color={colors.dim}> ▸ </Text>
+          </Box>
+        )}
+
+        <Box flexGrow={1}>
+          <TextInput
+            value={activePart}
+            onChange={handleActivePartChange}
+            onSubmit={handleActivePartSubmit}
+            placeholder={showSummary ? 'Add a comment...' : 'Ask anything... "halo"'}
+            showCursor
+          />
+        </Box>
+      </Box>
+      
+      {showSummary && (
+          <Box paddingX={1}>
+              <Text color={colors.dim} italic>
+                  Large payload detected. Typing at the end of buffer. 
+                  Press ESC in chat to clear.
+              </Text>
+          </Box>
+      )}
+    </Box>
+  );
+}
+</file>
+
+<file path="src/components/SpaceBackdrop.tsx">
+import React from 'react';
+import { Box, Text } from 'ink';
+import { colors } from '../theme/colors.js';
+
+type SpaceBackdropProps = {
+  compact?: boolean;
+};
+
+export function SpaceBackdrop({ compact = false }: SpaceBackdropProps) {
+  if (compact) {
+    return null;
+  }
+
+  return (
+    <Box width="100%" justifyContent="center">
+      <Text color={colors.indigo}>
+        ·        ✦             ·        *          ✧        ◌
+      </Text>
+    </Box>
+  );
+}
+</file>
+
+<file path="src/components/StatusBar.tsx">
+import React from 'react';
+import { Box, Text } from 'ink';
+import { colors } from '../theme/colors.js';
+
+type StatusBarProps = {
+  width: number;
+};
+
+export function StatusBar({ width }: StatusBarProps) {
+  return (
+    <Box width={width} flexDirection="column" paddingX={2}>
+      <Text color={colors.white}>
+        Build · Local Mock · Xninetzy Labs · <Text color={colors.orange}>max</Text>
+      </Text>
+      <Text color={colors.dim}>
+        env root · future AI http://ai:8000
+      </Text>
+      <Text color={colors.muted}>
+        tab agents     ctrl+p commands     esc exit     ctrl+c quit
+      </Text>
+    </Box>
+  );
+}
+</file>
+
+<file path="src/config/env.ts">
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+export interface CliConfig {
+  aiUrl: string;
+  envFilePath: string | null;
+  envLoaded: boolean;
+}
+
+function parseEnv(raw: string): Record<string, string> {
+  const values: Record<string, string> = {};
+
+  for (const line of raw.split(/\r?\n/)) {
+    const trimmed = line.trim();
+    if (!trimmed || trimmed.startsWith("#")) continue;
+
+    const separator = trimmed.indexOf("=");
+    if (separator === -1) continue;
+
+    const key = trimmed.slice(0, separator).trim();
+    let value = trimmed.slice(separator + 1).trim();
+    if (!key) continue;
+
+    if (
+      (value.startsWith('"') && value.endsWith('"')) ||
+      (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    values[key] = value;
+  }
+
+  return values;
+}
+
+function findEnvFile(start: string): string | null {
+  let current = resolve(start);
+
+  for (let i = 0; i < 8; i += 1) {
+    const candidate = join(current, ".env");
+    if (existsSync(candidate)) return candidate;
+
+    const parent = dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+
+  return null;
+}
+
+function loadRootEnv(): string | null {
+  const entryDir = dirname(fileURLToPath(import.meta.url));
+  const envFile =
+    findEnvFile(process.cwd()) ??
+    findEnvFile(entryDir);
+
+  if (!envFile) return null;
+
+  const values = parseEnv(readFileSync(envFile, "utf8"));
+  for (const [key, value] of Object.entries(values)) {
+    process.env[key] ??= value;
+  }
+
+  return envFile;
+}
+
+const envFilePath = loadRootEnv();
+
+export const cliConfig: CliConfig = {
+  aiUrl:
+    process.env.XNINETZY_AI_URL ??
+    process.env.AI_API_URL ??
+    process.env.AI_BASE_URL ??
+    "http://localhost:8000",
+  envFilePath,
+  envLoaded: Boolean(envFilePath),
+};
+</file>
+
+<file path="src/hooks/useStdoutDimensions.ts">
+import { useEffect, useState } from "react";
+import { useStdout } from "ink";
+
+export function useStdoutDimensions(): [number, number] {
+  const { stdout } = useStdout();
+  const [dimensions, setDimensions] = useState<[number, number]>([
+    stdout.columns || 100,
+    stdout.rows || 30,
+  ]);
+
+  useEffect(() => {
+    const handler = () => {
+      setDimensions([stdout.columns || 100, stdout.rows || 30]);
+    };
+
+    stdout.on("resize", handler);
+    return () => {
+      stdout.off("resize", handler);
+    };
+  }, [stdout]);
+
+  return dimensions;
+}
+</file>
+
+<file path="src/theme/colors.ts">
+export const colors = {
+  background: '#000000',
+  backgroundDeep: '#020008',
+  backgroundSoft: '#05010f',
+
+  text: '#ffffff',
+  white: '#ffffff',
+  lavender: '#ddd6fe',
+  muted: '#a1a1aa',
+  dim: '#71717a',
+
+  purple: '#8b5cf6',
+  violet: '#a855f7',
+  purpleBright: '#c084fc',
+  indigo: '#6366f1',
+
+  orange: '#f97316',
+  orangeBright: '#fb923c',
+  amber: '#f59e0b',
+
+  border: '#7c3aed',
+  borderDim: '#2e1065',
+  line: '#272033'
+} as const;
+</file>
+
+<file path="src/app.tsx">
+import React, { useState } from 'react';
+import { Box, Text, useApp, useInput } from 'ink';
+import { useStdoutDimensions } from './hooks/useStdoutDimensions.js';
+import { FullScreenShell } from './components/FullScreenShell.js';
+import { SpaceBackdrop } from './components/SpaceBackdrop.js';
+import { Header } from './components/Header.js';
+import { ChatView } from './components/ChatView.js';
+import { InputBox } from './components/InputBox.js';
+import { StatusBar } from './components/StatusBar.js';
+import { colors } from './theme/colors.js';
+import type { ChatMessage } from './types.js';
+
+function createMessage(role: ChatMessage['role'], content: string): ChatMessage {
+  return {
+    id: `${role}-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+    role,
+    content,
+    createdAt: new Date()
+  };
+}
+
+function getMockReply(input: string): string {
+  const normalized = input.toLowerCase().trim();
+
+  if (normalized === '/help') {
+    return [
+      '### Xninetzy Mock Commands',
+      '- `/help` — show this help',
+      '- `/status` — show local session status',
+      '- `/clear` — clear chat',
+      '',
+      '**Note:** Local mock session active.'
+    ].join('\n');
+  }
+
+  if (normalized === '/status') {
+    return [
+      '◎ **Status:** OK',
+      '◎ **Mode:** Local Mock',
+      '◎ **Version:** `0.1.0-alpha`',
+      '',
+      'No AI/API/backend calls are being made.'
+    ].join('\n');
+  }
+
+  if (
+    normalized.includes('halo') ||
+    normalized.includes('hai') ||
+    normalized.includes('hello')
+  ) {
+    return 'hei yoi this is **xninetzy**. How can I help you today?';
+  }
+
+  return 'xninetzy mock mode aktif — `AI belum disambungkan`.';
+}
+
+export function App() {
+  const { exit } = useApp();
+  const [columns, rows] = useStdoutDimensions();
+
+  const [input, setInput] = useState('');
+  const [messages, setMessages] = useState<ChatMessage[]>([
+    createMessage('system', 'Local mock session ready. No AI/API/backend calls.')
+  ]);
+
+  const hasUserMessages = messages.some((message) => message.role === 'user');
+
+  const contentWidth = Math.max(40, columns - 4);
+  const compactHeader = rows < 32 || hasUserMessages;
+
+  function addAssistantMessage(content: string) {
+    setMessages((current) => [...current, createMessage('assistant', content)]);
+  }
+
+  function handleSubmit(value: string) {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    setInput('');
+
+    if (trimmed.toLowerCase() === '/clear') {
+      setMessages([
+        createMessage('system', 'Local mock session ready. No AI/API/backend calls.')
+      ]);
+      return;
+    }
+
+    setMessages((current) => [
+      ...current,
+      createMessage('user', trimmed),
+      createMessage('assistant', getMockReply(trimmed))
+    ]);
+  }
+
+  useInput((inputChar, key) => {
+    if (key.escape || (key.ctrl && inputChar === 'c')) {
+      exit();
+      return;
+    }
+
+    if (key.tab) {
+      addAssistantMessage('Agents menu belum aktif — **mock UI only**.');
+      return;
+    }
+
+    if (key.ctrl && inputChar === 'p') {
+      addAssistantMessage('Command palette belum aktif — `mock UI only`.');
+    }
+  });
+
+  return (
+    <FullScreenShell>
+      <Box width={columns} minHeight={rows} flexDirection="column">
+        <Box height={hasUserMessages ? 1 : 3} />
+
+        <SpaceBackdrop compact={compactHeader} />
+
+        <Box height={compactHeader ? 0 : 1} />
+
+        <Header columns={columns} compact={compactHeader} />
+
+        <Box height={1} />
+
+        <Box flexGrow={1} flexDirection="column" justifyContent="flex-end">
+          <ChatView messages={messages} width={contentWidth} />
+
+          <Box height={1} />
+
+          <InputBox
+            value={input}
+            onChange={setInput}
+            onSubmit={handleSubmit}
+            width={contentWidth}
+          />
+
+          <Box height={1} />
+
+          <StatusBar width={contentWidth} />
+
+          <Box height={1} />
+
+          <Box width={contentWidth} paddingX={2}>
+            <Text color={colors.white}>
+              ✦ drifting through your second brain space ✦
+            </Text>
+          </Box>
+
+          <Box height={1} />
+        </Box>
+      </Box>
+    </FullScreenShell>
+  );
+}
+</file>
+
+<file path="src/index.tsx">
+import React from 'react';
+import { render } from 'ink';
+import { execSync } from 'node:child_process';
+import { App } from './app.js';
+import { getMockReply } from './mock.js';
+
+async function runPipedInput() {
+  let buffer = '';
+
+  process.stdin.setEncoding('utf8');
+  for await (const chunk of process.stdin) {
+    buffer += chunk;
+  }
+
+  const lines = buffer
+    .split(/\r?\n/)
+    .map((line) => line.trim())
+    .filter(Boolean);
+
+  for (const line of lines) {
+    process.stdout.write(`You\n${line}\n\n`);
+    process.stdout.write(`Xninetzy\n${getMockReply(line)}\n`);
+  }
+}
+
+if (process.stdin.isTTY) {
+  // Clear screen, move cursor to home, set background black, foreground white
+  process.stdout.write('\x1b[2J\x1b[3J\x1b[H\x1b[40m\x1b[37m');
+  
+  const { waitUntilExit } = render(<App />);
+  
+  await waitUntilExit();
+
+  // Full terminal reset command
+  try {
+    execSync('reset', { stdio: 'inherit' });
+  } catch {
+    // Fallback to ANSI reset if 'reset' command fails
+    process.stdout.write('\x1bc');
+  }
+
+  // Closing message following the style
+  process.stdout.write('\x1b[38;5;135mX N I N E T Z Y\x1b[0m\n');
+  process.stdout.write('\x1b[38;5;214m◎ event horizon detached\x1b[0m\n\n');
+  process.stdout.write('\x1b[37mready for making a .., continue session ...\x1b[0m\n');
+  process.stdout.write('\x1b[38;5;63m✦ drifting through your second brain space ✦\x1b[0m\n\n');
+} else {
+  await runPipedInput();
+}
+</file>
+
+<file path="src/mock.ts">
+export function getMockReply(input: string): string {
+  const normalized = input.toLowerCase().trim();
+
+  if (normalized === '/help') {
+    return [
+      '### Xninetzy Mock Commands',
+      '- `/help` — show this help',
+      '- `/status` — show local session status',
+      '- `/clear` — clear chat',
+      '',
+      '**Note:** Local mock session active.'
+    ].join('\n');
+  }
+
+  if (normalized === '/status') {
+    return [
+      '◎ **Status:** OK',
+      '◎ **Mode:** Local Mock',
+      '◎ **Version:** `0.1.0-alpha`',
+      '',
+      'No AI/API/backend calls are being made.'
+    ].join('\n');
+  }
+
+  if (
+    normalized.includes('halo') ||
+    normalized.includes('hai') ||
+    normalized.includes('hello')
+  ) {
+    return 'hei yoi this is **xninetzy**. How can I help you today?';
+  }
+
+  return 'xninetzy mock mode aktif — `AI belum disambungkan`.';
+}
+</file>
+
+<file path="src/types.ts">
+export type ChatRole = 'user' | 'assistant' | 'system';
+
+export interface ChatMessage {
+  id: string;
+  role: ChatRole;
+  content: string;
+  createdAt: Date;
+}
+</file>
+
+<file path="Dockerfile">
+FROM node:20-alpine
+
+WORKDIR /app
+
+COPY package.json yarn.lock ./
+COPY tsconfig.json ./
+COPY bin ./bin
+COPY src ./src
+
+RUN corepack enable \
+    && yarn install \
+    && yarn build \
+    && chmod +x ./bin/chat ./bin/xninetzy
+
+ENTRYPOINT ["./bin/xninetzy"]
+</file>
+
+<file path="package.json">
+{
+  "name": "@xninetzy/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "bin": {
+    "xninetzy": "./bin/xninetzy",
+    "chat": "./bin/chat"
+  },
+  "scripts": {
+    "dev": "tsx src/index.tsx",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit",
+    "test:smoke": "printf 'halo\\n' | node dist/index.js"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "ink": "^5.2.1",
+    "ink-text-input": "^6.0.0",
+    "react": "^18.3.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.2",
+    "@types/react": "^18.3.18",
+    "tsx": "^4.19.2",
+    "typescript": "^5.7.2"
+  }
+}
+</file>
+
+<file path="README.md">
+# Xninetzy CLI
+
+Dark fullscreen terminal UI mock untuk Xninetzy.
+
+## Current UI
+
+- Full terminal TUI
+- Dark/deep-space background
+- Xninetzy ASCII header
+- Full-width chat area
+- Full-width input area
+- White text
+- Purple logo/border accent
+- Orange node/event horizon accent
+- Local mock chat
+- No AI/API/backend call yet
+
+## Run
+
+```bash
+yarn dev
+```
+
+## Build
+
+```bash
+yarn build
+yarn start
+```
+
+## Link Command
+
+```bash
+yarn link
+xninetzy
+```
+
+## Mock Inputs
+
+```txt
+halo
+/help
+/status
+/clear
+```
+</file>
+
+<file path="tsconfig.json">
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
+    "jsx": "react-jsx",
+    "outDir": "dist",
+    "rootDir": "src",
+    "strict": true,
+    "esModuleInterop": true,
+    "skipLibCheck": true,
+    "forceConsistentCasingInFileNames": true,
+    "types": ["node"]
+  },
+  "include": ["src/**/*.ts", "src/**/*.tsx"]
+}
+</file>
+
+</files>

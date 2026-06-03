@@ -1,11 +1,19 @@
 from functools import lru_cache
+from pathlib import Path
 
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+def find_root_env() -> Path | None:
+    for parent in Path(__file__).resolve().parents:
+        if (parent / "docker-compose.yml").exists():
+            return parent / ".env"
+    return None
+
+
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(env_file=find_root_env(), env_file_encoding="utf-8", extra="ignore")
 
     DEEPSEEK_API_KEY: str = Field(..., min_length=1)
     DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
@@ -33,6 +41,10 @@ class Settings(BaseSettings):
     REMINDER_ENABLED: bool = True
     APP_TIMEZONE: str = "Asia/Jakarta"
     REMINDER_POLL_INTERVAL_SECONDS: int = 30
+    REMINDER_SCHEDULER_INTERVAL_SECONDS: int = 30
+    REMINDER_EXPIRE_AFTER_HOURS: int = 24
+    REMINDER_AUTO_CREATE_ENABLED: bool = True
+    REMINDER_DEFAULT_TIMEZONE: str = "Asia/Jakarta"
     WA_MCP_BASE_URL: str = "http://wa-enggine:8081"
     WA_MCP_API_KEY: str = ""
 
@@ -53,6 +65,22 @@ class Settings(BaseSettings):
     HEBAT_PASSWORD: str = ""
     HEBAT_NOTIFY_CHAT_ID: str = ""
     HEBAT_AUTO_LOGIN: bool = True
+    # Max automatic re-logins per request when a stale cookie redirects to /login.
+    # Bounds the relogin+retry loop so a permanently-broken session can't spin forever.
+    HEBAT_SESSION_MAX_RELOGIN: int = 2
+    # Persist raw/cleaned HTML to disk on failure for offline debugging.
+    HEBAT_DEBUG_SAVE_HTML: bool = False
+    HEBAT_DEBUG_HTML_DIR: str = "/app/data/hebat/debug-html"
+
+    # Multi-action workflow engine
+    WORKFLOW_ENABLED: bool = True
+    WORKFLOW_RUNNER_MODE: str = "inline"  # inline | queued (queued not implemented yet)
+    WORKFLOW_NOTIFY_ENABLED: bool = True
+    WORKFLOW_NOTIFY_ON_START: bool = False
+    WORKFLOW_NOTIFY_ON_DONE: bool = True
+    WORKFLOW_NOTIFY_MIN_INTERVAL_SECONDS: float = 3.0
+    WORKFLOW_NOTIFY_MAX_MESSAGE_LENGTH: int = 500
+    WORKFLOW_MAX_ACTIONS: int = 12
 
     # Admin / owner policy
     ADMIN_JID: str = ""

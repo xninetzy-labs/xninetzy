@@ -68,6 +68,9 @@ from app.notifications.admin_notifier import admin_notify_progress
 from app.media.media_tools import (
     analyze_media, media_info, media_ingest_to_knowledge, media_read_document,
 )
+from app.agent.workflow_tools import (
+    workflow_status, workflow_latest, workflow_resume, workflow_cancel,
+)
 from app.rules.tools import (
     rule_add, rule_delete, rule_disable, rule_enable, rule_list, rule_search,
     rules_healthcheck,
@@ -145,6 +148,8 @@ def get_all_tools() -> list[BaseTool]:
             admin_notify_progress,
             # Media (WhatsApp documents)
             media_read_document, media_info, analyze_media, media_ingest_to_knowledge,
+            # Multi-action workflow
+            workflow_status, workflow_latest, workflow_resume, workflow_cancel,
             # Rules & Style (defense system)
             rule_add, rule_list, rule_disable, rule_enable, rule_delete, rule_search,
             rules_healthcheck, style_set, style_show, style_reset,

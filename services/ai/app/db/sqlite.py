@@ -55,17 +55,41 @@ def init_db() -> None:
         CREATE TABLE IF NOT EXISTS reminders (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           chat_id TEXT NOT NULL,
+          user_id TEXT,
           sender_id TEXT,
+          source TEXT DEFAULT 'user',
+          source_ref_id TEXT,
           title TEXT NOT NULL,
           description TEXT,
+          context_summary TEXT,
+          action_label TEXT,
+          display_time_label TEXT,
+          deadline_label TEXT,
+          offset_label TEXT,
+          source_reason TEXT,
+          raw_user_message TEXT,
+          normalized_task_text TEXT,
+          deadline_at TEXT,
           remind_at TEXT NOT NULL,
           timezone TEXT DEFAULT 'Asia/Jakarta',
           status TEXT DEFAULT 'pending',
+          priority TEXT DEFAULT 'normal',
+          reminder_type TEXT DEFAULT 'explicit',
+          offset_value INTEGER,
+          offset_unit TEXT,
           repeat_rule TEXT,
+          metadata_json TEXT DEFAULT '{}',
+          sent_at TEXT,
+          expired_at TEXT,
+          attempt_count INTEGER DEFAULT 0,
+          last_error TEXT,
+          locked_at TEXT,
           created_at TEXT NOT NULL,
           updated_at TEXT NOT NULL
         )
         """,
+        "CREATE INDEX IF NOT EXISTS idx_reminders_due ON reminders(status, remind_at)",
+        "CREATE INDEX IF NOT EXISTS idx_reminders_chat ON reminders(chat_id, status)",
         """
         CREATE TABLE IF NOT EXISTS workflows (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -193,10 +217,62 @@ def init_db() -> None:
           created_at TEXT NOT NULL
         )
         """,
+        """
+        CREATE TABLE IF NOT EXISTS hebat_downloads (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          chat_id TEXT NOT NULL,
+          course_id TEXT,
+          cmid TEXT,
+          activity_url TEXT,
+          file_url TEXT NOT NULL,
+          final_url TEXT,
+          filename TEXT,
+          mime_type TEXT,
+          local_path TEXT,
+          size_bytes INTEGER,
+          sha256 TEXT,
+          text_excerpt TEXT,
+          summary TEXT,
+          created_at TEXT NOT NULL
+        )
+        """,
         "CREATE INDEX IF NOT EXISTS idx_hebat_activities_course ON hebat_activities(course_id)",
         "CREATE INDEX IF NOT EXISTS idx_hebat_assignments_due ON hebat_assignments(due_at)",
         "CREATE INDEX IF NOT EXISTS idx_hebat_submissions_token ON hebat_submissions(confirmation_token)",
         "CREATE INDEX IF NOT EXISTS idx_hebat_audit_chat ON hebat_audit_logs(user_chat_id)",
+        "CREATE INDEX IF NOT EXISTS idx_hebat_downloads_chat ON hebat_downloads(chat_id)",
+        "CREATE INDEX IF NOT EXISTS idx_hebat_downloads_cmid ON hebat_downloads(cmid)",
+        # Multi-action workflow engine
+        """
+        CREATE TABLE IF NOT EXISTS workflow_runs (
+          id TEXT PRIMARY KEY,
+          chat_id TEXT NOT NULL,
+          title TEXT,
+          original_user_message TEXT NOT NULL,
+          status TEXT NOT NULL,
+          plan_json TEXT NOT NULL,
+          result_json TEXT,
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS workflow_action_runs (
+          id TEXT PRIMARY KEY,
+          workflow_id TEXT NOT NULL,
+          action_type TEXT NOT NULL,
+          title TEXT,
+          status TEXT NOT NULL,
+          input_json TEXT,
+          result_json TEXT,
+          result_summary TEXT,
+          error TEXT,
+          started_at TEXT,
+          finished_at TEXT
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_workflow_runs_chat ON workflow_runs(chat_id)",
+        "CREATE INDEX IF NOT EXISTS idx_workflow_action_runs_wf ON workflow_action_runs(workflow_id)",
         # Ecosystem events
         """
         CREATE TABLE IF NOT EXISTS ecosystem_events (

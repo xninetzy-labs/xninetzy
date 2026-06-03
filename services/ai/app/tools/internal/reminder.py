@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.reminders.reminder_service import ReminderService
+from app.reminders.reminder_service import ReminderService, format_reminder_creation_response
 
 
 @tool
@@ -19,11 +19,7 @@ def reminder_create(chat_id: str, message: str) -> str:
     try:
         svc = ReminderService()
         result = svc.create_from_message(chat_id, None, message)
-        return (
-            f"⏰ Reminder dibuat!\n\n"
-            f"*Judul:* {result['title']}\n"
-            f"_Jadwal: {result['remind_at']}_"
-        )
+        return format_reminder_creation_response(result)
     except Exception as e:
         return f"Gagal membuat reminder: {e}"
 
@@ -41,7 +37,7 @@ def reminder_list(chat_id: str) -> str:
         return "Belum ada reminder pending."
     lines = ["*Reminder pending:*"]
     for r in reminders[:20]:
-        lines.append(f"• `{r['id']}` {r['title']} - _{r['remind_at']}_")
+        lines.append(f"• `{r['id']}` {r['title']} - _{r['remind_at']}_ ({r['status']})")
     return "\n".join(lines)
 
 

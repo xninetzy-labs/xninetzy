@@ -1,8 +1,27 @@
 import dotenv from "dotenv";
+import { existsSync } from "node:fs";
 import path from "node:path";
 
-dotenv.config();
-dotenv.config({ path: path.resolve(process.cwd(), "../../.env") });
+function findRootEnv(start: string): string | null {
+  let current = path.resolve(start);
+
+  for (let i = 0; i < 8; i += 1) {
+    if (existsSync(path.join(current, "docker-compose.yml"))) {
+      return path.join(current, ".env");
+    }
+
+    const parent = path.dirname(current);
+    if (parent === current) break;
+    current = parent;
+  }
+
+  return null;
+}
+
+const rootEnvPath = findRootEnv(process.cwd()) ?? findRootEnv(__dirname);
+if (rootEnvPath) {
+  dotenv.config({ path: rootEnvPath });
+}
 
 function parseNumber(value: string | undefined, fallback: number): number {
   if (!value) return fallback;

@@ -29,6 +29,29 @@ async def _invoke_tool_directly(tool_name: str, kwargs: dict, request: ChatReque
         return f"Error menjalankan command: {e}"
 
 
+async def _maybe_run_workflow(request: ChatRequest) -> str | None:
+    """Run the multi-action workflow engine for compound requests, else None.
+
+    Best-effort: any failure falls through to the normal LangGraph flow so a
+    workflow bug can never take down regular chat.
+    """
+    try:
+        from app.core.config import get_settings
+        if not get_settings().WORKFLOW_ENABLED:
+            return None
+        from app.agent.workflow_plan import is_multi_action_request
+        if not is_multi_action_request(request.message):
+            return None
+        from app.agent.workflow_executor import run_workflow
+        from_wa = bool((request.metadata or {}).get("messageId")) or request.chat_type in ("private", "group")
+        return await run_workflow(
+            request.chat_id, request.message,
+            context={"chat_type": request.chat_type}, from_whatsapp=from_wa,
+        )
+    except Exception:
+        return None
+
+
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
     # 1. Check for slash command (deterministic routing, skip LangGraph)
@@ -36,6 +59,11 @@ async def chat(request: ChatRequest) -> ChatResponse:
     if tool_name:
         reply = await _invoke_tool_directly(tool_name, kwargs, request)
         return ChatResponse(reply=reply)
+
+    # 1b. Multi-action workflow (compound request → staged execution + WA progress)
+    workflow_reply = await _maybe_run_workflow(request)
+    if workflow_reply is not None:
+        return ChatResponse(reply=workflow_reply)
 
     # 2. Normal LangGraph flow
     store = ChatStore()

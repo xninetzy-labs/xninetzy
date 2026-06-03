@@ -1,29 +1,45 @@
-import React from "react";
-import { Box, Text } from "ink";
-import { colors } from "../theme/colors.js";
+import React from 'react';
+import { Box, Text } from 'ink';
+import { colors } from '../theme/colors.js';
+
+type HeaderProps = {
+  columns: number;
+  compact?: boolean;
+};
 
 const logo = [
-  "██╗  ██╗███╗   ██╗██╗███╗   ██╗███████╗████████╗███████╗██╗   ██╗",
-  "╚██╗██╔╝████╗  ██║██║████╗  ██║██╔════╝╚══██╔══╝╚══███╔╝╚██╗ ██╔╝",
-  " ╚███╔╝ ██╔██╗ ██║██║██╔██╗ ██║█████╗     ██║     ███╔╝  ╚████╔╝ ",
-  " ██╔██╗ ██║╚██╗██║██║██║╚██╗██║██╔══╝     ██║    ███╔╝    ╚██╔╝  ",
-  "██╔╝ ██╗██║ ╚████║██║██║ ╚████║███████╗   ██║   ███████╗   ██║   ",
-  "╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝   ",
+  '██╗  ██╗███╗   ██╗██╗███╗   ██╗███████╗████████╗███████╗██╗   ██╗',
+  '╚██╗██╔╝████╗  ██║██║████╗  ██║██╔════╝╚══██╔══╝╚══███╔╝╚██╗ ██╔╝',
+  ' ╚███╔╝ ██╔██╗ ██║██║██╔██╗ ██║█████╗     ██║     ███╔╝  ╚████╔╝ ',
+  ' ██╔██╗ ██║╚██╗██║██║██║╚██╗██║██╔══╝     ██║    ███╔╝    ╚██╔╝  ',
+  '██╔╝ ██╗██║ ╚████║██║██║ ╚████║███████╗   ██║   ███████╗   ██║   ',
+  '╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝   '
 ];
 
-export function Header() {
+export function Header({ columns, compact = false }: HeaderProps) {
+  const useCompact = compact || columns < 96;
+
   return (
-    <Box flexDirection="column" alignItems="center">
-      <Box flexDirection="column">
-        {logo.map((line) => (
-          <Text key={line} color={colors.violet}>
-            {line}
-          </Text>
-        ))}
-      </Box>
-      <Box marginTop={1}>
-        <Text color={colors.lavender}>future-ready AI session shell · local mock mode</Text>
-      </Box>
+    <Box flexDirection="column" alignItems="center" width="100%">
+      {useCompact ? (
+        <Text bold color={colors.purpleBright}>X N I N E T Z Y</Text>
+      ) : (
+        <Box flexDirection="column" alignItems="center">
+          {logo.map((line, index) => (
+            <Text key={index} bold color={colors.purpleBright}>
+              {line}
+            </Text>
+          ))}
+        </Box>
+      )}
+
+      <Text color={colors.white}>
+        future-ready AI session shell · local mock · cosmos
+      </Text>
+
+      <Text color={colors.orange}>
+        ───── ◎ event horizon ◎ ─────
+      </Text>
     </Box>
   );
 }

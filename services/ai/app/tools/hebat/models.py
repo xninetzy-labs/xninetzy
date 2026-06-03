@@ -98,6 +98,51 @@ class SubmissionPreview(BaseModel):
     confirmation_message: str
 
 
+class DownloadLink(BaseModel):
+    """A resolvable file download candidate found inside an activity page."""
+    url: str
+    filename: str | None = None
+    mime_type: str | None = None
+    # resource | assign_intro | assign_submission | assign_feedback | folder | page | unknown
+    source: str = "unknown"
+    title: str | None = None
+
+
+class OutlineActivity(BaseModel):
+    cmid: str | None = None
+    type: ActivityType = ActivityType.UNKNOWN
+    title: str
+    activity_url: str
+    section_title: str | None = None
+    visible_text: str | None = None
+    due_date_text: str | None = None
+    availability_text: str | None = None
+
+
+class OutlineSection(BaseModel):
+    title: str
+    summary: str | None = None
+    activities: list[OutlineActivity] = Field(default_factory=list)
+
+
+class CourseOutline(BaseModel):
+    course_id: str
+    title: str | None = None
+    sections: list[OutlineSection] = Field(default_factory=list)
+
+    @property
+    def activity_count(self) -> int:
+        return sum(len(s.activities) for s in self.sections)
+
+    def counts_by_type(self) -> dict[str, int]:
+        counts: dict[str, int] = {}
+        for section in self.sections:
+            for act in section.activities:
+                key = act.type.value if isinstance(act.type, ActivityType) else str(act.type)
+                counts[key] = counts.get(key, 0) + 1
+        return counts
+
+
 class EditSubmissionFields(BaseModel):
     """Dynamic fields extracted from Moodle edit submission form."""
     form_action: str

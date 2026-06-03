@@ -5,7 +5,7 @@ from langchain_core.tools import tool
 from app.core.logging import logging
 from app.media.document_parser import parse_document
 from app.media.media_store import save_media_item
-from app.wa_tools.client import WaToolError, call_wa_tool
+from app.wa_tools.client import WaToolError, download_media_message
 
 logger = logging.getLogger(__name__)
 
@@ -14,11 +14,10 @@ _PREVIEW_CHARS = 4000
 
 async def _download_media(chat_id: str, message_id: str) -> dict:
     """Ask wa-enggine (MCP) to download the media and return its local metadata."""
-    data = await call_wa_tool("download_media_message", {"chat_id": chat_id, "message_id": message_id})
-    result = data.get("result") or {}
-    if not result.get("local_path"):
-        raise WaToolError("Media tidak bisa diunduh (mungkin sudah kedaluwarsa di cache WA).")
-    return result
+    dl = await download_media_message(chat_id, message_id)
+    if not dl.get("ok") or not dl.get("local_path"):
+        raise WaToolError(dl.get("error") or "Media tidak bisa diunduh (mungkin sudah kedaluwarsa di cache WA).")
+    return dl
 
 
 async def _read_document(chat_id: str, message_id: str) -> dict:

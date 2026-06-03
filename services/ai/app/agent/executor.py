@@ -38,15 +38,21 @@ async def agent_node(state: AgentState) -> dict:
     except Exception:
         pass
 
-    # Build media context so the agent knows a file is attached and how to read it
+    # Build media context so the agent knows a file is attached and how to read it.
+    # Falls back to a quoted file (user replied to an earlier image/document and
+    # asked about it), so "jelasin file ini" on a reply still works.
     media_context = ""
     media = metadata.get("media") or {}
-    if media.get("hasMedia"):
-        msg_id = media.get("messageId") or metadata.get("messageId") or ""
+    quoted_media = metadata.get("quotedMedia") or {}
+    effective_media = media if media.get("hasMedia") else quoted_media
+    if effective_media.get("hasMedia"):
+        is_quoted = not media.get("hasMedia")
+        msg_id = effective_media.get("messageId") or metadata.get("messageId") or ""
+        label = "Media Attached (quoted)" if is_quoted else "Media Attached"
         media_context = (
-            "\n[Media Attached]\n"
-            f"type={media.get('mediaType')} filename={media.get('filename') or '-'} "
-            f"mime={media.get('mimetype') or '-'} message_id={msg_id}\n"
+            f"\n[{label}]\n"
+            f"type={effective_media.get('mediaType')} filename={effective_media.get('filename') or '-'} "
+            f"mime={effective_media.get('mimetype') or '-'} message_id={msg_id}\n"
             "Jika tipe dokumen dan user bertanya tentang isinya, panggil "
             f"media_read_document(chat_id='{state.get('chat_id','')}', message_id='{msg_id}') "
             "lebih dulu sebelum menjawab.\n"

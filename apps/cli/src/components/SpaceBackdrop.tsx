@@ -1,11 +1,21 @@
-import React from "react";
-import { Box, Text } from "ink";
-import { colors } from "../theme/colors.js";
+import React from 'react';
+import { Box, Text } from 'ink';
+import { colors } from '../theme/colors.js';
 
-export function SpaceBackdrop() {
+type SpaceBackdropProps = {
+  compact?: boolean;
+};
+
+export function SpaceBackdrop({ compact = false }: SpaceBackdropProps) {
+  if (compact) {
+    return null;
+  }
+
   return (
-    <Box justifyContent="center">
-      <Text color={colors.indigo}>✦  ·  *  .     ✧       ·    ✦      .  *  ·  ✧</Text>
+    <Box width="100%" justifyContent="center">
+      <Text color={colors.indigo}>
+        ·        ✦             ·        *          ✧        ◌
+      </Text>
     </Box>
   );
 }

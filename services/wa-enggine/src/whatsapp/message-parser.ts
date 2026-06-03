@@ -24,6 +24,23 @@ export function extractMessageText(rawMessage?: proto.IMessage | null): string |
   return text?.trim() || null;
 }
 
+export type MediaKind = "image" | "video" | "audio" | "document";
+
+/** The media kind carried by a message (after unwrapping), or null if none. */
+export function getMediaType(rawMessage?: proto.IMessage | null): MediaKind | null {
+  const message = unwrapMessage(rawMessage);
+  if (!message) return null;
+  if (message.imageMessage) return "image";
+  if (message.videoMessage) return "video";
+  if (message.audioMessage) return "audio";
+  if (message.documentMessage) return "document";
+  return null;
+}
+
+export function hasMediaMessage(rawMessage?: proto.IMessage | null): boolean {
+  return getMediaType(rawMessage) !== null;
+}
+
 export function getMessageKinds(rawMessage?: proto.IMessage | null): string[] {
   const message = unwrapMessage(rawMessage);
   if (!message) return ["empty"];

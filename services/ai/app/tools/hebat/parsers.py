@@ -247,3 +247,36 @@ def is_logged_out(html: str) -> bool:
     ]
     lower = html.lower()
     return any(re.search(p, lower) for p in patterns)
+
+
+def is_login_redirect(location: str | None) -> bool:
+    """True if a redirect ``Location`` (or any URL) points at Moodle's login page.
+
+    Covers the two loop signatures we see in the wild::
+
+        /login/index.php
+        /login/index.php?loginredirect=1
+    """
+    if not location:
+        return False
+    lowered = location.lower()
+    return "/login/index.php" in lowered or "loginredirect=1" in lowered
+
+
+def looks_like_login_page(html: str) -> bool:
+    """Strong "this is the Moodle login page" signal.
+
+    Unlike :func:`is_logged_out` (which matches any stray ``/login/index.php``
+    link and can false-positive on authenticated pages), this requires the
+    actual login *form* — a ``logintoken`` input or a username+password pair.
+    Used to decide whether a re-login is genuinely warranted so we never loop
+    re-logging-in on a page that merely links to login.
+    """
+    if not html:
+        return False
+    lower = html.lower()
+    if 'name="logintoken"' in lower or "name='logintoken'" in lower:
+        return True
+    has_username = 'name="username"' in lower or "name='username'" in lower
+    has_password = 'name="password"' in lower or "name='password'" in lower
+    return has_username and has_password

@@ -184,3 +184,30 @@ def get_tool_descriptions() -> list[dict]:
         {"name": t.name, "description": (t.description or "").split("\n")[0]}
         for t in get_all_tools()
     ]
+
+
+def get_tool_groups() -> dict[str, list[str]]:
+    """Tool names grouped by domain / support OS (for docs and routing hints).
+
+    Organizational only — does not affect what ``get_all_tools()`` returns. IT
+    Learning is the primary domain; the rest are support OS + interfaces.
+    """
+    return {
+        "core": ["calculate", "calculate_percentage", "datetime_now"],
+        "it_learning": [
+            "learning_create_roadmap", "learning_list_roadmaps",
+            "learning_generate_today_plan", "learning_review_week",
+        ],
+        "knowledge": ["knowledge_ingest_text", "knowledge_search", "knowledge_answer"],
+        "research": ["research_light", "deep_research_topic", "web_search", "youtube_search"],
+        "graph": ["graph_search", "graph_get_context", "graph_explain_topic_map"],
+        "notes": ["obsidian_search", "obsidian_read", "obsidian_create", "obsidian_append"],
+        "academic": [
+            "hebat_login_status", "hebat_sync_courses",
+            "hebat_sync_assignments", "hebat_get_assignment_detail",
+        ],
+        "life": ["goal_create", "task_capture", "daily_checkin"],
+        "reminders": ["reminder_create", "reminder_list", "reminder_cancel"],
+        "whatsapp": ["wa_pin_message", "wa_set_announce", "wa_send_text"],
+        "media": ["media_read_document", "media_info", "media_ingest_to_knowledge"],
+    }

@@ -31,8 +31,8 @@ def skill_suggest_for_request(request: str) -> str:
     picks: list[str] = []
     if any(k in text for k in ["youtube", "research", "riset", "sumber"]):
         picks.append("research")
-    if any(k in text for k in ["roadmap", "belajar", "study"]):
-        picks.append("learning")
+    if any(k in text for k in ["roadmap", "belajar", "study", "coding", "programming", "backend", "python"]):
+        picks.append("it_learning")
     if any(k in text for k in ["task", "goal", "review", "reminder"]):
         picks.append("management")
     if "hebat" in text or "moodle" in text:

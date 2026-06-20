@@ -1,26 +1,11 @@
-"""Input normalization for WhatsApp / API / media payloads."""
+"""Message normalization (deterministic, no LLM)."""
 from __future__ import annotations
 
-from typing import Any
-
-from app.xninetzy.context.packet import ContextPacket, Source
+import re
 
 
-def normalize(payload: dict[str, Any], source: Source = "api") -> ContextPacket:
-    """Turn a raw interface payload into a ContextPacket.
-
-    Tolerant of the common field shapes used across interfaces (text/message/body).
-    """
-    text = (
-        payload.get("text")
-        or payload.get("message")
-        or payload.get("body")
-        or ""
-    ).strip()
-    return ContextPacket(
-        text=text,
-        chat_id=payload.get("chat_id") or payload.get("jid"),
-        source=source,
-        attachments=list(payload.get("attachments") or []),
-        metadata={k: v for k, v in payload.items() if k not in {"text", "message", "body"}},
-    )
+def normalize_message(text: str) -> str:
+    """Collapse whitespace and trim. Tolerant of None."""
+    text = text or ""
+    text = re.sub(r"\s+", " ", text).strip()
+    return text

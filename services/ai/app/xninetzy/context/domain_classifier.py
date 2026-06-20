@@ -1,33 +1,56 @@
-"""Lightweight domain classifier.
+"""Deterministic domain classifier (routing hint only).
 
 Priority order (IT Learning OS first):
     it_learning > academic > knowledge > research > life > general
 
-Keyword-based and deliberately simple — it is a routing hint, not the agent's
-reasoning. Biology / neuroscience are intentionally NOT classified yet.
+Notes:
+- ``rag`` / ``graph rag`` are intentionally treated as IT learning topics so that
+  "buat roadmap belajar RAG" routes to it_learning, not knowledge/research.
+- HEBAT is an academic *connector* — only route to ``academic`` when the user is
+  clearly talking about coursework, not when asking for a general IT roadmap.
+- Biology / neuroscience are intentionally NOT classified yet.
 """
 from __future__ import annotations
 
-from app.xninetzy.context.packet import Domain
+IT_LEARNING_KEYWORDS = (
+    "python", "javascript", "typescript", "golang", " go ", "backend", "frontend",
+    "database", "sql", "docker", "nginx", "vps", "api", "rest", "graphql",
+    "system design", "rag", "graph rag", "llm", "agent", "machine learning",
+    "deep learning", "pytorch", "fastapi", "nestjs", "laravel", "coding",
+    "ngoding", "program", "belajar coding", "roadmap belajar", "belajar ngoding",
+)
 
-# Ordered by priority. First branch with a keyword hit wins.
-_KEYWORDS: list[tuple[Domain, tuple[str, ...]]] = [
-    ("it_learning", (
-        "code", "coding", "program", "python", "javascript", "typescript",
-        "backend", "api", "database", "sql", "docker", "nginx", "vps",
-        "system design", "llm", "agent", "rag", "graph rag", "machine learning",
-        "deep learning", "embedding", "roadmap belajar", "belajar ngoding",
-    )),
-    ("academic", ("hebat", "moodle", "tugas kuliah", "assignment", "submission", "course", "dosen", "kuliah")),
-    ("knowledge", ("ingest", "knowledge base", "catatan", "dokumen", "pdf", "rangkum")),
-    ("research", ("research", "riset", "cari paper", "deep research", "literatur", "youtube")),
-    ("life", ("habit", "jurnal", "journal", "workout", "uang", "money", "goal", "tugas harian", "reminder")),
-]
+ACADEMIC_KEYWORDS = (
+    "hebat", "moodle", "tugas", "deadline", "matkul", "kuliah", "assignment",
+    "submission", "dosen", "course",
+)
+
+KNOWLEDGE_KEYWORDS = (
+    "knowledge", "catatan", "obsidian", "note", "vault", "ingest", "dokumen",
+)
+
+RESEARCH_KEYWORDS = (
+    "research", "riset", "paper", "jurnal", "referensi", "youtube", "sumber",
+    "literatur",
+)
+
+LIFE_KEYWORDS = (
+    "reminder", "ingatkan", "habit", "goal", "task", "todo", "uang", "money",
+    "workout", "jurnal", "journal",
+)
 
 
-def classify_domain(text: str) -> Domain:
+def classify_domain(text: str) -> str:
     lowered = (text or "").lower()
-    for domain, keywords in _KEYWORDS:
-        if any(kw in lowered for kw in keywords):
-            return domain
+
+    if any(k in lowered for k in IT_LEARNING_KEYWORDS):
+        return "it_learning"
+    if any(k in lowered for k in ACADEMIC_KEYWORDS):
+        return "academic"
+    if any(k in lowered for k in KNOWLEDGE_KEYWORDS):
+        return "knowledge"
+    if any(k in lowered for k in RESEARCH_KEYWORDS):
+        return "research"
+    if any(k in lowered for k in LIFE_KEYWORDS):
+        return "life"
     return "general"

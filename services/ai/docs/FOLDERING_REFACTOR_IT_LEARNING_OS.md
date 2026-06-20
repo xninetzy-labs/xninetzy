@@ -155,3 +155,30 @@ Once all callers (including any external services / scripts) import from
 `app.xninetzy.*`, delete the adapter files at the old paths
 (`app/core`, `app/agent`, `app/tools`, `app/learning`, `app/knowledge`, …) and
 remove this compatibility layer.
+
+## Phase 2 Polishing
+
+Yang diperbaiki:
+- Menambahkan domain entrypoint `it_learning/prompts.py`, `tools.py`, `workflows.py`.
+- Menambahkan skill eksplisit `skills/it_learning` (`skill.md`, `prompts.py`, `tools.py`).
+- Menjadikan `skills/learning` sebagai alias/backward compatibility (+ `SKILL_ALIASES`).
+- Menambahkan deterministic context packet: domain, intent, mode (`build_context_packet`).
+- Menghubungkan context packet ke orchestrator (routing hint) dan agent executor
+  (placeholder `{context_routing}` di `AGENT_PROMPT`).
+- Menambahkan aturan IT Learning di agent prompt.
+- Menambahkan helper tool grouping `get_tool_groups()`.
+- Menambahkan test import dan behavior minimal (domain/intent/mode + skill + grouping).
+
+Batasan:
+- Context layer masih rule-based/deterministic, belum LLM-based.
+- Tidak menghapus compatibility adapter lama.
+- Tidak mengimplementasikan Biology/Neuroscience.
+- Tidak mengubah behavior besar workflow.
+- Tidak mengubah DB schema.
+
+Kontrak context layer (phase 2):
+- `ContextPacket(raw_message, normalized_message, domain, intent, mode, metadata)`
+- `build_context_packet(message, metadata) -> ContextPacket`
+- `classify_domain(text)` prioritas: it_learning > academic > knowledge > research > life > general
+- `classify_intent(text)` → create_roadmap | create_study_plan | research | save_note | reminder | explain | chat
+- `route_mode(domain, intent, text)` → quick | study | deep_think | research | life

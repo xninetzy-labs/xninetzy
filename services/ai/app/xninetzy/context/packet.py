@@ -1,27 +1,22 @@
-"""ContextPacket — normalized input passed from interfaces into the agent.
+"""ContextPacket — deterministic routing metadata for one user turn.
 
-Skeleton for the input-preprocessing layer. Not yet wired into the agent graph;
-adding it does not change existing behavior.
+Rule-based input-preprocessing layer (no LLM calls). Built by
+``app.xninetzy.context.builder.build_context_packet`` and injected into the
+agent/orchestrator as a lightweight routing hint.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Literal
-
-Domain = Literal["it_learning", "academic", "knowledge", "research", "life", "general"]
-Mode = Literal["quick", "study", "deep_think", "research", "life"]
-Source = Literal["whatsapp", "api", "media"]
+from typing import Any
 
 
 @dataclass
 class ContextPacket:
     """A single normalized turn of user input plus routing metadata."""
 
-    text: str
-    chat_id: str | None = None
-    source: Source = "api"
-    domain: Domain = "general"
-    mode: Mode = "quick"
+    raw_message: str
+    normalized_message: str
+    domain: str = "general"
     intent: str = "chat"
-    attachments: list[dict[str, Any]] = field(default_factory=list)
+    mode: str = "quick"
     metadata: dict[str, Any] = field(default_factory=dict)

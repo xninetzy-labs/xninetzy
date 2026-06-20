@@ -29,6 +29,18 @@ async def agent_node(state: AgentState) -> dict:
     now = get_now_info()
     metadata = state.get("metadata") or {}
 
+    # Deterministic context routing hint (domain/intent/mode), best-effort.
+    context_routing = ""
+    try:
+        from app.xninetzy.context.builder import build_context_packet
+        packet = build_context_packet(state.get("message", ""), metadata)
+        context_routing = (
+            "\n[Context Routing]\n"
+            f"domain={packet.domain} intent={packet.intent} mode={packet.mode}\n"
+        )
+    except Exception:
+        pass
+
     # Build personal context (best-effort, silent on failure)
     personal_context = ""
     try:
@@ -95,6 +107,7 @@ async def agent_node(state: AgentState) -> dict:
         quoted_message_id=metadata.get("quotedMessageId") or "",
         quoted_participant=metadata.get("quotedParticipantJid") or metadata.get("participantJid") or "",
         is_reply_to_bot=metadata.get("isReplyToBot", False),
+        context_routing=context_routing,
         personal_context=personal_context,
         media_context=media_context,
         rules_context=rules_context,

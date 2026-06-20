@@ -26,8 +26,18 @@ async def orchestrator_node(state: AgentState) -> dict:
         current_datetime=now["human_datetime"],
     )
 
+    # Deterministic routing hint (domain/intent/mode), best-effort.
+    routing_hint = ""
+    try:
+        from app.xninetzy.context.builder import build_context_packet
+        packet = build_context_packet(state["message"], state.get("metadata") or {})
+        routing_hint = f"Domain: {packet.domain}\nIntent: {packet.intent}\nMode: {packet.mode}\n"
+    except Exception:
+        pass
+
     user_content = (
         f"Sender: {state.get('sender_name') or state.get('sender_id') or 'User'}\n"
+        f"{routing_hint}"
         f"Pesan: {state['message']}"
     )
 

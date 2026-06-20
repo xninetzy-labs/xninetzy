@@ -1,4 +1,4 @@
-from app.skills.registry import get_skill, list_skills
+from app.xninetzy.skills.registry import get_skill, list_skills
 
 
 def test_skill_research_registered():

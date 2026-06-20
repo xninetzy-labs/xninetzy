@@ -1,1 +1,4 @@
-PROMPT = "Research harus punya sub-plan, sumber terpilih, dan next action."
+# Backward compatibility adapter. New code should import from app.xninetzy.skills.research.prompts
+import sys as _sys
+import app.xninetzy.skills.research.prompts as _mod
+_sys.modules[__name__] = _mod

@@ -1,13 +1,4 @@
-from __future__ import annotations
-
-from app.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
-
-
-class UploadsSearchAction(ResearchAction):
-    name = "uploads_search"
-
-    def enabled(self, config: dict) -> bool:
-        return bool(config.get("include_uploads"))
-
-    async def execute(self, input: ResearchActionInput) -> ResearchActionOutput:
-        return ResearchActionOutput(type="uploads_search", data={"sources": []})
+# Backward compatibility adapter. New code should import from app.xninetzy.os.research.actions.search.uploads
+import sys as _sys
+import app.xninetzy.os.research.actions.search.uploads as _mod
+_sys.modules[__name__] = _mod

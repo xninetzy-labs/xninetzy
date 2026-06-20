@@ -1,5 +1,5 @@
-from app.core.config import get_settings
-from app.research.permissions import can_run_deep_research
+from app.xninetzy.core.config import get_settings
+from app.xninetzy.os.research.permissions import can_run_deep_research
 
 
 def test_sender_name_misbahul_allowed(monkeypatch):

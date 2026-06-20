@@ -1,7 +1,2 @@
-"""Lightning Agent — lightweight self-improvement loop.
-
-MVP: log execution traces, capture user feedback, turn negative feedback /
-recurring errors into improvement *proposals*, and require admin approval before
-applying. Applying a 'rule' proposal creates a user_rule (safe, reversible).
-No global prompt/behavior is changed automatically.
-"""
+# Backward compatibility adapter. New code should import from app.xninetzy.os.lightning
+from app.xninetzy.os.lightning import *  # noqa: F401,F403

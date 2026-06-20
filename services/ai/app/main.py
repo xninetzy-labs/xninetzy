@@ -2,15 +2,15 @@ import asyncio
 
 from fastapi import FastAPI
 
-from app.api.routes.chat import router as chat_router
-from app.api.routes.debug import router as debug_router
-from app.api.routes.health import router as health_router
-from app.api.routes.reminders import router as reminders_router
-from app.core.config import get_settings
-from app.core.logging import configure_logging, logging
-from app.db.sqlite import init_db
-from app.db.migrations import run_migrations
-from app.reminders.scheduler import reminder_loop
+from app.xninetzy.interfaces.api.routes.chat import router as chat_router
+from app.xninetzy.interfaces.api.routes.debug import router as debug_router
+from app.xninetzy.interfaces.api.routes.health import router as health_router
+from app.xninetzy.interfaces.api.routes.reminders import router as reminders_router
+from app.xninetzy.core.config import get_settings
+from app.xninetzy.core.logging import configure_logging, logging
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.os.reminders.scheduler import reminder_loop
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -60,7 +60,7 @@ async def _hebat_startup_task() -> None:
     notify_id = chat_id if s.HEBAT_NOTIFY_CHAT_ID else None
 
     try:
-        from app.tools.hebat.browser_session import ensure_hebat_session
+        from app.xninetzy.os.academic.hebat.browser_session import ensure_hebat_session
 
         logger.info("HEBAT auto-login starting (chat_id=%s)", chat_id)
         ok, profile, courses = await ensure_hebat_session(
@@ -78,7 +78,7 @@ async def _hebat_startup_task() -> None:
 
         logger.info("HEBAT auto-login OK (profile=%s, courses=%d)", profile, courses)
         if notify_id:
-            from app.tools.hebat.tools import hebat_academic_digest
+            from app.xninetzy.os.academic.hebat.tools import hebat_academic_digest
 
             digest = hebat_academic_digest.invoke({"chat_id": chat_id, "days_ahead": 7})
             await _notify_wa(
@@ -100,7 +100,7 @@ async def _hebat_startup_task() -> None:
 async def _notify_wa(chat_id: str, text: str) -> None:
     """Send a WA message via MCP — best-effort, no crash if MCP not ready."""
     try:
-        from app.wa_tools.client import call_wa_tool
+        from app.xninetzy.interfaces.whatsapp.client import call_wa_tool
         await call_wa_tool("send_text_message", {"jid": chat_id, "text": text})
     except Exception as e:
         logger.warning("Startup WA notification failed: %s", e)

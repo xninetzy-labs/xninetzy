@@ -1,1 +1,4 @@
-HITL_PROMPT = "Aksi berdampak besar wajib meminta approval admin sebelum dieksekusi."
+# Backward compatibility adapter. New code should import from app.xninetzy.os.hitl.prompts
+import sys as _sys
+import app.xninetzy.os.hitl.prompts as _mod
+_sys.modules[__name__] = _mod

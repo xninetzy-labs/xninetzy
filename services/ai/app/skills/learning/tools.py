@@ -1,1 +1,4 @@
-TOOLS = ["learning_create_roadmap", "learning_generate_today_plan"]
+# Backward compatibility adapter. New code should import from app.xninetzy.skills.learning.tools
+import sys as _sys
+import app.xninetzy.skills.learning.tools as _mod
+_sys.modules[__name__] = _mod

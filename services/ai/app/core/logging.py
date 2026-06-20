@@ -1,8 +1,4 @@
-import logging
-
-
-def configure_logging() -> None:
-    logging.basicConfig(
-        level=logging.INFO,
-        format="%(asctime)s %(levelname)s [%(name)s] %(message)s",
-    )
+# Backward compatibility adapter. New code should import from app.xninetzy.core.logging
+import sys as _sys
+import app.xninetzy.core.logging as _mod
+_sys.modules[__name__] = _mod

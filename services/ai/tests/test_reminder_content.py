@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.reminders.reminder_content import ReminderContentNormalizer, generate_clean_title
-from app.reminders.reminder_parser import parse_reminder
+from app.xninetzy.os.reminders.reminder_content import ReminderContentNormalizer, generate_clean_title
+from app.xninetzy.os.reminders.reminder_parser import parse_reminder
 
 
 NOW = datetime(2026, 6, 3, 20, 0, tzinfo=ZoneInfo("Asia/Jakarta"))

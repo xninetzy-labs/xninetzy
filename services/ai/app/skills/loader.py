@@ -1,3 +1,4 @@
-from app.skills.registry import get_skill, list_skills, read_skill_markdown
-
-__all__ = ["get_skill", "list_skills", "read_skill_markdown"]
+# Backward compatibility adapter. New code should import from app.xninetzy.skills.loader
+import sys as _sys
+import app.xninetzy.skills.loader as _mod
+_sys.modules[__name__] = _mod

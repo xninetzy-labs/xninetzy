@@ -1,7 +1,4 @@
-from __future__ import annotations
-
-from app.skills.registry import list_skills
-
-
-def build_skill_prompt() -> str:
-    return "\n".join(f"- {skill.name}: {skill.summary}" for skill in list_skills())
+# Backward compatibility adapter. New code should import from app.xninetzy.skills.prompting
+import sys as _sys
+import app.xninetzy.skills.prompting as _mod
+_sys.modules[__name__] = _mod

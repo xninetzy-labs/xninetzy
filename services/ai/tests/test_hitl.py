@@ -1,6 +1,6 @@
-from app.db.migrations import run_migrations
-from app.db.sqlite import init_db
-from app.hitl.approval_service import request_approval, set_approval_status
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.os.hitl.approval_service import request_approval, set_approval_status
 
 
 def test_approval_only_admin(monkeypatch):

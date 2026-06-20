@@ -1,6 +1,6 @@
-from app.db.migrations import run_migrations
-from app.db.sqlite import init_db
-from app.graph_rag.graph_store import add_edge, add_node, search_nodes
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.os.graph.graph_store import add_edge, add_node, search_nodes
 
 
 def test_graph_node_edge_created():

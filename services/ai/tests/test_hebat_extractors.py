@@ -5,17 +5,17 @@ Uses representative Moodle-shaped HTML — no network / browser / live account.
 
 from __future__ import annotations
 
-from app.tools.hebat.course_extractor import (
+from app.xninetzy.os.academic.hebat.course_extractor import (
     extract_course_outline_from_html,
     extract_courses_from_html,
 )
-from app.tools.hebat.html_cleaner import clean_moodle_html, html_to_readable_text
-from app.tools.hebat.link_extractor import (
+from app.xninetzy.os.academic.hebat.html_cleaner import clean_moodle_html, html_to_readable_text
+from app.xninetzy.os.academic.hebat.link_extractor import (
     extract_file_links,
     extract_mod_links,
     looks_like_file_url,
 )
-from app.tools.hebat.models import ActivityType
+from app.xninetzy.os.academic.hebat.models import ActivityType
 
 BASE = "https://hebat.elearning.unair.ac.id"
 

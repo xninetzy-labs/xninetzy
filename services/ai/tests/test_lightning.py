@@ -1,8 +1,8 @@
-from app.db.migrations import run_migrations
-from app.db.sqlite import init_db
-from app.lightning.feedback_parser import classify_feedback
-from app.lightning.service import apply_proposal, reject_proposal, submit_feedback
-from app.lightning.store import latest_trace, list_proposals, log_trace
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.os.lightning.feedback_parser import classify_feedback
+from app.xninetzy.os.lightning.service import apply_proposal, reject_proposal, submit_feedback
+from app.xninetzy.os.lightning.store import latest_trace, list_proposals, log_trace
 
 
 def _setup():
@@ -58,7 +58,7 @@ def test_approve_requires_admin_and_applies_rule():
     # admin applies -> creates a rule
     out2 = apply_proposal(prop["id"], "owner-jid", "Misbahul")
     assert "disetujui" in out2.lower()
-    from app.rules.store import list_rules
+    from app.xninetzy.os.rules.store import list_rules
     rules = list_rules("owner-jid")
     assert any("panjang" in r["content"].lower() or "singkat" in r["content"].lower() for r in rules)
 

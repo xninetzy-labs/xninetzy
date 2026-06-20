@@ -1,6 +1,6 @@
-from app.db.migrations import run_migrations
-from app.db.sqlite import init_db
-from app.research.session import add_substep, create_research_session, get_research_session, update_substep_status
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.os.research.session import add_substep, create_research_session, get_research_session, update_substep_status
 
 
 def test_session_saves_substeps():

@@ -5,12 +5,12 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.core.config import get_settings
-from app.db.sqlite import init_db
-from app.db.migrations import run_migrations
-from app.reminders.reminder_store import ReminderStore
-from app.reminders.scheduler import format_reminder_message, run_scheduler_tick
-from app.reminders.reminder_service import ReminderService
+from app.xninetzy.core.config import get_settings
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.os.reminders.reminder_store import ReminderStore
+from app.xninetzy.os.reminders.scheduler import format_reminder_message, run_scheduler_tick
+from app.xninetzy.os.reminders.reminder_service import ReminderService
 
 
 NOW = datetime(2026, 6, 3, 9, 0, tzinfo=ZoneInfo("Asia/Jakarta"))

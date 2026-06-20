@@ -1,4 +1,4 @@
-from app.notifications.notification_policy import should_notify_admin
+from app.xninetzy.os.notifications.notification_policy import should_notify_admin
 
 
 def test_source_collected_does_not_notify_admin():

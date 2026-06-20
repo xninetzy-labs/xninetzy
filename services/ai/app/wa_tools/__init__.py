@@ -1,3 +1,2 @@
-from app.wa_tools.client import WaToolError, call_wa_tool
-
-__all__ = ["WaToolError", "call_wa_tool"]
+# Backward compatibility adapter. New code should import from app.xninetzy.interfaces.whatsapp
+from app.xninetzy.interfaces.whatsapp import *  # noqa: F401,F403

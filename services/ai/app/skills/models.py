@@ -1,10 +1,4 @@
-from __future__ import annotations
-
-from pydantic import BaseModel
-
-
-class SkillDefinition(BaseModel):
-    name: str
-    summary: str
-    path: str
-    tools: list[str]
+# Backward compatibility adapter. New code should import from app.xninetzy.skills.models
+import sys as _sys
+import app.xninetzy.skills.models as _mod
+_sys.modules[__name__] = _mod

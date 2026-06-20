@@ -1,4 +1,4 @@
-from app.ecosystem.command_router import parse_command
+from app.xninetzy.ecosystem.command_router import parse_command
 
 
 def test_skill_command():

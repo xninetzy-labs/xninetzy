@@ -1,4 +1,4 @@
-from app.ecosystem.command_router import parse_command
+from app.xninetzy.ecosystem.command_router import parse_command
 
 
 def test_memory_commands():
@@ -29,7 +29,7 @@ def test_lightning_commands():
 
 
 def test_tools_registered():
-    from app.tools.registry import get_tool_names
+    from app.xninetzy.tools.registry import get_tool_names
 
     names = get_tool_names()
     for t in ("memory_add", "memory_search", "memory_list", "memory_forget",

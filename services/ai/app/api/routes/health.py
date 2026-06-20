@@ -1,8 +1,4 @@
-from fastapi import APIRouter
-
-router = APIRouter(tags=["health"])
-
-
-@router.get("/health")
-async def health_check() -> dict[str, str]:
-    return {"status": "ok", "service": "xninetzy-ai"}
+# Backward compatibility adapter. New code should import from app.xninetzy.interfaces.api.routes.health
+import sys as _sys
+import app.xninetzy.interfaces.api.routes.health as _mod
+_sys.modules[__name__] = _mod

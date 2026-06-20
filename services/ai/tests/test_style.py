@@ -1,6 +1,6 @@
-from app.db.migrations import run_migrations
-from app.db.sqlite import init_db
-from app.style.store import format_style_for_prompt, get_style_text, reset_style, set_style
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.os.style.store import format_style_for_prompt, get_style_text, reset_style, set_style
 
 U = "style-test-user"
 

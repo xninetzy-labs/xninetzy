@@ -1,7 +1,7 @@
-from app.db.migrations import run_migrations
-from app.db.sqlite import init_db
-from app.learning.roadmap_planner import create_roadmap_draft
-from app.learning.roadmap_store import save_roadmap_draft
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.domains.it_learning.roadmap_planner import create_roadmap_draft
+from app.xninetzy.domains.it_learning.roadmap_store import save_roadmap_draft
 
 
 def test_roadmap_draft_saved_as_draft():

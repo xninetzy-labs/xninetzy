@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.agent.workflow_executor import WorkflowExecutor
-from app.agent.workflow_models import (
+from app.xninetzy.workflow.executor import WorkflowExecutor
+from app.xninetzy.workflow.models import (
     WorkflowAction, WorkflowActionResult, WorkflowActionStatus, WorkflowActionType,
     WorkflowPlan, WorkflowState,
 )

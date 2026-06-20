@@ -27,9 +27,9 @@ import asyncio
 import os
 from pathlib import Path
 
-from app.core.config import get_settings
-from app.db.migrations import run_migrations
-from app.db.sqlite import init_db
+from app.xninetzy.core.config import get_settings
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
 
 CHAT_ID = os.getenv("HEBAT_TEST_CHAT_ID", "6285649204151@s.whatsapp.net")
 
@@ -41,14 +41,14 @@ async def main() -> int:
     print(f"[env] username_read={bool(s.HEBAT_USERNAME)} password_read={bool(s.HEBAT_PASSWORD)}")
     print(f"[env] base={s.HEBAT_BASE_URL}")
 
-    from app.tools.hebat.browser_session import check_session_valid, login_with_credentials
-    from app.tools.hebat.models import HebatActivity, HebatCourse
-    from app.tools.hebat.moodle_client import (
+    from app.xninetzy.os.academic.hebat.browser_session import check_session_valid, login_with_credentials
+    from app.xninetzy.os.academic.hebat.models import HebatActivity, HebatCourse
+    from app.xninetzy.os.academic.hebat.moodle_client import (
         download_file,
         fetch_course_activities,
         fetch_courses,
     )
-    from app.tools.hebat.storage import upsert_activity, upsert_course
+    from app.xninetzy.os.academic.hebat.storage import upsert_activity, upsert_course
 
     # 1. reuse stored session if still valid
     valid, name = await check_session_valid(CHAT_ID)

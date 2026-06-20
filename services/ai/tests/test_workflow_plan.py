@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.agent.workflow_models import WorkflowActionType as T
-from app.agent.workflow_plan import build_workflow_plan, is_multi_action_request
+from app.xninetzy.workflow.models import WorkflowActionType as T
+from app.xninetzy.workflow.plan import build_workflow_plan, is_multi_action_request
 
 
 def types_of(plan):

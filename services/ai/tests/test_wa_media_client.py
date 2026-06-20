@@ -4,8 +4,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.wa_tools import client as wa_client
-from app.wa_tools.client import WaToolError
+from app.xninetzy.interfaces.whatsapp import client as wa_client
+from app.xninetzy.interfaces.whatsapp.client import WaToolError
 
 
 @pytest.mark.asyncio

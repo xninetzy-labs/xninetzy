@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import pytest
 
-from app.agent.workflow_actions import DEFAULT_HANDLERS
-from app.agent.workflow_executor import WorkflowExecutor
-from app.agent.workflow_models import WorkflowActionResult, WorkflowActionStatus, WorkflowActionType
-from app.agent.workflow_plan import build_workflow_plan
-from app.core.config import get_settings
-from app.db.sqlite import init_db
-from app.db.migrations import run_migrations
-from app.reminders.reminder_service import ReminderService
+from app.xninetzy.workflow.actions import DEFAULT_HANDLERS
+from app.xninetzy.workflow.executor import WorkflowExecutor
+from app.xninetzy.workflow.models import WorkflowActionResult, WorkflowActionStatus, WorkflowActionType
+from app.xninetzy.workflow.plan import build_workflow_plan
+from app.xninetzy.core.config import get_settings
+from app.xninetzy.db.sqlite import init_db
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.os.reminders.reminder_service import ReminderService
 
 
 def _types(plan):

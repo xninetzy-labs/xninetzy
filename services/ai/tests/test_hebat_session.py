@@ -11,8 +11,8 @@ from collections import deque
 import httpx
 import pytest
 
-from app.tools.hebat import moodle_client
-from app.tools.hebat.parsers import is_login_redirect, looks_like_login_page
+from app.xninetzy.os.academic.hebat import moodle_client
+from app.xninetzy.os.academic.hebat.parsers import is_login_redirect, looks_like_login_page
 
 
 # ─── detection helpers ───────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
 import pytest
 
-from app.tools.ecosystem.research_tools import research_light
+from app.xninetzy.tools.ecosystem.research_tools import research_light
 
 
 @pytest.mark.asyncio
@@ -11,7 +11,7 @@ async def test_research_light_works_without_provider(monkeypatch):
 
 
 def test_deep_research_denied_does_not_claim_save():
-    from app.research.permissions import deep_research_denied_message
+    from app.xninetzy.os.research.permissions import deep_research_denied_message
 
     msg = deep_research_denied_message()
     assert "simpan ke Obsidian" not in msg

@@ -1,4 +1,4 @@
-from app.ecosystem.command_router import parse_command
+from app.xninetzy.ecosystem.command_router import parse_command
 
 
 def test_rule_add():
@@ -37,7 +37,7 @@ def test_test_rules_command():
 
 
 def test_rules_style_tools_registered():
-    from app.tools.registry import get_tool_names
+    from app.xninetzy.tools.registry import get_tool_names
 
     names = get_tool_names()
     for t in ("rule_add", "rule_list", "rule_disable", "rule_enable", "rule_delete",

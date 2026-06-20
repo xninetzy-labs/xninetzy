@@ -1,6 +1,6 @@
 import json
 
-from app.media.document_parser import parse_document
+from app.xninetzy.interfaces.media.document_parser import parse_document
 
 
 def test_parse_txt(tmp_path):

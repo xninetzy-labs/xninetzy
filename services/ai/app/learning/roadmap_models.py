@@ -1,11 +1,4 @@
-from __future__ import annotations
-
-from pydantic import BaseModel
-
-
-class RoadmapDraft(BaseModel):
-    topic: str
-    duration_days: int = 14
-    target: str
-    milestones: list[str]
-    first_day_tasks: list[str]
+# Backward compatibility adapter. New code should import from app.xninetzy.domains.it_learning.roadmap_models
+import sys as _sys
+import app.xninetzy.domains.it_learning.roadmap_models as _mod
+_sys.modules[__name__] = _mod

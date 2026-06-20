@@ -1,3 +1,2 @@
-from app.db.sqlite import connect, init_db
-
-__all__ = ["connect", "init_db"]
+# Backward compatibility adapter. New code should import from app.xninetzy.db
+from app.xninetzy.db import *  # noqa: F401,F403

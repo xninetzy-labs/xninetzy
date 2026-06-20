@@ -1,9 +1,4 @@
-from __future__ import annotations
-
-from pathlib import Path
-
-from app.core.config import get_settings
-
-
-def vault_path() -> Path:
-    return Path(get_settings().OBSIDIAN_VAULT_PATH).resolve()
+# Backward compatibility adapter. New code should import from app.xninetzy.os.notes.obsidian_config
+import sys as _sys
+import app.xninetzy.os.notes.obsidian_config as _mod
+_sys.modules[__name__] = _mod

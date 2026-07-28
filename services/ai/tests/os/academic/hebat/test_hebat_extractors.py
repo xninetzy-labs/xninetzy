@@ -16,6 +16,7 @@ from app.xninetzy.os.academic.hebat.link_extractor import (
     looks_like_file_url,
 )
 from app.xninetzy.os.academic.hebat.models import ActivityType
+from app.xninetzy.os.academic.hebat.parsers import parse_ajax_courses
 
 BASE = "https://hebat.elearning.unair.ac.id"
 
@@ -115,7 +116,7 @@ def test_looks_like_file_url():
 
 def test_extract_mod_links_dedupes_and_types():
     links = extract_mod_links(COURSE, BASE)
-    cmids = {l["cmid"]: l["type"] for l in links}
+    cmids = {link["cmid"]: link["type"] for link in links}
     assert cmids["37302"] == ActivityType.ASSIGN
     assert cmids["37310"] == ActivityType.RESOURCE
     assert cmids["37320"] == ActivityType.FORUM
@@ -139,6 +140,27 @@ def test_extract_courses_dedupes():
     assert ids == {"101", "102"}
     ku = next(c for c in courses if c["moodle_course_id"] == "101")
     assert ku["course_url"] == f"{BASE}/course/view.php?id=101"
+
+
+def test_parse_ajax_courses():
+    payload = [{
+        "error": False,
+        "data": {
+            "courses": [{
+                "id": 1709,
+                "fullname": "Kepemimpinan &amp; Organisasi",
+                "shortname": "MNM203",
+            }]
+        },
+    }]
+
+    assert parse_ajax_courses(payload) == [{
+        "moodle_course_id": "1709",
+        "fullname": "Kepemimpinan & Organisasi",
+        "shortname": "MNM203",
+        "course_url": f"{BASE}/course/view.php?id=1709",
+    }]
+
 
 
 def test_extract_course_outline_structure():

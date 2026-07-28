@@ -125,10 +125,15 @@ def _extract_offset(text: str) -> Offset | None:
 
 
 def _extract_relative_offset(text: str) -> Offset | None:
-    rel = re.search(r"\b(\d+)\s*(menit|minute|minutes|min|jam|hour|hours|hari|day|days)\s+lagi\b", text)
-    if not rel:
-        return None
-    return Offset(int(rel.group(1)), _unit(rel.group(2)))
+    patterns = (
+        r"\b(\d+)\s*(menit|minute|minutes|min|jam|hour|hours|hari|day|days)\s+lagi\b",
+        r"\bin\s+(\d+)\s*(menit|minute|minutes|min|jam|hour|hours|hari|day|days)\b",
+    )
+    for pattern in patterns:
+        rel = re.search(pattern, text)
+        if rel:
+            return Offset(int(rel.group(1)), _unit(rel.group(2)))
+    return None
 
 
 def _unit(raw: str) -> str:
@@ -157,9 +162,9 @@ def _extract_deadline(text: str, now: datetime) -> datetime | None:
 
 
 def _extract_explicit_remind_at(text: str, now: datetime) -> datetime | None:
-    rel = re.search(r"\b(\d+)\s*(menit|minute|minutes|min|jam|hour|hours|hari|day|days)\s+lagi\b", text)
-    if rel:
-        return now + Offset(int(rel.group(1)), _unit(rel.group(2))).delta()
+    relative_offset = _extract_relative_offset(text)
+    if relative_offset:
+        return now + relative_offset.delta()
 
     if "besok pagi" in text:
         return (now + timedelta(days=1)).replace(hour=8, minute=0, second=0, microsecond=0)
@@ -233,7 +238,18 @@ def _clean_task_text(message: str) -> str:
     cleaned = re.sub(r"(?i)\bdari\s+(deadline|dikumpulkan|batas|tenggat)\b.*", " ", cleaned)
     cleaned = re.sub(r"(?i)\b(deadline|dikumpulkan|batas|tenggat)\b", " ", cleaned)
     cleaned = re.sub(r"(?i)\bh\s*-\s*\d+\s*(menit|jam|hari)\b", " ", cleaned)
-    cleaned = re.sub(r"(?i)\b\d+\s*(menit|jam|hari)\s+(lagi|sebelum deadline)\b", " ", cleaned)
+    cleaned = re.sub(
+        r"(?i)\b\d+\s*(menit|minute|minutes|min|jam|hour|hours|hari|day|days)"
+        r"\s+(lagi|sebelum deadline)\b",
+        " ",
+        cleaned,
+    )
+    cleaned = re.sub(
+        r"(?i)\bin\s+\d+\s*"
+        r"(menit|minute|minutes|min|jam|hour|hours|hari|day|days)\b",
+        " ",
+        cleaned,
+    )
     cleaned = re.sub(r"(?i)\b(besok|nanti|hari ini|malam ini|nanti malam|jam|tanggal|buat|untuk|dari|pagi|siang|sore|malam)\b", " ", cleaned)
     cleaned = re.sub(r"(?i)\b\d{1,2}([:.]\d{2})?\b", " ", cleaned)
     cleaned = re.sub(r"(?i)\b(januari|februari|maret|april|mei|juni|juli|agustus|september|oktober|november|desember)\b", " ", cleaned)

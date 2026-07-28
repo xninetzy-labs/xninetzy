@@ -30,14 +30,32 @@ async def agent_node(state: AgentState) -> dict:
 
     # Deterministic context routing hint (domain/intent/mode), best-effort.
     context_routing = ""
+    context_packet = None
     try:
         from app.xninetzy.context.builder import build_context_packet
 
         packet = build_context_packet(state.get("message", ""), metadata)
+        context_packet = packet
         context_routing = (
             "\n[Context Routing]\n"
             f"domain={packet.domain} intent={packet.intent} mode={packet.mode}\n"
         )
+    except Exception:
+        pass
+
+    grounding_context = ""
+    try:
+        from app.xninetzy.os.knowledge.retrieval import (
+            build_agent_grounding_context,
+            should_auto_ground,
+        )
+
+        if context_packet and should_auto_ground(
+            context_packet.domain,
+            context_packet.intent,
+            state.get("message", ""),
+        ):
+            grounding_context = build_agent_grounding_context(state.get("message", ""))
     except Exception:
         pass
 
@@ -143,6 +161,7 @@ async def agent_node(state: AgentState) -> dict:
         rules_context=rules_context,
         style_context=style_context,
         memory_context=memory_context,
+        grounding_context=grounding_context,
     )
 
     messages_with_system = [SystemMessage(content=system_content)] + list(

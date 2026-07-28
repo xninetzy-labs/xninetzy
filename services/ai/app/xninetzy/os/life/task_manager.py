@@ -15,9 +15,15 @@ def _today() -> str:
     return datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).strftime("%Y-%m-%d")
 
 
-def create_task(title: str, description: str = "", priority: str = "medium",
-                due_at: str | None = None, goal_id: int | None = None,
-                domain: str | None = None, source: str = "manual") -> dict:
+def create_task(
+    title: str,
+    description: str = "",
+    priority: str = "medium",
+    due_at: str | None = None,
+    goal_id: int | None = None,
+    domain: str | None = None,
+    source: str = "manual",
+) -> dict:
     init_db()
     now = _now()
     with connect() as conn:
@@ -27,7 +33,18 @@ def create_task(title: str, description: str = "", priority: str = "medium",
               (title, description, status, priority, domain, goal_id, due_at, source, created_at, updated_at)
             VALUES (?,?,?,?,?,?,?,?,?,?)
             """,
-            (title, description, "inbox", priority, domain, goal_id, due_at, source, now, now),
+            (
+                title,
+                description,
+                "inbox",
+                priority,
+                domain,
+                goal_id,
+                due_at,
+                source,
+                now,
+                now,
+            ),
         )
         tid = cur.lastrowid
     return get_task(tid) or {"id": tid, "title": title}
@@ -40,8 +57,12 @@ def get_task(task_id: int) -> dict | None:
     return dict(row) if row else None
 
 
-def list_tasks(status: str | None = None, priority: str | None = None,
-               domain: str | None = None, limit: int = 30) -> list[dict]:
+def list_tasks(
+    status: str | None = None,
+    priority: str | None = None,
+    domain: str | None = None,
+    limit: int = 30,
+) -> list[dict]:
     init_db()
     sql = "SELECT * FROM tasks WHERE status NOT IN ('done','cancelled')"
     params: list = []
@@ -79,13 +100,14 @@ def list_tasks_today() -> list[dict]:
     return [dict(r) for r in rows]
 
 
-def complete_task(task_id: int) -> None:
+def complete_task(task_id: int) -> bool:
     init_db()
     with connect() as conn:
-        conn.execute(
-            "UPDATE tasks SET status='done', updated_at=? WHERE id=?",
+        result = conn.execute(
+            "UPDATE tasks SET status='done', updated_at=? WHERE id=? AND status!='done'",
             (_now(), task_id),
         )
+    return result.rowcount > 0
 
 
 def update_task_status(task_id: int, status: str) -> None:

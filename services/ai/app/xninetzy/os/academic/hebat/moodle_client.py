@@ -3,13 +3,14 @@ from __future__ import annotations
 import asyncio
 import hashlib
 from pathlib import Path
-from urllib.parse import urljoin, urlparse
+from urllib.parse import urljoin
 
 import httpx
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
 from app.xninetzy.os.academic.hebat.browser_session import (
+    get_courses_ajax_payload,
     get_cookies_for_httpx,
     get_page_html,
     relogin_hebat,
@@ -19,6 +20,7 @@ from app.xninetzy.os.academic.hebat.parsers import (
     is_login_redirect,
     looks_like_login_page,
     parse_assignment_page,
+    parse_ajax_courses,
     parse_course_activities,
     parse_courses,
 )
@@ -113,7 +115,10 @@ async def fetch_courses(chat_id: str) -> list[dict]:
     html = await get_page_html(chat_id, url)
     if not html or is_logged_out(html):
         return []
-    return parse_courses(html)
+    courses = parse_courses(html)
+    if courses:
+        return courses
+    return parse_ajax_courses(await get_courses_ajax_payload(chat_id))
 
 
 async def fetch_course_activities(chat_id: str, course_id: str) -> list[dict]:

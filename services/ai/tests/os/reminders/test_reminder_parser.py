@@ -35,6 +35,15 @@ def test_parse_relative_minutes():
     assert parsed["remind_at"] == "2026-06-03T09:30:00+07:00"
 
 
+def test_parse_english_relative_minutes():
+    parsed = parse_reminder("Test reminder in 1 minute", now=NOW)
+    assert parsed["title"] == "Test"
+    assert parsed["remind_at"] == "2026-06-03T09:01:00+07:00"
+    assert parsed["offset_value"] == 1
+    assert parsed["offset_unit"] == "minutes"
+
+
+
 def test_parse_tomorrow_at_hour():
     parsed = parse_reminder("ingatkan aku besok jam 8 buat belajar", now=NOW)
     assert parsed["title"] == "Belajar"

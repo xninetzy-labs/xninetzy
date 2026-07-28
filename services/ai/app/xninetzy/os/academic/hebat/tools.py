@@ -11,7 +11,7 @@ from langchain_core.tools import tool
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
 from app.xninetzy.os.academic.hebat.browser_session import check_session_valid, debug_login_with_credentials, login_with_credentials
-from app.xninetzy.os.academic.hebat.models import ActivityType, HebatActivity, HebatAssignment, HebatCourse, HebatFile, UploadStatus
+from app.xninetzy.os.academic.hebat.models import HebatActivity, HebatAssignment, HebatCourse, UploadStatus
 from app.xninetzy.os.academic.hebat.moodle_client import (
     download_file,
     fetch_assignment_detail,
@@ -20,22 +20,18 @@ from app.xninetzy.os.academic.hebat.moodle_client import (
 )
 from app.xninetzy.os.academic.hebat.pdf_reader import summarize_pdf
 from app.xninetzy.os.academic.hebat.storage import (
-    audit_log,
     create_submission,
     get_activity_by_cmid,
-    get_assignment_by_activity,
     get_session,
     get_submission_by_token,
     has_reminder_for_assignment,
     list_activities,
     list_assignments,
     list_courses,
-    mark_session_checked,
     update_submission_status,
     upsert_activity,
     upsert_assignment,
     upsert_course,
-    upsert_session,
 )
 from app.xninetzy.os.academic.hebat.submission import generate_token, upload_submission_via_playwright
 
@@ -281,19 +277,35 @@ async def hebat_download_material(chat_id: str, activity_id_or_url: str,
     title = activity["title"] if activity else f"Activity {cmid}"
     course_id = activity["course_id"] if activity else "unknown"
 
-    # Destination
+    # Resolve the Moodle activity page to a concrete pluginfile/resource URL.
     safe_title = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "_")[:50]
     dest_dir = Path(s.HEBAT_DOWNLOAD_DIR) / course_id / safe_title
     dest_dir.mkdir(parents=True, exist_ok=True)
-    dest_path = dest_dir / f"{safe_title}.pdf"
 
-    # Download
-    result = await download_file(chat_id, url, dest_path)
+    from app.xninetzy.os.academic.hebat.download_resolver import (
+        resolve_download_links,
+    )
+
+    candidates = await resolve_download_links(chat_id, url)
+    download_url = candidates[0].url if candidates else url
+    candidate_name = candidates[0].filename if candidates else None
+    safe_filename = re.sub(
+        r"[^\w.\- ]",
+        "",
+        Path(candidate_name or f"{safe_title}.pdf").name,
+    ).strip()
+    dest_path = dest_dir / (safe_filename or f"{safe_title}.pdf")
+
+    result = await download_file(chat_id, download_url, dest_path)
     if not result:
-        return f"Gagal mengunduh materi dari `{url}`."
+        return f"Gagal mengunduh materi dari `{download_url}`."
 
-    # Read PDF
-    pdf_data = summarize_pdf(result["local_path"])
+    local_path = Path(result["local_path"])
+    pdf_data = (
+        summarize_pdf(local_path)
+        if local_path.suffix.casefold() == ".pdf"
+        else {}
+    )
     pages = pdf_data.get("pages", 0)
     preview = pdf_data.get("text_preview", "")[:1500]
 
@@ -318,7 +330,9 @@ async def hebat_download_material(chat_id: str, activity_id_or_url: str,
     lines = [
         f"📄 *{title}*",
         f"File: `{result['filename']}`",
-        f"Ukuran: {result['size_bytes']//1024} KB | {pages} halaman",
+        f"Lokasi: `{result['local_path']}`",
+        f"Ukuran: {result['size_bytes']//1024} KB"
+        + (f" | {pages} halaman" if pages else ""),
     ]
     if obsidian_path:
         lines.append(f"Disimpan ke Obsidian: `{obsidian_path}`")
@@ -420,7 +434,6 @@ async def hebat_sync_assignments(chat_id: str, course_id: str | None = None) -> 
                 remind_at = due_dt - timedelta(hours=hours)
                 if remind_at > now and not has_reminder_for_assignment(activity_id, hours):
                     try:
-                        from app.xninetzy.os.reminders.reminder_service import ReminderService
                         from app.xninetzy.os.reminders.reminder_store import ReminderStore
                         store = ReminderStore()
                         store.create(

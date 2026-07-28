@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
+  <defs><radialGradient id="g"><stop stop-color="#2e1065"/><stop offset="1" stop-color="#020008"/></radialGradient></defs>
+  <rect width="1200" height="630" fill="#020008"/><circle cx="930" cy="170" r="410" fill="url(#g)" opacity=".7"/>
+  <g fill="#c084fc" opacity=".6"><circle cx="100" cy="90" r="2"/><circle cx="570" cy="80" r="2"/><circle cx="1110" cy="430" r="2"/><circle cx="670" cy="530" r="2"/></g>
+  <circle cx="905" cy="315" r="155" fill="none" stroke="#7c3aed" stroke-width="2"/><circle cx="905" cy="315" r="95" fill="none" stroke="#2e1065" stroke-width="2"/>
+  <circle cx="905" cy="315" r="48" fill="#05010f" stroke="#8b5cf6" stroke-width="2"/><path d="M880 290l50 50m0-50-50 50" stroke="#c084fc" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="1060" cy="315" r="8" fill="#f97316"/>
+  <text x="90" y="190" fill="#f97316" font-family="monospace" font-size="18" letter-spacing="4">PERSONAL LEARNING OS</text>
+  <text x="90" y="310" fill="white" font-family="Arial,sans-serif" font-size="90" font-weight="700">XNINETZY</text>
+  <text x="90" y="380" fill="#c084fc" font-family="Arial,sans-serif" font-size="42">Documentation</text>
+  <text x="90" y="455" fill="#a1a1aa" font-family="Arial,sans-serif" font-size="25">WhatsApp · Obsidian · HEBAT · MCP · AI agents</text>
+</svg>

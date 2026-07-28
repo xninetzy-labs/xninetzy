@@ -6,8 +6,13 @@ from app.xninetzy.ecosystem.event_bus import record_event
 
 
 @tool
-def knowledge_ingest_text(title: str, text: str, source_type: str = "manual_note",
-                          uri: str | None = None, chat_id: str = "system") -> str:
+def knowledge_ingest_text(
+    title: str,
+    text: str,
+    source_type: str = "manual_note",
+    uri: str | None = None,
+    chat_id: str = "system",
+) -> str:
     """Simpan teks ke knowledge base untuk pencarian semantik di masa depan.
 
     Args:
@@ -18,9 +23,16 @@ def knowledge_ingest_text(title: str, text: str, source_type: str = "manual_note
         chat_id: WhatsApp chat ID (dari context)
     """
     from app.xninetzy.os.knowledge.ingestion import ingest_text
+
     result = ingest_text(title, text, source_type, uri)
-    record_event(chat_id, "pdf_ingested", "manual", "note", result.get("source_id", ""),
-                 {"title": title, "chunks": result.get("chunks", 0)})
+    record_event(
+        chat_id,
+        "pdf_ingested",
+        "manual",
+        "note",
+        result.get("source_id", ""),
+        {"title": title, "chunks": result.get("chunks", 0)},
+    )
 
     if result["status"] == "already_exists":
         return f"ℹ️ Sumber *{title}* sudah ada di knowledge base."
@@ -31,9 +43,12 @@ def knowledge_ingest_text(title: str, text: str, source_type: str = "manual_note
 
 
 @tool
-def knowledge_ingest_file(file_path: str, title: str | None = None,
-                          source_type: str = "hebat_pdf",
-                          chat_id: str = "system") -> str:
+def knowledge_ingest_file(
+    file_path: str,
+    title: str | None = None,
+    source_type: str = "hebat_pdf",
+    chat_id: str = "system",
+) -> str:
     """Ingest file PDF ke knowledge base.
 
     Args:
@@ -43,15 +58,22 @@ def knowledge_ingest_file(file_path: str, title: str | None = None,
         chat_id: WhatsApp chat ID (dari context)
     """
     from app.xninetzy.os.knowledge.ingestion import ingest_pdf
+
     result = ingest_pdf(file_path, title, source_type)
 
     if result.get("status") == "error":
         return f"❌ Gagal ingest: {result.get('error')}"
     if result["status"] == "already_exists":
-        return f"ℹ️ File sudah ada di knowledge base."
+        return "ℹ️ File sudah ada di knowledge base."
 
-    record_event(chat_id, "pdf_ingested", "file", "note", str(result.get("source_id", "")),
-                 {"title": result.get("title"), "chunks": result.get("chunks", 0)})
+    record_event(
+        chat_id,
+        "pdf_ingested",
+        "file",
+        "note",
+        str(result.get("source_id", "")),
+        {"title": result.get("title"), "chunks": result.get("chunks", 0)},
+    )
     return (
         f"✅ PDF diingest!\n"
         f"*{result['title']}*\n"
@@ -61,42 +83,43 @@ def knowledge_ingest_file(file_path: str, title: str | None = None,
 
 @tool
 def knowledge_search(query: str, limit: int = 5) -> str:
-    """Cari di knowledge base menggunakan semantic/keyword search.
+    """Inspeksi evidence bundle terpilih dari knowledge base.
 
     Args:
         query: Pertanyaan atau kata kunci
         limit: Jumlah hasil (default: 5)
     """
-    from app.xninetzy.os.knowledge.vector_store import semantic_search
-    results = semantic_search(query, limit=limit)
-    if not results:
-        return "Tidak ada hasil di knowledge base untuk query tersebut."
+    from app.xninetzy.os.knowledge.retrieval import (
+        render_evidence_bundle,
+        retrieve_evidence,
+    )
 
-    lines = [f"🔍 *Knowledge search:* `{query}`\n"]
-    for i, r in enumerate(results, 1):
-        title = r.get("title", "?")
-        source_type = r.get("source_type", "?")
-        text_preview = r.get("text", "")[:200]
-        lines.append(f"*[{i}] {title}* ({source_type})\n{text_preview}\n")
-    return "\n".join(lines)
+    bundle = retrieve_evidence(query, limit=limit)
+    if not bundle.evidence:
+        return "Tidak ada hasil di knowledge base untuk query tersebut."
+    return render_evidence_bundle(bundle)
 
 
 @tool
-def knowledge_answer(query: str, chat_id: str = "system") -> str:
-    """Jawab pertanyaan berdasarkan knowledge base yang sudah diingest.
+async def knowledge_answer(query: str, chat_id: str = "system") -> str:
+    """Jawab melalui retrieval, evidence selection, sintesis, dan validasi sitasi.
 
     Args:
         query: Pertanyaan yang ingin dijawab
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.knowledge.rag import build_rag_context
-    context = build_rag_context(query)
-    if not context:
-        return (
-            "Tidak ada knowledge relevan ditemukan untuk menjawab pertanyaan ini.\n"
-            "Coba ingest materi dulu dengan `knowledge_ingest_file` atau `knowledge_ingest_text`."
-        )
-    return context + f"\n\n_Pertanyaan: {query}_\n_(Jawab berdasarkan konteks di atas menggunakan pengetahuanmu)_"
+    from app.xninetzy.os.knowledge.retrieval import answer_from_knowledge
+
+    answer = await answer_from_knowledge(query)
+    record_event(
+        chat_id,
+        "knowledge_answered",
+        "knowledge",
+        "query",
+        None,
+        {"query": query[:500]},
+    )
+    return answer
 
 
 @tool
@@ -108,13 +131,16 @@ def knowledge_list_sources(source_type: str | None = None, limit: int = 20) -> s
         limit: Jumlah maksimal
     """
     from app.xninetzy.os.knowledge.ingestion import list_sources
+
     sources = list_sources(source_type, limit)
     if not sources:
         return "Belum ada sumber di knowledge base."
 
     lines = [f"📚 *Knowledge Sources ({len(sources)}):*\n"]
     for s in sources:
-        lines.append(f"`{s['id']}` *{s['title']}* ({s['source_type']}) — {s['created_at'][:10]}")
+        lines.append(
+            f"`{s['id']}` *{s['title']}* ({s['source_type']}) — {s['created_at'][:10]}"
+        )
     return "\n".join(lines)
 
 
@@ -122,5 +148,6 @@ def knowledge_list_sources(source_type: str | None = None, limit: int = 20) -> s
 def knowledge_rebuild_index() -> str:
     """Rebuild FAISS vector index dari semua knowledge chunks yang ada di database."""
     from app.xninetzy.os.knowledge.vector_store import rebuild_index
+
     count = rebuild_index()
     return f"✅ Knowledge index di-rebuild: {count} vectors"

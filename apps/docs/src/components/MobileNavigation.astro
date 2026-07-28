@@ -1,0 +1,22 @@
+---
+import Brand from './Brand.astro';
+import Icon from './Icon.astro';
+import Sidebar from './Sidebar.astro';
+---
+
+<dialog id="mobile-navigation" class="mobile-navigation">
+  <div class="mobile-drawer">
+    <header>
+      <Brand compact />
+      <button id="menu-close" class="icon-button" aria-label="Tutup navigasi"><Icon name="x" /></button>
+    </header>
+    <Sidebar mobile />
+  </div>
+</dialog>
+
+<script>
+  const menu = document.querySelector<HTMLDialogElement>('#mobile-navigation');
+  document.querySelector('#menu-open')?.addEventListener('click', () => menu?.showModal());
+  document.querySelector('#menu-close')?.addEventListener('click', () => menu?.close());
+  menu?.addEventListener('click', (event) => { if (event.target === menu) menu.close(); });
+</script>

@@ -17,6 +17,13 @@ import { createTraceId, maskJid } from "../utils/observability";
 import { isProcessableChatType } from "../types/chat";
 import { cacheMessage } from "./socket-state";
 import { persistMediaMessage } from "../mcp/media-store";
+import { runInChatQueue } from "./chat-queue";
+import {
+  claimMessage,
+  markMessageCompleted,
+  markMessageFailed,
+  markReplyReady,
+} from "./message-processing-store";
 
 const botSentMessageIds = new Set<string>();
 const MAX_TRACKED_BOT_MESSAGES = 500;
@@ -32,10 +39,11 @@ export function registerMessageListener(sock: WASocket): void {
       "WhatsApp messages received"
     );
 
-    for (const message of messages) {
+    const jobs = messages.map((message) => {
       // Cache all messages for MCP media download
       cacheMessage(message);
-      await handleIncomingMessage(sock, message).catch((error) => {
+      const chatKey = message.key.remoteJid || message.key.participant || message.key.id || "unknown";
+      return runInChatQueue(chatKey, () => handleIncomingMessage(sock, message)).catch((error) => {
         logger.error(
           {
             step: "message_handler_unhandled_error",
@@ -45,7 +53,8 @@ export function registerMessageListener(sock: WASocket): void {
           "Unhandled error while processing WhatsApp message"
         );
       });
-    }
+    });
+    await Promise.all(jobs);
   });
 }
 
@@ -55,6 +64,8 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
   const traceId = createTraceId(messageId);
   const remoteJid = message.key.remoteJid;
   const chatType = getChatType(remoteJid);
+  let processingClaimed = false;
+  let replyPrepared = false;
 
   logger.info(
     {
@@ -74,6 +85,11 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
 
     if (!remoteJid) {
       logSkipped(traceId, messageId, startedAt, "missing_remote_jid");
+      return;
+    }
+
+    if (!messageId) {
+      logSkipped(traceId, messageId, startedAt, "missing_message_id");
       return;
     }
 
@@ -135,6 +151,32 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
       return;
     }
 
+    const claim = claimMessage(remoteJid, messageId);
+    if (claim.action === "duplicate") {
+      logSkipped(traceId, messageId, startedAt, "duplicate_or_leased", {
+        processingStatus: claim.record.status,
+        attempts: claim.record.attempts,
+      });
+      return;
+    }
+    processingClaimed = true;
+
+    if (claim.action === "resume_reply") {
+      replyPrepared = true;
+      const outboundMessageId = await sendWhatsAppReply({
+        sock,
+        remoteJid,
+        reply: claim.reply,
+        quoted: message,
+        traceId,
+        messageId,
+        chatType,
+        rememberBotMessageId,
+      });
+      markMessageCompleted(remoteJid, messageId, outboundMessageId);
+      return;
+    }
+
     if (chatType === "group") {
        logger.info(
         {
@@ -150,16 +192,20 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
     const text = trigger.normalizedText.trim();
     if (!text) {
       if (chatType === "group" && (trigger.isMentioned || trigger.isReplyToBot)) {
-        await sendWhatsAppReply({
+        const greeting = "Halo! Ada yang bisa saya bantu?";
+        markReplyReady(remoteJid, messageId, greeting);
+        replyPrepared = true;
+        const outboundMessageId = await sendWhatsAppReply({
           sock,
           remoteJid,
-          reply: "Halo! Ada yang bisa saya bantu?",
+          reply: greeting,
           quoted: message,
           traceId,
           messageId,
           chatType,
           rememberBotMessageId,
         });
+        markMessageCompleted(remoteJid, messageId, outboundMessageId);
         return;
       }
       logSkipped(traceId, messageId, startedAt, "empty_text_after_trigger_cleanup");
@@ -203,7 +249,9 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
 
     const { reply } = await sendChatToAI(payload);
 
-    await sendWhatsAppReply({
+    markReplyReady(remoteJid, messageId, reply);
+    replyPrepared = true;
+    const outboundMessageId = await sendWhatsAppReply({
       sock,
       remoteJid,
       reply,
@@ -213,6 +261,7 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
       chatType,
       rememberBotMessageId,
     });
+    markMessageCompleted(remoteJid, messageId, outboundMessageId);
 
     logger.info(
       {
@@ -236,6 +285,16 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
       "WhatsApp message flow failed"
     );
 
+    if (processingClaimed && remoteJid && messageId && !replyPrepared) {
+      try {
+        markMessageFailed(remoteJid, messageId, error);
+      } catch (storeError) {
+        logger.error(
+          { step: "message_processing_store_failed", traceId, messageId, err: storeError },
+          "Failed to persist message failure state",
+        );
+      }
+    }
     await sendFallbackReply(sock, remoteJid, chatType, traceId, messageId);
   }
 }
@@ -339,14 +398,16 @@ async function sendFallbackReply(
   chatType: string,
   traceId: string,
   messageId: string | null | undefined
-): Promise<void> {
-  if (!remoteJid || (chatType !== "private" && chatType !== "group")) return;
+): Promise<string | null> {
+  if (!remoteJid || (chatType !== "private" && chatType !== "group")) return null;
 
   try {
     const sentMessage = await sendTextMessage(sock, remoteJid, "Maaf, AI sedang bermasalah sebentar. Coba ulangi lagi ya.");
     rememberBotMessageId(sentMessage?.key.id);
+    return sentMessage?.key.id ?? null;
   } catch (error) {
     logger.error({ step: "fallback_reply_failed", traceId, messageId, err: error }, "Failed to send fallback reply");
+    return null;
   }
 }
 

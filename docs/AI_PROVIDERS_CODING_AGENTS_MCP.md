@@ -38,7 +38,7 @@ Codex / Claude Code / OpenCode
 - Pilihan diteruskan ke orchestrator, direct response, dan ReAct agent.
 - Adapter subprocess tersedia untuk Codex, Claude Code, dan OpenCode.
 - Setiap coding run memiliki audit row di `coding_agent_runs`.
-- MCP stdio menyediakan 22 tool vault, knowledge, task, dan reminder.
+- MCP stdio mengekspos seluruh tool dari registry Xninetzy.
 - Konfigurasi project tersedia untuk Codex, Claude Code, dan OpenCode.
 
 ## Menyiapkan provider chat
@@ -116,6 +116,9 @@ CODING_AGENT_WORKSPACE=/absolute/path/to/xninetzy
 CODING_AGENT_TIMEOUT_SECONDS=600
 CODING_AGENT_MAX_OUTPUT_CHARS=12000
 CODING_AGENT_SANDBOX=workspace-write
+CODING_AGENT_REQUIRE_XNINETZY_MCP=true
+CODING_AGENT_MCP_SERVER_NAME=xninetzy
+CODING_AGENT_MCP_PREFLIGHT_TIMEOUT_SECONDS=15
 CODING_AGENT_ENV_ALLOWLIST=PATH,HOME,USER,LOGNAME,LANG,LC_ALL,TERM,TMPDIR,XDG_CONFIG_HOME,XDG_DATA_HOME,XDG_CACHE_HOME,SSL_CERT_FILE,SSL_CERT_DIR,CODEX_HOME
 
 CODEX_BIN=codex
@@ -181,31 +184,168 @@ Gunakan `MCP_RUNTIME_MODE=host` untuk memaksa host fallback atau
 host dikosongkan, database host default adalah
 `services/ai/data/xninetzy.sqlite3`.
 
-Tool yang tersedia:
+MCP mengambil katalog langsung dari `tools/registry.py`, sehingga penambahan tool
+Xninetzy baru otomatis tersedia tanpa membuat wrapper MCP manual. Katalog mencakup
+seluruh domain Xninetzy: Obsidian, knowledge, task, reminder, research, learning
+roadmap, Graph RAG, media, workflow, rules, memory, provider AI, coding agent,
+HEBAT, portal mahasiswa, dan tool pendukung lainnya.
 
-- Obsidian: list, search, read, create, append, update section, todos, backlinks, headings, tags, dan frontmatter.
-- Knowledge: search, answer context, list sources, dan ingest text.
-- Tasks: list, today, capture, dan complete.
-- Reminders: list, create, dan cancel.
+MCP stdio mewakili owner lokal instalasi. `sender_id`, `sender_name`, `chat_id`,
+`chat_type`, dan `metadata` diinjeksi server dan disembunyikan dari schema tool
+dinamis. Client tidak boleh memakai parameter buatan sendiri untuk menyamar
+sebagai chat atau pengguna lain. Override opsional tersedia melalui:
 
-`coding_agent_run` sengaja tidak diekspos ke MCP. Codex/Claude/OpenCode sudah merupakan coding agent; mengekspos `/code` kepada mereka akan membuat recursion dan memperluas dampak eksekusi.
+```env
+MCP_PRINCIPAL_ID=
+MCP_PRINCIPAL_NAME=
+MCP_DEFAULT_CHAT_ID=
+```
+
+Nilai kosong memakai `ADMIN_JID`, `BOT_OWNER`, dan namespace owner lokal yang
+stabil.
+
+### Kontrak retrieval dan grounding
+
+`knowledge_search` mengembalikan evidence bundle untuk inspeksi. Ia bukan jawaban
+akhir. `knowledge_answer` menjalankan hybrid FAISS + FTS, reciprocal-rank fusion,
+deduplikasi, pembatasan context, sintesis model, dan validasi sitasi `[K1]`.
+
+LangGraph memakai kontrak yang sama untuk permintaan penjelasan knowledge,
+akademik, dan IT learning yang relevan. Jika bukti internal tidak cukup, agent
+harus menyatakannya dan tidak boleh membuat jawaban umum terlihat berasal dari
+vault. Isi source diperlakukan sebagai data tidak tepercaya, bukan instruksi.
+
+Connector HEBAT memakai konfigurasi credential dan session lokal yang sama dengan
+service AI. Tool untuk status/login, sinkronisasi course dan activity, materi,
+assignment, PDF, serta academic digest dapat dipanggil langsung oleh client MCP.
+Aksi sensitif seperti upload submission tetap tunduk pada confirmation token,
+approval, allowlist, dan guard yang sudah diterapkan pada tool Xninetzy.
+
+Karena `coding_agent_run` juga merupakan tool Xninetzy, tool tersebut ikut
+diekspos. Gunakan hanya jika memang ingin mendelegasikan pekerjaan ke runtime
+coding lain; pembatasan workspace, admin, timeout, dan audit tetap berlaku.
+
+### Akses HEBAT dan course
+
+Credential HEBAT hanya disimpan pada `.env` lokal:
+
+```env
+HEBAT_USERNAME=
+HEBAT_PASSWORD=
+HEBAT_DATA_DIR=/app/data/hebat
+HEBAT_DOWNLOAD_DIR=/app/data/hebat/downloads
+```
+
+Jangan menaruh nilai credential pada `.env.example`, dokumentasi, database,
+atau pesan WhatsApp. MCP memakai session dan database yang sama dengan service
+AI. Alur yang direkomendasikan:
+
+1. `hebat_start_login(chat_id)` untuk membuat atau memperbarui session.
+2. `hebat_sync_courses(chat_id)` untuk mengambil seluruh course melalui
+   endpoint AJAX Moodle.
+3. `hebat_sync_course_activities(chat_id, course_id)` untuk menyimpan resource,
+   assignment, URL, dan activity lain.
+4. `hebat_download_material(chat_id, activity_id_or_url)` untuk me-resolve
+   activity ke `pluginfile.php` dan mengunduh file sebenarnya.
+5. `hebat_read_pdf(file_path)` untuk membaca file PDF yang sudah ada.
+
+Pada host, file hasil download disimpan di
+`services/ai/data/hebat/downloads/<course-id>/<activity>/`. Output tool
+menampilkan `Lokasi` absolut agar client dapat memverifikasi file fisik.
+Upload submission tetap membutuhkan confirmation token dan guard admin.
+
+Dari WhatsApp, gunakan bahasa natural seperti `login hebat`,
+`sync course hebat`, `cek tugas hebat`, atau `/hebat`. Tool MCP yang sama
+dapat dipanggil langsung oleh Codex, Claude Code, dan OpenCode.
+
+### Permission host dan Docker
+
+Service `ai` pada Docker Compose berjalan sebagai
+`${HOST_UID:-1000}:${HOST_GID:-1000}`. Sesuaikan pada `.env` bila UID/GID
+host berbeda:
+
+```bash
+id -u
+id -g
+```
+
+Jika data lama sudah telanjur dimiliki root, perbaiki satu kali:
+
+```bash
+docker run --rm \
+  -v "$PWD/services/ai/data:/data" \
+  alpine:latest chown -R "$(id -u):$(id -g)" /data
+```
+
+Lakukan hal setara pada vault hanya jika folder vault lama memang root-owned.
+Jangan menjalankan `chmod 777`; samakan ownership dengan user service.
+
+### Coding agent melalui WhatsApp dan MCP
+
+Aktifkan runtime pada environment service AI:
+
+```env
+CODING_AGENT_ENABLED=true
+CODING_AGENT_ALLOWED=internal,codex,claude-code,opencode
+CODING_AGENT_ADMIN_ONLY=true
+CODING_AGENT_WORKSPACE=/path/absolut/ke/xninetzy
+CODING_AGENT_ALLOWED_ROOT=/path/absolut/ke/xninetzy
+```
+
+Command WhatsApp:
+
+```text
+/agent list
+/agent use codex
+/agent use claude-code
+/agent use opencode
+/code perbaiki test yang gagal
+```
+
+Command tersebut dirutekan ke `coding_agent_list`, `coding_agent_use`, dan
+`coding_agent_run`; ketiganya juga tersedia melalui MCP Xninetzy. Setiap CLI
+dijalankan dari workspace yang dibatasi. Konfigurasi MCP Xninetzy berada pada
+scope global/user agar Codex, Claude Code, dan OpenCode dapat mengaksesnya dari
+folder mana pun.
+
+Sebelum subprocess coding dijalankan, Xninetzy melakukan preflight MCP:
+
+- Codex: `codex mcp get xninetzy`;
+- Claude Code: `claude mcp get xninetzy`;
+- OpenCode: `opencode mcp list` dan verifikasi status server.
+
+Jika server tidak ditemukan, belum disetujui, atau disconnected, `/code` gagal
+dengan pesan konfigurasi dan tidak menjalankan runtime tanpa akses OS. Task yang
+lolos preflight otomatis diberi kontrak untuk membaca `AGENTS.md`, memakai MCP
+untuk state Xninetzy, dan memakai `knowledge_answer` untuk jawaban knowledge.
+
+Binary serta autentikasi CLI harus tersedia pada environment tempat service AI
+berjalan. Gunakan absolute path ke binary `uv` dan directory `services/ai` pada
+semua global config. API key tidak perlu disalin ke konfigurasi MCP.
 
 ### Codex
 
-Konfigurasi project ada di `.codex/config.toml`:
+Tambahkan konfigurasi user:
+
+```bash
+codex mcp add xninetzy -- \
+  /home/you/.local/bin/uv run \
+  --directory /home/you/code/xninetzy/services/ai \
+  python -m app.xninetzy.interfaces.mcp_server
+```
+
+Lalu tambahkan timeout pada entry `~/.codex/config.toml`:
 
 ```toml
-[mcp_servers.xninetzy]
-command = "uv"
-args = ["run", "--directory", "services/ai", "python", "-m", "app.xninetzy.interfaces.mcp_server"]
-cwd = "."
 startup_timeout_sec = 30
 tool_timeout_sec = 120
 ```
 
-Verifikasi dari root repository:
+Verifikasi dari luar repository:
 
 ```bash
+cd /tmp
+codex mcp get xninetzy
 codex mcp list
 ```
 
@@ -213,17 +353,56 @@ Dokumentasi resmi: [Codex MCP](https://developers.openai.com/codex/mcp/), [Codex
 
 ### Claude Code
 
-Konfigurasi project ada di `.mcp.json`. Claude Code akan menemukan server saat dijalankan dari repository ini.
+Gunakan scope `user`:
 
 ```bash
+claude mcp add --scope user xninetzy \
+  -e PYTHONUNBUFFERED=1 -- \
+  /home/you/.local/bin/uv run \
+  --directory /home/you/code/xninetzy/services/ai \
+  python -m app.xninetzy.interfaces.mcp_server
+
+cd /tmp
+claude mcp get xninetzy
 claude mcp list
 ```
+
+Output harus menunjukkan `Scope: User config` dan `Connected`.
 
 Dokumentasi resmi: [Claude Code MCP](https://code.claude.com/docs/en/mcp) dan [Claude Code CLI usage](https://code.claude.com/docs/en/cli-usage).
 
 ### OpenCode
 
-Konfigurasi project ada di `opencode.json` pada key `mcp.xninetzy`. Konfigurasi ini hanya mendaftarkan MCP; provider/model OpenCode tetap bebas dikelola oleh pengguna OpenCode.
+Tambahkan `mcp.xninetzy` pada `~/.config/opencode/opencode.jsonc`:
+
+```json
+{
+  "mcp": {
+    "xninetzy": {
+      "type": "local",
+      "command": [
+        "/home/you/.local/bin/uv",
+        "run",
+        "--directory",
+        "/home/you/code/xninetzy/services/ai",
+        "python",
+        "-m",
+        "app.xninetzy.interfaces.mcp_server"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    }
+  }
+}
+```
+
+Merge key tersebut tanpa menimpa config lain, lalu verifikasi:
+
+```bash
+cd /tmp
+opencode mcp list
+opencode debug config
+```
 
 Dokumentasi resmi: [OpenCode MCP servers](https://opencode.ai/docs/mcp-servers), [OpenCode providers](https://opencode.ai/docs/providers), dan [OpenCode server](https://opencode.ai/docs/server/).
 

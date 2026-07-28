@@ -56,6 +56,36 @@ def parse_courses(html: str) -> list[dict]:
             "shortname": None,
             "course_url": urljoin(BASE, href),
         }
+
+
+def parse_ajax_courses(payload: object) -> list[dict]:
+    """Parse Moodle's course-overview AJAX response into stored course rows."""
+
+    item = payload[0] if isinstance(payload, list) and payload else payload
+    if not isinstance(item, dict) or item.get("error"):
+        return []
+    data = item.get("data")
+    if not isinstance(data, dict):
+        return []
+
+    courses: dict[str, dict] = {}
+    for raw in data.get("courses", []):
+        if not isinstance(raw, dict):
+            continue
+        course_id = str(raw.get("id") or "").strip()
+        fullname = _soup(str(raw.get("fullname") or "")).get_text(" ", strip=True)
+        if not course_id or not fullname:
+            continue
+        courses[course_id] = {
+            "moodle_course_id": course_id,
+            "fullname": fullname,
+            "shortname": _soup(str(raw.get("shortname"))).get_text(" ", strip=True)
+            if raw.get("shortname")
+            else None,
+            "course_url": raw.get("viewurl")
+            or f"{BASE}/course/view.php?id={course_id}",
+        }
+    return list(courses.values())
     return list(courses.values())
 
 

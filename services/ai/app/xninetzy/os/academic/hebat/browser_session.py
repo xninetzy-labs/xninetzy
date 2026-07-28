@@ -13,7 +13,7 @@ logger = logging.getLogger(__name__)
 
 _PLAYWRIGHT_AVAILABLE = False
 try:
-    from playwright.async_api import async_playwright, Browser, BrowserContext, Page
+    from playwright.async_api import async_playwright
     _PLAYWRIGHT_AVAILABLE = True
 except ImportError:
     pass
@@ -372,6 +372,68 @@ async def get_page_html(
         return None
 
     return html
+
+
+async def get_courses_ajax_payload(
+    chat_id: str,
+    *,
+    retry_on_logout: bool = True,
+) -> object | None:
+    """Load enrolled courses through Moodle's JS-only course-overview endpoint."""
+
+    if not _PLAYWRIGHT_AVAILABLE:
+        return None
+
+    s = get_settings()
+    storage_path = _storage_state_path(chat_id)
+    if not storage_path.exists():
+        if retry_on_logout and await relogin_hebat(chat_id):
+            return await get_courses_ajax_payload(chat_id, retry_on_logout=False)
+        return None
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=s.HEBAT_BROWSER_HEADLESS)
+        try:
+            ctx = await browser.new_context(storage_state=str(storage_path))
+            page = await ctx.new_page()
+            await page.goto(
+                s.HEBAT_BASE_URL + "/my/courses.php",
+                wait_until="domcontentloaded",
+                timeout=30_000,
+            )
+            if looks_like_login_page(await page.content()):
+                if retry_on_logout and await relogin_hebat(chat_id):
+                    return await get_courses_ajax_payload(
+                        chat_id,
+                        retry_on_logout=False,
+                    )
+                return None
+            return await page.evaluate(
+                """
+                async () => {
+                  const method =
+                    "core_course_get_enrolled_courses_by_timeline_classification";
+                  const url = "/lib/ajax/service.php?sesskey="
+                    + encodeURIComponent(M.cfg.sesskey) + "&info=" + method;
+                  const body = [{index: 0, methodname: method, args: {
+                    offset: 0, limit: 1000, classification: "all",
+                    sort: "fullname", customfieldname: "", customfieldvalue: ""
+                  }}];
+                  const response = await fetch(url, {
+                    method: "POST",
+                    headers: {"Content-Type": "application/json"},
+                    body: JSON.stringify(body)
+                  });
+                  return await response.json();
+                }
+                """
+            )
+        except Exception as exc:
+            logger.warning("HEBAT course AJAX failed: %s", exc)
+            return None
+        finally:
+            await browser.close()
+
 
 
 async def get_cookies_for_httpx(chat_id: str) -> list[dict]:

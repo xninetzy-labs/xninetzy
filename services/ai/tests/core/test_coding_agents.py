@@ -6,6 +6,8 @@ import pytest
 
 from app.xninetzy.core.coding_agents import (
     build_command,
+    build_mcp_preflight_command,
+    build_os_aware_task,
     resolve_workspace,
     runtime_catalog,
     subprocess_environment,
@@ -90,3 +92,37 @@ def test_subprocess_environment_does_not_inherit_service_secrets(
 
     assert environment["PATH"] == "/usr/bin"
     assert "FLAZ_API_KEY" not in environment
+
+
+def test_each_external_runtime_has_an_mcp_preflight(monkeypatch, tmp_path) -> None:
+    settings = _settings(tmp_path)
+    monkeypatch.setattr(
+        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
+    )
+
+    assert build_mcp_preflight_command("codex", settings) == [
+        "codex-test",
+        "mcp",
+        "get",
+        "xninetzy",
+    ]
+    assert build_mcp_preflight_command("claude-code", settings) == [
+        "claude-test",
+        "mcp",
+        "get",
+        "xninetzy",
+    ]
+    assert build_mcp_preflight_command("opencode", settings) == [
+        "opencode-test",
+        "mcp",
+        "list",
+    ]
+
+
+def test_os_aware_task_requires_agents_md_mcp_and_grounded_answer(tmp_path) -> None:
+    task = build_os_aware_task("fix the test", _settings(tmp_path))
+
+    assert "AGENTS.md" in task
+    assert "MCP server named `xninetzy`" in task
+    assert "knowledge_answer" in task
+    assert task.endswith("fix the test")

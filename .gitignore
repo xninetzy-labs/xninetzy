@@ -30,6 +30,8 @@ coverage/
 .yarn-cache/
 .turbo/
 .cache/
+.astro/
+**/.astro/
 
 *.tsbuildinfo
 
@@ -120,6 +122,13 @@ temp/
 *.sqlite
 *.sqlite3
 *.db
+
+# HEBAT runtime state and downloaded course materials
+services/ai/data/hebat/browser-profiles/
+services/ai/data/hebat/downloads/
+
+# Local backup snapshots (contain private owner state)
+services/ai/data/backups/
 
 # =========================
 # Secrets / keys

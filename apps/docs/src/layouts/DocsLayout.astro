@@ -1,0 +1,55 @@
+---
+import BaseLayout from './BaseLayout.astro';
+import Sidebar from '../components/Sidebar.astro';
+import Icon from '../components/Icon.astro';
+import { navigation, pageNeighbors } from '../data/navigation';
+
+type Props = {
+  frontmatter: {
+    title: string;
+    description: string;
+    section?: string;
+  };
+};
+
+const { frontmatter } = Astro.props;
+const section = frontmatter.section ?? navigation.find((group) =>
+  group.items.some((item) => item.href === Astro.url.pathname)
+)?.title ?? 'Dokumentasi';
+const { previous, next } = pageNeighbors(Astro.url.pathname);
+---
+
+<BaseLayout title={frontmatter.title} description={frontmatter.description}>
+  <div class="docs-shell">
+    <Sidebar />
+    <main class="docs-main" id="main-content">
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a href="/">Docs</a><span>/</span><span>{section}</span>
+      </nav>
+      <header class="docs-heading">
+        <div class="eyebrow"><span></span>{section}</div>
+        <h1>{frontmatter.title}</h1>
+        <p>{frontmatter.description}</p>
+      </header>
+      <article class="prose">
+        <slot />
+      </article>
+      <nav class="page-neighbors" aria-label="Halaman sebelumnya dan berikutnya">
+        {previous ? (
+          <a class="previous" href={previous.href}>
+            <small>← Sebelumnya</small><strong>{previous.title}</strong>
+          </a>
+        ) : <span />}
+        {next && (
+          <a class="next" href={next.href}>
+            <small>Berikutnya →</small><strong>{next.title}</strong>
+          </a>
+        )}
+      </nav>
+      <div class="edit-note">
+        <Icon name="code" />
+        <span>Dokumentasi berada di <code>apps/docs/src/pages/docs</code> dan dapat diedit sebagai Markdown.</span>
+      </div>
+    </main>
+  </div>
+</BaseLayout>

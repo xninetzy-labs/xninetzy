@@ -20,7 +20,12 @@ export async function sendChat(message: string, attachments: string[] = []): Pro
   try {
     const response = await fetch(`${cliConfig.aiUrl.replace(/\/$/, '')}/api/chat`, {
       method: 'POST',
-      headers: { 'content-type': 'application/json' },
+      headers: {
+        'content-type': 'application/json',
+        ...(cliConfig.aiApiKey
+          ? { authorization: `Bearer ${cliConfig.aiApiKey}` }
+          : {})
+      },
       body: JSON.stringify({
         chat_id: cliConfig.chatId,
         sender_id: cliConfig.senderId,

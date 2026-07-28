@@ -1,0 +1,33 @@
+---
+import { navigation, normalizePath } from '../data/navigation';
+
+type Props = { mobile?: boolean };
+const { mobile = false } = Astro.props;
+const pathname = normalizePath(Astro.url.pathname);
+---
+
+<aside class:list={['sidebar', { mobile }]} aria-label="Dokumentasi">
+  <nav>
+    {navigation.map((group) => (
+      <section>
+        <h2>{group.title}</h2>
+        <ul>
+          {group.items.map((item) => (
+            <li>
+              <a href={item.href} aria-current={pathname === item.href ? 'page' : undefined}>
+                <span>{item.title}</span>
+                {pathname === item.href && <i aria-hidden="true"></i>}
+              </a>
+            </li>
+          ))}
+        </ul>
+      </section>
+    ))}
+  </nav>
+  <div class="sidebar-card">
+    <span class="signal"><i></i> MCP ready</span>
+    <strong>149 tools. Satu registry.</strong>
+    <p>Akses Obsidian, HEBAT, task, dan research dari coding agent.</p>
+    <a href="/docs/mcp/">Hubungkan client →</a>
+  </div>
+</aside>

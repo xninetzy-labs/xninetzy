@@ -8,6 +8,7 @@ export interface CliConfig {
   senderId: string;
   senderName: string;
   requestTimeoutMs: number;
+  aiApiKey: string;
   envFilePath: string | null;
   envLoaded: boolean;
 }
@@ -84,9 +85,13 @@ export const cliConfig: CliConfig = {
     process.env.AI_BASE_URL ??
     "http://localhost:8000",
   chatId: process.env.XNINETZY_CLI_CHAT_ID ?? 'xninetzy-cli',
-  senderId: process.env.XNINETZY_CLI_SENDER_ID ?? 'cli-user',
+  senderId:
+    process.env.XNINETZY_CLI_SENDER_ID ??
+    process.env.ADMIN_JID ??
+    'cli-local-owner',
   senderName: process.env.XNINETZY_CLI_SENDER_NAME ?? 'CLI User',
   requestTimeoutMs: positiveInteger(process.env.XNINETZY_CLI_TIMEOUT_MS, 120_000),
+  aiApiKey: process.env.AI_API_KEY ?? '',
   envFilePath,
   envLoaded: Boolean(envFilePath),
 };

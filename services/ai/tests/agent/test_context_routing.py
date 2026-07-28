@@ -1,3 +1,6 @@
+import pytest
+
+from app.xninetzy.agent.orchestrator import orchestrator_node
 from app.xninetzy.context.builder import build_context_packet
 from app.xninetzy.context.domain_classifier import classify_domain
 from app.xninetzy.context.intent_classifier import classify_intent
@@ -22,7 +25,9 @@ def test_intent_create_roadmap():
 
 
 def test_mode_study_for_it_learning_roadmap():
-    assert route_mode("it_learning", "create_roadmap", "buat roadmap backend") == "study"
+    assert (
+        route_mode("it_learning", "create_roadmap", "buat roadmap backend") == "study"
+    )
 
 
 def test_build_context_packet():
@@ -31,3 +36,24 @@ def test_build_context_packet():
     assert packet.intent == "create_roadmap"
     assert packet.mode == "study"
     assert packet.normalized_message == "buat roadmap belajar Docker"
+
+
+@pytest.mark.asyncio
+async def test_knowledge_explanation_is_forced_through_grounded_agent_path():
+    result = await orchestrator_node(
+        {
+            "chat_id": "owner",
+            "sender_id": "owner",
+            "sender_name": "Owner",
+            "message": "jelaskan RAG",
+            "chat_type": "private",
+            "group_name": None,
+            "metadata": {},
+            "messages": [],
+            "route": "",
+            "clarification_question": None,
+            "response": "",
+        }
+    )
+
+    assert result["route"] == "agent"

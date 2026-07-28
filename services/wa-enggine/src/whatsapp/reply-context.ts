@@ -12,7 +12,7 @@ export async function sendWhatsAppReply(params: {
   messageId: string | null | undefined;
   chatType: "private" | "group";
   rememberBotMessageId: (id: string | null | undefined) => void;
-}): Promise<void> {
+}): Promise<string | null> {
   const { sock, remoteJid, reply, quoted, traceId, messageId, chatType, rememberBotMessageId } = params;
 
   logger.info(
@@ -26,9 +26,11 @@ export async function sendWhatsAppReply(params: {
     "Sending AI reply to WhatsApp"
   );
 
+  let outboundMessageId: string | null = null;
   try {
     const sentMessage = await sendTextMessage(sock, remoteJid, reply, { quoted });
     rememberBotMessageId(sentMessage?.key.id);
+    outboundMessageId = sentMessage?.key.id ?? null;
   } catch (error) {
     logger.warn(
       {
@@ -44,6 +46,7 @@ export async function sendWhatsAppReply(params: {
     try {
       const sentMessage = await sendTextMessage(sock, remoteJid, reply);
       rememberBotMessageId(sentMessage?.key.id);
+      outboundMessageId = sentMessage?.key.id ?? null;
     } catch (sendError) {
       logger.error(
         {
@@ -68,4 +71,5 @@ export async function sendWhatsAppReply(params: {
     },
     "AI reply sent to WhatsApp"
   );
+  return outboundMessageId;
 }

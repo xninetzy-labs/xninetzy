@@ -28,6 +28,21 @@ async def orchestrator_node(state: AgentState) -> dict:
             "messages": [HumanMessage(content=state["message"])],
         }
 
+    packet = None
+    try:
+        from app.xninetzy.context.builder import build_context_packet
+        from app.xninetzy.os.knowledge.retrieval import should_auto_ground
+
+        packet = build_context_packet(state["message"], metadata)
+        if should_auto_ground(packet.domain, packet.intent, state["message"]):
+            return {
+                "route": RouteDecision.AGENT.value,
+                "clarification_question": None,
+                "messages": [HumanMessage(content=state["message"])],
+            }
+    except Exception:
+        packet = None
+
     system_content = ORCHESTRATOR_PROMPT.format(
         bot_name=settings.BOT_NAME,
         sender_name=state.get("sender_name") or "User",
@@ -39,9 +54,10 @@ async def orchestrator_node(state: AgentState) -> dict:
     # Deterministic routing hint (domain/intent/mode), best-effort.
     routing_hint = ""
     try:
-        from app.xninetzy.context.builder import build_context_packet
+        if packet is None:
+            from app.xninetzy.context.builder import build_context_packet
 
-        packet = build_context_packet(state["message"], metadata)
+            packet = build_context_packet(state["message"], metadata)
         routing_hint = (
             f"Domain: {packet.domain}\nIntent: {packet.intent}\nMode: {packet.mode}\n"
         )

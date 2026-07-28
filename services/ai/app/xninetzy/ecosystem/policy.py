@@ -12,8 +12,14 @@ CONFIRMATION_REQUIRED_ACTIONS = {
 }
 
 NEVER_LOG = {
-    "password", "sesskey", "logintoken", "cookie",
-    "token", "secret", "private_key", "credential",
+    "password",
+    "sesskey",
+    "logintoken",
+    "cookie",
+    "token",
+    "secret",
+    "private_key",
+    "credential",
 }
 
 ACADEMIC_INTEGRITY_NOTE = (

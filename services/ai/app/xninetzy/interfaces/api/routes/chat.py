@@ -1,14 +1,19 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.xninetzy.agent.graph import get_compiled_graph
 from app.xninetzy.ecosystem.command_router import parse_command
 from app.xninetzy.os.memory.chat_store import ChatStore
 from app.xninetzy.os.ai_preferences import resolve_user_profile
 from app.xninetzy.schemas.chat import ChatRequest, ChatResponse
+from app.xninetzy.interfaces.api.deps.auth import require_api_key
+from app.xninetzy.interfaces.api.owner_policy import (
+    authorize_owner,
+    owner_denied_message,
+)
 
-router = APIRouter(tags=["chat"])
+router = APIRouter(tags=["chat"], dependencies=[Depends(require_api_key)])
 
 
 def _has_media(metadata: dict | None) -> bool:
@@ -89,6 +94,10 @@ async def _maybe_run_workflow(request: ChatRequest) -> str | None:
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
+    owner = authorize_owner(request.sender_id)
+    if not owner.allowed:
+        return ChatResponse(reply=owner_denied_message(owner.reason))
+
     # 1. Check for slash command (deterministic routing, skip LangGraph)
     tool_name, kwargs = parse_command(request.message)
     if tool_name:

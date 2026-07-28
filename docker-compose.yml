@@ -4,6 +4,8 @@ services:
       context: ./services/ai
     env_file:
       - .env
+    # Match host ownership so MCP host and Docker share writable data/vault files.
+    user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     # AI, WA and CLI use distinct host ports; Flaz is reached over HTTPS.
     network_mode: host
     environment:
@@ -41,6 +43,7 @@ services:
       WA_COMMAND_PREFIX: "!"
       WA_MEDIA_DIR: /app/data/wa-media
       WA_MEDIA_MAX_BYTES: "26214400"
+      WA_PROCESSING_DIR: /app/sessions/processing
     depends_on:
       ai:
         condition: service_healthy

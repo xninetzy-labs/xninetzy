@@ -69,10 +69,17 @@ export const env = {
   WA_GROUP_TREAT_ANY_MENTION_AS_BOT: process.env.WA_GROUP_TREAT_ANY_MENTION_AS_BOT === "true",
   WA_MEDIA_DIR: process.env.WA_MEDIA_DIR ?? "/app/data/wa-media",
   WA_MEDIA_MAX_BYTES: parseNumber(process.env.WA_MEDIA_MAX_BYTES, 25 * 1024 * 1024),
+  WA_PROCESSING_DIR:
+    process.env.WA_PROCESSING_DIR ??
+    path.resolve(process.env.WA_AUTH_DIR ?? path.resolve(process.cwd(), "sessions"), "processing"),
+  WA_MESSAGE_LEASE_MS: parseNumber(process.env.WA_MESSAGE_LEASE_MS, 5 * 60_000),
+  WA_MESSAGE_RETRY_DELAY_MS: parseNumber(process.env.WA_MESSAGE_RETRY_DELAY_MS, 60_000),
+  WA_MESSAGE_RETENTION: parseNumber(process.env.WA_MESSAGE_RETENTION, 5_000),
   AI_BASE_URL: process.env.AI_API_URL ?? process.env.AI_BASE_URL ?? "http://ai:8000",
   AI_CHAT_ENDPOINT: process.env.AI_CHAT_ENDPOINT ?? "/api/chat",
   AI_TIMEOUT_MS: parseNumber(process.env.AI_TIMEOUT_MS, 60_000),
   AI_API_URL: process.env.AI_API_URL ?? process.env.AI_BASE_URL ?? "http://ai:8000",
+  AI_API_KEY: process.env.AI_API_KEY ?? "",
   MCP_SERVER_ENABLED: process.env.MCP_SERVER_ENABLED !== "false",
   MCP_HOST: process.env.MCP_HOST ?? "0.0.0.0",
   MCP_PORT: parseNumber(process.env.MCP_PORT, 8081),

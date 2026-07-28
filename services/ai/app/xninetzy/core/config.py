@@ -60,6 +60,9 @@ class Settings(BaseSettings):
     CODING_AGENT_MAX_OUTPUT_CHARS: int = 12_000
     CODING_AGENT_SANDBOX: str = "workspace-write"
     CODING_AGENT_ENV_ALLOWLIST: str = "PATH,HOME,USER,LOGNAME,LANG,LC_ALL,TERM,TMPDIR,XDG_CONFIG_HOME,XDG_DATA_HOME,XDG_CACHE_HOME,SSL_CERT_FILE,SSL_CERT_DIR,CODEX_HOME"
+    CODING_AGENT_REQUIRE_XNINETZY_MCP: bool = True
+    CODING_AGENT_MCP_SERVER_NAME: str = "xninetzy"
+    CODING_AGENT_MCP_PREFLIGHT_TIMEOUT_SECONDS: float = 15.0
     CODEX_BIN: str = "codex"
     CODEX_MODEL: str = ""
     CLAUDE_CODE_BIN: str = "claude"
@@ -70,13 +73,18 @@ class Settings(BaseSettings):
     BOT_NAME: str = "Xninetzy AI"
     BOT_OWNER: str = "Misbahul Muttaqin"
     AI_API_KEY: str = ""
+    AI_API_AUTH_REQUIRED: bool = True
+    SINGLE_OWNER_MODE: bool = True
+    OWNER_ALLOWED_JIDS: str = ""
 
     DATA_DIR: str = "/app/data"
     SQLITE_PATH: str = "/app/data/xninetzy.sqlite3"
+    BACKUP_DIR: str = "/app/data/backups"
+    BACKUP_RETENTION: int = 14
 
     AGENT_MAX_ITERATIONS: int = 10
     CHAT_HISTORY_LIMIT: int = 20
-    AGENT_DEBUG_ENDPOINTS: bool = True
+    AGENT_DEBUG_ENDPOINTS: bool = False
 
     OBSIDIAN_ENABLED: bool = True
     OBSIDIAN_VAULT_HOST_PATH: str = "~/Documents/xninetzy"
@@ -102,6 +110,11 @@ class Settings(BaseSettings):
     MCP_RUNTIME_MODE: str = "auto"  # auto | host | container
     MCP_HOST_DATA_DIR: str = ""
     MCP_HOST_SQLITE_PATH: str = ""
+    # Local stdio clients are treated as the installation owner. Context
+    # arguments are injected server-side and are not trusted from MCP callers.
+    MCP_PRINCIPAL_ID: str = ""
+    MCP_PRINCIPAL_NAME: str = ""
+    MCP_DEFAULT_CHAT_ID: str = ""
 
     # OCR for WhatsApp images and scanned PDFs
     OCR_ENABLED: bool = True
@@ -191,6 +204,9 @@ class Settings(BaseSettings):
     EMBEDDING_PROVIDER: str = "sentence_transformers"
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
     RAG_TOP_K: int = 5
+    RAG_AUTO_GROUND_ENABLED: bool = True
+    RAG_MIN_EVIDENCE: int = 1
+    RAG_MAX_CONTEXT_CHARS: int = 6_000
 
     # Graph memory
     NEO4J_ENABLED: bool = False

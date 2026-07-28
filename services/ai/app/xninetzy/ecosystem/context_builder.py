@@ -14,10 +14,15 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         "academic_schedule": [],
         "recent_daily_summary": None,
         "relevant_knowledge": [],
+        "active_roadmaps": [],
+        "habit_status": [],
+        "workout_summary": None,
+        "recent_events": [],
     }
 
     try:
         from app.xninetzy.os.life.goal_manager import list_goals
+
         goals = list_goals(status="active", limit=3)
         context["active_goals"] = [
             f"{g['title']} ({g.get('domain', '?')}, {g.get('horizon', '?')})"
@@ -28,10 +33,10 @@ def build_personal_context(chat_id: str, message: str) -> dict:
 
     try:
         from app.xninetzy.os.life.task_manager import list_tasks_today
+
         tasks = list_tasks_today()[:5]
         context["today_tasks"] = [
-            f"[{t.get('priority', '?')}] {t['title']}"
-            for t in tasks
+            f"[{t.get('priority', '?')}] {t['title']}" for t in tasks
         ]
     except Exception as e:
         logger.debug("Context: tasks fetch failed: %s", e)
@@ -40,8 +45,10 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         from app.xninetzy.os.academic.hebat.storage import list_assignments
 
         assigns = [
-            a for a in list_assignments()
-            if a.get("due_at") and a.get("submission_status", "").lower() not in ("submitted for grading",)
+            a
+            for a in list_assignments()
+            if a.get("due_at")
+            and a.get("submission_status", "").lower() not in ("submitted for grading",)
         ]
         deadlines = []
         for a in assigns[:3]:
@@ -68,6 +75,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
 
     try:
         from app.xninetzy.os.life.journal_manager import get_latest_review
+
         review = get_latest_review()
         if review:
             context["recent_daily_summary"] = review.get("summary", "")[:200]
@@ -75,8 +83,55 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: daily review fetch failed: %s", e)
 
     try:
-        if any(kw in message.lower() for kw in ["belajar", "materi", "konsep", "jelaskan", "apa itu"]):
+        from app.xninetzy.domains.it_learning.roadmap_store import (
+            list_roadmaps_with_progress,
+        )
+
+        roadmaps = list_roadmaps_with_progress(chat_id, status="active", limit=3)
+        context["active_roadmaps"] = [
+            f"{r['topic']} ({r.get('completed_tasks') or 0}/{r.get('task_count') or 0} task)"
+            for r in roadmaps
+        ]
+    except Exception as e:
+        logger.debug("Context: roadmap fetch failed: %s", e)
+
+    try:
+        from app.xninetzy.os.life.habit_manager import get_habit_today
+
+        context["habit_status"] = [
+            f"{h['name']} {h['done_today']}/{h['target_count']}"
+            for h in get_habit_today()[:5]
+        ]
+    except Exception as e:
+        logger.debug("Context: habit fetch failed: %s", e)
+
+    try:
+        from app.xninetzy.os.life.workout_manager import get_workout_summary
+
+        workout = get_workout_summary("week")
+        context["workout_summary"] = (
+            f"{workout['session_count']} sesi, {workout['total_minutes']} menit minggu ini"
+        )
+    except Exception as e:
+        logger.debug("Context: workout fetch failed: %s", e)
+
+    try:
+        from app.xninetzy.ecosystem.event_bus import recent_events
+
+        context["recent_events"] = [
+            f"{event['event_type']}:{event.get('entity_type') or 'system'}"
+            for event in recent_events(chat_id, limit=5)
+        ]
+    except Exception as e:
+        logger.debug("Context: recent events fetch failed: %s", e)
+
+    try:
+        if any(
+            kw in message.lower()
+            for kw in ["belajar", "materi", "konsep", "jelaskan", "apa itu"]
+        ):
             from app.xninetzy.os.knowledge.rag import quick_search
+
             hits = quick_search(message, limit=3)
             context["relevant_knowledge"] = [h.get("title", "?") for h in hits]
     except Exception as e:
@@ -106,6 +161,18 @@ def format_context_for_prompt(ctx: dict) -> str:
 
     if ctx.get("relevant_knowledge"):
         parts.append("Relevant knowledge: " + ", ".join(ctx["relevant_knowledge"]))
+
+    if ctx.get("active_roadmaps"):
+        parts.append("Active learning roadmaps: " + " | ".join(ctx["active_roadmaps"]))
+
+    if ctx.get("habit_status"):
+        parts.append("Today habits: " + " | ".join(ctx["habit_status"]))
+
+    if ctx.get("workout_summary"):
+        parts.append("Workout: " + ctx["workout_summary"])
+
+    if ctx.get("recent_events"):
+        parts.append("Recent OS events: " + " | ".join(ctx["recent_events"]))
 
     if not parts:
         return ""

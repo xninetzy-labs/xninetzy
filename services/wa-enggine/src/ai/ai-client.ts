@@ -6,6 +6,9 @@ import type { AIChatPayload, AIChatResponse } from "../types/ai";
 const client = axios.create({
   baseURL: env.AI_API_URL,
   timeout: env.AI_TIMEOUT_MS || 60_000,
+  headers: env.AI_API_KEY
+    ? { Authorization: `Bearer ${env.AI_API_KEY}` }
+    : undefined,
 });
 
 export async function sendChatToAI(

@@ -6,6 +6,9 @@ from zoneinfo import ZoneInfo
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.db.sqlite import connect, init_db
+from app.xninetzy.core.logging import logging
+
+logger = logging.getLogger(__name__)
 
 
 def record_event(
@@ -15,23 +18,40 @@ def record_event(
     entity_type: str | None = None,
     entity_id: str | None = None,
     payload: dict | None = None,
-) -> None:
+) -> int:
     """Record a lifecycle event to the ecosystem timeline."""
     init_db()
     now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).isoformat()
     with connect() as conn:
-        conn.execute(
+        result = conn.execute(
             """
             INSERT INTO ecosystem_events
               (chat_id, event_type, source, entity_type, entity_id, payload_json, created_at)
             VALUES (?,?,?,?,?,?,?)
             """,
-            (chat_id, event_type, source, entity_type, entity_id,
-             json.dumps(payload or {}, ensure_ascii=False), now),
+            (
+                chat_id,
+                event_type,
+                source,
+                entity_type,
+                entity_id,
+                json.dumps(payload or {}, ensure_ascii=False),
+                now,
+            ),
         )
+        event_id = int(result.lastrowid)
+    try:
+        from app.xninetzy.ecosystem.reducers import consume_event
+
+        consume_event(event_id)
+    except Exception:
+        logger.exception("Ecosystem reducer failed for event %s", event_id)
+    return event_id
 
 
-def recent_events(chat_id: str, limit: int = 20, event_type: str | None = None) -> list[dict]:
+def recent_events(
+    chat_id: str, limit: int = 20, event_type: str | None = None
+) -> list[dict]:
     init_db()
     with connect() as conn:
         if event_type:

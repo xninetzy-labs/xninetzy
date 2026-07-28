@@ -1,12 +1,17 @@
 from __future__ import annotations
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 
 from app.xninetzy.os.memory.chat_store import ChatStore
 from app.xninetzy.schemas.routing import ToolInvokeRequest
 from app.xninetzy.tools.registry import get_tool_descriptions, get_all_tools
+from app.xninetzy.interfaces.api.deps.auth import require_api_key
 
-router = APIRouter(prefix="/debug", tags=["debug"])
+router = APIRouter(
+    prefix="/debug",
+    tags=["debug"],
+    dependencies=[Depends(require_api_key)],
+)
 
 
 @router.get("/tools")
@@ -24,8 +29,7 @@ async def get_memory(chat_id: str, limit: int = 20) -> dict:
         "chat_id": chat_id,
         "count": len(messages),
         "messages": [
-            {"role": type(m).__name__, "content": m.content}
-            for m in messages
+            {"role": type(m).__name__, "content": m.content} for m in messages
         ],
     }
 
@@ -42,7 +46,10 @@ async def invoke_tool(tool_name: str, request: ToolInvokeRequest) -> dict:
     """Directly invoke a tool by name for testing."""
     tools = {t.name: t for t in get_all_tools()}
     if tool_name not in tools:
-        return {"error": f"Tool '{tool_name}' not found", "available": list(tools.keys())}
+        return {
+            "error": f"Tool '{tool_name}' not found",
+            "available": list(tools.keys()),
+        }
     try:
         result = await tools[tool_name].ainvoke(request.args)
         return {"tool": tool_name, "result": result}

@@ -1,5 +1,9 @@
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
+ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
+    UV_CACHE_DIR=/tmp/uv-cache \
+    HOME=/tmp/xninetzy-home
+
 WORKDIR /app
 
 # System deps: Chromium for Playwright + PDF libs
@@ -14,15 +18,19 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock ./
+RUN chmod -R a+rX /ms-playwright
 RUN uv sync --no-dev
 
 # Install Playwright browser binaries (Chromium only)
 RUN uv run --no-dev playwright install chromium
 
+RUN mkdir -p /tmp/xninetzy-home /tmp/uv-cache \
+    && chmod -R a+rwX /app/data /tmp/xninetzy-home /tmp/uv-cache
 COPY app ./app
+COPY scripts ./scripts
 
 # Create data directories
-RUN mkdir -p /app/data/hebat/downloads /app/data/hebat/browser-profiles /app/data/wa-media
+RUN mkdir -p /app/data/hebat/downloads /app/data/hebat/browser-profiles /app/data/wa-media /app/data/backups
 
 EXPOSE 8000
 

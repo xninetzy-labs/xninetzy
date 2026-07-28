@@ -10,24 +10,21 @@ def quick_search(query: str, limit: int = 5) -> list[dict]:
     for c in chunks:
         sid = c.get("source_id", 0)
         if sid not in seen:
-            seen[sid] = {"source_id": sid, "title": c.get("title", "?"),
-                         "source_type": c.get("source_type", "?"), "score": c.get("score", 0)}
+            seen[sid] = {
+                "source_id": sid,
+                "title": c.get("title", "?"),
+                "source_type": c.get("source_type", "?"),
+                "score": c.get("score", 0),
+            }
     return list(seen.values())
 
 
 def build_rag_context(query: str, top_k: int | None = None) -> str:
-    """Build a RAG context string from top matching chunks."""
-    from app.xninetzy.core.config import get_settings
-    k = top_k or get_settings().RAG_TOP_K
-    chunks = semantic_search(query, limit=k)
-    if not chunks:
-        return ""
+    """Backward-compatible evidence context; never returns unlabelled raw chunks."""
+    from app.xninetzy.os.knowledge.retrieval import (
+        render_evidence_bundle,
+        retrieve_evidence,
+    )
 
-    parts: list[str] = ["[Konteks dari knowledge base:]\n"]
-    for i, c in enumerate(chunks, 1):
-        title = c.get("title", "?")
-        text = c.get("text", "")[:600]
-        score = c.get("score", 0)
-        parts.append(f"[{i}] Sumber: {title} (relevance: {score:.2f})\n{text}\n")
-
-    return "\n".join(parts)
+    bundle = retrieve_evidence(query, limit=top_k)
+    return render_evidence_bundle(bundle) if bundle.evidence else ""

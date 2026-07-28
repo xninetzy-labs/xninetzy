@@ -86,6 +86,29 @@ def run_migrations() -> None:
         )
         """,
         """
+        CREATE TABLE IF NOT EXISTS entity_links (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            chat_id TEXT,
+            source_type TEXT NOT NULL,
+            source_id TEXT NOT NULL,
+            relation TEXT NOT NULL,
+            target_type TEXT NOT NULL,
+            target_id TEXT NOT NULL,
+            metadata_json TEXT DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            UNIQUE(source_type, source_id, relation, target_type, target_id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_entity_links_target ON entity_links(target_type, target_id)",
+        """
+        CREATE TABLE IF NOT EXISTS ecosystem_event_consumptions (
+            event_id INTEGER NOT NULL,
+            reducer TEXT NOT NULL,
+            consumed_at TEXT NOT NULL,
+            PRIMARY KEY (event_id, reducer)
+        )
+        """,
+        """
         CREATE TABLE IF NOT EXISTS graph_nodes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             node_type TEXT NOT NULL,

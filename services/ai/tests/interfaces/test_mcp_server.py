@@ -6,17 +6,25 @@ from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
 from app.xninetzy.interfaces.mcp_server import mcp
+from app.xninetzy.tools.registry import get_all_tools
 
 
-def test_mcp_server_exposes_curated_xninetzy_tools():
+def test_mcp_server_exposes_all_registered_xninetzy_tools():
     names = {tool.name for tool in mcp._tool_manager.list_tools()}
+    registry_names = {tool.name for tool in get_all_tools()}
 
-    assert "obsidian_read" in names
-    assert "obsidian_create" in names
-    assert "knowledge_search" in names
-    assert "task_capture" in names
-    assert "reminder_create" in names
-    assert "coding_agent_run" not in names
+    assert names == registry_names
+    assert "deep_research_topic" in names
+    assert "hebat_sync_courses" in names
+    assert "hebat_list_courses" in names
+    assert "portal_schedule" in names
+    assert "coding_agent_run" in names
+
+    coding_tool = mcp._tool_manager.get_tool("coding_agent_run")
+    assert coding_tool is not None
+    assert "sender_id" not in coding_tool.parameters["properties"]
+    assert "sender_name" not in coding_tool.parameters["properties"]
+    assert "chat_id" not in coding_tool.parameters["properties"]
 
 
 @pytest.mark.asyncio
@@ -37,7 +45,9 @@ async def test_mcp_stdio_transport_lists_tools():
         async with ClientSession(read_stream, write_stream) as session:
             await session.initialize()
             tools = await session.list_tools()
-    assert len(tools.tools) == 22
+    assert len(tools.tools) == len(get_all_tools())
+    assert any(tool.name == "deep_research_topic" for tool in tools.tools)
+    assert any(tool.name == "hebat_sync_courses" for tool in tools.tools)
 
 
 @pytest.mark.asyncio

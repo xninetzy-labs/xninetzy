@@ -1,0 +1,27 @@
+---
+type Props = { name: 'arrow' | 'book' | 'code' | 'menu' | 'search' | 'x' };
+const { name } = Astro.props;
+const paths = {
+  arrow: '<path d="M5 12h14m-5-5 5 5-5 5"/>',
+  book: '<path d="M4 5.5A2.5 2.5 0 0 1 6.5 3H11a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3H4V5.5Zm16 0A2.5 2.5 0 0 0 17.5 3H14v18a3 3 0 0 1 3-3h3V5.5Z"/>',
+  code: '<path d="m8 9-4 3 4 3m8-6 4 3-4 3m-3-9-2 12"/>',
+  menu: '<path d="M4 7h16M4 12h16M4 17h16"/>',
+  search: '<circle cx="11" cy="11" r="6"/><path d="m16 16 4 4"/>',
+  x: '<path d="m6 6 12 12M18 6 6 18"/>'
+};
+---
+
+<svg viewBox="0 0 24 24" aria-hidden="true" set:html={paths[name]} />
+
+<style>
+  svg {
+    display: block;
+    width: 1.1rem;
+    height: 1.1rem;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+</style>

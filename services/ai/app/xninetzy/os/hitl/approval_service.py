@@ -41,6 +41,19 @@ def list_pending() -> list[dict]:
     return [dict(row) for row in rows]
 
 
+def _execute_approved_action(row: dict) -> str:
+    """Execute the approved payload. Handlers must be idempotent."""
+    payload = json.loads(row.get("payload_json") or "{}")
+    if row.get("action_type") == "activate_learning_roadmap":
+        from app.xninetzy.domains.it_learning.roadmap_store import activate_roadmap
+
+        roadmap_id = int(payload["roadmap_id"])
+        if not activate_roadmap(roadmap_id):
+            raise ValueError(f"Roadmap #{roadmap_id} tidak ditemukan.")
+        return f" Roadmap #{roadmap_id} diaktifkan dan task belajar disiapkan."
+    return ""
+
+
 def set_approval_status(approval_id: int, status: str, sender_id: str | None, sender_name: str | None) -> tuple[bool, str]:
     if not is_owner_admin(sender_id, sender_name):
         return False, "Maaf, approval ini hanya bisa dilakukan oleh admin."
@@ -49,13 +62,21 @@ def set_approval_status(approval_id: int, status: str, sender_id: str | None, se
         row = conn.execute("SELECT * FROM approval_requests WHERE id=?", (approval_id,)).fetchone()
         if not row:
             return False, f"Approval #{approval_id} tidak ditemukan."
+        row_data = dict(row)
         if row["status"] != "pending":
+            if row["status"] == "approved" and status == "approved":
+                action_message = _execute_approved_action(row_data)
+                return True, f"Approval #{approval_id} sudah berstatus approved.{action_message}"
             return False, f"Approval #{approval_id} sudah berstatus {row['status']}."
         conn.execute(
             f"UPDATE approval_requests SET status=?, {column}=? WHERE id=?",
             (status, _now(), approval_id),
         )
-    return True, f"Approval #{approval_id} {status}."
+    if status == "approved":
+        action_message = _execute_approved_action(row_data)
+    else:
+        action_message = ""
+    return True, f"Approval #{approval_id} {status}.{action_message}"
 
 
 def get_approval_status(approval_id: int) -> dict | None:

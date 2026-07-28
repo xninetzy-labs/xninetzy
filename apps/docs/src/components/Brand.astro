@@ -1,0 +1,30 @@
+---
+type Props = { compact?: boolean };
+const { compact = false } = Astro.props;
+---
+
+<a class:list={['brand', { compact }]} href="/" aria-label="Xninetzy documentation home">
+  <span class="brand-mark" aria-hidden="true">
+    <svg viewBox="0 0 36 36" role="img">
+      <path d="M8 8l20 20M28 8L8 28" />
+      <circle cx="18" cy="18" r="14" />
+      <circle class="orbit" cx="29" cy="18" r="2" />
+    </svg>
+  </span>
+  <span class="brand-copy">
+    <strong>XNINETZY</strong>
+    {!compact && <small>documentation</small>}
+  </span>
+</a>
+
+<style>
+  .brand { display: inline-flex; align-items: center; gap: .72rem; color: var(--text); text-decoration: none; }
+  .brand-mark { width: 2.15rem; height: 2.15rem; display: grid; place-items: center; border: 1px solid var(--border); border-radius: .72rem; background: linear-gradient(145deg, rgba(139, 92, 246, .2), rgba(249, 115, 22, .06)); box-shadow: 0 0 28px rgba(139, 92, 246, .2); }
+  svg { width: 1.45rem; height: 1.45rem; overflow: visible; }
+  path, circle { fill: none; stroke: var(--purple-bright); stroke-width: 1.8; }
+  .orbit { fill: var(--orange); stroke: var(--surface); }
+  .brand-copy { display: grid; line-height: 1; gap: .28rem; }
+  strong { font: 760 .88rem/1 var(--font-mono); letter-spacing: .2em; }
+  small { color: var(--muted); font: 500 .68rem/1 var(--font-mono); letter-spacing: .08em; }
+  .compact .brand-copy small { display: none; }
+</style>

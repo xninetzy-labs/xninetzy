@@ -6,6 +6,10 @@ from mcp.server.fastmcp import FastMCP
 from app.xninetzy.interfaces.mcp_runtime import (
     MCP_PATH_OVERRIDES as _MCP_PATH_OVERRIDES,
 )
+from app.xninetzy.interfaces.mcp_tool_adapter import (
+    expose_xninetzy_tools,
+    mcp_principal,
+)
 
 from app.xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_answer as _knowledge_answer,
@@ -40,13 +44,17 @@ from app.xninetzy.tools.internal.reminder import (
 
 # stdio MCP reserves stdout for protocol messages, so bootstrap stays silent.
 assert isinstance(_MCP_PATH_OVERRIDES, dict)
+_MCP_PRINCIPAL = mcp_principal()
+_MCP_CONTEXT = _MCP_PRINCIPAL.as_tool_context()
 
 
 mcp = FastMCP(
     "xninetzy",
     instructions=(
-        "Gunakan tools ini untuk mengakses vault Obsidian, knowledge base, task, "
-        "dan reminder Xninetzy. Semua path vault harus relatif terhadap vault."
+        "Akses Xninetzy OS milik owner lokal: Obsidian, knowledge, learning, HEBAT, "
+        "life OS, task, reminder, research, dan workflow. Gunakan knowledge_answer "
+        "untuk jawaban tersintesis dan tersitasi; knowledge_search hanya untuk inspeksi "
+        "bukti. Semua path vault harus relatif terhadap vault."
     ),
 )
 
@@ -128,9 +136,13 @@ def knowledge_search(query: str, limit: int = 5) -> str:
 
 
 @mcp.tool()
-def knowledge_answer(query: str) -> str:
-    """Ambil konteks knowledge yang relevan untuk menjawab query."""
-    return str(_knowledge_answer.invoke({"query": query, "chat_id": "mcp"}))
+async def knowledge_answer(query: str) -> str:
+    """Jawab dari knowledge melalui retrieval, sintesis, dan sitasi tervalidasi."""
+    return str(
+        await _knowledge_answer.ainvoke(
+            {"query": query, "chat_id": _MCP_CONTEXT["chat_id"]}
+        )
+    )
 
 
 @mcp.tool()
@@ -155,7 +167,7 @@ def knowledge_ingest_text(
                 "text": text,
                 "source_type": source_type,
                 "uri": uri or None,
-                "chat_id": "mcp",
+                "chat_id": _MCP_CONTEXT["chat_id"],
             }
         )
     )
@@ -186,7 +198,7 @@ def task_capture(
                 "priority": priority,
                 "due_at": due_at or None,
                 "goal_id": None,
-                "chat_id": "mcp",
+                "chat_id": _MCP_CONTEXT["chat_id"],
             }
         )
     )
@@ -195,25 +207,34 @@ def task_capture(
 @mcp.tool()
 def task_complete(task_id: int) -> str:
     """Tandai task selesai."""
-    return str(_task_complete.invoke({"task_id": task_id, "chat_id": "mcp"}))
+    return str(
+        _task_complete.invoke({"task_id": task_id, "chat_id": _MCP_CONTEXT["chat_id"]})
+    )
 
 
 @mcp.tool()
-def reminder_list(chat_id: str = "mcp") -> str:
-    """Daftar reminder pending untuk namespace chat."""
-    return str(_reminder_list.invoke({"chat_id": chat_id}))
+def reminder_list() -> str:
+    """Daftar reminder pending untuk owner lokal."""
+    return str(_reminder_list.invoke({"chat_id": _MCP_CONTEXT["chat_id"]}))
 
 
 @mcp.tool()
-def reminder_create(message: str, chat_id: str = "mcp") -> str:
+def reminder_create(message: str) -> str:
     """Buat reminder dari kalimat natural language."""
-    return str(_reminder_create.invoke({"chat_id": chat_id, "message": message}))
+    return str(
+        _reminder_create.invoke(
+            {"chat_id": _MCP_CONTEXT["chat_id"], "message": message}
+        )
+    )
 
 
 @mcp.tool()
 def reminder_cancel(reminder_id: int) -> str:
     """Batalkan reminder berdasarkan ID."""
     return str(_reminder_cancel.invoke({"reminder_id": reminder_id}))
+
+
+EXPOSED_XNINETZY_TOOLS = expose_xninetzy_tools(mcp, principal=_MCP_PRINCIPAL)
 
 
 def main() -> None:

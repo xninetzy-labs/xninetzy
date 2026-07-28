@@ -19,7 +19,6 @@ def _types(plan):
 @pytest.fixture(autouse=True)
 def sqlite_tmp(monkeypatch, tmp_path):
     monkeypatch.setenv("SQLITE_PATH", str(tmp_path / "workflow-reminder.sqlite3"))
-    monkeypatch.setenv("DEEPSEEK_API_KEY", "test")
     get_settings.cache_clear()
     init_db()
     run_migrations()

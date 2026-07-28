@@ -6,6 +6,7 @@ import { logger } from "../utils/logger";
 import {
   extractMessageText,
   getChatType,
+  getMessageContextInfo,
   getMediaType,
   type MediaKind,
 } from "./message-parser";
@@ -15,6 +16,7 @@ import { sendTextMessage } from "./message-sender";
 import { createTraceId, maskJid } from "../utils/observability";
 import { isProcessableChatType } from "../types/chat";
 import { cacheMessage } from "./socket-state";
+import { persistMediaMessage } from "../mcp/media-store";
 
 const botSentMessageIds = new Set<string>();
 const MAX_TRACKED_BOT_MESSAGES = 500;
@@ -164,6 +166,8 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
       return;
     }
 
+    await persistRelevantMedia(sock, message, remoteJid);
+
     const groupMeta = chatType === "group"
       ? await resolveGroupAdminMetadata(sock, remoteJid, message.key.participant || undefined)
       : { groupName: null, groupAdmins: [], isGroupAdmin: false };
@@ -233,6 +237,58 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
     );
 
     await sendFallbackReply(sock, remoteJid, chatType, traceId, messageId);
+  }
+}
+
+async function persistRelevantMedia(
+  sock: WASocket,
+  message: WAMessage,
+  remoteJid: string,
+): Promise<void> {
+  const currentMessageId = message.key.id;
+  if (currentMessageId && getMediaType(message.message)) {
+    try {
+      await persistMediaMessage(sock, message, remoteJid, currentMessageId);
+    } catch (error) {
+      logger.warn(
+        {
+          step: "wa_media_persist_failed",
+          attachment: "current",
+          messageId: currentMessageId,
+          err: error,
+        },
+        "Could not persist current WhatsApp media before AI request",
+      );
+    }
+  }
+
+  const context = getMessageContextInfo(message.message);
+  const quotedMessageId = context?.stanzaId;
+  if (!quotedMessageId || !context?.quotedMessage || !getMediaType(context.quotedMessage)) {
+    return;
+  }
+
+  const quotedMessage: WAMessage = {
+    key: {
+      id: quotedMessageId,
+      remoteJid,
+      participant: context.participant ?? undefined,
+      fromMe: false,
+    },
+    message: context.quotedMessage,
+  };
+  try {
+    await persistMediaMessage(sock, quotedMessage, remoteJid, quotedMessageId);
+  } catch (error) {
+    logger.warn(
+      {
+        step: "wa_media_persist_failed",
+        attachment: "quoted",
+        messageId: quotedMessageId,
+        err: error,
+      },
+      "Could not persist quoted WhatsApp media before AI request",
+    );
   }
 }
 

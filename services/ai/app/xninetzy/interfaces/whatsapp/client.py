@@ -82,3 +82,17 @@ async def get_message_metadata(chat_jid: str, message_id: str) -> dict[str, Any]
     except WaToolError as error:
         return {"ok": False, "error": str(error)}
     return {"ok": True, **(data.get("result") or {})}
+
+
+async def get_media_content(chat_jid: str, message_id: str) -> dict[str, Any]:
+    """Fetch durable media bytes when WA and AI do not share a filesystem."""
+    try:
+        data = await call_wa_tool(
+            "get_media_content", {"chat_id": chat_jid, "message_id": message_id}
+        )
+    except WaToolError as error:
+        return {"ok": False, "error": str(error)}
+    result = data.get("result") or {}
+    if not result.get("content_base64"):
+        return {"ok": False, "error": "WA MCP tidak mengembalikan konten media."}
+    return {"ok": True, **result}

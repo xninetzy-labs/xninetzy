@@ -34,7 +34,7 @@ export function Header({ columns, compact = false }: HeaderProps) {
       )}
 
       <Text color={colors.white}>
-        future-ready AI session shell · local mock · cosmos
+        future-ready AI session shell · live backend · cosmos
       </Text>
 
       <Text color={colors.orange}>

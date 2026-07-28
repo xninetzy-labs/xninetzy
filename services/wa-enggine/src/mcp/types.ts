@@ -22,9 +22,16 @@ export type McpToolHandler = (
   context: McpToolContext,
 ) => Promise<unknown>;
 
+export type McpOfflineToolHandler = (
+  input: Record<string, unknown>,
+  context: Pick<McpToolContext, "recentMessages">,
+) => Promise<unknown>;
+
 export interface McpTool {
   definition: McpToolDefinition;
   handler: McpToolHandler;
+  /** Optional read-only path that is safe when the WhatsApp socket is closed. */
+  offlineHandler?: McpOfflineToolHandler;
 }
 
 export interface McpCallRequest {

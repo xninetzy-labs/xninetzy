@@ -9,6 +9,7 @@ from app.xninetzy.agent.prompts import ORCHESTRATOR_PROMPT
 from app.xninetzy.agent.state import AgentState
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.llm import get_llm_flash
+from app.xninetzy.core.providers import profile_from_metadata
 from app.xninetzy.schemas.routing import OrchestratorOutput, RouteDecision
 from app.xninetzy.tools.internal.datetime_info import get_now_info
 
@@ -17,6 +18,15 @@ async def orchestrator_node(state: AgentState) -> dict:
     """Determine routing: agent, direct, or clarify."""
     settings = get_settings()
     now = get_now_info()
+    metadata = state.get("metadata") or {}
+    media = metadata.get("media") or {}
+    quoted_media = metadata.get("quotedMedia") or {}
+    if media.get("hasMedia") or quoted_media.get("hasMedia"):
+        return {
+            "route": RouteDecision.AGENT.value,
+            "clarification_question": None,
+            "messages": [HumanMessage(content=state["message"])],
+        }
 
     system_content = ORCHESTRATOR_PROMPT.format(
         bot_name=settings.BOT_NAME,
@@ -30,8 +40,11 @@ async def orchestrator_node(state: AgentState) -> dict:
     routing_hint = ""
     try:
         from app.xninetzy.context.builder import build_context_packet
-        packet = build_context_packet(state["message"], state.get("metadata") or {})
-        routing_hint = f"Domain: {packet.domain}\nIntent: {packet.intent}\nMode: {packet.mode}\n"
+
+        packet = build_context_packet(state["message"], metadata)
+        routing_hint = (
+            f"Domain: {packet.domain}\nIntent: {packet.intent}\nMode: {packet.mode}\n"
+        )
     except Exception:
         pass
 
@@ -49,11 +62,13 @@ async def orchestrator_node(state: AgentState) -> dict:
         HumanMessage(content=user_content),
     ]
 
-    llm = get_llm_flash()
+    llm = get_llm_flash(profile_from_metadata(metadata))
 
     try:
         structured_llm = llm.with_structured_output(OrchestratorOutput)
         result: OrchestratorOutput = await structured_llm.ainvoke(orchestrator_messages)
+        if not isinstance(result, OrchestratorOutput):
+            raise ValueError("Structured orchestrator returned no routing decision")
     except Exception:
         result = await _fallback_route(llm, orchestrator_messages)
 
@@ -86,7 +101,9 @@ async def _fallback_route(llm, messages) -> OrchestratorOutput:
             return OrchestratorOutput(**data)
     except Exception:
         pass
-    return OrchestratorOutput(route=RouteDecision.DIRECT, reasoning="fallback to direct")
+    return OrchestratorOutput(
+        route=RouteDecision.DIRECT, reasoning="fallback to direct"
+    )
 
 
 def route_from_orchestrator(state: AgentState) -> str:

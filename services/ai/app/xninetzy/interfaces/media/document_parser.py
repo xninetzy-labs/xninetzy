@@ -96,7 +96,48 @@ def _parse_pdf(p: Path) -> str:
     result = read_pdf_text(str(p))
     if result.get("error"):
         raise RuntimeError(result["error"])
-    return result.get("text", "")
+    text = result.get("text", "")
+    if text.strip():
+        return text
+    return _ocr_pdf(p)
+
+
+def _ocr_pdf(p: Path) -> str:
+    """OCR a scanned PDF when pypdf finds no text layer."""
+    from app.xninetzy.core.config import get_settings
+    from app.xninetzy.interfaces.media.image_parser import ocr_pil_image
+
+    settings = get_settings()
+    if not settings.OCR_ENABLED:
+        return ""
+    try:
+        import pypdfium2 as pdfium
+    except ImportError as exc:
+        raise _MissingLib("Library pypdfium2 belum terinstall untuk OCR PDF scan") from exc
+
+    document = pdfium.PdfDocument(str(p))
+    parts: list[str] = []
+    try:
+        page_count = min(len(document), settings.OCR_MAX_PDF_PAGES)
+        for index in range(page_count):
+            page = document[index]
+            try:
+                bitmap = page.render(scale=2)
+                try:
+                    image = bitmap.to_pil()
+                    try:
+                        page_text = ocr_pil_image(image)
+                        if page_text:
+                            parts.append(f"# Page {index + 1}\n{page_text}")
+                    finally:
+                        image.close()
+                finally:
+                    bitmap.close()
+            finally:
+                page.close()
+    finally:
+        document.close()
+    return "\n\n".join(parts)
 
 
 def _parse_text(p: Path) -> str:

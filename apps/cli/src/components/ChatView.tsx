@@ -178,7 +178,7 @@ export function ChatView({ messages, width }: ChatViewProps) {
     return (
       <Box width={width} flexDirection="column" paddingX={1}>
         <Text color={colors.dim}>
-          Local mock session ready. No AI/API/backend calls.
+          Live AI session ready. Ketik pesan untuk mulai.
         </Text>
       </Box>
     );

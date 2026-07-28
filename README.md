@@ -10,12 +10,14 @@ Bot menerima pesan WhatsApp, menentukan apakah pesan cukup dijawab langsung atau
 
 ## Arsitektur
 
-Repo ini adalah monorepo dengan dua service utama:
+Repo ini adalah monorepo dengan dua service utama dan satu terminal client:
 
 ```txt
 services/
-├── ai/          FastAPI + LangGraph + DeepSeek
+├── ai/          FastAPI + LangGraph + LangChain multi-provider
 └── wa-enggine/  Node.js + TypeScript + Baileys
+apps/
+└── cli/         Ink + React terminal chat client
 ```
 
 Alur pesan:
@@ -43,6 +45,9 @@ services/ai
 `services/ai` adalah otak agent, prompt, routing, tool registry, database, memory, research, Obsidian, HEBAT, media, dan HITL approval.
 
 `services/wa-enggine` adalah koneksi WhatsApp. Service ini memegang socket Baileys, menerima pesan, mengirim reply, dan menyediakan MCP-style HTTP tool server agar AI bisa menjalankan aksi WhatsApp.
+
+`apps/cli` adalah client terminal alternatif yang memanggil endpoint `/api/chat`
+yang sama dengan WhatsApp, sehingga provider, memory, routing, dan tools tetap satu sumber.
 
 ---
 
@@ -87,7 +92,7 @@ Lokasi: `services/wa-enggine`
 | Graph RAG | Node/edge topik, sumber, note, roadmap, task, dan context graph |
 | Obsidian | Create/read/search/append Markdown note, daily note, backup sebelum overwrite |
 | Life OS | Goal, task, reminder, money, workout, habit, daily check-in, daily review |
-| Media WhatsApp | Baca dokumen WhatsApp seperti PDF, DOCX, TXT, Markdown, CSV, JSON, XLSX, PPTX |
+| Media WhatsApp | Baca dokumen, quoted attachment, OCR gambar, dan OCR PDF scan |
 | Memory | Memory semantik user, pencarian memory, forget/update memory |
 | Rules & Style | User rules lewat `/rule`, gaya jawaban lewat `/style` |
 | HITL | Approval untuk aksi berdampak besar |
@@ -104,7 +109,7 @@ Untuk Docker:
 
 - Docker
 - Docker Compose
-- DeepSeek API key
+- Flaz API key
 - Akun WhatsApp untuk login Baileys
 
 Untuk local development tanpa Docker:
@@ -113,7 +118,7 @@ Untuk local development tanpa Docker:
 - `uv`
 - Node.js 20+
 - Yarn 1.x
-- DeepSeek API key
+- Flaz API key
 - Playwright Chromium untuk fitur HEBAT browser automation
 
 Opsional:
@@ -133,20 +138,37 @@ Buat file `.env` dari template root:
 cp .env.example .env
 ```
 
-Minimal isi:
+Masukkan API key tanpa menampilkannya di terminal atau history shell:
+
+```bash
+cd services/ai
+uv run python scripts/configure_flaz.py
+```
+
+Script memakai `getpass`, menyimpan key secara atomik ke root `.env`, dan mengatur permission file ke `600`.
+
+Konfigurasi LLM minimal:
 
 ```env
-DEEPSEEK_API_KEY=your_deepseek_api_key
+FLAZ_API_KEY=your-secret-key
+FLAZ_BASE_URL=https://ai.flaz.id/v1
+FLAZ_MODEL=deepseek-v4-pro
 ```
+
+Flaz tetap menjadi default melalui `ChatOpenAI`. Registry juga mendukung OpenAI,
+Anthropic, OpenRouter, Ollama, dan endpoint OpenAI-compatible kustom secara opt-in.
+API key hanya berada di `.env`; pilihan provider/model pengguna disimpan tanpa
+credential. Lihat panduan integrasi di `docs/AI_PROVIDERS_CODING_AGENTS_MCP.md`.
 
 Variabel penting:
 
 ```env
 # LLM
-DEEPSEEK_API_KEY=...
-DEEPSEEK_BASE_URL=https://api.deepseek.com
-DEEPSEEK_MODEL=deepseek-v4-flash
-DEEPSEEK_PRO_MODEL=deepseek-v4-pro
+FLAZ_API_KEY=your-secret-key
+FLAZ_BASE_URL=https://ai.flaz.id/v1
+FLAZ_MODEL=deepseek-v4-pro
+FLAZ_TIMEOUT_SECONDS=120
+FLAZ_MAX_RETRIES=2
 
 # AI API
 AI_API_KEY=
@@ -159,11 +181,11 @@ WA_LOGIN_MODE=qr
 WA_PHONE_NUMBER=628xxxxxxxxxx
 WA_COMMAND_PREFIX=!
 WA_GROUP_TRIGGER_MODE=mention_or_prefix
-AI_BASE_URL=http://ai:8000
-AI_API_URL=http://ai:8000
+AI_BASE_URL=http://127.0.0.1:8000
+AI_API_URL=http://127.0.0.1:8000
 
 # MCP
-WA_MCP_BASE_URL=http://wa-enggine:8081
+WA_MCP_BASE_URL=http://127.0.0.1:8081
 WA_MCP_API_KEY=
 MCP_API_KEY=
 MCP_SERVER_ENABLED=true
@@ -186,7 +208,7 @@ OBSIDIAN_ALLOW_DELETE=false
 HEBAT_USERNAME=
 HEBAT_PASSWORD=
 HEBAT_NOTIFY_CHAT_ID=
-HEBAT_AUTO_LOGIN=true
+HEBAT_AUTO_LOGIN=false
 
 # Search providers
 TAVILY_API_KEY=
@@ -201,20 +223,22 @@ AI_API_URL=http://localhost:8000
 AI_BASE_URL=http://localhost:8000
 ```
 
-Untuk Docker Compose, gunakan:
+Compose Linux menggunakan host networking, jadi endpoint antarproses tetap localhost:
 
 ```env
-AI_API_URL=http://ai:8000
-AI_BASE_URL=http://ai:8000
+AI_API_URL=http://127.0.0.1:8000
+AI_BASE_URL=http://127.0.0.1:8000
 ```
 
 ---
 
 ## Menjalankan dengan Docker
 
+Isi `FLAZ_API_KEY` di `.env`, lalu jalankan:
+
 ```bash
 cp .env.example .env
-# edit .env dan isi DEEPSEEK_API_KEY
+# edit .env dan isi FLAZ_API_KEY
 docker compose up --build
 ```
 
@@ -224,6 +248,18 @@ Service yang berjalan:
 |---|---|---|
 | `ai` | `http://localhost:8000` | FastAPI AI service |
 | `wa-enggine` | `http://localhost:8081` | MCP server + WhatsApp worker |
+
+Client CLI interaktif berjalan melalui profile `tools`:
+
+```bash
+docker compose --profile tools run --rm cli
+```
+
+CLI non-interaktif juga dapat dipakai untuk smoke test:
+
+```bash
+printf 'Balas hanya CLI_OK\n' | docker compose --profile tools run --rm -T cli
+```
 
 Lihat log WhatsApp:
 
@@ -301,7 +337,8 @@ mkdir -p services/wa-enggine/sessions
 docker compose up --build wa-enggine ai
 ```
 
-Jangan jalankan Docker `wa-enggine` dan `yarn dev` bersamaan untuk akun WhatsApp yang sama.
+Compose menggunakan `network_mode: host` pada Linux. Jangan jalankan Docker
+`wa-enggine` dan `yarn dev` bersamaan untuk akun WhatsApp yang sama.
 
 ---
 
@@ -309,10 +346,10 @@ Jangan jalankan Docker `wa-enggine` dan `yarn dev` bersamaan untuk akun WhatsApp
 
 ### AI Service
 
+Pastikan `FLAZ_API_KEY` sudah diisi di root `.env`, lalu jalankan:
+
 ```bash
 cd services/ai
-cp .env.example .env
-# isi DEEPSEEK_API_KEY
 uv sync
 uv run uvicorn app.main:app --host 0.0.0.0 --port 8000 --reload
 ```
@@ -393,6 +430,11 @@ Slash command diproses deterministik oleh `app/ecosystem/command_router.py`.
 | `/review` | Daily review |
 | `/hebat` | Digest akademik HEBAT |
 | `/hebat-debug` | Debug login HEBAT aman |
+| `/jadwal` | Baca snapshot jadwal lokal terenkripsi |
+| `/portalinfo` | Status cache/session portal mahasiswa |
+| `/krs-watcher` | Status watcher KRS read/notify-only |
+| `/web-analysis [site]` | Status cache struktur web |
+| `/web-refresh <site>` | Refresh struktur allowlisted secara read-only |
 | `/research <topik>` | Research ringan |
 | `/deep-research <topik>` | Deep research mode balanced |
 | `/deep-research speed <topik>` | Deep research cepat |
@@ -408,7 +450,7 @@ Slash command diproses deterministik oleh `app/ecosystem/command_router.py`.
 | `/approve <id>` | Approve request |
 | `/reject <id>` | Reject request |
 | `/media-info` | Info media terlampir |
-| `/analyze-media` | Analisis media terlampir |
+| `/analyze-media` | Ekstrak dokumen atau OCR gambar terlampir/reply |
 | `/rule list` | Daftar aturan user |
 | `/rule add <aturan>` | Tambah aturan |
 | `/rule off <id>` | Disable aturan |
@@ -554,16 +596,13 @@ Docker Compose mount beberapa data lokal:
 | Host / Volume | Container | Isi |
 |---|---|---|
 | `./services/ai/data` | `/app/data` | SQLite, FAISS, HEBAT downloads, browser profile |
-| `~/Documents/xninetzy` | `/app/obsidian-vault` | Obsidian vault |
+| `OBSIDIAN_VAULT_HOST_PATH` | `/app/obsidian-vault` | Obsidian vault |
 | `wa-media` volume | `/app/data/wa-media` | Media WhatsApp shared antara AI dan WA engine |
 | `./services/wa-enggine/sessions` | `/app/sessions` | Session Baileys WhatsApp |
 
-Jika `~` tidak resolve di environment Docker, ubah mount vault di `docker-compose.yml` menjadi absolute path:
-
-```yaml
-volumes:
-  - /home/<user>/Documents/xninetzy:/app/obsidian-vault
-```
+Set `OBSIDIAN_VAULT_HOST_PATH` di `.env` ke absolute path vault pada host,
+misalnya `/home/<user>/Documents/xninetzy`. Docker Compose menolak start jika
+variable ini kosong, sehingga tidak membuat folder `~` literal secara tidak sengaja.
 
 File data lokal seperti SQLite, WAL/SHM, session Baileys, browser storage state, dan media hasil download tidak boleh dicommit.
 
@@ -580,7 +619,7 @@ Default vault container:
 Default host mount:
 
 ```txt
-~/Documents/xninetzy
+/absolute/path/to/obsidian-vault
 ```
 
 Safety bawaan:
@@ -609,7 +648,7 @@ HEBAT_LOGIN_URL=https://hebat.elearning.unair.ac.id/login/index.php
 HEBAT_USERNAME=
 HEBAT_PASSWORD=
 HEBAT_NOTIFY_CHAT_ID=
-HEBAT_AUTO_LOGIN=true
+HEBAT_AUTO_LOGIN=false
 HEBAT_BROWSER_HEADLESS=true
 HEBAT_REQUIRE_CONFIRMATION=true
 HEBAT_MAX_UPLOAD_BYTES=5242880
@@ -628,6 +667,42 @@ cek deadline hebat
 ```
 
 Upload tugas dirancang memakai token konfirmasi. Bot akan menyiapkan submission terlebih dahulu, lalu user harus mengirim konfirmasi token sebelum upload dijalankan.
+
+---
+
+## Local Web Analysis
+
+Web Analysis Engine adalah modul single-owner: satu instalasi untuk satu pemilik dan
+seluruh proses berjalan lokal di AI Docker service/background loop. Engine tidak
+dirancang sebagai layanan cloud atau multi-tenant.
+
+Structural cache (`analisis_web.md`) hanya memuat selector, path, nama field,
+structure hash, serta metadata endpoint GET/HEAD yang sudah disanitasi. Jadwal,
+nilai, cookie, dan data pribadi tidak masuk Markdown; snapshot akademik dan
+`storage_state` disimpan terpisah dengan Fernet encryption.
+
+Setup env penting tersedia lengkap di `.env.example`. Buat encryption key satu kali,
+simpan hanya di `.env`, lalu login manual dari host yang punya display:
+
+```bash
+cd services/ai
+uv run python -m app.xninetzy.os.web_analysis.cli login --site mahasiswa
+uv run python -m app.xninetzy.os.web_analysis.cli login --site hebat
+```
+
+Analisis struktur publik dapat dijalankan tanpa session:
+
+```bash
+uv run python -m app.xninetzy.os.web_analysis.cli analyze --site mahasiswa --force
+uv run python -m app.xninetzy.os.web_analysis.cli analyze --site hebat --force
+```
+
+CAPTCHA/OTP selalu diselesaikan manual. Analyzer tidak mengisi form, mengeklik
+tombol, atau mengirim method selain GET/HEAD. KRS dibatasi permanen ke monitoring
+dan notifikasi; submit tetap tindakan manual owner.
+
+Planning dan kontrak teknis: `docs/plan/PLANNING_WEB_ANALYSIS_AGENT.md` dan
+`docs/plan/design_tool.md`.
 
 ---
 
@@ -689,7 +764,7 @@ AI service memiliki test suite pytest untuk command router, research, HITL, Grap
 
 ```bash
 cd services/ai
-DEEPSEEK_API_KEY=test SQLITE_PATH=/tmp/xninetzy-pytest.sqlite3 \
+SQLITE_PATH=/tmp/xninetzy-pytest.sqlite3 \
   uv run --with pytest --with pytest-asyncio python -m pytest -q -o asyncio_mode=auto tests/
 ```
 
@@ -700,7 +775,7 @@ cd services/wa-enggine
 yarn build
 ```
 
-Belum ada test runner TypeScript khusus di `package.json`; validasi minimal sisi WA saat ini adalah `yarn build`.
+WA engine memiliki smoke/unit test TypeScript (`yarn test`) dan build check (`yarn build`).
 
 ---
 
@@ -750,13 +825,11 @@ Belum ada test runner TypeScript khusus di `package.json`; validasi minimal sisi
 
 ## Troubleshooting
 
-### AI service gagal start karena API key
+### AI service tidak bisa menghubungi model
 
-Pastikan `.env` berisi:
-
-```env
-DEEPSEEK_API_KEY=...
-```
+Pastikan `FLAZ_API_KEY` terisi dan cek `FLAZ_BASE_URL` serta `FLAZ_MODEL`.
+Nilai default endpoint adalah `https://ai.flaz.id/v1` dengan model
+`deepseek-v4-pro`.
 
 ### WhatsApp tidak muncul QR/pairing code
 
@@ -798,7 +871,7 @@ curl http://localhost:8081/health
 Pastikan `WA_MCP_BASE_URL` di AI mengarah ke MCP server:
 
 ```env
-WA_MCP_BASE_URL=http://wa-enggine:8081
+WA_MCP_BASE_URL=http://127.0.0.1:8081
 ```
 
 Untuk local manual, gunakan:
@@ -868,3 +941,31 @@ Repo ini sudah memiliki banyak modul fitur, tetapi beberapa area masih perlu dip
 - repo hygiene untuk data lokal.
 
 Untuk development lokal, Docker Compose adalah jalur paling praktis. Untuk production, jalankan service di jaringan private, batasi port publik, dan aktifkan API key.
+
+---
+
+## Multi-provider, Coding Agent, dan MCP
+
+Chat AI dapat dipilih per pengguna dari provider/model yang diaktifkan operator:
+
+```text
+/llm list
+/llm use flaz deepseek-v4-pro
+```
+
+Codex, Claude Code, atau OpenCode dapat dipilih sebagai runtime coding lokal yang terpisah:
+
+```text
+/agent list
+/agent use codex
+/code jalankan test terkait lalu perbaiki kegagalannya
+```
+
+Runtime coding dinonaktifkan secara default dan dapat dibatasi ke admin serta satu allowed workspace. Repository juga menyertakan MCP stdio Xninetzy untuk memberi Codex, Claude Code, dan OpenCode akses terkurasi ke Obsidian, knowledge, task, dan reminder:
+
+- Codex: `.codex/config.toml`
+- Claude Code: `.mcp.json`
+- OpenCode: `opencode.json`
+- Server: `services/ai/app/xninetzy/interfaces/mcp_server.py`
+
+Panduan setup, keamanan, command, Docker, dan troubleshooting: [Provider LLM, Coding Agent, dan MCP](docs/AI_PROVIDERS_CODING_AGENTS_MCP.md).

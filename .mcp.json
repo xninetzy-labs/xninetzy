@@ -1,0 +1,19 @@
+{
+  "mcpServers": {
+    "xninetzy": {
+      "type": "stdio",
+      "command": "uv",
+      "args": [
+        "run",
+        "--directory",
+        "services/ai",
+        "python",
+        "-m",
+        "app.xninetzy.interfaces.mcp_server"
+      ],
+      "env": {
+        "PYTHONUNBUFFERED": "1"
+      }
+    }
+  }
+}

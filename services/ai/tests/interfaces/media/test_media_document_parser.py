@@ -64,3 +64,21 @@ def test_empty_document(tmp_path):
     p.write_text("   \n  ", encoding="utf-8")
     out = parse_document(str(p))
     assert out["error"]
+
+
+def test_scanned_pdf_uses_ocr_fallback(tmp_path, monkeypatch):
+    from app.xninetzy.interfaces.media import document_parser
+    from app.xninetzy.os.academic.hebat import pdf_reader
+
+    path = tmp_path / "scan.pdf"
+    path.write_bytes(b"%PDF diagnostic")
+    monkeypatch.setattr(
+        pdf_reader,
+        "read_pdf_text",
+        lambda _path: {"text": "", "pages": 1, "error": None},
+    )
+    monkeypatch.setattr(document_parser, "_ocr_pdf", lambda _path: "teks hasil OCR")
+
+    out = document_parser.parse_document(str(path))
+    assert out["error"] is None
+    assert out["text"] == "teks hasil OCR"

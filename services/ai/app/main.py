@@ -11,6 +11,7 @@ from app.xninetzy.core.logging import configure_logging, logging
 from app.xninetzy.db.sqlite import init_db
 from app.xninetzy.db.migrations import run_migrations
 from app.xninetzy.os.reminders.scheduler import reminder_loop
+from app.xninetzy.os.web_analysis.background import web_analysis_loop
 
 configure_logging()
 logger = logging.getLogger(__name__)
@@ -31,6 +32,8 @@ async def startup() -> None:
     init_db()
     run_migrations()
     asyncio.create_task(reminder_loop())
+    if settings.WEB_ANALYSIS_BACKGROUND_ENABLED:
+        asyncio.create_task(web_analysis_loop())
     if settings.HEBAT_AUTO_LOGIN and settings.HEBAT_USERNAME and settings.HEBAT_PASSWORD:
         asyncio.create_task(_hebat_startup_task())
     elif settings.HEBAT_AUTO_LOGIN:

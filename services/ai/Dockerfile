@@ -9,15 +9,15 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
     libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
     libcairo2 libatspi2.0-0 libwayland-client0 \
-    # Build tools
-    build-essential \
+    # Build tools + OCR runtime (English and Indonesian)
+    build-essential tesseract-ocr tesseract-ocr-eng tesseract-ocr-ind \
     && rm -rf /var/lib/apt/lists/*
 
 COPY pyproject.toml uv.lock ./
 RUN uv sync --no-dev
 
 # Install Playwright browser binaries (Chromium only)
-RUN uv run playwright install chromium
+RUN uv run --no-dev playwright install chromium
 
 COPY app ./app
 
@@ -26,4 +26,4 @@ RUN mkdir -p /app/data/hebat/downloads /app/data/hebat/browser-profiles /app/dat
 
 EXPOSE 8000
 
-CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--no-dev", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

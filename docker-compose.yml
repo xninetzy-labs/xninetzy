@@ -4,21 +4,32 @@ services:
       context: ./services/ai
     env_file:
       - .env
-    ports:
-      - "8000:8000"
+    # AI, WA and CLI use distinct host ports; Flaz is reached over HTTPS.
+    network_mode: host
+    environment:
+      WA_MCP_BASE_URL: http://127.0.0.1:8081
     volumes:
       - ./services/ai/data:/app/data
-      - ~/Documents/xninetzy:/app/obsidian-vault
+      - ${OBSIDIAN_VAULT_HOST_PATH:?Set OBSIDIAN_VAULT_HOST_PATH}:/app/obsidian-vault
       - wa-media:/app/data/wa-media      # shared with wa-enggine for media download
+    healthcheck:
+      test: ["CMD", "uv", "run", "--no-dev", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 30s
+    restart: unless-stopped
 
   wa-enggine:
     build:
       context: ./services/wa-enggine
     env_file:
       - .env
+    network_mode: host
     environment:
       WA_AUTH_DIR: /app/sessions
-      AI_BASE_URL: http://ai:8000
+      AI_BASE_URL: http://127.0.0.1:8000
+      AI_API_URL: http://127.0.0.1:8000
       AI_CHAT_ENDPOINT: /api/chat
       AI_TIMEOUT_MS: "120000"
       MCP_SERVER_ENABLED: "true"
@@ -29,14 +40,20 @@ services:
       WA_GROUP_TRIGGER_MODE: mention_or_prefix
       WA_COMMAND_PREFIX: "!"
       WA_MEDIA_DIR: /app/data/wa-media
+      WA_MEDIA_MAX_BYTES: "26214400"
     depends_on:
-      - ai
+      ai:
+        condition: service_healthy
     restart: unless-stopped
-    ports:
-      - "8081:8081"
     volumes:
-      - ./services/wa-enggine/sessions:/app/sessions
+      - wa-session:/app/sessions
       - wa-media:/app/data/wa-media      # shared with ai service
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
 
   cli:
     build:
@@ -45,10 +62,13 @@ services:
       - .env
     profiles:
       - tools
+    network_mode: host
     stdin_open: true
     tty: true
     environment:
-      XNINETZY_AI_URL: http://ai:8000
+      XNINETZY_AI_URL: http://127.0.0.1:8000
+      XNINETZY_CLI_TIMEOUT_MS: "120000"
 
 volumes:
   wa-media:
+  wa-session:

@@ -260,6 +260,31 @@ def run_migrations() -> None:
             reviewed_by TEXT
         )
         """,
+        """
+        CREATE TABLE IF NOT EXISTS ai_preferences (
+            user_id TEXT PRIMARY KEY,
+            chat_provider TEXT NOT NULL,
+            chat_model TEXT NOT NULL,
+            coding_agent TEXT NOT NULL DEFAULT 'internal',
+            updated_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS coding_agent_runs (
+            id TEXT PRIMARY KEY,
+            user_id TEXT NOT NULL,
+            chat_id TEXT NOT NULL,
+            runtime TEXT NOT NULL,
+            task TEXT NOT NULL,
+            workspace TEXT NOT NULL,
+            status TEXT NOT NULL,
+            output TEXT,
+            error TEXT,
+            created_at TEXT NOT NULL,
+            finished_at TEXT
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_coding_agent_runs_user ON coding_agent_runs(user_id, created_at)",
     ]
     with connect() as conn:
         for statement in statements:
@@ -300,5 +325,9 @@ def _migrate_reminders(conn) -> None:
     for name, ddl in columns.items():
         if name not in existing:
             conn.execute(f"ALTER TABLE reminders ADD COLUMN {name} {ddl}")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_reminders_due ON reminders(status, remind_at)")
-    conn.execute("CREATE INDEX IF NOT EXISTS idx_reminders_chat ON reminders(chat_id, status)")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_reminders_due ON reminders(status, remind_at)"
+    )
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_reminders_chat ON reminders(chat_id, status)"
+    )

@@ -1,0 +1,46 @@
+{
+  "schema_version": 1,
+  "site_slug": "mahasiswa",
+  "site_name": "Cybercampus Mahasiswa UNAIR",
+  "base_url": "https://mahasiswa.unair.ac.id",
+  "analyzed_at": "2026-07-21T01:51:55.087876+00:00",
+  "auth_status": "human_verification_required",
+  "modules": [
+    {
+      "name": "login",
+      "path": "/",
+      "classification": "contains_action",
+      "selectors": [
+        "table",
+        "form"
+      ],
+      "field_names": [
+        "captcha",
+        "csrf_token",
+        "mode",
+        "password",
+        "username"
+      ],
+      "structure_hash": "49a6ff2a0bee70771e85f292bfc66a177bcf51e9313dc1df2b86332c9fcc6bf4",
+      "analyzed_at": "2026-07-21T01:51:54.921517+00:00"
+    }
+  ],
+  "endpoints": [
+    {
+      "method": "GET",
+      "path": "/",
+      "query_keys": [],
+      "status": 200,
+      "content_type": "text/html"
+    }
+  ],
+  "protection_flags": [
+    "Submit KRS adalah aksi kompetitif dan dilindungi human verification. Sistem hanya boleh membaca status slot dan mengirim notifikasi; klik/submit tetap manual."
+  ],
+  "login_notes": [
+    "Session hanya berasal dari login manual owner dan disimpan terenkripsi untuk local profile.",
+    "Credential, cookie, token, query value, dan isi data akademik tidak ditulis ke analisis_web.md.",
+    "Saat human verification terdeteksi, crawl dihentikan tanpa solve atau retry otomatis."
+  ],
+  "errors": []
+}

@@ -14,11 +14,17 @@ async def test_download_media_message_success(monkeypatch):
         assert tool == "download_media_message"
         assert input_data["chat_id"] == "628@s.whatsapp.net"
         assert input_data["message_id"] == "MSG1"
-        return {"success": True, "tool": tool, "result": {
-            "local_path": "/app/data/wa-media/628/MSG1/file.pdf",
-            "filename": "file.pdf", "mime_type": "application/pdf",
-            "size_bytes": 1234, "sha256": "abc",
-        }}
+        return {
+            "success": True,
+            "tool": tool,
+            "result": {
+                "local_path": "/app/data/wa-media/628/MSG1/file.pdf",
+                "filename": "file.pdf",
+                "mime_type": "application/pdf",
+                "size_bytes": 1234,
+                "sha256": "abc",
+            },
+        }
 
     monkeypatch.setattr(wa_client, "call_wa_tool", fake_call)
     out = await wa_client.download_media_message("628@s.whatsapp.net", "MSG1")
@@ -58,7 +64,9 @@ async def test_download_passes_participant(monkeypatch):
         return {"success": True, "result": {"local_path": "/x"}}
 
     monkeypatch.setattr(wa_client, "call_wa_tool", fake_call)
-    await wa_client.download_media_message("g@g.us", "M", participant_jid="628@s.whatsapp.net")
+    await wa_client.download_media_message(
+        "g@g.us", "M", participant_jid="628@s.whatsapp.net"
+    )
     assert seen["participant_jid"] == "628@s.whatsapp.net"
 
 
@@ -70,3 +78,19 @@ async def test_get_message_metadata(monkeypatch):
     monkeypatch.setattr(wa_client, "call_wa_tool", fake_call)
     out = await wa_client.get_message_metadata("628@s.whatsapp.net", "MSG1")
     assert out["ok"] is True and out["has_media"] is True
+
+
+@pytest.mark.asyncio
+async def test_get_media_content(monkeypatch):
+    async def fake_call(tool, input_data):
+        assert tool == "get_media_content"
+        assert input_data == {"chat_id": "chat", "message_id": "MSG"}
+        return {
+            "success": True,
+            "result": {"content_base64": "aGVsbG8=", "size_bytes": 5},
+        }
+
+    monkeypatch.setattr(wa_client, "call_wa_tool", fake_call)
+    out = await wa_client.get_media_content("chat", "MSG")
+    assert out["ok"] is True
+    assert out["content_base64"] == "aGVsbG8="

@@ -8,6 +8,7 @@ from app.xninetzy.agent.prompts import DIRECT_PROMPT
 from app.xninetzy.agent.state import AgentState
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.llm import get_llm_flash
+from app.xninetzy.core.providers import profile_from_metadata
 from app.xninetzy.tools.internal.datetime_info import get_now_info
 
 
@@ -25,11 +26,15 @@ async def direct_node(state: AgentState) -> dict:
         current_datetime=now["human_datetime"],
     )
 
-    messages = [SystemMessage(content=system_content)] + list(state.get("messages") or [])
+    messages = [SystemMessage(content=system_content)] + list(
+        state.get("messages") or []
+    )
 
-    llm = get_llm_flash()
+    llm = get_llm_flash(profile_from_metadata(state.get("metadata")))
     result = await llm.ainvoke(messages)
-    response = result.content if isinstance(result.content, str) else str(result.content)
+    response = (
+        result.content if isinstance(result.content, str) else str(result.content)
+    )
 
     return {
         "messages": [AIMessage(content=response)],

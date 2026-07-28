@@ -11,6 +11,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         "active_goals": [],
         "today_tasks": [],
         "urgent_deadlines": [],
+        "academic_schedule": [],
         "recent_daily_summary": None,
         "relevant_knowledge": [],
     }
@@ -37,11 +38,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
 
     try:
         from app.xninetzy.os.academic.hebat.storage import list_assignments
-        from datetime import datetime, timedelta
-        from zoneinfo import ZoneInfo
-        from app.xninetzy.core.config import get_settings
-        now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE))
-        soon = now + timedelta(days=3)
+
         assigns = [
             a for a in list_assignments()
             if a.get("due_at") and a.get("submission_status", "").lower() not in ("submitted for grading",)
@@ -52,6 +49,22 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         context["urgent_deadlines"] = deadlines
     except Exception as e:
         logger.debug("Context: HEBAT deadlines fetch failed: %s", e)
+
+    try:
+        from app.xninetzy.core.config import get_settings
+
+        if get_settings().WEB_ANALYSIS_ENCRYPTION_KEY:
+            from app.xninetzy.os.web_analysis.snapshot_manager import SnapshotManager
+
+            snapshot = SnapshotManager().load("mahasiswa", "schedule")
+            items = (snapshot or {}).get("items") or []
+            context["academic_schedule"] = [
+                f"{item.get('when') or item.get('start') or '?'} — "
+                f"{item.get('label') or item.get('course') or 'Jadwal'}"
+                for item in items[:5]
+            ]
+    except Exception as e:
+        logger.debug("Context: local portal schedule fetch failed: %s", e)
 
     try:
         from app.xninetzy.os.life.journal_manager import get_latest_review
@@ -84,6 +97,9 @@ def format_context_for_prompt(ctx: dict) -> str:
 
     if ctx.get("urgent_deadlines"):
         parts.append("Urgent HEBAT deadlines: " + " | ".join(ctx["urgent_deadlines"]))
+
+    if ctx.get("academic_schedule"):
+        parts.append("Local academic schedule: " + " | ".join(ctx["academic_schedule"]))
 
     if ctx.get("recent_daily_summary"):
         parts.append(f"Yesterday summary: {ctx['recent_daily_summary']}")

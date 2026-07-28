@@ -1,0 +1,18 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "xninetzy": {
+      "type": "local",
+      "command": [
+        "uv",
+        "run",
+        "--directory",
+        "services/ai",
+        "python",
+        "-m",
+        "app.xninetzy.interfaces.mcp_server"
+      ],
+      "enabled": true
+    }
+  }
+}

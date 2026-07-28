@@ -14,7 +14,7 @@ pointing the data dirs at a writable location:
       DATA_DIR=/tmp/hebat_data \
       HEBAT_DATA_DIR=/tmp/hebat_data_fresh \
       HEBAT_DOWNLOAD_DIR=/tmp/hebat_dl \
-      uv run --project services/ai python services/ai/tests/manual_hebat_e2e.py
+      uv run --project services/ai python services/ai/tests/manual/hebat_e2e.py
 
 Output is masked: cookies/tokens/sesskey are never printed.
 

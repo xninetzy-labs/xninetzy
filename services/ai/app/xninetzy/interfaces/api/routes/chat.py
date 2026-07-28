@@ -5,14 +5,40 @@ from fastapi import APIRouter
 from app.xninetzy.agent.graph import get_compiled_graph
 from app.xninetzy.ecosystem.command_router import parse_command
 from app.xninetzy.os.memory.chat_store import ChatStore
+from app.xninetzy.os.ai_preferences import resolve_user_profile
 from app.xninetzy.schemas.chat import ChatRequest, ChatResponse
 
 router = APIRouter(tags=["chat"])
 
 
-async def _invoke_tool_directly(tool_name: str, kwargs: dict, request: ChatRequest) -> str:
+def _has_media(metadata: dict | None) -> bool:
+    data = metadata or {}
+    media = data.get("media") or {}
+    quoted = data.get("quotedMedia") or {}
+    return bool(media.get("hasMedia") or quoted.get("hasMedia"))
+
+
+async def _prepare_media_metadata(request: ChatRequest) -> dict:
+    metadata = dict(request.metadata or {})
+    if not _has_media(metadata):
+        return metadata
+    try:
+        from app.xninetzy.interfaces.media.media_tools import build_media_prompt_context
+
+        context = await build_media_prompt_context(request.chat_id, metadata)
+    except Exception as exc:
+        context = f"\n[Media Extraction Error]\nError internal: {exc}\n"
+    if context:
+        metadata["_media_prompt_context"] = context
+    return metadata
+
+
+async def _invoke_tool_directly(
+    tool_name: str, kwargs: dict, request: ChatRequest
+) -> str:
     """Invoke a single tool directly, bypassing LangGraph (for slash commands)."""
     from app.xninetzy.tools.registry import get_all_tools
+
     tools = {t.name: t for t in get_all_tools()}
     tool = tools.get(tool_name)
     if not tool:
@@ -35,18 +61,27 @@ async def _maybe_run_workflow(request: ChatRequest) -> str | None:
     Best-effort: any failure falls through to the normal LangGraph flow so a
     workflow bug can never take down regular chat.
     """
+    if _has_media(request.metadata):
+        return None
     try:
         from app.xninetzy.core.config import get_settings
+
         if not get_settings().WORKFLOW_ENABLED:
             return None
         from app.xninetzy.workflow.plan import is_multi_action_request
+
         if not is_multi_action_request(request.message):
             return None
         from app.xninetzy.workflow.executor import run_workflow
-        from_wa = bool((request.metadata or {}).get("messageId")) or request.chat_type in ("private", "group")
+
+        from_wa = bool(
+            (request.metadata or {}).get("messageId")
+        ) or request.chat_type in ("private", "group")
         return await run_workflow(
-            request.chat_id, request.message,
-            context={"chat_type": request.chat_type}, from_whatsapp=from_wa,
+            request.chat_id,
+            request.message,
+            context={"chat_type": request.chat_type},
+            from_whatsapp=from_wa,
         )
     except Exception:
         return None
@@ -66,6 +101,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
         return ChatResponse(reply=workflow_reply)
 
     # 2. Normal LangGraph flow
+    prepared_metadata = await _prepare_media_metadata(request)
+    user_key = request.sender_id or request.chat_id
+    prepared_metadata["_llm_profile"] = resolve_user_profile(user_key).as_dict()
+
     store = ChatStore()
     history = store.get_recent(request.chat_id)
 
@@ -76,7 +115,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         "message": request.message,
         "chat_type": request.chat_type,
         "group_name": request.group_name,
-        "metadata": request.metadata,
+        "metadata": prepared_metadata,
         "messages": history,
         "route": "",
         "clarification_question": None,
@@ -86,7 +125,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
     graph = get_compiled_graph()
     result = await graph.ainvoke(initial_state)
 
-    new_messages = result["messages"][len(history):]
+    new_messages = result["messages"][len(history) :]
     if new_messages:
         store.save_messages(request.chat_id, new_messages)
 
@@ -95,24 +134,39 @@ async def chat(request: ChatRequest) -> ChatResponse:
     return ChatResponse(reply=result["response"])
 
 
-def _log_trace(request: ChatRequest, result: dict, new_messages: list, status: str = "ok",
-               error_type: str | None = None, error_message: str | None = None) -> None:
+def _log_trace(
+    request: ChatRequest,
+    result: dict,
+    new_messages: list,
+    status: str = "ok",
+    error_type: str | None = None,
+    error_message: str | None = None,
+) -> None:
     """Best-effort Lightning trace logging — must never break the chat flow."""
     try:
         from app.xninetzy.os.lightning.store import log_trace
 
         tools_used: list[str] = []
         for m in new_messages or []:
-            for call in (getattr(m, "tool_calls", None) or []):
-                name = call.get("name") if isinstance(call, dict) else getattr(call, "name", None)
+            for call in getattr(m, "tool_calls", None) or []:
+                name = (
+                    call.get("name")
+                    if isinstance(call, dict)
+                    else getattr(call, "name", None)
+                )
                 if name:
                     tools_used.append(name)
         log_trace(
-            user_id=request.sender_id, chat_id=request.chat_id,
+            user_id=request.sender_id,
+            chat_id=request.chat_id,
             message_id=(request.metadata or {}).get("messageId"),
-            input_text=request.message, response_text=result.get("response", ""),
-            intent=result.get("route"), tools_used=tools_used,
-            status=status, error_type=error_type, error_message=error_message,
+            input_text=request.message,
+            response_text=result.get("response", ""),
+            intent=result.get("route"),
+            tools_used=tools_used,
+            status=status,
+            error_type=error_type,
+            error_message=error_message,
         )
     except Exception:
         pass

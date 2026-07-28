@@ -1,21 +1,65 @@
+import type { WAMessage } from "@whiskeysockets/baileys";
 import type { McpTool } from "../types";
 import { requireString } from "../validation";
-import * as fs from "node:fs";
-import * as path from "node:path";
-import * as crypto from "node:crypto";
-import { logger } from "../../utils/logger";
-import { downloadMediaMessage } from "@whiskeysockets/baileys";
+import { getStoredMedia, getStoredMediaContent, persistMediaMessage } from "../media-store";
+import { unwrapMessage } from "../../whatsapp/message-parser";
 
-const MEDIA_BASE = process.env.WA_MEDIA_DIR ?? "/app/data/wa-media";
-
-function safeDir(input: string): string {
-  return input.replace(/[^a-zA-Z0-9_\-@.]/g, "_").slice(0, 120);
+function requireStored(input: Record<string, unknown>) {
+  const chatId = requireString(input, "chat_id");
+  const messageId = requireString(input, "message_id");
+  const stored = getStoredMedia(chatId, messageId);
+  if (!stored) {
+    throw new Error(
+      `Message ${messageId} not found in durable store while WhatsApp is disconnected.`,
+    );
+  }
+  return stored;
 }
 
-function validatePath(resolved: string, base: string): void {
-  if (!resolved.startsWith(path.resolve(base))) {
-    throw new Error("Path traversal detected");
+function readMetadata(
+  input: Record<string, unknown>,
+  recentMessages?: Map<string, WAMessage>,
+) {
+  const chatId = requireString(input, "chat_id");
+  const messageId = requireString(input, "message_id");
+  const stored = getStoredMedia(chatId, messageId);
+  if (stored) {
+    return {
+      has_media: true,
+      media_type: stored.media_type,
+      filename: stored.filename,
+      caption: null,
+      mime_type: stored.mime_type,
+      size_bytes: stored.size_bytes,
+      persisted: true,
+    };
   }
+
+  const message = recentMessages?.get(messageId);
+  const content = unwrapMessage(message?.message);
+  const document = content?.documentMessage;
+  const image = content?.imageMessage;
+  const video = content?.videoMessage;
+  const audio = content?.audioMessage;
+  const hasMedia = Boolean(document ?? image ?? video ?? audio);
+  const mediaType = document
+    ? "document"
+    : image
+      ? "image"
+      : video
+        ? "video"
+        : audio
+          ? "audio"
+          : null;
+  return {
+    has_media: hasMedia,
+    media_type: mediaType,
+    filename: document?.fileName ?? null,
+    caption: document?.caption ?? image?.caption ?? video?.caption ?? null,
+    mime_type:
+      document?.mimetype ?? image?.mimetype ?? video?.mimetype ?? audio?.mimetype ?? null,
+    persisted: false,
+  };
 }
 
 export const mediaTools: McpTool[] = [
@@ -23,7 +67,7 @@ export const mediaTools: McpTool[] = [
     definition: {
       name: "download_media_message",
       description:
-        "Download media (dokumen, gambar, video, audio) dari pesan WhatsApp ke disk dan kembalikan path lokal. Dipakai AI service untuk membaca file yang dikirim user.",
+        "Ambil media WhatsApp dari durable store atau download dari message cache bila belum tersimpan.",
       inputSchema: {
         type: "object",
         properties: {
@@ -36,87 +80,25 @@ export const mediaTools: McpTool[] = [
     async handler(input, { sock, recentMessages }) {
       const chatId = requireString(input, "chat_id");
       const messageId = requireString(input, "message_id");
+      const stored = getStoredMedia(chatId, messageId);
+      if (stored) return stored;
 
-      // Look up message from recent message cache
-      const msg = recentMessages?.get(messageId);
-      if (!msg || !msg.message) {
-        throw new Error(`Message ${messageId} not found in cache. Media may have expired.`);
+      const message = recentMessages?.get(messageId);
+      if (!message?.message) {
+        throw new Error(
+          `Message ${messageId} not found in durable store or cache. Ask the user to resend it.`,
+        );
       }
-
-      const destDir = path.resolve(MEDIA_BASE, safeDir(chatId), safeDir(messageId));
-      validatePath(destDir, MEDIA_BASE);
-      fs.mkdirSync(destDir, { recursive: true });
-
-      // Detect media type
-      const msgContent = msg.message;
-      const docMsg = msgContent.documentMessage;
-      const imgMsg = msgContent.imageMessage;
-      const videoMsg = msgContent.videoMessage;
-      const audioMsg = msgContent.audioMessage;
-
-      const mediaMsg = docMsg ?? imgMsg ?? videoMsg ?? audioMsg;
-      if (!mediaMsg) {
-        throw new Error("Message does not contain downloadable media");
-      }
-
-      const mimetype: string =
-        docMsg?.mimetype ??
-        imgMsg?.mimetype ??
-        videoMsg?.mimetype ??
-        audioMsg?.mimetype ??
-        "application/octet-stream";
-
-      const originalFilename: string =
-        docMsg?.fileName ??
-        (imgMsg ? `image_${messageId}.jpg` : undefined) ??
-        (videoMsg ? `video_${messageId}.mp4` : undefined) ??
-        (audioMsg ? `audio_${messageId}.ogg` : undefined) ??
-        `media_${messageId}`;
-
-      const safeFilename = safeDir(originalFilename).slice(0, 200);
-      const destPath = path.join(destDir, safeFilename);
-      validatePath(destPath, MEDIA_BASE);
-
-      logger.info(
-        { step: "mcp_download_media", chatId, messageId, mimetype, safeFilename },
-        "Downloading WA media",
-      );
-
-      // Download using Baileys helper
-      const buffer = await downloadMediaMessage(
-        msg,
-        "buffer",
-        {},
-        { logger: logger as any, reuploadRequest: sock.updateMediaMessage },
-      );
-
-      if (!Buffer.isBuffer(buffer)) {
-        throw new Error("Media download returned unexpected type");
-      }
-
-      fs.writeFileSync(destPath, buffer);
-
-      const sha256 = crypto.createHash("sha256").update(buffer).digest("hex");
-      const sizeBytes = buffer.byteLength;
-
-      logger.info(
-        { step: "mcp_download_media_done", destPath, sizeBytes, sha256 },
-        "WA media downloaded",
-      );
-
-      return {
-        local_path: destPath,
-        filename: safeFilename,
-        mime_type: mimetype,
-        size_bytes: sizeBytes,
-        sha256,
-      };
+      return persistMediaMessage(sock, message, chatId, messageId);
+    },
+    async offlineHandler(input) {
+      return requireStored(input);
     },
   },
   {
     definition: {
       name: "get_message_metadata",
-      description: "Cek apakah pesan mengandung media/attachment tanpa mendownload.",
+      description: "Cek metadata attachment dari durable store atau cache.",
       inputSchema: {
         type: "object",
         properties: {
@@ -127,28 +109,40 @@ export const mediaTools: McpTool[] = [
       },
     },
     async handler(input, { recentMessages }) {
+      return readMetadata(input, recentMessages);
+    },
+    async offlineHandler(input, { recentMessages }) {
+      return readMetadata(input, recentMessages);
+    },
+  },
+  {
+    definition: {
+      name: "get_media_content",
+      description: "Ambil byte media durable sebagai base64 ketika filesystem tidak dibagi dengan AI.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          chat_id: { type: "string" },
+          message_id: { type: "string" },
+        },
+        required: ["chat_id", "message_id"],
+      },
+    },
+    async handler(input) {
+      const chatId = requireString(input, "chat_id");
       const messageId = requireString(input, "message_id");
-      const msg = recentMessages?.get(messageId);
-      if (!msg || !msg.message) {
-        return { has_media: false, media_type: null, filename: null, caption: null, mime_type: null };
+      const content = getStoredMediaContent(chatId, messageId);
+      if (!content) {
+        throw new Error(`Message ${messageId} not found in durable media store.`);
       }
-
-      const m = msg.message;
-      const doc = m.documentMessage;
-      const img = m.imageMessage;
-      const vid = m.videoMessage;
-      const aud = m.audioMessage;
-
-      const hasMedia = Boolean(doc ?? img ?? vid ?? aud);
-      const mediaType = doc ? "document" : img ? "image" : vid ? "video" : aud ? "audio" : null;
-
-      return {
-        has_media: hasMedia,
-        media_type: mediaType,
-        filename: doc?.fileName ?? null,
-        caption: doc?.caption ?? img?.caption ?? vid?.caption ?? null,
-        mime_type: doc?.mimetype ?? img?.mimetype ?? vid?.mimetype ?? null,
-      };
+      return content;
+    },
+    async offlineHandler(input) {
+      const chatId = requireString(input, "chat_id");
+      const messageId = requireString(input, "message_id");
+      const content = getStoredMediaContent(chatId, messageId);
+      if (!content) throw new Error(`Message ${messageId} not found in durable media store.`);
+      return content;
     },
   },
 ];

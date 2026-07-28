@@ -81,6 +81,17 @@ CATEGORIES = {
             "baca catatan HEBAT/APSI/materi1",
         ],
     },
+    "ai-runtime": {
+        "title": "Provider LLM & Coding Agent",
+        "examples": [
+            "/llm — provider/model chat aktif",
+            "/llm list — provider yang disiapkan operator",
+            "/llm use flaz deepseek-v4-pro",
+            "/agent list — runtime coding lokal",
+            "/agent use codex",
+            "/code <task> — jalankan task coding (admin)",
+        ],
+    },
     "research": {
         "title": "Research Tools",
         "examples": [
@@ -106,6 +117,9 @@ CATEGORIES = {
             "/money            — ringkasan keuangan",
             "/workout          — ringkasan workout",
             "/hebat            — digest HEBAT",
+            "/jadwal           — snapshot jadwal lokal",
+            "/portalinfo       — status portal lokal",
+            "/web-analysis     — status structural cache",
             "/knowledge        — cari di knowledge",
         ],
     },
@@ -140,8 +154,11 @@ Web search, YouTube search, deep research brief
 *9. Obsidian Vault*
 Daily note, learning note, project note, append, search
 
-*10. Slash Commands*
-/today, /review, /goals, /tasks, /money, /workout, /hebat
+*10. AI Runtime*
+Pilih provider/model chat dan jalankan Codex, Claude Code, atau OpenCode (admin)
+
+*11. Slash Commands*
+/today, /review, /goals, /tasks, /llm, /agent, /code, /hebat, /jadwal, /portalinfo
 
 Ketik: */helper <kategori>* untuk detail
 Contoh: /helper learning"""

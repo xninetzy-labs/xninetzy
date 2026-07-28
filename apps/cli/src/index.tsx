@@ -2,7 +2,7 @@ import React from 'react';
 import { render } from 'ink';
 import { execSync } from 'node:child_process';
 import { App } from './app.js';
-import { getMockReply } from './mock.js';
+import { sendChat } from './api/client.js';
 
 async function runPipedInput() {
   let buffer = '';
@@ -19,7 +19,14 @@ async function runPipedInput() {
 
   for (const line of lines) {
     process.stdout.write(`You\n${line}\n\n`);
-    process.stdout.write(`Xninetzy\n${getMockReply(line)}\n`);
+    try {
+      const reply = await sendChat(line);
+      process.stdout.write(`Xninetzy\n${reply}\n`);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown AI request error';
+      process.stderr.write(`Xninetzy error\n${message}\n`);
+      process.exitCode = 1;
+    }
   }
 }
 

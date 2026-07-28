@@ -1,6 +1,11 @@
 import http from "node:http";
 import { env } from "../config/env";
-import { getCurrentSocket, getRecentMessages } from "../whatsapp/socket-state";
+import {
+  getConnectionStatus,
+  getCurrentSocket,
+  getRecentMessages,
+  isSocketReady,
+} from "../whatsapp/socket-state";
 import { logger } from "../utils/logger";
 import { getTool, listToolDefinitions } from "./tool-registry";
 import type { McpCallRequest, McpCallResponse } from "./types";
@@ -36,8 +41,12 @@ async function routeRequest(req: http.IncomingMessage, res: http.ServerResponse)
   const url = new URL(req.url ?? "/", `http://${req.headers.host ?? "localhost"}`);
 
   if (url.pathname === "/health") {
-    sendJson(res, 200, { status:
-       "ok", socket_ready: Boolean(getCurrentSocket()) });
+    sendJson(res, 200, {
+      status: "ok",
+      service_ready: true,
+      socket_ready: isSocketReady(),
+      connection: getConnectionStatus(),
+    });
     return;
   }
 
@@ -82,7 +91,22 @@ async function callTool(body: unknown): Promise<McpCallResponse> {
   }
 
   const sock = getCurrentSocket();
-  if (!sock) {
+  if (!sock || !isSocketReady()) {
+    if (tool.offlineHandler) {
+      try {
+        const result = await tool.offlineHandler(body.input ?? {}, {
+          recentMessages: getRecentMessages(),
+        });
+        return { success: true, tool: body.tool, result };
+      } catch (error) {
+        const message = error instanceof Error ? error.message : "Offline tool execution failed";
+        return {
+          success: false,
+          tool: body.tool,
+          error: { code: "tool_error", message },
+        };
+      }
+    }
     return {
       success: false,
       tool: body.tool,

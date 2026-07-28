@@ -6,7 +6,12 @@ import { handleConnectionUpdate, resetAuthStateAndScheduleReconnect } from "./co
 import { registerMessageListener } from "./message-listener";
 import { registerProcessHandlers } from "./process-handlers";
 import { requestPairingCodeIfNeeded } from "./pairing-manager";
-import { cleanupCurrentSocket, setCurrentSocket, getCurrentSocket } from "./socket-state";
+import {
+  cleanupCurrentSocket,
+  setConnectionStatus,
+  setCurrentSocket,
+  getCurrentSocket,
+} from "./socket-state";
 import { getDisconnectStatusCode, getErrorMessage, shouldResetAuthState } from "./disconnect-utils";
 import { scheduleReconnect } from "./reconnect-manager";
 
@@ -44,6 +49,7 @@ export async function startWhatsAppSocket(): Promise<void> {
     const sock = await createWhatsAppSocket(state);
 
     setCurrentSocket(sock);
+    setConnectionStatus("connecting");
 
     sock.ev.on("creds.update", async () => {
       await saveCreds();

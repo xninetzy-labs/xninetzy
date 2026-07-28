@@ -5,7 +5,7 @@ import { logger } from "../utils/logger";
 import { maskJid, maskPhone } from "../utils/observability";
 import { getBotIdentity } from "../utils/jid";
 import { getDisconnectStatusCode, getErrorMessage, shouldResetAuthState } from "./disconnect-utils";
-import { cleanupCurrentSocket } from "./socket-state";
+import { cleanupCurrentSocket, setConnectionStatus } from "./socket-state";
 import { scheduleReconnect, resetReconnectAttempts, getReconnectAttempts } from "./reconnect-manager";
 import { isInsidePairingWindow, getPairingWaitRemainingMs, resetPairingState } from "./pairing-manager";
 import { clearAuthState } from "./auth";
@@ -42,10 +42,12 @@ export async function handleConnectionUpdate(
   }
 
   if (connection === "connecting") {
+    setConnectionStatus("connecting");
     logger.info({ step: "connection_connecting" }, "WhatsApp connecting");
   }
 
   if (connection === "open") {
+    setConnectionStatus("open");
     const attemptsBeforeReset = getReconnectAttempts();
     const botIdentity = getBotIdentity(currentSock);
     
@@ -79,6 +81,7 @@ export async function handleConnectionUpdate(
   }
 
   if (connection !== "close") return;
+  setConnectionStatus("disconnected");
 
   const statusCode = getDisconnectStatusCode(lastDisconnect?.error);
   const message = getErrorMessage(lastDisconnect?.error);

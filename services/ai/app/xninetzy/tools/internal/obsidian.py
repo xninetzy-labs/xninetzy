@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 from datetime import datetime
 
 from langchain_core.tools import tool
@@ -10,6 +11,95 @@ from app.xninetzy.os.notes.vault_service import ObsidianVaultService
 
 def _vault() -> ObsidianVaultService:
     return ObsidianVaultService()
+
+
+@tool
+def obsidian_list(folder: str = "", limit: int = 100) -> str:
+    """Daftar file markdown/text dalam vault atau folder tertentu."""
+    try:
+        files = _vault().list_files(folder or None)[: max(1, min(limit, 500))]
+        return json.dumps(files, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        return f"Gagal menampilkan isi vault: {exc}"
+
+
+@tool
+def obsidian_create_folder(path: str) -> str:
+    """Buat folder baru di dalam vault menggunakan path relatif."""
+    try:
+        result = _vault().create_folder(path)
+        return f"✅ Folder siap: `{result['path']}`"
+    except Exception as exc:
+        return f"Gagal membuat folder: {exc}"
+
+
+@tool
+def obsidian_update_section(path: str, heading: str, content: str) -> str:
+    """Ganti isi section berdasarkan heading; buat section jika belum ada."""
+    try:
+        result = _vault().update_section(path, heading, content)
+        return f"✅ Section *{heading}* diperbarui di `{result['path']}`"
+    except Exception as exc:
+        return f"Gagal memperbarui section: {exc}"
+
+
+@tool
+def obsidian_todos(folder: str = "", limit: int = 100) -> str:
+    """Ambil checkbox todo selesai/belum selesai dari seluruh atau sebagian vault."""
+    try:
+        items = _vault().extract_todos(folder or None)[: max(1, min(limit, 500))]
+        return json.dumps(items, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        return f"Gagal membaca todo vault: {exc}"
+
+
+@tool
+def obsidian_backlinks(note_path: str, limit: int = 100) -> str:
+    """Cari note yang memiliki wikilink menuju note tertentu."""
+    try:
+        items = _vault().get_backlinks(note_path)[: max(1, min(limit, 500))]
+        return json.dumps(items, ensure_ascii=False, indent=2)
+    except Exception as exc:
+        return f"Gagal membaca backlinks: {exc}"
+
+
+@tool
+def obsidian_headings(path: str) -> str:
+    """Ambil struktur heading beserta level dan nomor baris suatu note."""
+    try:
+        return json.dumps(_vault().extract_headings(path), ensure_ascii=False, indent=2)
+    except Exception as exc:
+        return f"Gagal membaca heading: {exc}"
+
+
+@tool
+def obsidian_generate_moc(folder: str = "", title: str = "Index") -> str:
+    """Buat atau perbarui Map of Content berisi wikilink note dalam folder."""
+    try:
+        result = _vault().generate_moc(folder or None, title)
+        return f"✅ Map of Content dibuat: `{result['path']}`"
+    except Exception as exc:
+        return f"Gagal membuat Map of Content: {exc}"
+
+
+@tool
+def obsidian_add_tags(path: str, tags: list[str]) -> str:
+    """Tambahkan tags ke frontmatter note tanpa menghapus tag lama."""
+    try:
+        result = _vault().add_tags(path, tags)
+        return f"✅ Tags diperbarui di `{result['path']}`"
+    except Exception as exc:
+        return f"Gagal menambahkan tags: {exc}"
+
+
+@tool
+def obsidian_set_frontmatter(path: str, data: dict) -> str:
+    """Tambah atau perbarui field frontmatter note."""
+    try:
+        result = _vault().add_frontmatter(path, data)
+        return f"✅ Frontmatter diperbarui di `{result['path']}`"
+    except Exception as exc:
+        return f"Gagal memperbarui frontmatter: {exc}"
 
 
 @tool
@@ -98,7 +188,7 @@ def obsidian_save_note(title: str, content: str, folder: str = "Notes") -> str:
     try:
         result = _vault().create_note(path, content, overwrite=False)
         return f"✅ Disimpan: `{result['path']}`"
-    except Exception as e:
+    except Exception:
         today = datetime.now().strftime("%Y-%m-%d-%H%M")
         path = f"{folder}/{safe_title}-{today}.md"
         try:

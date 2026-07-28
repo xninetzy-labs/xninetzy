@@ -1,1 +1,17 @@
-TOOLS = ["obsidian_create", "obsidian_search", "obsidian_daily"]
+TOOLS = [
+    "obsidian_search",
+    "obsidian_read",
+    "obsidian_list",
+    "obsidian_create",
+    "obsidian_append",
+    "obsidian_create_folder",
+    "obsidian_update_section",
+    "obsidian_todos",
+    "obsidian_backlinks",
+    "obsidian_headings",
+    "obsidian_generate_moc",
+    "obsidian_add_tags",
+    "obsidian_set_frontmatter",
+    "obsidian_daily",
+    "obsidian_save_note",
+]

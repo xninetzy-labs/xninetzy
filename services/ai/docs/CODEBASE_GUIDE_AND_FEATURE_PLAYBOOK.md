@@ -25,7 +25,7 @@ Daftar isi:
 cd services/ai
 uv venv && source .venv/bin/activate     # atau pakai .venv yang ada
 uv pip install pytest pytest-asyncio      # untuk run test
-export DEEPSEEK_API_KEY=test SQLITE_PATH=/tmp/xninetzy-dev.sqlite3
+export FLAZ_API_KEY=your-key SQLITE_PATH=/tmp/xninetzy-dev.sqlite3
 python -m pytest -q                       # harus hijau dulu sebelum ngoprek
 ```
 > **Why:** pegang baseline test hijau dulu. Itu jaring pengaman. Kalau setelah ngoprek ada yang merah, kamu tahu itu ulahmu.

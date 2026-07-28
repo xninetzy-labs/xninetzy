@@ -9,6 +9,8 @@ import { InputBox } from './components/InputBox.js';
 import { StatusBar } from './components/StatusBar.js';
 import { colors } from './theme/colors.js';
 import type { ChatMessage } from './types.js';
+import { sendChat } from './api/client.js';
+import { cliConfig } from './config/env.js';
 
 function createMessage(
   role: ChatMessage['role'],
@@ -24,49 +26,16 @@ function createMessage(
   };
 }
 
-function getMockReply(input: string): string {
-  const normalized = input.toLowerCase().trim();
-
-  if (normalized === '/help') {
-    return [
-      '### Xninetzy Mock Commands',
-      '- `/help` — show this help',
-      '- `/status` — show local session status',
-      '- `/clear` — clear chat',
-      '',
-      '**Note:** Local mock session active.'
-    ].join('\n');
-  }
-
-  if (normalized === '/status') {
-    return [
-      '◎ **Status:** OK',
-      '◎ **Mode:** Local Mock',
-      '◎ **Version:** `0.1.0-alpha`',
-      '',
-      'No AI/API/backend calls are being made.'
-    ].join('\n');
-  }
-
-  if (
-    normalized.includes('halo') ||
-    normalized.includes('hai') ||
-    normalized.includes('hello')
-  ) {
-    return 'hei yoi this is **xninetzy**. How can I help you today?';
-  }
-
-  return 'xninetzy mock mode aktif — `AI belum disambungkan`.';
-}
-
 export function App() {
   const { exit } = useApp();
   const [columns, rows] = useStdoutDimensions();
 
   const [draft, setDraft] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
+  const [isSending, setIsSending] = useState(false);
+  const [lastError, setLastError] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    createMessage('system', 'Local mock session ready. No AI/API/backend calls.')
+    createMessage('system', `AI session ready at ${cliConfig.aiUrl}`)
   ]);
 
   const hasUserMessages = messages.some((message) => message.role === 'user');
@@ -78,7 +47,8 @@ export function App() {
     setMessages((current) => [...current, createMessage('assistant', content)]);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    if (isSending) return;
     const trimmed = draft.trim();
     if (!trimmed && attachments.length === 0) return;
 
@@ -88,16 +58,28 @@ export function App() {
 
     if (trimmed.toLowerCase() === '/clear' && pasted.length === 0) {
       setMessages([
-        createMessage('system', 'Local mock session ready. No AI/API/backend calls.')
+        createMessage('system', `AI session ready at ${cliConfig.aiUrl}`)
       ]);
+      setLastError(null);
       return;
     }
 
-    setMessages((current) => [
-      ...current,
-      createMessage('user', trimmed, pasted),
-      createMessage('assistant', getMockReply(trimmed || '(pasted content)'))
-    ]);
+    setMessages((current) => [...current, createMessage('user', trimmed, pasted)]);
+    setIsSending(true);
+    setLastError(null);
+    try {
+      const reply = await sendChat(trimmed, pasted);
+      setMessages((current) => [...current, createMessage('assistant', reply)]);
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Unknown AI request error';
+      setLastError(message);
+      setMessages((current) => [
+        ...current,
+        createMessage('assistant', `⚠ AI request gagal: ${message}`)
+      ]);
+    } finally {
+      setIsSending(false);
+    }
   }
 
   function handleRemoveLastAttachment() {
@@ -111,12 +93,12 @@ export function App() {
     }
 
     if (key.tab) {
-      addAssistantMessage('Agents menu belum aktif — **mock UI only**.');
+      addAssistantMessage('Agents menu belum tersedia di client CLI ini.');
       return;
     }
 
     if (key.ctrl && inputChar === 'p') {
-      addAssistantMessage('Command palette belum aktif — `mock UI only`.');
+      addAssistantMessage('Command palette belum tersedia di client CLI ini.');
     }
   });
 
@@ -144,13 +126,19 @@ export function App() {
             onDraftChange={setDraft}
             onPaste={(block) => setAttachments((current) => [...current, block])}
             onRemoveLastAttachment={handleRemoveLastAttachment}
-            onSubmit={handleSubmit}
+            onSubmit={() => void handleSubmit()}
+            disabled={isSending}
             width={contentWidth}
           />
 
           <Box height={1} />
 
-          <StatusBar width={contentWidth} />
+          <StatusBar
+            width={contentWidth}
+            aiUrl={cliConfig.aiUrl}
+            isSending={isSending}
+            lastError={lastError}
+          />
 
           <Box height={1} />
 

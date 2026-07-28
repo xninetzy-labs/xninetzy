@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from functools import lru_cache
+
 from langchain_core.messages import AIMessage, SystemMessage
 from langgraph.prebuilt import create_react_agent
 
@@ -7,24 +9,21 @@ from app.xninetzy.agent.prompts import AGENT_PROMPT
 from app.xninetzy.agent.state import AgentState
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.llm import get_llm_pro
+from app.xninetzy.core.providers import LLMProfile, profile_from_metadata
 from app.xninetzy.tools.internal.datetime_info import get_now_info
 from app.xninetzy.tools.registry import get_all_tools
 
-_react_agent = None
 
-
-def _get_react_agent():
-    global _react_agent
-    if _react_agent is None:
-        _react_agent = create_react_agent(
-            model=get_llm_pro(),
-            tools=get_all_tools(),
-        )
-    return _react_agent
+@lru_cache(maxsize=16)
+def _get_react_agent(profile: LLMProfile | None = None):
+    return create_react_agent(
+        model=get_llm_pro(profile),
+        tools=get_all_tools(),
+    )
 
 
 async def agent_node(state: AgentState) -> dict:
-    """Run ReAct agent with full tool access using deepseek-pro for complex reasoning."""
+    """Run the ReAct agent with full Xninetzy tool access."""
     settings = get_settings()
     now = get_now_info()
     metadata = state.get("metadata") or {}
@@ -33,6 +32,7 @@ async def agent_node(state: AgentState) -> dict:
     context_routing = ""
     try:
         from app.xninetzy.context.builder import build_context_packet
+
         packet = build_context_packet(state.get("message", ""), metadata)
         context_routing = (
             "\n[Context Routing]\n"
@@ -44,7 +44,11 @@ async def agent_node(state: AgentState) -> dict:
     # Build personal context (best-effort, silent on failure)
     personal_context = ""
     try:
-        from app.xninetzy.ecosystem.context_builder import build_personal_context, format_context_for_prompt
+        from app.xninetzy.ecosystem.context_builder import (
+            build_personal_context,
+            format_context_for_prompt,
+        )
+
         ctx = build_personal_context(state.get("chat_id", ""), state.get("message", ""))
         personal_context = format_context_for_prompt(ctx)
     except Exception:
@@ -60,27 +64,47 @@ async def agent_node(state: AgentState) -> dict:
     if effective_media.get("hasMedia"):
         is_quoted = not media.get("hasMedia")
         msg_id = effective_media.get("messageId") or metadata.get("messageId") or ""
+        media_type = effective_media.get("mediaType")
         label = "Media Attached (quoted)" if is_quoted else "Media Attached"
+        if media_type == "document":
+            instruction = (
+                f"Call media_read_document(chat_id='{state.get('chat_id', '')}', "
+                f"message_id='{msg_id}') before answering questions about its content."
+            )
+        elif media_type == "image":
+            instruction = (
+                f"Call media_read_image(chat_id='{state.get('chat_id', '')}', "
+                f"message_id='{msg_id}') before answering questions about text in the image."
+            )
+        else:
+            instruction = "Explain honestly that this media type is not supported yet."
         media_context = (
             f"\n[{label}]\n"
-            f"type={effective_media.get('mediaType')} filename={effective_media.get('filename') or '-'} "
+            f"type={media_type} filename={effective_media.get('filename') or '-'} "
             f"mime={effective_media.get('mimetype') or '-'} message_id={msg_id}\n"
-            "Jika tipe dokumen dan user bertanya tentang isinya, panggil "
-            f"media_read_document(chat_id='{state.get('chat_id','')}', message_id='{msg_id}') "
-            "lebih dulu sebelum menjawab.\n"
+            f"{instruction}\n"
         )
+
+    preloaded_media_context = metadata.get("_media_prompt_context")
+    if isinstance(preloaded_media_context, str) and preloaded_media_context:
+        media_context = preloaded_media_context
 
     # Inject user rules + style profile (defense system), best-effort
     user_key = state.get("sender_id") or state.get("chat_id") or "default"
     rules_context = ""
     style_context = ""
     try:
-        from app.xninetzy.os.rules.store import format_rules_for_prompt, get_active_rules
+        from app.xninetzy.os.rules.store import (
+            format_rules_for_prompt,
+            get_active_rules,
+        )
+
         rules_context = format_rules_for_prompt(get_active_rules(user_key, limit=20))
     except Exception:
         pass
     try:
         from app.xninetzy.os.style.store import format_style_for_prompt
+
         style_context = format_style_for_prompt(user_key)
     except Exception:
         pass
@@ -88,7 +112,11 @@ async def agent_node(state: AgentState) -> dict:
     # Inject relevant semantic memory for this message, best-effort
     memory_context = ""
     try:
-        from app.xninetzy.os.memory.memory_store import format_memories_for_prompt, search_memories
+        from app.xninetzy.os.memory.memory_store import (
+            format_memories_for_prompt,
+            search_memories,
+        )
+
         memory_context = format_memories_for_prompt(
             search_memories(user_key, state.get("message", ""), limit=5)
         )
@@ -105,7 +133,9 @@ async def agent_node(state: AgentState) -> dict:
         group_name=state.get("group_name") or "-",
         current_datetime=now["human_datetime"],
         quoted_message_id=metadata.get("quotedMessageId") or "",
-        quoted_participant=metadata.get("quotedParticipantJid") or metadata.get("participantJid") or "",
+        quoted_participant=metadata.get("quotedParticipantJid")
+        or metadata.get("participantJid")
+        or "",
         is_reply_to_bot=metadata.get("isReplyToBot", False),
         context_routing=context_routing,
         personal_context=personal_context,
@@ -115,16 +145,26 @@ async def agent_node(state: AgentState) -> dict:
         memory_context=memory_context,
     )
 
-    messages_with_system = [SystemMessage(content=system_content)] + list(state.get("messages") or [])
+    messages_with_system = [SystemMessage(content=system_content)] + list(
+        state.get("messages") or []
+    )
 
-    react = _get_react_agent()
+    react = _get_react_agent(profile_from_metadata(metadata))
     result = await react.ainvoke({"messages": messages_with_system})
 
     final_msg = next(
-        (m for m in reversed(result["messages"]) if isinstance(m, AIMessage) and m.content),
+        (
+            m
+            for m in reversed(result["messages"])
+            if isinstance(m, AIMessage) and m.content
+        ),
         None,
     )
-    response = final_msg.content if final_msg else "Maaf, aku tidak bisa memproses request ini."
+    response = (
+        final_msg.content
+        if final_msg
+        else "Maaf, aku tidak bisa memproses request ini."
+    )
     if not isinstance(response, str):
         response = str(response)
 

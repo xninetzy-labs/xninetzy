@@ -51,7 +51,7 @@ Ketik */helper* untuk detail command.
 • web_search, youtube_search, deep_research
 
 *Slash commands:*
-/helper /today /goals /tasks /money /workout /hebat /review
+/helper /today /goals /tasks /money /workout /hebat /jadwal /portalinfo /review
 
 Coba: "buat goal belajar React 2 minggu", "cek tugas hebat", "/today" """
 

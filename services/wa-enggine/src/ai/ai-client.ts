@@ -16,7 +16,7 @@ export async function sendChatToAI(
   logger.info(
     {
       step: "ai_request_start",
-      url: `${env.AI_API_URL}/api/chat`,
+      url: `${env.AI_API_URL}${env.AI_CHAT_ENDPOINT}`,
       chatType: payload.chat_type,
       textLength: payload.message.length,
       hasSenderId: Boolean(payload.sender_id),
@@ -25,7 +25,7 @@ export async function sendChatToAI(
   );
 
   try {
-    const response = await client.post<AIChatResponse>("/api/chat", payload);
+    const response = await client.post<AIChatResponse>(env.AI_CHAT_ENDPOINT, payload);
 
     logger.info(
       {

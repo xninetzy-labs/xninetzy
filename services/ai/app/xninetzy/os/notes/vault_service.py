@@ -10,7 +10,11 @@ from app.xninetzy.core.config import get_settings
 from app.xninetzy.db.sqlite import connect
 from app.xninetzy.os.notes.obsidian_config import vault_path
 from app.xninetzy.os.notes.markdown_service import MarkdownService
-from app.xninetzy.os.notes.safety import ensure_readable_file, ensure_write_allowed, resolve_vault_path
+from app.xninetzy.os.notes.safety import (
+    ensure_readable_file,
+    ensure_write_allowed,
+    resolve_vault_path,
+)
 
 
 class ObsidianVaultService:
@@ -24,7 +28,11 @@ class ObsidianVaultService:
         if root.is_file():
             files = [root]
         else:
-            files = [path for path in root.rglob("*") if path.is_file() and path.suffix.lower() in {".md", ".txt"}]
+            files = [
+                path
+                for path in root.rglob("*")
+                if path.is_file() and path.suffix.lower() in {".md", ".txt"}
+            ]
         return [self._file_info(path) for path in sorted(files)]
 
     def read_note(self, path: str) -> str:
@@ -54,29 +62,49 @@ class ObsidianVaultService:
         note = resolve_vault_path(path, for_write=True)
         ensure_write_allowed(note, overwrite=overwrite)
         old_content = note.read_text(encoding="utf-8") if note.exists() else ""
-        backup = self._backup(note) if note.exists() and get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE else None
+        backup = (
+            self._backup(note)
+            if note.exists() and get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE
+            else None
+        )
         try:
             note.parent.mkdir(parents=True, exist_ok=True)
             note.write_text(content, encoding="utf-8")
-            self._log_operation("create_note", note, old_content, content, backup, True, None)
-            return {"path": self._relative(note), "created": not old_content, "backup_path": backup}
+            self._log_operation(
+                "create_note", note, old_content, content, backup, True, None
+            )
+            return {
+                "path": self._relative(note),
+                "created": not old_content,
+                "backup_path": backup,
+            }
         except Exception as error:
-            self._log_operation("create_note", note, old_content, content, backup, False, str(error))
+            self._log_operation(
+                "create_note", note, old_content, content, backup, False, str(error)
+            )
             raise
 
     def append_note(self, path: str, content: str) -> dict:
         note = resolve_vault_path(path, for_write=True)
         old_content = note.read_text(encoding="utf-8") if note.exists() else ""
         ensure_write_allowed(note, overwrite=True)
-        backup = self._backup(note) if note.exists() and get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE else None
+        backup = (
+            self._backup(note)
+            if note.exists() and get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE
+            else None
+        )
         new_content = old_content.rstrip() + "\n\n" + content.strip() + "\n"
         try:
             note.parent.mkdir(parents=True, exist_ok=True)
             note.write_text(new_content, encoding="utf-8")
-            self._log_operation("append_note", note, old_content, new_content, backup, True, None)
+            self._log_operation(
+                "append_note", note, old_content, new_content, backup, True, None
+            )
             return {"path": self._relative(note), "backup_path": backup}
         except Exception as error:
-            self._log_operation("append_note", note, old_content, new_content, backup, False, str(error))
+            self._log_operation(
+                "append_note", note, old_content, new_content, backup, False, str(error)
+            )
             raise
 
     def update_section(self, path: str, heading: str, content: str) -> dict:
@@ -84,18 +112,37 @@ class ObsidianVaultService:
         ensure_readable_file(note)
         ensure_write_allowed(note, overwrite=True)
         old_content = note.read_text(encoding="utf-8")
-        new_content = self.markdown.update_heading_section(old_content, heading, content)
-        backup = self._backup(note) if get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE else None
+        new_content = self.markdown.update_heading_section(
+            old_content, heading, content
+        )
+        backup = (
+            self._backup(note) if get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE else None
+        )
         try:
             note.write_text(new_content, encoding="utf-8")
-            self._log_operation("update_section", note, old_content, new_content, backup, True, None)
-            return {"path": self._relative(note), "heading": heading, "backup_path": backup}
+            self._log_operation(
+                "update_section", note, old_content, new_content, backup, True, None
+            )
+            return {
+                "path": self._relative(note),
+                "heading": heading,
+                "backup_path": backup,
+            }
         except Exception as error:
-            self._log_operation("update_section", note, old_content, new_content, backup, False, str(error))
+            self._log_operation(
+                "update_section",
+                note,
+                old_content,
+                new_content,
+                backup,
+                False,
+                str(error),
+            )
             raise
 
     def create_folder(self, path: str) -> dict:
-        folder = resolve_vault_path(path)
+        folder = resolve_vault_path(path, for_write=True)
+        ensure_write_allowed(folder, overwrite=True)
         folder.mkdir(parents=True, exist_ok=True)
         return {"path": self._relative(folder), "created": True}
 
@@ -105,7 +152,9 @@ class ObsidianVaultService:
             content = self.read_note(item["path"])
             for line_no, line in enumerate(content.splitlines(), start=1):
                 if line.strip().startswith("- [ ]") or line.strip().startswith("- [x]"):
-                    todos.append({"path": item["path"], "line": line_no, "text": line.strip()})
+                    todos.append(
+                        {"path": item["path"], "line": line_no, "text": line.strip()}
+                    )
         return todos
 
     def get_backlinks(self, note_path: str) -> list[dict]:
@@ -152,7 +201,11 @@ class ObsidianVaultService:
 
     def _file_info(self, path: Path) -> dict:
         stat = path.stat()
-        return {"path": self._relative(path), "size": stat.st_size, "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat()}
+        return {
+            "path": self._relative(path),
+            "size": stat.st_size,
+            "modified_at": datetime.fromtimestamp(stat.st_mtime).isoformat(),
+        }
 
     def _relative(self, path: Path) -> str:
         return path.resolve().relative_to(vault_path()).as_posix()
@@ -163,7 +216,16 @@ class ObsidianVaultService:
             return content[:180]
         return content[max(0, index - 80) : index + 140].replace("\n", " ").strip()
 
-    def _log_operation(self, operation: str, path: Path, old: str, new: str, backup: str | None, success: bool, error: str | None) -> None:
+    def _log_operation(
+        self,
+        operation: str,
+        path: Path,
+        old: str,
+        new: str,
+        backup: str | None,
+        success: bool,
+        error: str | None,
+    ) -> None:
         now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).isoformat()
         with connect() as conn:
             conn.execute(

@@ -4,6 +4,10 @@ import { fileURLToPath } from "node:url";
 
 export interface CliConfig {
   aiUrl: string;
+  chatId: string;
+  senderId: string;
+  senderName: string;
+  requestTimeoutMs: number;
   envFilePath: string | null;
   envLoaded: boolean;
 }
@@ -68,12 +72,21 @@ function loadRootEnv(): string | null {
 
 const envFilePath = loadRootEnv();
 
+function positiveInteger(value: string | undefined, fallback: number): number {
+  const parsed = Number(value);
+  return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
+}
+
 export const cliConfig: CliConfig = {
   aiUrl:
     process.env.XNINETZY_AI_URL ??
     process.env.AI_API_URL ??
     process.env.AI_BASE_URL ??
     "http://localhost:8000",
+  chatId: process.env.XNINETZY_CLI_CHAT_ID ?? 'xninetzy-cli',
+  senderId: process.env.XNINETZY_CLI_SENDER_ID ?? 'cli-user',
+  senderName: process.env.XNINETZY_CLI_SENDER_NAME ?? 'CLI User',
+  requestTimeoutMs: positiveInteger(process.env.XNINETZY_CLI_TIMEOUT_MS, 120_000),
   envFilePath,
   envLoaded: Boolean(envFilePath),
 };

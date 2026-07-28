@@ -1,7 +1,6 @@
 from functools import lru_cache
 from pathlib import Path
 
-from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -13,12 +12,61 @@ def find_root_env() -> Path | None:
 
 
 class Settings(BaseSettings):
-    model_config = SettingsConfigDict(env_file=find_root_env(), env_file_encoding="utf-8", extra="ignore")
+    model_config = SettingsConfigDict(
+        env_file=find_root_env(), env_file_encoding="utf-8", extra="ignore"
+    )
 
-    DEEPSEEK_API_KEY: str = Field(..., min_length=1)
-    DEEPSEEK_BASE_URL: str = "https://api.deepseek.com"
-    DEEPSEEK_MODEL: str = "deepseek-v4-flash"
-    DEEPSEEK_PRO_MODEL: str = "deepseek-v4-pro"
+    # Chat LLM provider registry. Credentials stay deployment-scoped; users
+    # only select an enabled provider/model pair.
+    LLM_DEFAULT_PROVIDER: str = "flaz"
+    LLM_ENABLED_PROVIDERS: str = "flaz"
+    LLM_TIMEOUT_SECONDS: float = 120.0
+    LLM_MAX_RETRIES: int = 2
+
+    FLAZ_API_KEY: str = ""
+    FLAZ_BASE_URL: str = "https://ai.flaz.id/v1"
+    FLAZ_MODEL: str = "deepseek-v4-pro"
+    FLAZ_MODELS: str = "deepseek-v4-pro"
+    FLAZ_TIMEOUT_SECONDS: float = 120.0
+    FLAZ_MAX_RETRIES: int = 2
+    OPENAI_API_KEY: str = ""
+    OPENAI_BASE_URL: str = "https://api.openai.com/v1"
+    OPENAI_MODEL: str = ""
+    OPENAI_MODELS: str = ""
+    ANTHROPIC_API_KEY: str = ""
+    ANTHROPIC_MODEL: str = ""
+    ANTHROPIC_MODELS: str = ""
+    OPENROUTER_API_KEY: str = ""
+    OPENROUTER_BASE_URL: str = "https://openrouter.ai/api/v1"
+    OPENROUTER_MODEL: str = ""
+    OPENROUTER_MODELS: str = ""
+    OLLAMA_BASE_URL: str = "http://127.0.0.1:11434/v1"
+    OLLAMA_MODEL: str = ""
+    OLLAMA_MODELS: str = ""
+    GENERIC_OPENAI_API_KEY: str = ""
+    GENERIC_OPENAI_BASE_URL: str = ""
+    GENERIC_OPENAI_MODEL: str = ""
+    GENERIC_OPENAI_MODELS: str = ""
+
+    # Optional coding-agent runtimes. These execute local CLIs and are kept
+    # separate from the chat LLM provider selected above.
+    CODING_AGENT_ENABLED: bool = False
+    CODING_AGENT_DEFAULT: str = "internal"
+    CODING_AGENT_ALLOWED: str = "internal,codex,claude-code,opencode"
+    CODING_AGENT_ADMIN_ONLY: bool = True
+    CODING_AGENT_WORKSPACE: str = "."
+    CODING_AGENT_ALLOWED_ROOT: str = "."
+    CODING_AGENT_TIMEOUT_SECONDS: float = 600.0
+    CODING_AGENT_MAX_OUTPUT_CHARS: int = 12_000
+    CODING_AGENT_SANDBOX: str = "workspace-write"
+    CODING_AGENT_ENV_ALLOWLIST: str = "PATH,HOME,USER,LOGNAME,LANG,LC_ALL,TERM,TMPDIR,XDG_CONFIG_HOME,XDG_DATA_HOME,XDG_CACHE_HOME,SSL_CERT_FILE,SSL_CERT_DIR,CODEX_HOME"
+    CODEX_BIN: str = "codex"
+    CODEX_MODEL: str = ""
+    CLAUDE_CODE_BIN: str = "claude"
+    CLAUDE_CODE_MODEL: str = ""
+    OPENCODE_BIN: str = "opencode"
+    OPENCODE_MODEL: str = ""
+
     BOT_NAME: str = "Xninetzy AI"
     BOT_OWNER: str = "Misbahul Muttaqin"
     AI_API_KEY: str = ""
@@ -45,8 +93,39 @@ class Settings(BaseSettings):
     REMINDER_EXPIRE_AFTER_HOURS: int = 24
     REMINDER_AUTO_CREATE_ENABLED: bool = True
     REMINDER_DEFAULT_TIMEZONE: str = "Asia/Jakarta"
-    WA_MCP_BASE_URL: str = "http://wa-enggine:8081"
+    WA_MCP_BASE_URL: str = "http://127.0.0.1:8081"
     WA_MCP_API_KEY: str = ""
+    WA_MEDIA_MAX_BYTES: int = 25 * 1024 * 1024
+
+    # Standard stdio MCP can run either inside the AI container or directly on
+    # the host through Codex, Claude Code, and OpenCode.
+    MCP_RUNTIME_MODE: str = "auto"  # auto | host | container
+    MCP_HOST_DATA_DIR: str = ""
+    MCP_HOST_SQLITE_PATH: str = ""
+
+    # OCR for WhatsApp images and scanned PDFs
+    OCR_ENABLED: bool = True
+    OCR_LANGUAGES: str = "eng+ind"
+    OCR_MAX_PDF_PAGES: int = 20
+    OCR_MAX_IMAGE_PIXELS: int = 25_000_000
+
+    # Local-only web analysis engine (one owner profile per installation)
+    WEB_ANALYSIS_ENABLED: bool = True
+    WEB_ANALYSIS_DATA_DIR: str = "/app/data/web-analysis"
+    WEB_ANALYSIS_PROFILE_ID: str = "local-owner"
+    WEB_ANALYSIS_ENCRYPTION_KEY: str = ""
+    WEB_ANALYSIS_HEADLESS: bool = True
+    WEB_ANALYSIS_AUTHENTICATED_CRAWL_ENABLED: bool = False
+    WEB_ANALYSIS_DEFAULT_TTL_DAYS: int = 14
+    WEB_ANALYSIS_MAX_PAGES: int = 10
+    WEB_ANALYSIS_TIMEOUT_MS: int = 30_000
+    WEB_ANALYSIS_REQUEST_DELAY_SECONDS: float = 2.0
+    WEB_ANALYSIS_LOCK_STALE_SECONDS: int = 1_800
+    WEB_ANALYSIS_MAX_ENCRYPTED_JSON_BYTES: int = 5_242_880
+    WEB_ANALYSIS_BACKGROUND_ENABLED: bool = True
+    WEB_ANALYSIS_BACKGROUND_INTERVAL_MINUTES: int = 360
+    WEB_ANALYSIS_BACKGROUND_SITES: str = "hebat,mahasiswa"
+    WEB_ANALYSIS_BACKGROUND_AUTHENTICATED: bool = False
 
     # HEBAT / Moodle integration
     HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"
@@ -64,7 +143,7 @@ class Settings(BaseSettings):
     HEBAT_USERNAME: str = ""
     HEBAT_PASSWORD: str = ""
     HEBAT_NOTIFY_CHAT_ID: str = ""
-    HEBAT_AUTO_LOGIN: bool = True
+    HEBAT_AUTO_LOGIN: bool = False
     # Max automatic re-logins per request when a stale cookie redirects to /login.
     # Bounds the relogin+retry loop so a permanently-broken session can't spin forever.
     HEBAT_SESSION_MAX_RELOGIN: int = 2
@@ -99,7 +178,11 @@ class Settings(BaseSettings):
     HITL_REQUIRE_FOR_GRAPH_RAG_WRITE: bool = True
 
     def hebat_reminder_hours(self) -> list[int]:
-        return [int(h.strip()) for h in self.HEBAT_REMINDER_BEFORE_HOURS.split(",") if h.strip().isdigit()]
+        return [
+            int(h.strip())
+            for h in self.HEBAT_REMINDER_BEFORE_HOURS.split(",")
+            if h.strip().isdigit()
+        ]
 
     # Knowledge / Vector memory
     KNOWLEDGE_ENABLED: bool = True

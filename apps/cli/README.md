@@ -1,6 +1,6 @@
 # Xninetzy CLI
 
-Dark fullscreen terminal UI mock untuk Xninetzy.
+Dark fullscreen terminal client untuk Xninetzy AI.
 
 ## Current UI
 
@@ -12,8 +12,9 @@ Dark fullscreen terminal UI mock untuk Xninetzy.
 - White text
 - Purple logo/border accent
 - Orange node/event horizon accent
-- Local mock chat
-- No AI/API/backend call yet
+- Live chat ke endpoint FastAPI `/api/chat`
+- Mendukung pasted block sebagai konteks pesan
+- Timeout dan error state yang terlihat di status bar
 
 ## Run
 
@@ -35,11 +36,24 @@ yarn link
 xninetzy
 ```
 
-## Mock Inputs
+## Docker
+
+Jalankan AI terlebih dahulu, lalu buka CLI interaktif:
+
+```bash
+docker compose --profile tools run --rm cli
+```
+
+Smoke test non-interaktif:
+
+```bash
+printf 'Balas hanya CLI_OK\n' | docker compose --profile tools run --rm -T cli
+```
+
+## Inputs
 
 ```txt
 halo
 /help
-/status
 /clear
 ```

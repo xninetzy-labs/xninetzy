@@ -12,6 +12,7 @@ type InputBoxProps = {
   onPaste: (block: string) => void;
   onRemoveLastAttachment: () => void;
   onSubmit: () => void;
+  disabled?: boolean;
   width: number;
 };
 
@@ -41,6 +42,7 @@ export function InputBox({
   onPaste,
   onRemoveLastAttachment,
   onSubmit,
+  disabled = false,
   width
 }: InputBoxProps) {
   const [cursor, setCursor] = useState(draft.length);
@@ -52,6 +54,7 @@ export function InputBox({
   }, [draft]);
 
   useInput((input, key) => {
+    if (disabled) return;
     if (key.return) {
       onSubmit();
       return;
@@ -99,14 +102,18 @@ export function InputBox({
   });
 
   const hasContent = draft.length > 0 || attachments.length > 0;
-  const placeholder = attachments.length > 0 ? 'Add a comment…' : 'Ask anything… "halo"';
+  const placeholder = disabled
+    ? 'Waiting for Xninetzy AI…'
+    : attachments.length > 0
+      ? 'Add a comment…'
+      : 'Ask anything… "halo"';
 
   return (
     <Box width={width} flexDirection="column" paddingX={1}>
       <Box
         width={width - 2}
         borderStyle="round"
-        borderColor={attachments.length > 0 ? colors.orange : colors.border}
+        borderColor={disabled ? colors.dim : attachments.length > 0 ? colors.orange : colors.border}
         paddingX={1}
       >
         <Text color={colors.orange}>◎ </Text>
@@ -121,7 +128,12 @@ export function InputBox({
         ))}
 
         <Box flexGrow={1}>
-          <DraftLine draft={draft} cursor={cursor} placeholder={placeholder} showPlaceholder={!hasContent} />
+          <DraftLine
+            draft={draft}
+            cursor={cursor}
+            placeholder={placeholder}
+            showPlaceholder={disabled || !hasContent}
+          />
         </Box>
       </Box>
 

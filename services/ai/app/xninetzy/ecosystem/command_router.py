@@ -22,6 +22,10 @@ SLASH_COMMANDS: dict[str, str] = {
     "/study-review": "learning_review_week",
     "/approvals": "hitl_list_pending",
     "/hebat-debug": "hebat_debug_login",
+    "/jadwal": "portal_schedule",
+    "/portalinfo": "portal_info",
+    "/krs-watcher": "portal_krs_watcher_status",
+    "/web-analysis": "web_analysis_status",
     "/media-info": "media_info",
     "/analyze-media": "analyze_media",
     "/rule": "rule_list",
@@ -36,10 +40,17 @@ SLASH_COMMANDS: dict[str, str] = {
     "/test-memory": "memory_list",
     "/workflow-status": "workflow_status",
     "/workflow-latest": "workflow_latest",
+    "/llm": "ai_provider_status",
+    "/agent": "coding_agent_status",
 }
 
 WORKFLOW_RESUME_PATTERN = re.compile(r"^/workflow-resume\s+([\w-]+)$", re.I)
 WORKFLOW_CANCEL_PATTERN = re.compile(r"^/workflow-cancel\s+([\w-]+)$", re.I)
+LLM_LIST_PATTERN = re.compile(r"^/llm\s+list$", re.I)
+LLM_USE_PATTERN = re.compile(r"^/llm\s+use\s+([\w-]+)(?:\s+(.+))?$", re.I | re.S)
+AGENT_LIST_PATTERN = re.compile(r"^/agent\s+list$", re.I)
+AGENT_USE_PATTERN = re.compile(r"^/agent\s+use\s+([\w-]+)$", re.I)
+CODE_PATTERN = re.compile(r"^/code\s+(.+)$", re.I | re.S)
 
 # /helper <topic> → helper_get with topic
 HELPER_PATTERN = re.compile(r"^/helper\s+(\w+)$", re.I)
@@ -47,7 +58,11 @@ SKILL_PATTERN = re.compile(r"^/skill\s+([\w-]+)$", re.I)
 APPROVE_PATTERN = re.compile(r"^/approve\s+(\d+)$", re.I)
 REJECT_PATTERN = re.compile(r"^/reject\s+(\d+)$", re.I)
 RESEARCH_PATTERN = re.compile(r"^/research\s+(.+)$", re.I | re.S)
-DEEP_RESEARCH_PATTERN = re.compile(r"^/deep-research(?:\s+(speed|balanced|quality))?\s+(.+)$", re.I | re.S)
+DEEP_RESEARCH_PATTERN = re.compile(
+    r"^/deep-research(?:\s+(speed|balanced|quality))?\s+(.+)$", re.I | re.S
+)
+WEB_ANALYSIS_PATTERN = re.compile(r"^/web-analysis\s+(hebat|mahasiswa)$", re.I)
+WEB_REFRESH_PATTERN = re.compile(r"^/web-refresh\s+(hebat|mahasiswa)$", re.I)
 
 RULE_ADD_PATTERN = re.compile(r"^/rule\s+add\s+(.+)$", re.I | re.S)
 RULE_OFF_PATTERN = re.compile(r"^/rule\s+off\s+(\d+)$", re.I)
@@ -63,7 +78,9 @@ REMEMBER_PATTERN = re.compile(r"^/remember\s+(.+)$", re.I | re.S)
 MEMORY_SEARCH_PATTERN = re.compile(r"^/memory\s+search\s+(.+)$", re.I | re.S)
 MEMORY_DELETE_PATTERN = re.compile(r"^/memory\s+(?:delete|del|rm)\s+(\d+)$", re.I)
 FORGET_MEMORY_PATTERN = re.compile(r"^/forget-memory\s+(\d+)$", re.I)
-FEEDBACK_PATTERN = re.compile(r"^/(?:feedback|fix-agent|agent-learn)\s+(.+)$", re.I | re.S)
+FEEDBACK_PATTERN = re.compile(
+    r"^/(?:feedback|fix-agent|agent-learn)\s+(.+)$", re.I | re.S
+)
 AGENT_APPROVE_PATTERN = re.compile(r"^/agent-approve\s+(\d+)$", re.I)
 AGENT_REJECT_PATTERN = re.compile(r"^/agent-reject\s+(\d+)$", re.I)
 
@@ -75,6 +92,25 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     stripped = message.strip()
     if not stripped.startswith("/"):
         return None, {}
+
+    if LLM_LIST_PATTERN.match(stripped):
+        return "ai_provider_list", {}
+    m = LLM_USE_PATTERN.match(stripped)
+    if m:
+        return "ai_provider_use", {
+            "provider": m.group(1).lower(),
+            "model": (m.group(2) or "").strip(),
+        }
+
+    if AGENT_LIST_PATTERN.match(stripped):
+        return "coding_agent_list", {}
+    m = AGENT_USE_PATTERN.match(stripped)
+    if m:
+        return "coding_agent_use", {"runtime": m.group(1).lower()}
+
+    m = CODE_PATTERN.match(stripped)
+    if m:
+        return "coding_agent_run", {"task": m.group(1).strip()}
 
     # /helper <topic>
     m = HELPER_PATTERN.match(stripped)
@@ -103,11 +139,21 @@ def parse_command(message: str) -> tuple[str | None, dict]:
 
     m = DEEP_RESEARCH_PATTERN.match(stripped)
     if m:
-        return "deep_research_topic", {"mode": (m.group(1) or "balanced").lower(), "topic": m.group(2).strip()}
+        return "deep_research_topic", {
+            "mode": (m.group(1) or "balanced").lower(),
+            "topic": m.group(2).strip(),
+        }
 
     m = RESEARCH_PATTERN.match(stripped)
     if m:
         return "research_light", {"topic": m.group(1).strip()}
+
+    m = WEB_ANALYSIS_PATTERN.match(stripped)
+    if m:
+        return "web_analysis_status", {"site_slug": m.group(1).lower()}
+    m = WEB_REFRESH_PATTERN.match(stripped)
+    if m:
+        return "web_analysis_refresh", {"site_slug": m.group(1).lower()}
 
     # /rule subcommands
     m = RULE_ADD_PATTERN.match(stripped)

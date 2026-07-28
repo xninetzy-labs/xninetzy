@@ -2,6 +2,8 @@ import type { WASocket, WAMessage } from "@whiskeysockets/baileys";
 import { logger } from "../utils/logger";
 
 let currentSocket: WASocket | null = null;
+export type WhatsAppConnectionStatus = "disconnected" | "connecting" | "open";
+let connectionStatus: WhatsAppConnectionStatus = "disconnected";
 
 // Shared recent message cache for MCP media download
 const MAX_CACHED_MESSAGES = 500;
@@ -27,6 +29,19 @@ export function getCurrentSocket(): WASocket | null {
 
 export function setCurrentSocket(sock: WASocket | null): void {
   currentSocket = sock;
+  if (!sock) connectionStatus = "disconnected";
+}
+
+export function getConnectionStatus(): WhatsAppConnectionStatus {
+  return connectionStatus;
+}
+
+export function setConnectionStatus(status: WhatsAppConnectionStatus): void {
+  connectionStatus = status;
+}
+
+export function isSocketReady(): boolean {
+  return Boolean(currentSocket) && connectionStatus === "open";
 }
 
 export function cleanupCurrentSocket(reason: string): void {
@@ -43,6 +58,7 @@ export function cleanupCurrentSocket(reason: string): void {
 
   const oldSock = currentSocket;
   currentSocket = null;
+  connectionStatus = "disconnected";
 
   try {
     oldSock.ev.removeAllListeners("connection.update");

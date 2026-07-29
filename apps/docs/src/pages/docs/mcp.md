@@ -143,6 +143,16 @@ Gunakan knowledge_answer dari MCP xninetzy untuk menjawab pertanyaan ini dan per
 `knowledge_answer` melakukan hybrid retrieval, sintesis, dan validasi sitasi.
 Jika evidence tidak cukup, client harus menyampaikan kekurangan tersebut.
 
+State learning session juga sama pada semua client. Contoh:
+
+```text
+Gunakan MCP xninetzy. Tampilkan learning_generate_today_plan, lalu mulai sesi
+melalui learning_start_study_session dengan idempotency_key yang stabil.
+```
+
+Jika sesi sudah dimulai dari WhatsApp, Codex, Claude Code, dan OpenCode akan
+melihat sesi aktif yang sama dan tidak membuat sesi paralel baru.
+
 ## Path dan environment
 
 Server menjalankan AI project sehingga root `.env` tetap terbaca. Jangan menaruh API key langsung dalam file MCP.

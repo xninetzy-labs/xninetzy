@@ -23,6 +23,7 @@ def build_parser() -> argparse.ArgumentParser:
     login = subparsers.add_parser("login", help="Capture a manual headed-browser session")
     login.add_argument("--site", required=True, choices=("hebat", "mahasiswa"))
     login.add_argument("--profile", help="Override the configured local profile ID")
+    login.add_argument("--credential-source", choices=("hebat",))
 
     status = subparsers.add_parser("status", help="Show cache/session presence without secrets")
     status.add_argument("--site", required=True, choices=("hebat", "mahasiswa"))
@@ -40,7 +41,9 @@ async def _run(args: argparse.Namespace) -> dict:
         )
         return result.model_dump()
     if args.command == "login":
-        return await capture_manual_session(args.site, args.profile)
+        return await capture_manual_session(
+            args.site, args.profile, args.credential_source
+        )
 
     cache = AnalysisCacheManager().load(args.site)
     result = {

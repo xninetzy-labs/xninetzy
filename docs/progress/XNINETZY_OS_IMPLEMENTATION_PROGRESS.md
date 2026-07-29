@@ -17,7 +17,9 @@ code, tests, configuration, and documentation agree.
 | P1-01 | Event reducers, entity links, and Personal Context v2 | Complete | 31 focused + 264 full AI tests; focused lint |
 | P1-02 | Scheduled briefing/review and HEBAT freshness worker | Complete | 6 scheduler + 29 parity + 264 full AI tests |
 | P2-01 | Duration/level/source-aware roadmap planner | Complete | 21 focused + 264 full AI tests; focused lint |
+| P2-02 | Study sessions, progress metrics, and adaptive today plan | Complete | 21 focused + 271 full AI tests; focused lint |
 | Security-02 | Per-installation runtime data isolation | Complete | Git tracked-file audit; docs build |
+| Academic/Telegram plan | Cyber Campus KRS, grades, and owner Telegram bridge | Planned | Design only; no actions enabled |
 
 ## Batch P0-01 — API authentication and owner boundary
 
@@ -99,8 +101,20 @@ Completed: 2026-07-29
 - [x] Persist source references as roadmap metadata and `learning_resources`.
 - [x] Disclose when the roadmap has no validated internal source.
 
-Next P2 work: study-session tracking, mastery/prerequisite relationships,
-active-recall scheduling, and plan adaptation from energy/deadlines.
+## Batch P2-02 — Study session and progress tracking
+
+Completed: 2026-07-29
+
+- [x] Replace the study-session and progress-tracker placeholders.
+- [x] Enforce one active owner session and accept stable idempotency keys.
+- [x] Persist planned/actual duration, energy, mastery, reflection, and evidence.
+- [x] Write completion progress and ecosystem event atomically and exactly once.
+- [x] Adapt today plan across start, resume, reinforce, practice, and advance modes.
+- [x] Include adaptive focus in Personal Context for internal LangGraph.
+- [x] Expose the same tools through the central registry and dynamic MCP adapter.
+
+Next P2 work: prerequisite/concept/mastery relationships, active recall and
+spaced-repetition scheduling, deadline-aware plan adaptation, and retrieval evals.
 
 ## Batch Security-02 — Open-source local data isolation
 

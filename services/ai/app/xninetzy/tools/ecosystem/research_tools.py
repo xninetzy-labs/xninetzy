@@ -123,6 +123,8 @@ async def research_generate_brief(topic: str) -> str:
 async def research_save_brief(topic: str, brief: str, chat_id: str = "system") -> str:
     """Buat approval request untuk menyimpan brief riset."""
     from app.xninetzy.os.hitl.approval_service import request_approval
+    from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
+
     approval_id = request_approval(
         chat_id=chat_id,
         sender_id=None,
@@ -131,7 +133,18 @@ async def research_save_brief(topic: str, brief: str, chat_id: str = "system") -
         summary="Menyimpan brief ke Obsidian/Knowledge membutuhkan approval jika impact tinggi.",
         payload={"topic": topic, "brief": brief},
     )
-    return f"*Approval Required #{approval_id}*\nSimpan research `{topic}` membutuhkan approval admin.\nBalas `/approve {approval_id}` atau `/reject {approval_id}`."
+    delivered = await notify_admin_approval(
+        approval_id,
+        "save_research_to_obsidian",
+        f"Simpan research: {topic}",
+        "Menyimpan brief ke Obsidian/Knowledge membutuhkan approval.",
+    )
+    status = (
+        "Tombol dikirim ke WhatsApp admin."
+        if delivered
+        else "Pengiriman tombol gagal; periksa ADMIN_JID dan WA Engine."
+    )
+    return f"*Approval Required #{approval_id}*\n{status}"
 
 
 @tool

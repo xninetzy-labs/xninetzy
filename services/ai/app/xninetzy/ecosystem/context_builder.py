@@ -15,6 +15,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         "recent_daily_summary": None,
         "relevant_knowledge": [],
         "active_roadmaps": [],
+        "learning_focus": None,
         "habit_status": [],
         "workout_summary": None,
         "recent_events": [],
@@ -96,6 +97,17 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: roadmap fetch failed: %s", e)
 
     try:
+        from app.xninetzy.domains.it_learning.progress_tracker import build_today_plan
+
+        plan = build_today_plan()
+        if plan:
+            context["learning_focus"] = (
+                f"{plan['mode']}: {plan['focus']} ({plan['minutes']} menit)"
+            )
+    except Exception as e:
+        logger.debug("Context: learning focus fetch failed: %s", e)
+
+    try:
         from app.xninetzy.os.life.habit_manager import get_habit_today
 
         context["habit_status"] = [
@@ -164,6 +176,9 @@ def format_context_for_prompt(ctx: dict) -> str:
 
     if ctx.get("active_roadmaps"):
         parts.append("Active learning roadmaps: " + " | ".join(ctx["active_roadmaps"]))
+
+    if ctx.get("learning_focus"):
+        parts.append("Adaptive learning focus: " + ctx["learning_focus"])
 
     if ctx.get("habit_status"):
         parts.append("Today habits: " + " | ".join(ctx["habit_status"]))

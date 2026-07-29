@@ -6,6 +6,10 @@ This is the execution tracker for turning Xninetzy from a feature-rich assistant
 into one OS shared by WhatsApp, internal LangGraph, Codex, Claude Code, and
 OpenCode.
 
+The planned Cyber Campus KRS/grades and Telegram extension is tracked separately
+in `docs/plan/CYBER_CAMPUS_KRS_GRADES_TELEGRAM_PLAN.md`. It remains planning-only
+until its read-only and approval-hardening gates are implemented.
+
 ## Architecture decision
 
 All interfaces use the central Xninetzy tool registry and the same persisted OS
@@ -75,7 +79,7 @@ Acceptance:
 ## P2 — Adaptive Learning OS
 
 - [x] Replace the fixed 14-day roadmap template with a source-aware planner.
-- [ ] Implement study sessions and progress tracker modules.
+- [x] Implement study sessions and progress tracker modules.
 - [ ] Model prerequisite, concept, milestone, evidence, and mastery relationships.
 - [ ] Add quizzes, active recall, and spaced repetition scheduling.
 - [ ] Adapt the daily plan to mastery, available time, energy, and deadlines.
@@ -106,6 +110,7 @@ Acceptance:
 - Added leased scheduled jobs with at-most-once WhatsApp delivery tracking.
 - Added event-backed morning/evening/weekly messages and inspectable HEBAT freshness.
 - Added duration/level-aware roadmap phases and persisted knowledge source links.
+- Added idempotent study sessions, progress metrics, and mastery/energy adaptive daily plans.
 
 ### 2026-07-28
 

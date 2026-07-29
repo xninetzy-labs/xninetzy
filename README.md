@@ -37,7 +37,7 @@ Project ini ditujukan untuk instalasi lokal/single-owner. Docker Compose yang di
 |---|---|
 | Chat agent | Routing LangGraph, jawaban langsung, ReAct tools, workflow multi-aksi, dan slash command deterministik |
 | LLM | Flaz sebagai default melalui `langchain-openai`, plus OpenAI, Anthropic, OpenRouter, Ollama, dan endpoint OpenAI-compatible |
-| Learning OS | Roadmap belajar, milestone, task belajar, review mingguan, resource attachment, dan approval aktivasi |
+| Learning OS | Roadmap adaptif, study session, mastery, task belajar, review mingguan, resource attachment, dan approval aktivasi |
 | HEBAT/Moodle | Login Playwright, sinkronisasi course/activity/tugas, deadline digest, download file asli, baca PDF, dan submission dengan konfirmasi |
 | Obsidian | List, search, read, create, append, frontmatter, tag, heading, backlink, todo, MOC, daily note, dan backup sebelum overwrite |
 | Knowledge | Ingest teks/file, hybrid FAISS+FTS, evidence selection, grounded Q&A bersitasi, dan Graph RAG |

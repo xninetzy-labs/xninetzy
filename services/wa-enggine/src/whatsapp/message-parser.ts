@@ -12,12 +12,12 @@ export function extractMessageText(rawMessage?: proto.IMessage | null): string |
     message.imageMessage?.caption,
     message.videoMessage?.caption,
     message.documentMessage?.caption,
-    message.buttonsResponseMessage?.selectedDisplayText,
     message.buttonsResponseMessage?.selectedButtonId,
+    message.buttonsResponseMessage?.selectedDisplayText,
     message.listResponseMessage?.title,
     message.listResponseMessage?.singleSelectReply?.selectedRowId,
-    message.templateButtonReplyMessage?.selectedDisplayText,
     message.templateButtonReplyMessage?.selectedId,
+    message.templateButtonReplyMessage?.selectedDisplayText,
   ];
 
   const text = candidates.find((value) => typeof value === "string" && value.trim().length > 0);

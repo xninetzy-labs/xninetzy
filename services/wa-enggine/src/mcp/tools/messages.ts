@@ -50,6 +50,46 @@ export const messageTools: McpTool[] = [
   },
   {
     definition: {
+      name: "send_verification_buttons",
+      description: "Kirim permintaan verifikasi dengan tombol approve dan reject.",
+      inputSchema: {
+        type: "object",
+        properties: {
+          jid: jidParam,
+          text: { type: "string" },
+          approval_id: { type: "string" },
+          footer: { type: "string" },
+        },
+        required: ["jid", "text", "approval_id"],
+      },
+    },
+    async handler(input, { sock }) {
+      const approvalId = requireString(input, "approval_id");
+      const message = await sock.sendMessage(
+        requireString(input, "jid"),
+        {
+          text: requireString(input, "text"),
+          footer: optionalString(input, "footer") ?? "Xninetzy OS verification",
+          buttons: [
+            {
+              buttonId: `/approve ${approvalId}`,
+              buttonText: { displayText: "Approve" },
+              type: 1,
+            },
+            {
+              buttonId: `/reject ${approvalId}`,
+              buttonText: { displayText: "Reject" },
+              type: 1,
+            },
+          ],
+          headerType: 1,
+        } as any,
+      );
+      return publicMessageResult(message);
+    },
+  },
+  {
+    definition: {
       name: "send_video",
       description: "Kirim video dari URL, file URL, atau base64.",
       inputSchema: {

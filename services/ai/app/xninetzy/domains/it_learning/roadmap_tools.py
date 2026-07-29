@@ -12,7 +12,12 @@ from app.xninetzy.domains.it_learning.roadmap_store import (
     list_roadmaps,
     save_roadmap_draft,
 )
-from app.xninetzy.os.notifications.admin_notifier import notify_admin
+from app.xninetzy.domains.it_learning.progress_tracker import (
+    build_today_plan,
+    get_roadmap_progress,
+    get_weekly_learning_summary,
+)
+from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
 
 
 @tool
@@ -36,12 +41,16 @@ async def learning_create_roadmap(
         summary=f"Akan mengaktifkan roadmap #{roadmap_id} dan membuat task belajar.",
         payload={"roadmap_id": roadmap_id},
     )
-    await notify_admin(
-        "roadmap_draft_created",
-        {"status": f"roadmap #{roadmap_id}", "title": draft.topic},
-        "medium",
+    await notify_admin_approval(
+        approval_id,
+        "activate_learning_roadmap",
+        f"Aktifkan roadmap {draft.topic}",
+        f"Akan mengaktifkan roadmap #{roadmap_id} dan membuat task belajar.",
     )
-    return format_roadmap_draft(draft) + f"\n\nApproval: `/approve {approval_id}`"
+    return (
+        format_roadmap_draft(draft)
+        + f"\n\nApproval #{approval_id} dikirim ke WhatsApp admin."
+    )
 
 
 def _resolve_planning_sources(topic: str, source_ids: list[int] | None) -> list[dict]:
@@ -102,19 +111,58 @@ def learning_update_progress(roadmap_id: int, progress_note: str) -> str:
 
 
 @tool
-def learning_generate_today_plan(chat_id: str = "system") -> str:
-    """Generate rencana belajar hari ini dari roadmap draft/aktif."""
-    rows = list_roadmaps()
-    if not rows:
-        return "Belum ada roadmap. Buat dulu dengan `buat roadmap belajar <topik>`."
-    row = rows[0]
-    return f"*Study Today*\nRoadmap: {row['title']}\n• Review target akhir\n• Kerjakan 1 task paling kecil\n• Catat hasil belajar ke Obsidian"
+def learning_generate_today_plan(
+    chat_id: str = "system", roadmap_id: int | None = None
+) -> str:
+    """Buat rencana belajar adaptif dari roadmap, sesi, mastery, dan energi terakhir."""
+    plan = build_today_plan(roadmap_id)
+    if not plan:
+        return "Belum ada roadmap aktif. Buat dan aktifkan roadmap terlebih dahulu."
+    session_line = f"\nSesi aktif: `{plan['session_id']}`" if plan["session_id"] else ""
+    return (
+        f"*Study Today — {plan['mode']}*\nRoadmap: {plan['roadmap_title']}\n"
+        f"Fokus: {plan['focus']}\nDurasi: {plan['minutes']} menit\n"
+        f"Alasan: {plan['reason']}\nActive recall: {plan['recall']}{session_line}"
+    )
 
 
 @tool
-def learning_review_week(chat_id: str = "system") -> str:
-    """Review belajar mingguan."""
-    return "*Study Review Mingguan*\n• Apa yang selesai?\n• Apa yang masih membingungkan?\n• Resource apa yang paling membantu?\n• Apa fokus minggu depan?"
+def learning_review_week(chat_id: str = "system", roadmap_id: int | None = None) -> str:
+    """Review mingguan dari sesi, menit belajar, mastery, dan fokus aktual."""
+    summary = get_weekly_learning_summary(roadmap_id)
+    mastery = summary["average_mastery"]
+    mastery_text = f"{mastery:.0%}" if mastery is not None else "belum ada"
+    lines = [
+        "*Study Review Mingguan*",
+        f"Sesi selesai: {summary['session_count']}",
+        f"Total belajar: {summary['total_minutes']} menit",
+        f"Rata-rata mastery: {mastery_text}",
+    ]
+    if summary["recent"]:
+        lines.append("Fokus terbaru:")
+        for session in summary["recent"]:
+            lines.append(
+                f"• {session['objective']} — {session['actual_minutes']} menit, mastery {session['mastery_after']:.0%}"
+            )
+    else:
+        lines.append("Belum ada sesi selesai dalam 7 hari terakhir.")
+    return "\n".join(lines)
+
+
+@tool
+def learning_get_study_progress(roadmap_id: int) -> str:
+    """Tampilkan progres task, total sesi, menit belajar, dan mastery sebuah roadmap."""
+    progress = get_roadmap_progress(roadmap_id)
+    if not progress:
+        return f"Roadmap #{roadmap_id} tidak ditemukan."
+    mastery = progress["average_mastery"]
+    mastery_text = f"{mastery:.0%}" if mastery is not None else "belum ada"
+    return (
+        f"*Progress {progress['roadmap']['title']}*\n"
+        f"Task: {progress['task_done']}/{progress['task_total']} ({progress['task_ratio']:.0%})\n"
+        f"Sesi: {progress['session_count']}\nTotal belajar: {progress['total_minutes']} menit\n"
+        f"Rata-rata mastery: {mastery_text}"
+    )
 
 
 @tool

@@ -86,6 +86,33 @@ def run_migrations() -> None:
         )
         """,
         """
+        CREATE TABLE IF NOT EXISTS learning_study_sessions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_key TEXT NOT NULL UNIQUE,
+            roadmap_id INTEGER NOT NULL,
+            learning_task_id INTEGER,
+            chat_id TEXT,
+            topic TEXT NOT NULL,
+            objective TEXT NOT NULL,
+            planned_minutes INTEGER NOT NULL,
+            actual_minutes INTEGER,
+            energy_before INTEGER NOT NULL,
+            energy_after INTEGER,
+            mastery_before REAL NOT NULL DEFAULT 0,
+            mastery_after REAL,
+            status TEXT NOT NULL DEFAULT 'active',
+            reflection TEXT,
+            evidence_json TEXT NOT NULL DEFAULT '[]',
+            completion_event_id INTEGER,
+            started_at TEXT NOT NULL,
+            completed_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_learning_sessions_roadmap ON learning_study_sessions(roadmap_id, started_at)",
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_sessions_single_active ON learning_study_sessions(status) WHERE status='active'",
+        """
         CREATE TABLE IF NOT EXISTS entity_links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id TEXT,

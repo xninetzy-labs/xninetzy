@@ -51,6 +51,10 @@ LLM_USE_PATTERN = re.compile(r"^/llm\s+use\s+([\w-]+)(?:\s+(.+))?$", re.I | re.S
 AGENT_LIST_PATTERN = re.compile(r"^/agent\s+list$", re.I)
 AGENT_USE_PATTERN = re.compile(r"^/agent\s+use\s+([\w-]+)$", re.I)
 CODE_PATTERN = re.compile(r"^/code\s+(.+)$", re.I | re.S)
+CAPTCHA_PATTERN = re.compile(r"^/captcha\s+([A-Za-z0-9_-]+)\s+([^\s]+)$", re.I)
+CYBER_LOGIN_CANCEL_PATTERN = re.compile(
+    r"^/cyber-login-cancel\s+([A-Za-z0-9_-]+)$", re.I
+)
 
 # /helper <topic> → helper_get with topic
 HELPER_PATTERN = re.compile(r"^/helper\s+(\w+)$", re.I)
@@ -111,6 +115,18 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     m = CODE_PATTERN.match(stripped)
     if m:
         return "coding_agent_run", {"task": m.group(1).strip()}
+
+    if stripped.lower() == "/cyber-login":
+        return "portal_login_start", {}
+    m = CAPTCHA_PATTERN.match(stripped)
+    if m:
+        return "portal_login_submit_captcha", {
+            "challenge_id": m.group(1),
+            "captcha_answer": m.group(2),
+        }
+    m = CYBER_LOGIN_CANCEL_PATTERN.match(stripped)
+    if m:
+        return "portal_login_cancel", {"challenge_id": m.group(1)}
 
     # /helper <topic>
     m = HELPER_PATTERN.match(stripped)

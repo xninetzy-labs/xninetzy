@@ -45,7 +45,9 @@ from app.xninetzy.tools.internal.reminder import (
     reminder_list,
 )
 from app.xninetzy.interfaces.whatsapp.messaging import (
+    wa_forward_media_to_admin,
     wa_pin_message,
+    wa_send_admin_verification,
     wa_send_text,
     wa_set_announce,
 )
@@ -69,7 +71,12 @@ from app.xninetzy.os.academic.hebat.tools import (
 from app.xninetzy.os.academic.mahasiswa_portal.tools import (
     portal_info,
     portal_krs_watcher_status,
+    portal_login_cancel,
+    portal_login_start,
+    portal_login_submit_captcha,
+    portal_logout,
     portal_schedule,
+    portal_session_status,
 )
 from app.xninetzy.os.jobs.tools import os_job_status
 from app.xninetzy.tools.ecosystem.web_analysis_tools import (
@@ -155,9 +162,15 @@ from app.xninetzy.domains.it_learning.roadmap_tools import (
     learning_create_roadmap,
     learning_generate_today_plan,
     learning_get_roadmap,
+    learning_get_study_progress,
     learning_list_roadmaps,
     learning_review_week,
     learning_update_progress,
+)
+from app.xninetzy.domains.it_learning.study_session import (
+    learning_complete_study_session,
+    learning_list_study_sessions,
+    learning_start_study_session,
 )
 from app.xninetzy.os.notifications.admin_notifier import admin_notify_progress
 from app.xninetzy.interfaces.media.media_tools import (
@@ -242,6 +255,8 @@ def get_all_tools() -> list[BaseTool]:
             wa_pin_message,
             wa_set_announce,
             wa_send_text,
+            wa_send_admin_verification,
+            wa_forward_media_to_admin,
             # HEBAT / Moodle
             hebat_login_status,
             hebat_start_login,
@@ -264,6 +279,11 @@ def get_all_tools() -> list[BaseTool]:
             portal_info,
             portal_schedule,
             portal_krs_watcher_status,
+            portal_login_start,
+            portal_login_submit_captcha,
+            portal_login_cancel,
+            portal_session_status,
+            portal_logout,
             # Life OS — Goals
             goal_create,
             goal_list,
@@ -319,8 +339,12 @@ def get_all_tools() -> list[BaseTool]:
             learning_get_roadmap,
             learning_update_progress,
             learning_generate_today_plan,
+            learning_get_study_progress,
             learning_review_week,
             learning_attach_resource,
+            learning_start_study_session,
+            learning_complete_study_session,
+            learning_list_study_sessions,
             # Graph RAG
             graph_add_node,
             graph_add_edge,
@@ -421,7 +445,11 @@ def get_tool_groups() -> dict[str, list[str]]:
             "learning_create_roadmap",
             "learning_list_roadmaps",
             "learning_generate_today_plan",
+            "learning_get_study_progress",
             "learning_review_week",
+            "learning_start_study_session",
+            "learning_complete_study_session",
+            "learning_list_study_sessions",
         ],
         "knowledge": ["knowledge_ingest_text", "knowledge_search", "knowledge_answer"],
         "research": [
@@ -456,10 +484,21 @@ def get_tool_groups() -> dict[str, list[str]]:
             "portal_info",
             "portal_schedule",
             "portal_krs_watcher_status",
+            "portal_login_start",
+            "portal_login_submit_captcha",
+            "portal_login_cancel",
+            "portal_session_status",
+            "portal_logout",
         ],
         "life": ["goal_create", "task_capture", "daily_checkin", "os_job_status"],
         "reminders": ["reminder_create", "reminder_list", "reminder_cancel"],
-        "whatsapp": ["wa_pin_message", "wa_set_announce", "wa_send_text"],
+        "whatsapp": [
+            "wa_pin_message",
+            "wa_set_announce",
+            "wa_send_text",
+            "wa_send_admin_verification",
+            "wa_forward_media_to_admin",
+        ],
         "media": [
             "media_read_document",
             "media_read_image",

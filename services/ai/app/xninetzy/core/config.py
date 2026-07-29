@@ -156,6 +156,13 @@ class Settings(BaseSettings):
     WEB_ANALYSIS_BACKGROUND_INTERVAL_MINUTES: int = 360
     WEB_ANALYSIS_BACKGROUND_SITES: str = "hebat,mahasiswa"
     WEB_ANALYSIS_BACKGROUND_AUTHENTICATED: bool = False
+    CYBER_CAMPUS_ENABLED: bool = False
+    CYBER_CAMPUS_BASE_URL: str = "https://mahasiswa.unair.ac.id"
+    CYBER_CAMPUS_CREDENTIAL_SOURCE: str = "hebat"
+    CYBER_CAMPUS_BROWSER_HEADLESS: bool = True
+    CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS: int = 180
+    CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS: int = 3
+    CYBER_CAMPUS_LOGIN_TIMEOUT_MS: int = 30_000
 
     # HEBAT / Moodle integration
     HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"

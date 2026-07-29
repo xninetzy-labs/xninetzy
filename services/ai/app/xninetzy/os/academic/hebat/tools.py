@@ -10,8 +10,17 @@ from langchain_core.tools import tool
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
-from app.xninetzy.os.academic.hebat.browser_session import check_session_valid, debug_login_with_credentials, login_with_credentials
-from app.xninetzy.os.academic.hebat.models import HebatActivity, HebatAssignment, HebatCourse, UploadStatus
+from app.xninetzy.os.academic.hebat.browser_session import (
+    check_session_valid,
+    debug_login_with_credentials,
+    login_with_credentials,
+)
+from app.xninetzy.os.academic.hebat.models import (
+    HebatActivity,
+    HebatAssignment,
+    HebatCourse,
+    UploadStatus,
+)
 from app.xninetzy.os.academic.hebat.moodle_client import (
     download_file,
     fetch_assignment_detail,
@@ -31,9 +40,13 @@ from app.xninetzy.os.academic.hebat.storage import (
     update_submission_status,
     upsert_activity,
     upsert_assignment,
+    sync_assignment_task,
     upsert_course,
 )
-from app.xninetzy.os.academic.hebat.submission import generate_token, upload_submission_via_playwright
+from app.xninetzy.os.academic.hebat.submission import (
+    generate_token,
+    upload_submission_via_playwright,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -46,8 +59,13 @@ def _now(s=None) -> datetime:
 def _parse_due_dt(due_str: str | None) -> datetime | None:
     if not due_str:
         return None
-    for fmt in ["%d %B %Y, %I:%M %p", "%d %B %Y %H:%M", "%Y-%m-%dT%H:%M:%S%z",
-                "%d %B %Y", "%A, %d %B %Y, %I:%M %p"]:
+    for fmt in [
+        "%d %B %Y, %I:%M %p",
+        "%d %B %Y %H:%M",
+        "%Y-%m-%dT%H:%M:%S%z",
+        "%d %B %Y",
+        "%A, %d %B %Y, %I:%M %p",
+    ]:
         try:
             return datetime.strptime(due_str.strip(), fmt)
         except ValueError:
@@ -64,6 +82,7 @@ def _ensure_session_or_msg(chat_id: str) -> str | None:
 
 
 # ─── 1. Login Status ─────────────────────────────────────────────────────────
+
 
 @tool
 async def hebat_login_status(chat_id: str) -> str:
@@ -85,8 +104,12 @@ async def hebat_login_status_verbose(chat_id: str) -> str:
     session = get_session(chat_id)
     lines = ["*HEBAT Login Status*"]
     lines.append(f"• Session aktif: {'ya' if is_valid else 'tidak'}")
-    lines.append(f"• Profile: {profile_name or (session or {}).get('profile_name') or '-'}")
-    lines.append(f"• Storage state: {'ada' if (session or {}).get('storage_state_path') else 'tidak ada'}")
+    lines.append(
+        f"• Profile: {profile_name or (session or {}).get('profile_name') or '-'}"
+    )
+    lines.append(
+        f"• Storage state: {'ada' if (session or {}).get('storage_state_path') else 'tidak ada'}"
+    )
     lines.append("• Secret/cookie/token: disembunyikan")
     return "\n".join(lines)
 
@@ -95,29 +118,53 @@ async def hebat_login_status_verbose(chat_id: str) -> str:
 async def hebat_debug_login(chat_id: str = "system") -> str:
     """Debug login HEBAT secara aman tanpa menampilkan password/cookie/token."""
     s = get_settings()
-    result = await debug_login_with_credentials(chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD)
+    result = await debug_login_with_credentials(
+        chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD
+    )
     lines = ["*HEBAT Debug Login*"]
-    lines.append(f"• Env username: {'terbaca' if result['env_username_read'] else 'kosong'}")
-    lines.append(f"• Env password: {'tersedia' if result['env_password_available'] else 'kosong'}")
+    lines.append(
+        f"• Env username: {'terbaca' if result['env_username_read'] else 'kosong'}"
+    )
+    lines.append(
+        f"• Env password: {'tersedia' if result['env_password_available'] else 'kosong'}"
+    )
     lines.append(f"• Login URL: {result['login_url']}")
     lines.append(f"• HTTP status: {result.get('http_status') or '-'}")
-    lines.append(f"• Redirect chain: {'ada' if result.get('redirect_chain') else 'tidak'}")
-    lines.append(f"• Token ditemukan: {'ya' if result.get('login_token_found') else 'tidak'}")
-    lines.append(f"• Cookie session: {'ada' if result.get('session_cookie_saved') else 'tidak'}")
-    lines.append(f"• Login success indicator: {'ya' if result.get('login_success_indicator') else 'tidak'}")
+    lines.append(
+        f"• Redirect chain: {'ada' if result.get('redirect_chain') else 'tidak'}"
+    )
+    lines.append(
+        f"• Token ditemukan: {'ya' if result.get('login_token_found') else 'tidak'}"
+    )
+    lines.append(
+        f"• Cookie session: {'ada' if result.get('session_cookie_saved') else 'tidak'}"
+    )
+    lines.append(
+        f"• Login success indicator: {'ya' if result.get('login_success_indicator') else 'tidak'}"
+    )
     if result.get("parser_error"):
         lines.append(f"• Error parser: {result['parser_error'][:180]}")
     lines.append(f"• Dugaan masalah: {result.get('problem_guess') or '-'}")
     try:
         from app.xninetzy.os.notifications.admin_notifier import notify_admin
-        event = "hebat_login_debug_done" if result.get("login_success_indicator") else "hebat_login_debug_failed"
-        await notify_admin(event, {"status": result.get("problem_guess")}, "high" if event.endswith("failed") else "medium")
+
+        event = (
+            "hebat_login_debug_done"
+            if result.get("login_success_indicator")
+            else "hebat_login_debug_failed"
+        )
+        await notify_admin(
+            event,
+            {"status": result.get("problem_guess")},
+            "high" if event.endswith("failed") else "medium",
+        )
     except Exception:
         pass
     return "\n".join(lines)
 
 
 # ─── 2. Start Login ───────────────────────────────────────────────────────────
+
 
 @tool
 async def hebat_start_login(chat_id: str) -> str:
@@ -156,6 +203,7 @@ async def hebat_start_login(chat_id: str) -> str:
 
 # ─── 3. Sync Courses ─────────────────────────────────────────────────────────
 
+
 @tool
 async def hebat_sync_courses(chat_id: str) -> str:
     """Sinkronisasi daftar course dari HEBAT ke database lokal.
@@ -178,11 +226,12 @@ async def hebat_sync_courses(chat_id: str) -> str:
     for i, c in enumerate(courses[:20], 1):
         lines.append(f"{i}. {c['fullname']}")
     if len(courses) > 20:
-        lines.append(f"... dan {len(courses)-20} lainnya")
+        lines.append(f"... dan {len(courses) - 20} lainnya")
     return "\n".join(lines)
 
 
 # ─── 4. List Courses ─────────────────────────────────────────────────────────
+
 
 @tool
 def hebat_list_courses(query: str | None = None) -> str:
@@ -193,7 +242,11 @@ def hebat_list_courses(query: str | None = None) -> str:
     """
     courses = list_courses(query)
     if not courses:
-        msg = "Belum ada data course." if not query else f"Tidak ada course yang cocok dengan '{query}'."
+        msg = (
+            "Belum ada data course."
+            if not query
+            else f"Tidak ada course yang cocok dengan '{query}'."
+        )
         return msg + " Ketik 'sync course hebat' untuk mengambil dari HEBAT."
 
     lines = [f"📚 Course HEBAT ({len(courses)} ditemukan):\n"]
@@ -203,6 +256,7 @@ def hebat_list_courses(query: str | None = None) -> str:
 
 
 # ─── 5. Sync Course Activities ───────────────────────────────────────────────
+
 
 @tool
 async def hebat_sync_course_activities(chat_id: str, course_id: str) -> str:
@@ -232,24 +286,31 @@ async def hebat_sync_course_activities(chat_id: str, course_id: str) -> str:
         )
         upsert_activity(act)
         counts[a["type"].value if hasattr(a["type"], "value") else str(a["type"])] = (
-            counts.get(a["type"].value if hasattr(a["type"], "value") else str(a["type"]), 0) + 1
+            counts.get(
+                a["type"].value if hasattr(a["type"], "value") else str(a["type"]), 0
+            )
+            + 1
         )
 
     summary = ", ".join(f"{v} {k}" for k, v in counts.items())
     lines = [f"✅ Sync selesai: {summary}\n"]
     for a in activities[:15]:
         section = a.get("section_title", "")
-        lines.append(f"• [{section}] {a['title']} (`{a['type'].value if hasattr(a['type'], 'value') else a['type']}`)")
+        lines.append(
+            f"• [{section}] {a['title']} (`{a['type'].value if hasattr(a['type'], 'value') else a['type']}`)"
+        )
     if len(activities) > 15:
-        lines.append(f"... dan {len(activities)-15} activity lainnya")
+        lines.append(f"... dan {len(activities) - 15} activity lainnya")
     return "\n".join(lines)
 
 
 # ─── 6. Download Material ────────────────────────────────────────────────────
 
+
 @tool
-async def hebat_download_material(chat_id: str, activity_id_or_url: str,
-                                   save_to_obsidian: bool = False) -> str:
+async def hebat_download_material(
+    chat_id: str, activity_id_or_url: str, save_to_obsidian: bool = False
+) -> str:
     """Download materi PDF/resource dari HEBAT dan buat ringkasan.
 
     Args:
@@ -302,9 +363,7 @@ async def hebat_download_material(chat_id: str, activity_id_or_url: str,
 
     local_path = Path(result["local_path"])
     pdf_data = (
-        summarize_pdf(local_path)
-        if local_path.suffix.casefold() == ".pdf"
-        else {}
+        summarize_pdf(local_path) if local_path.suffix.casefold() == ".pdf" else {}
     )
     pages = pdf_data.get("pages", 0)
     preview = pdf_data.get("text_preview", "")[:1500]
@@ -314,6 +373,7 @@ async def hebat_download_material(chat_id: str, activity_id_or_url: str,
     if save_to_obsidian and preview:
         try:
             from app.xninetzy.os.notes.vault_service import ObsidianVaultService
+
             note_content = (
                 f"# {title}\n\n"
                 f"*Sumber:* HEBAT Course ID `{course_id}`\n"
@@ -331,7 +391,7 @@ async def hebat_download_material(chat_id: str, activity_id_or_url: str,
         f"📄 *{title}*",
         f"File: `{result['filename']}`",
         f"Lokasi: `{result['local_path']}`",
-        f"Ukuran: {result['size_bytes']//1024} KB"
+        f"Ukuran: {result['size_bytes'] // 1024} KB"
         + (f" | {pages} halaman" if pages else ""),
     ]
     if obsidian_path:
@@ -344,9 +404,11 @@ async def hebat_download_material(chat_id: str, activity_id_or_url: str,
 
 # ─── 7. Read PDF ─────────────────────────────────────────────────────────────
 
+
 @tool
-def hebat_read_pdf(file_path: str, mode: str = "summary",
-                   question: str | None = None) -> str:
+def hebat_read_pdf(
+    file_path: str, mode: str = "summary", question: str | None = None
+) -> str:
     """Baca dan ringkas PDF yang sudah diunduh dari HEBAT.
 
     Args:
@@ -363,27 +425,28 @@ def hebat_read_pdf(file_path: str, mode: str = "summary",
     headings = data.get("headings", [])
 
     if mode == "outline" and headings:
-        return f"*Outline PDF ({pages} hal):*\n" + "\n".join(f"• {h}" for h in headings[:20])
+        return f"*Outline PDF ({pages} hal):*\n" + "\n".join(
+            f"• {h}" for h in headings[:20]
+        )
 
     if mode == "qa" and question:
         # Find relevant section
         text = preview.lower()
         q_lower = question.lower()
         idx = text.find(q_lower[:20])
-        excerpt = preview[max(0, idx-200):idx+500] if idx >= 0 else preview[:800]
+        excerpt = preview[max(0, idx - 200) : idx + 500] if idx >= 0 else preview[:800]
         return (
             f"*Pertanyaan:* {question}\n\n"
             f"*Konten relevan dari PDF ({pages} hal):*\n{excerpt}"
         )
 
-    return (
-        f"📄 *Ringkasan PDF* ({pages} halaman)\n\n"
-        f"{preview[:1800]}"
-        + ("\n\n_[konten dipotong]_" if len(preview) > 1800 else "")
+    return f"📄 *Ringkasan PDF* ({pages} halaman)\n\n{preview[:1800]}" + (
+        "\n\n_[konten dipotong]_" if len(preview) > 1800 else ""
     )
 
 
 # ─── 8. Sync Assignments ─────────────────────────────────────────────────────
+
 
 @tool
 async def hebat_sync_assignments(chat_id: str, course_id: str | None = None) -> str:
@@ -400,10 +463,13 @@ async def hebat_sync_assignments(chat_id: str, course_id: str | None = None) -> 
     s = get_settings()
     assign_activities = list_activities(course_id=course_id, activity_type="assign")
     if not assign_activities:
-        return "Tidak ada assignment ditemukan di database. Sync course activities dulu."
+        return (
+            "Tidak ada assignment ditemukan di database. Sync course activities dulu."
+        )
 
     synced = 0
     reminders_created = 0
+    tasks_created = 0
     now = _now(s)
 
     for act in assign_activities:
@@ -424,24 +490,59 @@ async def hebat_sync_assignments(chat_id: str, course_id: str | None = None) -> 
             grading_status=detail.get("grading_status"),
             last_modified_text=detail.get("last_modified"),
         )
-        upsert_assignment(assign)
+        assignment_id = upsert_assignment(assign)
         synced += 1
 
         # Auto-create reminders for upcoming deadlines
         due_dt = _parse_due_dt(detail.get("due_at"))
-        if due_dt and detail.get("submission_status", "").lower() not in ("submitted for grading",):
+        task_id, task_created = sync_assignment_task(
+            chat_id,
+            assignment_id,
+            normalized_due_at=due_dt.isoformat() if due_dt else None,
+        )
+        tasks_created += int(task_created)
+        if due_dt and detail.get("submission_status", "").lower() not in (
+            "submitted for grading",
+        ):
             for hours in s.hebat_reminder_hours():
                 remind_at = due_dt - timedelta(hours=hours)
-                if remind_at > now and not has_reminder_for_assignment(activity_id, hours):
+                if remind_at > now and not has_reminder_for_assignment(
+                    assignment_id, hours
+                ):
                     try:
-                        from app.xninetzy.os.reminders.reminder_store import ReminderStore
+                        from app.xninetzy.os.reminders.reminder_store import (
+                            ReminderStore,
+                        )
+
                         store = ReminderStore()
-                        store.create(
+                        reminder = store.create(
                             chat_id=chat_id,
                             sender_id=None,
                             title=f"⏰ Deadline HEBAT: {assign.title}",
                             description=f"hebat_assign_{activity_id}_h{hours}",
                             remind_at=remind_at.isoformat(),
+                            source="hebat",
+                            source_ref_id=f"assignment:{assignment_id}:h{hours}",
+                            deadline_at=due_dt.isoformat(),
+                            reminder_type="deadline",
+                            offset_value=hours,
+                            offset_unit="hours",
+                        )
+                        from app.xninetzy.ecosystem.entity_links import (
+                            ensure_entity_link,
+                        )
+
+                        ensure_entity_link(
+                            source_type="task",
+                            source_id=task_id,
+                            relation="reminded_by",
+                            target_type="reminder",
+                            target_id=reminder["id"],
+                            chat_id=chat_id,
+                            metadata={
+                                "assignment_id": assignment_id,
+                                "hours_before": hours,
+                            },
                         )
                         reminders_created += 1
                     except Exception as e:
@@ -452,12 +553,14 @@ async def hebat_sync_assignments(chat_id: str, course_id: str | None = None) -> 
     return (
         f"✅ Sync assignment selesai.\n"
         f"• {synced} tugas diperbarui\n"
+        f"• {tasks_created} task Life OS baru dibuat\n"
         f"• {reminders_created} reminder baru dibuat\n\n"
         "Ketik 'lihat tugas hebat' untuk melihat daftar tugas."
     )
 
 
 # ─── 9. Get Assignment Detail ─────────────────────────────────────────────────
+
 
 @tool
 async def hebat_get_assignment_detail(chat_id: str, assignment_id_or_url: str) -> str:
@@ -482,7 +585,11 @@ async def hebat_get_assignment_detail(chat_id: str, assignment_id_or_url: str) -
         return "Tidak bisa mengambil detail tugas."
 
     attachments = detail.get("attachments", [])
-    att_lines = "\n".join(f"  • {a['filename']}" for a in attachments) if attachments else "  (tidak ada)"
+    att_lines = (
+        "\n".join(f"  • {a['filename']}" for a in attachments)
+        if attachments
+        else "  (tidak ada)"
+    )
 
     return (
         f"📋 *{detail.get('title', '?')}*\n\n"
@@ -498,6 +605,7 @@ async def hebat_get_assignment_detail(chat_id: str, assignment_id_or_url: str) -
 
 
 # ─── 10. Prepare Submission ───────────────────────────────────────────────────
+
 
 @tool
 async def hebat_prepare_submission_from_whatsapp_file(
@@ -529,14 +637,15 @@ async def hebat_prepare_submission_from_whatsapp_file(
     size = path.stat().st_size
     if size > s.HEBAT_MAX_UPLOAD_BYTES:
         return (
-            f"File terlalu besar: {size//1024} KB. "
-            f"Maksimal {s.HEBAT_MAX_UPLOAD_BYTES//1024//1024} MB."
+            f"File terlalu besar: {size // 1024} KB. "
+            f"Maksimal {s.HEBAT_MAX_UPLOAD_BYTES // 1024 // 1024} MB."
         )
 
     # Search assignment
     all_assignments = list_assignments()
     candidates = [
-        a for a in all_assignments
+        a
+        for a in all_assignments
         if assignment_query.lower() in a.get("title", "").lower()
         or assignment_query.lower() in (a.get("section_title") or "").lower()
     ]
@@ -587,7 +696,7 @@ async def hebat_prepare_submission_from_whatsapp_file(
         f"📎 Siap upload ke HEBAT:\n\n"
         f"*Tugas:* {assign['title']}\n"
         f"*Deadline:* {due_text}\n"
-        f"*File:* `{path.name}` ({size//1024} KB, PDF)\n"
+        f"*File:* `{path.name}` ({size // 1024} KB, PDF)\n"
         f"*Status saat ini:* {assign.get('submission_status', '?')}\n"
         f"{warning_text}\n"
         f"Untuk melanjutkan upload, balas:\n"
@@ -596,6 +705,7 @@ async def hebat_prepare_submission_from_whatsapp_file(
 
 
 # ─── 11. Upload Submission ────────────────────────────────────────────────────
+
 
 @tool
 async def hebat_upload_submission(chat_id: str, confirmation_token: str) -> str:
@@ -624,7 +734,10 @@ async def hebat_upload_submission(chat_id: str, confirmation_token: str) -> str:
     if not assign:
         return "Data tugas tidak ditemukan."
 
-    assignment_url = assign.get("activity_url") or f"{s.HEBAT_BASE_URL}/mod/assign/view.php?id={assign.get('cmid', '')}"
+    assignment_url = (
+        assign.get("activity_url")
+        or f"{s.HEBAT_BASE_URL}/mod/assign/view.php?id={assign.get('cmid', '')}"
+    )
 
     result = await upload_submission_via_playwright(
         chat_id=chat_id,
@@ -651,6 +764,7 @@ async def hebat_upload_submission(chat_id: str, confirmation_token: str) -> str:
 
 # ─── 12. Cancel Submission ────────────────────────────────────────────────────
 
+
 @tool
 def hebat_cancel_submission(chat_id: str, confirmation_token: str) -> str:
     """Batalkan pending upload tugas HEBAT.
@@ -665,10 +779,13 @@ def hebat_cancel_submission(chat_id: str, confirmation_token: str) -> str:
     if sub["source_chat_id"] != chat_id:
         return "Token ini bukan milik chat kamu."
     update_submission_status(confirmation_token, UploadStatus.CANCELLED)
-    return f"✅ Upload dibatalkan. Token `{confirmation_token}` tidak bisa dipakai lagi."
+    return (
+        f"✅ Upload dibatalkan. Token `{confirmation_token}` tidak bisa dipakai lagi."
+    )
 
 
 # ─── 13. Academic Digest ──────────────────────────────────────────────────────
+
 
 @tool
 def hebat_academic_digest(chat_id: str, days_ahead: int = 7) -> str:

@@ -137,6 +137,11 @@ While editing:
 
 - Keep dependencies directional: interfaces -> tools/domains -> OS/storage.
 - Do not import interface code into domain/storage modules.
+- Do not add new comments to source code. Existing comments may remain. Prefer
+  clear names, small functions, explicit types, and tests to make behavior
+  understandable. This rule applies to inline and block comments in executable
+  code; required public API docstrings, license headers, generated-file markers,
+  and configuration or documentation prose remain allowed.
 - Prefer typed, deterministic preprocessing before adding another LLM call.
 - Keep provider credentials deployment-scoped; user preferences store only an
   allowlisted provider/model identifier.

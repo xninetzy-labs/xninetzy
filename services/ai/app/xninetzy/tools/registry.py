@@ -71,6 +71,7 @@ from app.xninetzy.os.academic.mahasiswa_portal.tools import (
     portal_krs_watcher_status,
     portal_schedule,
 )
+from app.xninetzy.os.jobs.tools import os_job_status
 from app.xninetzy.tools.ecosystem.web_analysis_tools import (
     web_analysis_refresh,
     web_analysis_status,
@@ -286,6 +287,7 @@ def get_all_tools() -> list[BaseTool]:
             daily_checkin,
             daily_review_generate,
             life_dashboard,
+            os_job_status,
             # Knowledge OS
             knowledge_ingest_text,
             knowledge_ingest_file,
@@ -455,7 +457,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "portal_schedule",
             "portal_krs_watcher_status",
         ],
-        "life": ["goal_create", "task_capture", "daily_checkin"],
+        "life": ["goal_create", "task_capture", "daily_checkin", "os_job_status"],
         "reminders": ["reminder_create", "reminder_list", "reminder_cancel"],
         "whatsapp": ["wa_pin_message", "wa_set_announce", "wa_send_text"],
         "media": [

@@ -105,6 +105,23 @@ class Settings(BaseSettings):
     WA_MCP_API_KEY: str = ""
     WA_MEDIA_MAX_BYTES: int = 25 * 1024 * 1024
 
+    # Durable single-owner OS schedules. Delivery jobs are at-most-once; an
+    # ambiguous WA send is surfaced for manual inspection instead of blind retry.
+    OS_SCHEDULER_ENABLED: bool = True
+    OS_SCHEDULER_STARTUP_DELAY_SECONDS: int = 30
+    OS_SCHEDULER_POLL_SECONDS: int = 60
+    OS_JOB_LEASE_SECONDS: int = 900
+    OS_JOB_RETRY_DELAY_SECONDS: int = 300
+    OS_NOTIFY_CHAT_ID: str = ""
+    MORNING_BRIEFING_ENABLED: bool = True
+    MORNING_BRIEFING_HOUR: int = 7
+    EVENING_CHECKIN_ENABLED: bool = True
+    EVENING_CHECKIN_HOUR: int = 20
+    WEEKLY_REVIEW_ENABLED: bool = True
+    WEEKLY_REVIEW_WEEKDAY: int = 6
+    WEEKLY_REVIEW_HOUR: int = 20
+    HEBAT_PERIODIC_SYNC_ENABLED: bool = False
+
     # Standard stdio MCP can run either inside the AI container or directly on
     # the host through Codex, Claude Code, and OpenCode.
     MCP_RUNTIME_MODE: str = "auto"  # auto | host | container

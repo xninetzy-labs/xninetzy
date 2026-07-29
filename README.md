@@ -409,7 +409,16 @@ buat roadmap belajar 28 hari dari hasil riset ini
 /approve 1
 ```
 
-Membuat draft tidak sama dengan mengaktifkan roadmap. Aktivasi mengubah status roadmap menjadi `active` dan menyiapkan task belajar hanya setelah approval admin berhasil.
+Membuat draft tidak sama dengan mengaktifkan roadmap. Aktivasi mengubah status
+roadmap menjadi `active` dan memproyeksikan item belajar ke task bersama hanya
+setelah approval admin berhasil. Menyelesaikan task itu dari WhatsApp, MCP,
+Codex, Claude, atau OpenCode memperbarui progress roadmap yang sama secara
+idempotent.
+
+Planner membedakan roadmap 7, 14, dan 30 hari serta memakai source knowledge
+internal jika tersedia. Draft menampilkan ID/judul sumber yang dipakai; jika
+tidak ada evidence, draft meminta validasi sumber dan tidak mengklaim berasal
+dari vault.
 
 ### Tutorial 5 — Reminder natural language
 
@@ -425,6 +434,23 @@ Periksa task dan reminder dari WhatsApp:
 /today
 /review
 ```
+
+### Tutorial 5b — Automation closed-loop
+
+Aktifkan target dan jam di `.env`:
+
+```dotenv
+OS_NOTIFY_CHAT_ID=628xxxxxxxxxx@s.whatsapp.net
+MORNING_BRIEFING_HOUR=7
+EVENING_CHECKIN_HOUR=20
+WEEKLY_REVIEW_WEEKDAY=6
+WEEKLY_REVIEW_HOUR=20
+```
+
+Morning briefing menggabungkan task, deadline HEBAT, roadmap, dan freshness.
+Evening/weekly review memakai event yang benar-benar tersimpan. Dari WhatsApp,
+Codex, Claude, atau OpenCode, minta agent menjalankan `os_job_status` untuk
+melihat attempt, kegagalan, dan status pengiriman yang sama.
 
 ### Tutorial 6 — Provider dan model per pengguna
 
@@ -724,6 +750,11 @@ Runtime data berikut tidak boleh masuk Git:
 - PDF/DOCX course dan hasil download lain.
 - FAISS index dan cache web analysis.
 - snapshot backup dan manifest yang memuat metadata data pribadi.
+
+`services/ai/data/**` di-ignore secara menyeluruh kecuali README kebijakan.
+Setiap clone membuat SQLite sendiri saat startup; jangan membagikan database,
+FAISS, browser state, atau hasil analisis melalui Git. Panduan lengkap:
+[Local data per installation](apps/docs/src/pages/docs/local-data.md).
 
 ### Backup dan restore
 

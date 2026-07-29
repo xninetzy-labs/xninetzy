@@ -1,6 +1,6 @@
 # Xninetzy OS Unified Access and Grounding Plan
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 This is the execution tracker for turning Xninetzy from a feature-rich assistant
 into one OS shared by WhatsApp, internal LangGraph, Codex, Claude Code, and
@@ -57,13 +57,14 @@ Acceptance:
 
 ## P1 — Closed-loop Personal OS
 
-- [ ] Add entity ownership or formalize installation-global single-owner schema.
-- [ ] Turn ecosystem events into consumed reducers, not only an append-only log.
-- [ ] Link HEBAT assignment -> task -> reminder.
-- [ ] Link task completion -> goal and roadmap progress.
-- [ ] Include roadmap, habit, workout, and recent events in Personal Context v2.
-- [ ] Build idempotent morning briefing, evening check-in, and weekly review jobs.
-- [ ] Add periodic HEBAT sync with freshness and failure status.
+- [x] Formalize domain state as installation-global in single-owner mode;
+  `chat_id` records origin and conversation memory, not entity ownership.
+- [x] Consume ecosystem events through idempotent, replayable reducers.
+- [x] Link HEBAT assignment -> shared task -> deadline reminder.
+- [x] Link task completion -> goal and roadmap progress.
+- [x] Include roadmap, habit, workout, and recent events in Personal Context v2.
+- [x] Build idempotent morning briefing, evening check-in, and weekly review jobs.
+- [x] Add periodic HEBAT sync with freshness and failure status.
 
 Acceptance:
 
@@ -73,7 +74,7 @@ Acceptance:
 
 ## P2 — Adaptive Learning OS
 
-- [ ] Replace the fixed 14-day roadmap template with a source-aware planner.
+- [x] Replace the fixed 14-day roadmap template with a source-aware planner.
 - [ ] Implement study sessions and progress tracker modules.
 - [ ] Model prerequisite, concept, milestone, evidence, and mastery relationships.
 - [ ] Add quizzes, active recall, and spaced repetition scheduling.
@@ -95,6 +96,16 @@ Acceptance:
 - [ ] Run documented backup/restore and workflow-resume drills.
 
 ## Change log
+
+### 2026-07-29
+
+- Added installation-global entity links shared by WA, MCP, and LangGraph.
+- Projected activated roadmap tasks and HEBAT assignments into shared Life OS tasks.
+- Added idempotent task-completion reducer for goal and roadmap progress.
+- Added reducer replay on AI startup and Personal Context v2 signals.
+- Added leased scheduled jobs with at-most-once WhatsApp delivery tracking.
+- Added event-backed morning/evening/weekly messages and inspectable HEBAT freshness.
+- Added duration/level-aware roadmap phases and persisted knowledge source links.
 
 ### 2026-07-28
 

@@ -56,7 +56,9 @@ def get_habit_today() -> list[dict]:
     init_db()
     today = _today()
     with connect() as conn:
-        habits = conn.execute("SELECT * FROM habits WHERE status='active'").fetchall()
+        habits = conn.execute(
+            "SELECT * FROM habits WHERE status='active' ORDER BY id DESC"
+        ).fetchall()
         result = []
         for h in habits:
             log = conn.execute(

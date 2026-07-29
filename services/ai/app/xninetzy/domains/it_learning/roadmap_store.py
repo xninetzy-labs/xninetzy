@@ -47,6 +47,21 @@ def save_roadmap_draft(
                 "INSERT INTO learning_tasks (roadmap_id, title, day_index, status, created_at, updated_at) VALUES (?,?,?,?,?,?)",
                 (roadmap_id, task, idx, "draft", now, now),
             )
+        for source in draft.source_refs:
+            conn.execute(
+                """
+                INSERT INTO learning_resources
+                  (roadmap_id, title, url, resource_type, created_at)
+                VALUES (?,?,?,?,?)
+                """,
+                (
+                    roadmap_id,
+                    source.title,
+                    f"xninetzy://knowledge/source/{source.source_id}",
+                    source.source_type,
+                    now,
+                ),
+            )
         return roadmap_id
 
 

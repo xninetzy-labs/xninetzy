@@ -1,6 +1,6 @@
 # Xninetzy OS Implementation Progress
 
-Last updated: 2026-07-28
+Last updated: 2026-07-29
 
 This log tracks implementation batches from
 `docs/plan/XNINETZY_OS_UNIFIED_ACCESS_PLAN.md`. A batch is complete only after
@@ -10,11 +10,14 @@ code, tests, configuration, and documentation agree.
 
 | Batch | Scope | Status | Verification |
 |---|---|---|---|
-| Foundation-01 | Shared MCP principal, coding-agent preflight, grounded retrieval | Complete | 245 AI tests, WA build/tests, docs build |
+| Foundation-01 | Shared MCP principal, coding-agent preflight, grounded retrieval | Complete | 264 AI tests; WA/docs builds |
 | P0-01 | API authentication and single-owner request boundary | Complete | 5 focused API tests; AI lint |
 | P0-02 | Durable WA deduplication, per-chat queue, prepared-reply outbox | Complete | 6 WA tests; TypeScript build |
 | P0-03 | Verified SQLite/FAISS backup and restore | Complete | 2 backup tests; AI lint |
-| P1-01 | Event reducers and cross-domain entity links | Planned | Pending |
+| P1-01 | Event reducers, entity links, and Personal Context v2 | Complete | 31 focused + 264 full AI tests; focused lint |
+| P1-02 | Scheduled briefing/review and HEBAT freshness worker | Complete | 6 scheduler + 29 parity + 264 full AI tests |
+| P2-01 | Duration/level/source-aware roadmap planner | Complete | 21 focused + 264 full AI tests; focused lint |
+| Security-02 | Per-installation runtime data isolation | Complete | Git tracked-file audit; docs build |
 
 ## Batch P0-01 — API authentication and owner boundary
 
@@ -52,3 +55,63 @@ Completed: 2026-07-28
 
 Secrets, `.env`, browser sessions, WhatsApp sessions, downloads, and vault files
 are excluded by design and need their own encrypted backup policy.
+
+## Batch P1-01 — Closed-loop shared OS
+
+Completed: 2026-07-29
+
+- [x] Formalize Life OS and Learning OS state as installation-global for the
+  trusted single owner; retain `chat_id` only for origin/delivery/memory.
+- [x] Add generic, unique entity links shared across interfaces.
+- [x] Project approved learning-roadmap items into shared tasks exactly once.
+- [x] Project HEBAT assignments into shared tasks and link deadline reminders.
+- [x] Consume `task_completed` events transactionally and exactly once.
+- [x] Advance linked goal values, learning task progress, milestones, and roadmap status.
+- [x] Replay unconsumed events at AI startup.
+- [x] Add roadmap, habit, workout, and cross-interface recent events to Personal Context v2.
+
+## Batch P1-02 — Durable automation
+
+Completed: 2026-07-29
+
+- [x] Persist unique job keys, status, attempts, leases, outputs, and errors.
+- [x] Reclaim interrupted internal jobs only after lease expiry.
+- [x] Generate morning briefing from task/deadline/roadmap/freshness state.
+- [x] Generate evening check-in and weekly review from persisted events.
+- [x] Track WhatsApp delivery at-most-once and surface ambiguous delivery.
+- [x] Run optional periodic HEBAT sync with persisted retry backoff.
+- [x] Expose job/freshness status through the shared registry and MCP.
+- [x] Add startup grace period so WA engine can establish its socket first.
+
+Periodic HEBAT sync remains opt-in (`HEBAT_PERIODIC_SYNC_ENABLED=false`) because
+it uses an authenticated institutional session. A `delivery_uncertain` job is
+never retried automatically; inspect WhatsApp and the status tool first.
+
+## Batch P2-01 — Source-aware adaptive roadmap
+
+Completed: 2026-07-29
+
+- [x] Produce structurally different 7-, 14-, and 30-day roadmaps.
+- [x] Cover every day deterministically with bounded phases and outcomes.
+- [x] Adapt the first phase/tasks for beginner, intermediate, and advanced levels.
+- [x] Resolve optional source IDs or relevant internal knowledge sources.
+- [x] Deduplicate and bound source references.
+- [x] Persist source references as roadmap metadata and `learning_resources`.
+- [x] Disclose when the roadmap has no validated internal source.
+
+Next P2 work: study-session tracking, mastery/prerequisite relationships,
+active-recall scheduling, and plan adaptation from energy/deadlines.
+
+## Batch Security-02 — Open-source local data isolation
+
+Completed: 2026-07-29
+
+- [x] Treat SQLite as private state created independently for every clone.
+- [x] Ignore all `services/ai/data/**` runtime artifacts by default.
+- [x] Keep only a tracked data-policy README.
+- [x] Remove SQLite WAL/SHM, FAISS, HEBAT browser state, and generated analysis from Git tracking.
+- [x] Document encrypted backup migration and Git-history sanitization.
+
+This removes runtime files from the current repository tree. Existing public Git
+history must still be sanitized separately; history rewrite is intentionally not
+automated because it affects every collaborator.

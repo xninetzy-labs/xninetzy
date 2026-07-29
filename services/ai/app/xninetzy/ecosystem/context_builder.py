@@ -87,7 +87,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
             list_roadmaps_with_progress,
         )
 
-        roadmaps = list_roadmaps_with_progress(chat_id, status="active", limit=3)
+        roadmaps = list_roadmaps_with_progress(status="active", limit=3)
         context["active_roadmaps"] = [
             f"{r['topic']} ({r.get('completed_tasks') or 0}/{r.get('task_count') or 0} task)"
             for r in roadmaps
@@ -120,7 +120,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
 
         context["recent_events"] = [
             f"{event['event_type']}:{event.get('entity_type') or 'system'}"
-            for event in recent_events(chat_id, limit=5)
+            for event in recent_events(limit=5)
         ]
     except Exception as e:
         logger.debug("Context: recent events fetch failed: %s", e)

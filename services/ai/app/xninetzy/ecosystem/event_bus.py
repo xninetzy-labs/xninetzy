@@ -50,18 +50,29 @@ def record_event(
 
 
 def recent_events(
-    chat_id: str, limit: int = 20, event_type: str | None = None
+    chat_id: str | None = None,
+    limit: int = 20,
+    event_type: str | None = None,
 ) -> list[dict]:
     init_db()
     with connect() as conn:
-        if event_type:
+        if chat_id and event_type:
             rows = conn.execute(
                 "SELECT * FROM ecosystem_events WHERE chat_id=? AND event_type=? ORDER BY id DESC LIMIT ?",
                 (chat_id, event_type, limit),
             ).fetchall()
-        else:
+        elif chat_id:
             rows = conn.execute(
                 "SELECT * FROM ecosystem_events WHERE chat_id=? ORDER BY id DESC LIMIT ?",
                 (chat_id, limit),
+            ).fetchall()
+        elif event_type:
+            rows = conn.execute(
+                "SELECT * FROM ecosystem_events WHERE event_type=? ORDER BY id DESC LIMIT ?",
+                (event_type, limit),
+            ).fetchall()
+        else:
+            rows = conn.execute(
+                "SELECT * FROM ecosystem_events ORDER BY id DESC LIMIT ?", (limit,)
             ).fetchall()
     return [dict(r) for r in rows]

@@ -3,8 +3,15 @@ from __future__ import annotations
 from langchain_core.tools import tool
 
 from app.xninetzy.os.hitl.approval_service import request_approval
-from app.xninetzy.domains.it_learning.roadmap_planner import create_roadmap_draft, format_roadmap_draft
-from app.xninetzy.domains.it_learning.roadmap_store import get_roadmap, list_roadmaps, save_roadmap_draft
+from app.xninetzy.domains.it_learning.roadmap_planner import (
+    create_roadmap_draft,
+    format_roadmap_draft,
+)
+from app.xninetzy.domains.it_learning.roadmap_store import (
+    get_roadmap,
+    list_roadmaps,
+    save_roadmap_draft,
+)
 from app.xninetzy.os.notifications.admin_notifier import notify_admin
 
 
@@ -15,9 +22,11 @@ async def learning_create_roadmap(
     level: str = "beginner",
     chat_id: str = "system",
     sender_id: str | None = None,
+    source_ids: list[int] | None = None,
 ) -> str:
     """Buat draft roadmap belajar; aktivasi dan bulk task butuh approval."""
-    draft = create_roadmap_draft(topic, duration_days, level)
+    sources = _resolve_planning_sources(topic, source_ids)
+    draft = create_roadmap_draft(topic, duration_days, level, sources)
     roadmap_id = save_roadmap_draft(draft, chat_id=chat_id, status="draft")
     approval_id = request_approval(
         chat_id=chat_id,
@@ -27,14 +36,37 @@ async def learning_create_roadmap(
         summary=f"Akan mengaktifkan roadmap #{roadmap_id} dan membuat task belajar.",
         payload={"roadmap_id": roadmap_id},
     )
-    await notify_admin("roadmap_draft_created", {"status": f"roadmap #{roadmap_id}", "title": draft.topic}, "medium")
+    await notify_admin(
+        "roadmap_draft_created",
+        {"status": f"roadmap #{roadmap_id}", "title": draft.topic},
+        "medium",
+    )
     return format_roadmap_draft(draft) + f"\n\nApproval: `/approve {approval_id}`"
+
+
+def _resolve_planning_sources(topic: str, source_ids: list[int] | None) -> list[dict]:
+    if source_ids:
+        from app.xninetzy.db.sqlite import connect
+
+        placeholders = ",".join("?" for _ in source_ids[:5])
+        with connect() as conn:
+            rows = conn.execute(
+                f"SELECT id AS source_id, title, source_type FROM knowledge_sources WHERE id IN ({placeholders})",
+                source_ids[:5],
+            ).fetchall()
+        return [dict(row) for row in rows]
+    try:
+        from app.xninetzy.os.knowledge.rag import quick_search
+
+        return quick_search(topic, limit=3)
+    except Exception:
+        return []
 
 
 @tool
 def learning_list_roadmaps(chat_id: str = "system") -> str:
     """List roadmap belajar."""
-    rows = list_roadmaps(chat_id)
+    rows = list_roadmaps()
     if not rows:
         return "Belum ada roadmap belajar."
     lines = ["*Roadmap Belajar*"]
@@ -59,6 +91,7 @@ def learning_update_progress(roadmap_id: int, progress_note: str) -> str:
     from datetime import datetime
     from zoneinfo import ZoneInfo
     from app.xninetzy.core.config import get_settings
+
     now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).isoformat()
     with connect() as conn:
         conn.execute(
@@ -71,7 +104,7 @@ def learning_update_progress(roadmap_id: int, progress_note: str) -> str:
 @tool
 def learning_generate_today_plan(chat_id: str = "system") -> str:
     """Generate rencana belajar hari ini dari roadmap draft/aktif."""
-    rows = list_roadmaps(chat_id)
+    rows = list_roadmaps()
     if not rows:
         return "Belum ada roadmap. Buat dulu dengan `buat roadmap belajar <topik>`."
     row = rows[0]
@@ -85,12 +118,15 @@ def learning_review_week(chat_id: str = "system") -> str:
 
 
 @tool
-def learning_attach_resource(roadmap_id: int, title: str, url: str = "", resource_type: str = "web") -> str:
+def learning_attach_resource(
+    roadmap_id: int, title: str, url: str = "", resource_type: str = "web"
+) -> str:
     """Lampirkan resource ke roadmap."""
     from app.xninetzy.db.sqlite import connect
     from datetime import datetime
     from zoneinfo import ZoneInfo
     from app.xninetzy.core.config import get_settings
+
     now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).isoformat()
     with connect() as conn:
         conn.execute(

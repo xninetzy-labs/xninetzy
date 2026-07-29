@@ -109,6 +109,7 @@ def test_personal_context_v2_contains_learning_and_life_signals():
     log_habit(f"Habit {marker}")
     log_workout("mobility", duration=7)
     record_event(chat_id, "context_probe", "test", "probe", marker)
+    record_event(f"mcp-{marker}", "cross_interface_probe", "mcp", "probe", marker)
 
     context = build_personal_context(chat_id, "status hari ini")
 
@@ -116,3 +117,4 @@ def test_personal_context_v2_contains_learning_and_life_signals():
     assert any(marker in item for item in context["habit_status"])
     assert context["workout_summary"]
     assert "context_probe:probe" in context["recent_events"]
+    assert "cross_interface_probe:probe" in context["recent_events"]

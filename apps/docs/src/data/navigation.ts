@@ -25,7 +25,8 @@ export const navigation: NavGroup[] = [
     items: [
       { title: 'WhatsApp', description: 'Chat, group, media, dan command.', href: '/docs/whatsapp/' },
       { title: 'Obsidian', description: 'Vault, note, knowledge, dan guard.', href: '/docs/obsidian/' },
-      { title: 'HEBAT / Moodle', description: 'Course, activity, file, dan tugas.', href: '/docs/hebat/' }
+      { title: 'HEBAT / Moodle', description: 'Course, activity, file, dan tugas.', href: '/docs/hebat/' },
+      { title: 'Learning roadmap', description: 'Planner adaptif dan source linkage.', href: '/docs/learning-roadmaps/' }
     ]
   },
   {
@@ -41,6 +42,8 @@ export const navigation: NavGroup[] = [
     items: [
       { title: 'HTTP API', description: 'Endpoint AI dan WA engine.', href: '/docs/api/' },
       { title: 'Testing', description: 'Test suite dan quality gates.', href: '/docs/testing/' },
+      { title: 'Automation', description: 'Briefing, review, job lease, dan freshness.', href: '/docs/automation/' },
+      { title: 'Local data', description: 'SQLite privat per instalasi.', href: '/docs/local-data/' },
       { title: 'Backup & restore', description: 'Snapshot, verifikasi, retensi, dan recovery.', href: '/docs/backup-restore/' },
       { title: 'Keamanan', description: 'Hardening dan threat boundaries.', href: '/docs/security/' },
       { title: 'Troubleshooting', description: 'Diagnosis masalah umum.', href: '/docs/troubleshooting/' }

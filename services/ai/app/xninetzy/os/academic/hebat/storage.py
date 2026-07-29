@@ -7,13 +7,11 @@ from zoneinfo import ZoneInfo
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.db.sqlite import connect, init_db
 from app.xninetzy.os.academic.hebat.models import (
-    ActivityType,
     AuthMode,
     HebatActivity,
     HebatAssignment,
     HebatCourse,
     HebatFile,
-    HebatSession,
     UploadStatus,
 )
 
@@ -24,10 +22,15 @@ def _now() -> str:
 
 # ─── Session ─────────────────────────────────────────────────────────────────
 
-def upsert_session(chat_id: str, *, profile_name: str | None = None,
-                   storage_state_path: str | None = None,
-                   auth_mode: AuthMode = AuthMode.USERNAME_PASSWORD,
-                   is_active: bool = False) -> None:
+
+def upsert_session(
+    chat_id: str,
+    *,
+    profile_name: str | None = None,
+    storage_state_path: str | None = None,
+    auth_mode: AuthMode = AuthMode.USERNAME_PASSWORD,
+    is_active: bool = False,
+) -> None:
     init_db()
     now = _now()
     with connect() as conn:
@@ -47,8 +50,17 @@ def upsert_session(chat_id: str, *, profile_name: str | None = None,
               last_checked_at=excluded.last_checked_at,
               updated_at=excluded.updated_at
             """,
-            (chat_id, profile_name, storage_state_path, auth_mode.value,
-             1 if is_active else 0, now if is_active else None, now, now, now),
+            (
+                chat_id,
+                profile_name,
+                storage_state_path,
+                auth_mode.value,
+                1 if is_active else 0,
+                now if is_active else None,
+                now,
+                now,
+                now,
+            ),
         )
 
 
@@ -73,6 +85,7 @@ def mark_session_checked(chat_id: str, is_active: bool) -> None:
 
 # ─── Courses ─────────────────────────────────────────────────────────────────
 
+
 def upsert_course(course: HebatCourse) -> None:
     init_db()
     now = _now()
@@ -85,7 +98,13 @@ def upsert_course(course: HebatCourse) -> None:
               fullname=excluded.fullname, shortname=excluded.shortname,
               course_url=excluded.course_url, last_synced_at=excluded.last_synced_at
             """,
-            (course.moodle_course_id, course.fullname, course.shortname, course.course_url, now),
+            (
+                course.moodle_course_id,
+                course.fullname,
+                course.shortname,
+                course.course_url,
+                now,
+            ),
         )
 
 
@@ -99,7 +118,9 @@ def list_courses(query: str | None = None) -> list[dict]:
                 (needle, needle),
             ).fetchall()
         else:
-            rows = conn.execute("SELECT * FROM hebat_courses ORDER BY fullname").fetchall()
+            rows = conn.execute(
+                "SELECT * FROM hebat_courses ORDER BY fullname"
+            ).fetchall()
     return [dict(r) for r in rows]
 
 
@@ -113,6 +134,7 @@ def get_course_by_id(moodle_course_id: str) -> dict | None:
 
 
 # ─── Activities ──────────────────────────────────────────────────────────────
+
 
 def upsert_activity(activity: HebatActivity) -> int:
     init_db()
@@ -130,15 +152,28 @@ def upsert_activity(activity: HebatActivity) -> int:
               due_at=excluded.due_at, opened_at=excluded.opened_at,
               status=excluded.status, last_synced_at=excluded.last_synced_at
             """,
-            (activity.course_id, activity.cmid, activity.type.value, activity.title,
-             activity.section_title, activity.activity_url, activity.due_at,
-             activity.opened_at, activity.status, now),
+            (
+                activity.course_id,
+                activity.cmid,
+                activity.type.value,
+                activity.title,
+                activity.section_title,
+                activity.activity_url,
+                activity.due_at,
+                activity.opened_at,
+                activity.status,
+                now,
+            ),
         )
-        row = conn.execute("SELECT id FROM hebat_activities WHERE cmid=?", (activity.cmid,)).fetchone()
+        row = conn.execute(
+            "SELECT id FROM hebat_activities WHERE cmid=?", (activity.cmid,)
+        ).fetchone()
     return row["id"] if row else 0
 
 
-def list_activities(course_id: str | None = None, activity_type: str | None = None) -> list[dict]:
+def list_activities(
+    course_id: str | None = None, activity_type: str | None = None
+) -> list[dict]:
     init_db()
     with connect() as conn:
         sql = "SELECT * FROM hebat_activities WHERE 1=1"
@@ -157,11 +192,14 @@ def list_activities(course_id: str | None = None, activity_type: str | None = No
 def get_activity_by_cmid(cmid: str) -> dict | None:
     init_db()
     with connect() as conn:
-        row = conn.execute("SELECT * FROM hebat_activities WHERE cmid=?", (cmid,)).fetchone()
+        row = conn.execute(
+            "SELECT * FROM hebat_activities WHERE cmid=?", (cmid,)
+        ).fetchone()
     return dict(row) if row else None
 
 
 # ─── Files ───────────────────────────────────────────────────────────────────
+
 
 def upsert_file(f: HebatFile) -> int:
     init_db()
@@ -174,8 +212,16 @@ def upsert_file(f: HebatFile) -> int:
             VALUES (?,?,?,?,?,?,?,?)
             ON CONFLICT DO NOTHING
             """,
-            (f.activity_id, f.filename, f.file_url, f.local_path,
-             f.mime_type, f.size_bytes, f.sha256, now if f.local_path else None),
+            (
+                f.activity_id,
+                f.filename,
+                f.file_url,
+                f.local_path,
+                f.mime_type,
+                f.size_bytes,
+                f.sha256,
+                now if f.local_path else None,
+            ),
         )
         row = conn.execute(
             "SELECT id FROM hebat_files WHERE activity_id=? AND filename=?",
@@ -186,7 +232,8 @@ def upsert_file(f: HebatFile) -> int:
 
 # ─── Assignments ─────────────────────────────────────────────────────────────
 
-def upsert_assignment(assign: HebatAssignment) -> None:
+
+def upsert_assignment(assign: HebatAssignment) -> int:
     init_db()
     now = _now()
     with connect() as conn:
@@ -210,12 +257,104 @@ def upsert_assignment(assign: HebatAssignment) -> None:
               latest_submission_file=excluded.latest_submission_file,
               last_synced_at=excluded.last_synced_at
             """,
-            (assign.activity_id, assign.title, assign.instruction_text,
-             assign.opened_at, assign.due_at, assign.time_remaining_text,
-             assign.submission_status, assign.grading_status,
-             assign.last_modified_text, assign.max_files, assign.max_bytes,
-             assign.accepted_types, assign.latest_submission_file, now),
+            (
+                assign.activity_id,
+                assign.title,
+                assign.instruction_text,
+                assign.opened_at,
+                assign.due_at,
+                assign.time_remaining_text,
+                assign.submission_status,
+                assign.grading_status,
+                assign.last_modified_text,
+                assign.max_files,
+                assign.max_bytes,
+                assign.accepted_types,
+                assign.latest_submission_file,
+                now,
+            ),
         )
+        row = conn.execute(
+            "SELECT id FROM hebat_assignments WHERE activity_id=?",
+            (assign.activity_id,),
+        ).fetchone()
+    return int(row["id"]) if row else 0
+
+
+def sync_assignment_task(
+    chat_id: str,
+    assignment_id: int,
+    *,
+    normalized_due_at: str | None = None,
+) -> tuple[int, bool]:
+    """Idempotently project a HEBAT assignment into the shared task system."""
+    init_db()
+    now = _now()
+    with connect() as conn:
+        assignment = conn.execute(
+            "SELECT * FROM hebat_assignments WHERE id=?", (assignment_id,)
+        ).fetchone()
+        if not assignment:
+            return 0, False
+        linked = conn.execute(
+            """
+            SELECT target_id FROM entity_links
+            WHERE source_type='hebat_assignment' AND source_id=?
+              AND relation='represented_by' AND target_type='task'
+            """,
+            (str(assignment_id),),
+        ).fetchone()
+        submitted = "submitted" in (assignment["submission_status"] or "").casefold()
+        status = "done" if submitted else "inbox"
+        due_at = normalized_due_at or assignment["due_at"]
+        if linked:
+            task_id = int(linked["target_id"])
+            conn.execute(
+                """
+                UPDATE tasks SET title=?, description=?, due_at=?,
+                  status=CASE WHEN ?='done' THEN 'done' ELSE status END,
+                  updated_at=? WHERE id=?
+                """,
+                (
+                    f"[HEBAT] {assignment['title']}",
+                    assignment["instruction_text"] or "",
+                    due_at,
+                    status,
+                    now,
+                    task_id,
+                ),
+            )
+            return task_id, False
+        task = conn.execute(
+            """
+            INSERT INTO tasks
+              (title, description, status, priority, domain, due_at, source,
+               created_at, updated_at)
+            VALUES (?,?,?,?,?,?,?,?,?)
+            """,
+            (
+                f"[HEBAT] {assignment['title']}",
+                assignment["instruction_text"] or "",
+                status,
+                "high",
+                "learning",
+                due_at,
+                f"hebat_assignment:{assignment_id}",
+                now,
+                now,
+            ),
+        )
+        task_id = int(task.lastrowid)
+        conn.execute(
+            """
+            INSERT INTO entity_links
+              (chat_id, source_type, source_id, relation, target_type, target_id,
+               metadata_json, created_at)
+            VALUES (?, 'hebat_assignment', ?, 'represented_by', 'task', ?, '{}', ?)
+            """,
+            (chat_id, str(assignment_id), str(task_id), now),
+        )
+    return task_id, True
 
 
 def list_assignments(course_id: str | None = None) -> list[dict]:
@@ -255,9 +394,16 @@ def get_assignment_by_activity(activity_id: int) -> dict | None:
 
 # ─── Submissions ─────────────────────────────────────────────────────────────
 
-def create_submission(*, assignment_id: int, source_chat_id: str,
-                      source_message_id: str | None, local_file_path: str,
-                      uploaded_filename: str, confirmation_token: str) -> int:
+
+def create_submission(
+    *,
+    assignment_id: int,
+    source_chat_id: str,
+    source_message_id: str | None,
+    local_file_path: str,
+    uploaded_filename: str,
+    confirmation_token: str,
+) -> int:
     init_db()
     now = _now()
     with connect() as conn:
@@ -268,9 +414,16 @@ def create_submission(*, assignment_id: int, source_chat_id: str,
                uploaded_filename, upload_status, confirmation_token, created_at)
             VALUES (?,?,?,?,?,?,?,?)
             """,
-            (assignment_id, source_chat_id, source_message_id, local_file_path,
-             uploaded_filename, UploadStatus.PENDING_CONFIRMATION.value,
-             confirmation_token, now),
+            (
+                assignment_id,
+                source_chat_id,
+                source_message_id,
+                local_file_path,
+                uploaded_filename,
+                UploadStatus.PENDING_CONFIRMATION.value,
+                confirmation_token,
+                now,
+            ),
         )
         row = conn.execute(
             "SELECT id FROM hebat_submissions WHERE confirmation_token=?",
@@ -288,9 +441,12 @@ def get_submission_by_token(token: str) -> dict | None:
     return dict(row) if row else None
 
 
-def update_submission_status(token: str, status: UploadStatus,
-                             verification_text: str | None = None,
-                             error: str | None = None) -> None:
+def update_submission_status(
+    token: str,
+    status: UploadStatus,
+    verification_text: str | None = None,
+    error: str | None = None,
+) -> None:
     init_db()
     now = _now()
     with connect() as conn:
@@ -303,12 +459,21 @@ def update_submission_status(token: str, status: UploadStatus,
               error_message=COALESCE(?, error_message)
             WHERE confirmation_token=?
             """,
-            (status.value, status.value, now, status.value, now,
-             verification_text, error, token),
+            (
+                status.value,
+                status.value,
+                now,
+                status.value,
+                now,
+                verification_text,
+                error,
+                token,
+            ),
         )
 
 
 # ─── Downloads ───────────────────────────────────────────────────────────────
+
 
 def record_download(
     chat_id: str,
@@ -336,14 +501,29 @@ def record_download(
                mime_type, local_path, size_bytes, sha256, text_excerpt, summary, created_at)
             VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)
             """,
-            (chat_id, course_id, cmid, activity_url, file_url, final_url, filename,
-             mime_type, local_path, size_bytes, sha256,
-             (text_excerpt or "")[:4000], (summary or "")[:2000], _now()),
+            (
+                chat_id,
+                course_id,
+                cmid,
+                activity_url,
+                file_url,
+                final_url,
+                filename,
+                mime_type,
+                local_path,
+                size_bytes,
+                sha256,
+                (text_excerpt or "")[:4000],
+                (summary or "")[:2000],
+                _now(),
+            ),
         )
         return int(cur.lastrowid or 0)
 
 
-def search_downloads(chat_id: str, query: str | None = None, limit: int = 20) -> list[dict]:
+def search_downloads(
+    chat_id: str, query: str | None = None, limit: int = 20
+) -> list[dict]:
     """Find previously downloaded HEBAT files by filename / excerpt / summary."""
     init_db()
     with connect() as conn:
@@ -367,9 +547,15 @@ def search_downloads(chat_id: str, query: str | None = None, limit: int = 20) ->
 
 # ─── Audit Log ───────────────────────────────────────────────────────────────
 
-def audit_log(chat_id: str, action: str, status: str,
-              target_type: str | None = None, target_id: str | None = None,
-              detail: dict | None = None) -> None:
+
+def audit_log(
+    chat_id: str,
+    action: str,
+    status: str,
+    target_type: str | None = None,
+    target_id: str | None = None,
+    detail: dict | None = None,
+) -> None:
     init_db()
     with connect() as conn:
         conn.execute(
@@ -378,12 +564,20 @@ def audit_log(chat_id: str, action: str, status: str,
               (user_chat_id, action, target_type, target_id, status, detail_json, created_at)
             VALUES (?,?,?,?,?,?,?)
             """,
-            (chat_id, action, target_type, target_id, status,
-             json.dumps(detail or {}, ensure_ascii=False), _now()),
+            (
+                chat_id,
+                action,
+                target_type,
+                target_id,
+                status,
+                json.dumps(detail or {}, ensure_ascii=False),
+                _now(),
+            ),
         )
 
 
 # ─── Reminder dedup ──────────────────────────────────────────────────────────
+
 
 def has_reminder_for_assignment(assignment_id: int, hours_before: int) -> bool:
     """Check if a reminder already exists for this assignment + hours combination."""
@@ -391,7 +585,10 @@ def has_reminder_for_assignment(assignment_id: int, hours_before: int) -> bool:
     keyword = f"hebat_assign_{assignment_id}_h{hours_before}"
     with connect() as conn:
         row = conn.execute(
-            "SELECT id FROM reminders WHERE description LIKE ? AND status='pending'",
-            (f"%{keyword}%",),
+            """
+            SELECT id FROM reminders
+            WHERE (source_ref_id=? OR description LIKE ?) AND status='pending'
+            """,
+            (f"assignment:{assignment_id}:h{hours_before}", f"%{keyword}%"),
         ).fetchone()
     return row is not None

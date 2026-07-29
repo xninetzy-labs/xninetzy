@@ -108,6 +108,11 @@ Jangan mount home directory, SSH keys, cloud credentials, atau Docker socket ke 
 - course downloads dan submission files;
 - audit output yang memuat prompt sensitif.
 
+Seluruh `services/ai/data/**` bersifat privat per instalasi dan di-ignore, kecuali
+README kebijakan. Menghapus data dari branch terbaru tidak membersihkan Git
+history; lakukan rotasi serta sanitasi history sebelum publikasi bila pernah
+ter-push.
+
 ## Incident response sederhana
 
 Jika secret terekspos:

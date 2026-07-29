@@ -123,12 +123,9 @@ temp/
 *.sqlite3
 *.db
 
-# HEBAT runtime state and downloaded course materials
-services/ai/data/hebat/browser-profiles/
-services/ai/data/hebat/downloads/
-
-# Local backup snapshots (contain private owner state)
-services/ai/data/backups/
+# Every installation owns private runtime state. Keep only the policy README.
+services/ai/data/**
+!services/ai/data/README.md
 
 # =========================
 # Secrets / keys

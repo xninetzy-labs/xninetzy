@@ -3,6 +3,7 @@
 These are *hints* for the workflow planner — they do not replace the workflow
 engine in ``app/xninetzy/workflow/``. Deterministic and rule-based.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass
@@ -19,10 +20,29 @@ class ITLearningWorkflowIntent:
 
 
 _IT_KEYWORDS = (
-    "python", "javascript", "typescript", "go", "backend", "frontend",
-    "database", "sql", "docker", "api", "rest", "graphql", "system design",
-    "rag", "graph rag", "llm", "agent", "machine learning", "deep learning",
-    "pytorch", "fastapi", "nestjs", "laravel",
+    "python",
+    "javascript",
+    "typescript",
+    "go",
+    "backend",
+    "frontend",
+    "database",
+    "sql",
+    "docker",
+    "api",
+    "rest",
+    "graphql",
+    "system design",
+    "rag",
+    "graph rag",
+    "llm",
+    "agent",
+    "machine learning",
+    "deep learning",
+    "pytorch",
+    "fastapi",
+    "nestjs",
+    "laravel",
 )
 
 
@@ -35,11 +55,23 @@ def infer_it_learning_intent(text: str) -> ITLearningWorkflowIntent:
     lowered = (text or "").lower().strip()
     return ITLearningWorkflowIntent(
         topic=lowered[:120] or "it learning",
-        wants_roadmap=any(k in lowered for k in ("roadmap", "learning path", "belajar", "kurikulum")),
-        wants_study_plan=any(k in lowered for k in ("study plan", "rencana belajar", "jadwal belajar", "hari ini")),
-        wants_research=any(k in lowered for k in ("riset", "research", "referensi", "paper", "youtube", "sumber")),
-        wants_note=any(k in lowered for k in ("catat", "obsidian", "note", "knowledge")),
-        wants_reminder=any(k in lowered for k in ("ingatkan", "reminder", "deadline", "besok", "nanti")),
+        wants_roadmap=any(
+            k in lowered for k in ("roadmap", "learning path", "belajar", "kurikulum")
+        ),
+        wants_study_plan=any(
+            k in lowered
+            for k in ("study plan", "rencana belajar", "jadwal belajar", "hari ini")
+        ),
+        wants_research=any(
+            k in lowered
+            for k in ("riset", "research", "referensi", "paper", "youtube", "sumber")
+        ),
+        wants_note=any(
+            k in lowered for k in ("catat", "obsidian", "note", "knowledge")
+        ),
+        wants_reminder=any(
+            k in lowered for k in ("ingatkan", "reminder", "deadline", "besok", "nanti")
+        ),
     )
 
 

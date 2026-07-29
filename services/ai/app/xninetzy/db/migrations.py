@@ -109,6 +109,27 @@ def run_migrations() -> None:
         )
         """,
         """
+        CREATE TABLE IF NOT EXISTS os_job_runs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            job_key TEXT NOT NULL UNIQUE,
+            job_type TEXT NOT NULL,
+            owner_id TEXT NOT NULL,
+            scheduled_for TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'running',
+            attempts INTEGER NOT NULL DEFAULT 1,
+            lease_until TEXT,
+            prepared_output TEXT,
+            result_output TEXT,
+            last_error TEXT,
+            retryable INTEGER NOT NULL DEFAULT 0,
+            next_retry_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            completed_at TEXT
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_os_job_runs_status ON os_job_runs(status, next_retry_at)",
+        """
         CREATE TABLE IF NOT EXISTS graph_nodes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             node_type TEXT NOT NULL,

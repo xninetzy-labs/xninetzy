@@ -3,6 +3,7 @@
 Text only — no LLM imports, no behavior. Consumed by the agent prompt and the
 it_learning skill.
 """
+
 from __future__ import annotations
 
 IT_LEARNING_IDENTITY = """

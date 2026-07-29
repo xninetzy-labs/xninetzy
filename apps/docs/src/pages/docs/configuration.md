@@ -7,6 +7,10 @@ section: Mulai
 
 Root `.env.example` adalah kontrak konfigurasi seluruh monorepo. Salin menjadi `.env`; jangan mengubah template dengan nilai rahasia.
 
+Setiap clone memakai SQLite lokal yang berbeda. Tidak ada database runtime di
+repository. Startup membuat/migrasikan database pada `SQLITE_PATH`; lihat
+[Local data per installation](/docs/local-data/).
+
 ## Konfigurasi inti
 
 ```dotenv
@@ -112,6 +116,22 @@ BACKUP_RETENTION=14
 WA engine menyimpan claim dan reply outbox agar pengiriman ulang event tidak
 menjalankan LLM/tool yang sama. Direktori ini harus persisten dan hanya dapat
 dibaca owner. Lihat [Backup dan restore](/docs/backup-restore/) untuk recovery.
+
+## Scheduled Personal OS
+
+```dotenv
+OS_SCHEDULER_ENABLED=true
+OS_SCHEDULER_STARTUP_DELAY_SECONDS=30
+OS_NOTIFY_CHAT_ID=628xxxxxxxxxx@s.whatsapp.net
+MORNING_BRIEFING_HOUR=7
+EVENING_CHECKIN_HOUR=20
+WEEKLY_REVIEW_WEEKDAY=6
+WEEKLY_REVIEW_HOUR=20
+HEBAT_PERIODIC_SYNC_ENABLED=false
+```
+
+Gunakan [Automation dan scheduled jobs](/docs/automation/) untuk memahami lease,
+at-most-once delivery, ambiguous status, dan periodic HEBAT sync.
 
 ## MCP runtime path
 

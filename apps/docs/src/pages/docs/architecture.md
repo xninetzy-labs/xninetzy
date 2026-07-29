@@ -71,9 +71,37 @@ Codex, Claude, dan OpenCode menjalankan MCP stdio. Ketika sebuah tool perlu meng
 
 SQLite menyimpan state terstruktur. FAISS menyimpan embedding index. Markdown vault tetap menjadi source yang dapat dibaca manusia.
 
+## Single-owner state dan closed loop
+
+Goal, task, roadmap, habit, workout, HEBAT, knowledge, dan event adalah state
+milik instalasi—bukan milik satu transport. `chat_id` tetap direkam untuk asal,
+delivery, serta conversation memory, tetapi tidak memecah entity owner. Karena
+itu roadmap yang dibuat lewat MCP tetap terlihat dan dapat diselesaikan lewat
+WhatsApp.
+
+```text
+HEBAT assignment ─represented_by→ shared task ─reminded_by→ reminder
+roadmap item     ─represented_by→ shared task
+                                      ↓ task_completed event
+                           goal progress + roadmap progress
+                                      ↓
+                            Personal Context v2
+```
+
+Event ditulis lebih dahulu, lalu reducer mengonsumsinya dalam transaksi SQLite
+dan menulis consumption marker. Event yang belum memiliki marker diputar ulang
+saat AI startup. Completion task sendiri hanya menghasilkan event ketika status
+benar-benar berubah, sehingga request ulang tidak menambah progress dua kali.
+
+Scheduled jobs memakai tabel run yang sama untuk semua interface. Daily/weekly
+key mencegah briefing dibuat dua kali, lease memulihkan job internal yang
+terputus, dan weekly review menghitung event nyata. Detail operasional tersedia
+di [Automation](/docs/automation/).
+
 ## Security boundary
 
 - Admin ditentukan dengan JID eksplisit.
+- Chat API memerlukan bearer key dan owner JID pada single-owner mode.
 - Tool berisiko memakai approval atau confirmation.
 - Obsidian membatasi path ke vault dan extension aman.
 - Coding agent dibatasi allowed root, timeout, env allowlist, serta audit log.

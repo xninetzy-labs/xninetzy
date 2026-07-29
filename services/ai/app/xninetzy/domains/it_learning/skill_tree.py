@@ -3,6 +3,7 @@
 Used by the domain classifier / roadmap planner to anchor IT learning topics.
 This is data only — it introduces no behavior change to existing flows.
 """
+
 from __future__ import annotations
 
 IT_SKILL_TREE: dict[str, list[str]] = {

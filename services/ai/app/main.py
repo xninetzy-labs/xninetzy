@@ -11,6 +11,7 @@ from app.xninetzy.core.logging import configure_logging, logging
 from app.xninetzy.db.sqlite import init_db
 from app.xninetzy.db.migrations import run_migrations
 from app.xninetzy.os.reminders.scheduler import reminder_loop
+from app.xninetzy.os.jobs.service import os_job_loop
 from app.xninetzy.os.web_analysis.background import web_analysis_loop
 
 configure_logging()
@@ -31,13 +32,25 @@ if settings.AGENT_DEBUG_ENDPOINTS:
 async def startup() -> None:
     init_db()
     run_migrations()
+    from app.xninetzy.ecosystem.reducers import replay_unconsumed_events
+
+    replayed = replay_unconsumed_events()
+    if replayed:
+        logger.info("Replayed %d unconsumed ecosystem events", replayed)
     asyncio.create_task(reminder_loop())
+    asyncio.create_task(os_job_loop())
     if settings.WEB_ANALYSIS_BACKGROUND_ENABLED:
         asyncio.create_task(web_analysis_loop())
-    if settings.HEBAT_AUTO_LOGIN and settings.HEBAT_USERNAME and settings.HEBAT_PASSWORD:
+    if (
+        settings.HEBAT_AUTO_LOGIN
+        and settings.HEBAT_USERNAME
+        and settings.HEBAT_PASSWORD
+    ):
         asyncio.create_task(_hebat_startup_task())
     elif settings.HEBAT_AUTO_LOGIN:
-        logger.warning("HEBAT auto-login enabled but HEBAT_USERNAME/HEBAT_PASSWORD missing in env")
+        logger.warning(
+            "HEBAT auto-login enabled but HEBAT_USERNAME/HEBAT_PASSWORD missing in env"
+        )
 
 
 def _hebat_session_chat_id(s) -> str | None:
@@ -104,6 +117,7 @@ async def _notify_wa(chat_id: str, text: str) -> None:
     """Send a WA message via MCP — best-effort, no crash if MCP not ready."""
     try:
         from app.xninetzy.interfaces.whatsapp.client import call_wa_tool
+
         await call_wa_tool("send_text_message", {"jid": chat_id, "text": text})
     except Exception as e:
         logger.warning("Startup WA notification failed: %s", e)

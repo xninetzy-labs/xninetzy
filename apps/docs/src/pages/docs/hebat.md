@@ -45,6 +45,24 @@ baca seluruh PDF lalu buat roadmap lengkap di Obsidian
 
 Gunakan nama course yang cukup spesifik. Tool dapat mencari course dari cache lokal setelah sync.
 
+## Assignment menjadi task dan reminder
+
+`hebat_sync_assignments` tidak berhenti pada cache Moodle. Setiap assignment
+diproyeksikan secara idempotent ke task bersama:
+
+```text
+HEBAT assignment -> task priority tinggi -> reminder deadline
+```
+
+Sync berikutnya memperbarui judul, instruksi, deadline, dan status task yang
+sama—bukan membuat duplikat. Reminder menyimpan `source=hebat`, source reference,
+deadline, dan offset terstruktur. Task serta relasinya bersifat installation-
+global, sehingga hasil sync dari WhatsApp dapat dilihat melalui MCP/Codex/Claude/
+OpenCode dan sebaliknya.
+
+Jika Moodle menyatakan submission sudah terkirim, task terkait ditandai selesai.
+Aksi upload tetap memerlukan confirmation sesuai guard submission.
+
 ## Download materi
 
 File ditempatkan pada:

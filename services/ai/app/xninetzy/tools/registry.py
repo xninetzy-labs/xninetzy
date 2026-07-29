@@ -70,15 +70,19 @@ from app.xninetzy.os.academic.hebat.tools import (
 )
 from app.xninetzy.os.academic.mahasiswa_portal.tools import (
     portal_info,
+    portal_krs_capabilities,
     portal_krs_watcher_status,
     portal_login_cancel,
     portal_login_start,
     portal_login_submit_captcha,
     portal_logout,
+    portal_navigation,
+    portal_grades,
     portal_schedule,
     portal_session_status,
 )
 from app.xninetzy.os.jobs.tools import os_job_status
+from app.xninetzy.os.inbox.tools import os_capture, os_inbox, os_today, os_triage
 from app.xninetzy.tools.ecosystem.web_analysis_tools import (
     web_analysis_refresh,
     web_analysis_status,
@@ -277,6 +281,9 @@ def get_all_tools() -> list[BaseTool]:
             web_analysis_status,
             web_analysis_refresh,
             portal_info,
+            portal_navigation,
+            portal_krs_capabilities,
+            portal_grades,
             portal_schedule,
             portal_krs_watcher_status,
             portal_login_start,
@@ -308,6 +315,10 @@ def get_all_tools() -> list[BaseTool]:
             daily_review_generate,
             life_dashboard,
             os_job_status,
+            os_capture,
+            os_inbox,
+            os_triage,
+            os_today,
             # Knowledge OS
             knowledge_ingest_text,
             knowledge_ingest_file,
@@ -432,6 +443,7 @@ def get_tool_groups() -> dict[str, list[str]]:
     """
     return {
         "core": ["calculate", "calculate_percentage", "datetime_now"],
+        "os_kernel": ["os_capture", "os_inbox", "os_triage", "os_today", "os_job_status"],
         "ai_runtime": [
             "ai_provider_list",
             "ai_provider_status",
@@ -482,6 +494,9 @@ def get_tool_groups() -> dict[str, list[str]]:
             "web_analysis_status",
             "web_analysis_refresh",
             "portal_info",
+            "portal_navigation",
+            "portal_krs_capabilities",
+            "portal_grades",
             "portal_schedule",
             "portal_krs_watcher_status",
             "portal_login_start",
@@ -490,7 +505,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "portal_session_status",
             "portal_logout",
         ],
-        "life": ["goal_create", "task_capture", "daily_checkin", "os_job_status"],
+        "life": ["goal_create", "task_capture", "daily_checkin"],
         "reminders": ["reminder_create", "reminder_list", "reminder_cancel"],
         "whatsapp": [
             "wa_pin_message",

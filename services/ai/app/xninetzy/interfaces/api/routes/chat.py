@@ -44,6 +44,18 @@ async def _invoke_tool_directly(
     """Invoke a single tool directly, bypassing LangGraph (for slash commands)."""
     from app.xninetzy.tools.registry import get_all_tools
 
+    if tool_name == "__portal_grade_token_submit":
+        from app.xninetzy.os.academic.mahasiswa_portal.tools import (
+            submit_grade_token,
+        )
+
+        return await submit_grade_token(
+            challenge_id=str(kwargs.get("challenge_id") or ""),
+            token=str(kwargs.get("token") or ""),
+            sender_id=request.sender_id,
+            sender_name=request.sender_name,
+        )
+
     tools = {t.name: t for t in get_all_tools()}
     tool = tools.get(tool_name)
     if not tool:

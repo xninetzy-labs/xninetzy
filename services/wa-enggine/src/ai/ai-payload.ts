@@ -46,6 +46,7 @@ function extractMediaMeta(
 
 type BuildAIChatPayloadParams = {
   remoteJid: string;
+  senderId?: string;
   msg: WAMessage;
   chatType: ChatType;
   normalizedText: string;
@@ -83,6 +84,7 @@ export function buildAIChatPayload(
 ): AIChatPayload {
   const {
     remoteJid,
+    senderId: canonicalSenderId,
     msg,
     chatType,
     normalizedText,
@@ -97,7 +99,7 @@ export function buildAIChatPayload(
     isGroupAdmin,
   } = params;
 
-  const senderId = resolveSenderId({ remoteJid, msg, chatType });
+  const senderId = canonicalSenderId ?? resolveSenderId({ remoteJid, msg, chatType });
   const contextInfo = getMessageContextInfo(msg.message);
   const quotedMessageText = contextInfo?.quotedMessage ? extractMessageText(contextInfo.quotedMessage) : null;
 

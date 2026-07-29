@@ -192,6 +192,9 @@ dialog::backdrop { background: rgba(0,0,0,.74); backdrop-filter: blur(6px); }
 
 .site-footer { min-height: 6rem; padding: 1.6rem 2rem; display: flex; justify-content: center; align-items: center; gap: 1rem; border-top: 1px solid rgba(124,58,237,.17); color: var(--dim); background: #010003; font: .62rem var(--font-mono); letter-spacing: .09em; }
 .site-footer p { margin: 0; color: #52525b; }
+.site-footer nav { display: flex; gap: .8rem; }
+.site-footer a { color: var(--purple-bright); text-decoration: none; }
+.site-footer a:hover { color: #fff; }
 
 .mobile-navigation { width: min(20rem, 88vw); height: 100vh; max-height: none; margin: 0; padding: 0; }
 .mobile-navigation[open] { animation: fade-in .16s ease-out; }

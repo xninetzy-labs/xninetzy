@@ -8,11 +8,12 @@ import os
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit, urlunsplit
 
 from cryptography.fernet import Fernet, InvalidToken
 
 from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.web_analysis.sites import get_site
+from app.xninetzy.os.web_analysis.sites import get_site, is_allowed_url
 
 
 class SessionEncryptionUnavailable(RuntimeError):
@@ -104,6 +105,7 @@ class SessionManager:
         site_slug: str,
         storage_state: dict[str, Any],
         profile_id: str | None = None,
+        landing_url: str | None = None,
     ) -> Path:
         if not isinstance(storage_state.get("cookies", []), list):
             raise ValueError("storage_state.cookies harus list")
@@ -114,6 +116,7 @@ class SessionManager:
             "site_slug": get_site(site_slug).slug,
             "saved_at": datetime.now(timezone.utc).isoformat(),
             "storage_state": storage_state,
+            "landing_url": self._sanitize_landing_url(site_slug, landing_url),
         }
         return self.store.save(profile_id, site_slug, "storage-state", envelope)
 
@@ -133,8 +136,31 @@ class SessionManager:
     def has_session(self, site_slug: str, profile_id: str | None = None) -> bool:
         return self.store.exists(profile_id, site_slug, "storage-state")
 
+    def load_landing_url(
+        self,
+        site_slug: str,
+        profile_id: str | None = None,
+    ) -> str | None:
+        envelope = self.store.load(profile_id, site_slug, "storage-state")
+        if not envelope:
+            return None
+        value = envelope.get("landing_url")
+        if not isinstance(value, str) or not value:
+            return None
+        return self._sanitize_landing_url(site_slug, value)
+
     def clear_session(self, site_slug: str, profile_id: str | None = None) -> bool:
         return self.store.delete(profile_id, site_slug, "storage-state")
+
+    @staticmethod
+    def _sanitize_landing_url(site_slug: str, value: str | None) -> str | None:
+        if not value:
+            return None
+        site = get_site(site_slug)
+        if not is_allowed_url(site, value):
+            raise ValueError("Landing URL session berada di luar origin yang diizinkan.")
+        parsed = urlsplit(value)
+        return urlunsplit((parsed.scheme, parsed.netloc, parsed.path or "/", "", ""))
 
     @staticmethod
     def manual_login_required(site_slug: str) -> dict[str, str]:

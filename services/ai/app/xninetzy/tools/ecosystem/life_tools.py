@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 
 from langchain_core.tools import tool
 
@@ -271,7 +270,7 @@ def habit_log(
     """
     from app.xninetzy.os.life.habit_manager import log_habit
 
-    result = log_habit(name, value, notes)
+    log_habit(name, value, notes)
     record_event(chat_id, "habit_logged", "whatsapp", "habit", name, {"value": value})
     return f"✅ Habit *{name}* dicatat (×{value})"
 

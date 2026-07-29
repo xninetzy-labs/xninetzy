@@ -8,7 +8,7 @@ so a layout change degrades gracefully instead of returning nothing.
 from __future__ import annotations
 
 import re
-from urllib.parse import parse_qs, urljoin, urlparse
+from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 

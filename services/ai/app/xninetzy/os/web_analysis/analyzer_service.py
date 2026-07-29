@@ -64,7 +64,12 @@ class AnalyzerService:
                 message="WEB_ANALYSIS_ENABLED=false",
             )
         cached = self.cache.load(site.slug)
-        if cached and not force and not self.cache.is_stale(site.slug):
+        if (
+            cached
+            and not force
+            and not self.cache.is_stale(site.slug)
+            and self._cache_satisfies_request(cached, authenticated)
+        ):
             return AnalysisResult(
                 status="cache_fresh",
                 site_slug=site.slug,
@@ -75,6 +80,7 @@ class AnalyzerService:
             )
 
         storage_state: dict | None = None
+        landing_url: str | None = None
         if authenticated:
             if not settings.WEB_ANALYSIS_AUTHENTICATED_CRAWL_ENABLED:
                 return AnalysisResult(
@@ -84,7 +90,9 @@ class AnalyzerService:
                     message="Authenticated crawl belum diaktifkan oleh admin.",
                 )
             try:
-                storage_state = SessionManager().load_storage_state(site.slug, profile_id)
+                sessions = SessionManager()
+                storage_state = sessions.load_storage_state(site.slug, profile_id)
+                landing_url = sessions.load_landing_url(site.slug, profile_id)
             except SessionEncryptionUnavailable as exc:
                 return AnalysisResult(
                     status="configuration_required",
@@ -102,7 +110,11 @@ class AnalyzerService:
 
         try:
             with self.cache.lease(site.slug):
-                return await self._crawl(site, storage_state=storage_state)
+                return await self._crawl(
+                    site,
+                    storage_state=storage_state,
+                    landing_url=landing_url,
+                )
         except AnalysisBusyError as exc:
             return AnalysisResult(
                 status="busy",
@@ -111,7 +123,12 @@ class AnalyzerService:
                 message=str(exc),
             )
 
-    async def _crawl(self, site: SiteDefinition, storage_state: dict | None) -> AnalysisResult:
+    async def _crawl(
+        self,
+        site: SiteDefinition,
+        storage_state: dict | None,
+        landing_url: str | None = None,
+    ) -> AnalysisResult:
         try:
             from playwright.async_api import async_playwright
         except ImportError:
@@ -124,10 +141,17 @@ class AnalyzerService:
 
         settings = get_settings()
         auth_status = "authenticated" if storage_state else "public"
-        paths = list(site.public_paths)
         if storage_state:
-            paths.extend(site.authenticated_paths)
-        queue = [site.absolute_url(path) for path in paths]
+            queue = [landing_url] if landing_url else []
+            login_url = self._canonical_url(site.absolute_url(site.login_path))
+            for path in site.authenticated_paths:
+                target = self._canonical_url(site.absolute_url(path))
+                if target != login_url and target not in queue:
+                    queue.append(target)
+            if not queue:
+                queue.append(site.absolute_url(site.authenticated_paths[0]))
+        else:
+            queue = [site.absolute_url(path) for path in site.public_paths]
         visited: set[str] = set()
         modules: dict[tuple[str, str], ModuleRecord] = {}
         endpoints: dict[tuple[str, str, tuple[str, ...]], EndpointRecord] = {}
@@ -195,10 +219,7 @@ class AnalyzerService:
                             if storage_state:
                                 break
 
-                        discovered = await page.eval_on_selector_all(
-                            "a[href]",
-                            "elements => elements.map(element => element.href).filter(Boolean)",
-                        )
+                        discovered = await self._discover_links(page)
                         for link in discovered:
                             canonical = self._canonical_url(str(link))
                             if canonical not in visited and self._safe_to_visit(site, canonical):
@@ -250,6 +271,53 @@ class AnalyzerService:
     def _canonical_url(url: str) -> str:
         parsed = urlsplit(url)
         return urlunsplit((parsed.scheme, parsed.netloc, parsed.path or "/", parsed.query, ""))
+
+    @staticmethod
+    def _cache_satisfies_request(
+        cached: SiteAnalysis, authenticated: bool
+    ) -> bool:
+        return not authenticated or cached.auth_status == "authenticated"
+
+    @classmethod
+    async def _discover_links(cls, page) -> list[str]:
+        candidates: dict[str, str] = {}
+        for frame in page.frames:
+            try:
+                items = await frame.eval_on_selector_all(
+                    "a[href]",
+                    """
+                    elements => elements.map(element => ({
+                      href: element.href,
+                      text: (element.textContent || '').trim().slice(0, 200)
+                    })).filter(item => item.href)
+                    """,
+                )
+            except Exception:
+                continue
+            for item in items:
+                href = str(item.get("href") or "")
+                if href:
+                    candidates[href] = str(item.get("text") or "")
+        return sorted(
+            candidates,
+            key=lambda href: cls._link_priority(href, candidates[href]),
+        )
+
+    @staticmethod
+    def _link_priority(href: str, text: str = "") -> tuple[int, str]:
+        value = f"{href} {text}".casefold()
+        groups = (
+            ("krs", "rencana studi"),
+            ("kprs",),
+            ("nilai", "khs", "transkrip"),
+            ("jadwal",),
+            ("mata kuliah", "registrasi", "semester", "kuliah", "draft"),
+            ("akademik",),
+        )
+        for index, keywords in enumerate(groups):
+            if any(keyword in value for keyword in keywords):
+                return (index, href)
+        return (len(groups), href)
 
     @staticmethod
     def _safe_to_visit(site: SiteDefinition, url: str) -> bool:

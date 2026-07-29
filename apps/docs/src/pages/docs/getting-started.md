@@ -1,22 +1,61 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: Quick start
-description: Dari clone repository sampai chat WhatsApp pertama dengan jalur Docker yang reproducible.
+description: Instalasi satu perintah untuk Linux, macOS, dan Windows hingga chat WhatsApp pertama.
 section: Mulai
 ---
 
-Jalur Docker adalah cara termudah untuk menjalankan AI service dan WA engine secara konsisten. Compose saat ini bersifat **Linux-first** karena memakai host networking.
+Jalur Docker menjalankan AI service dan WA engine secara konsisten melalui
+bridge network Compose. Port hanya dipublikasikan ke loopback host, sehingga
+konfigurasi yang sama bekerja di Linux, macOS, Windows, dan WSL2.
 
 ## Prasyarat
 
-- Linux host dengan Docker Engine dan Docker Compose plugin.
+- Linux: Docker Engine dan Docker Compose plugin.
+- macOS: Docker Desktop.
+- Windows 10/11: Docker Desktop dengan WSL2 backend atau PowerShell 7.
+- Git. Installer Unix juga memerlukan OpenSSL.
 - Flaz API key atau credential provider LLM lain.
 - Absolute path menuju Obsidian vault.
 - Akun WhatsApp yang dapat ditautkan sebagai linked device.
 
 Untuk development lokal, gunakan Python 3.11+, `uv`, Node.js 22.12+, Yarn 1.22, Chromium Playwright, dan Tesseract untuk OCR.
 
-## 1. Siapkan environment
+## Instalasi satu perintah
+
+Linux, macOS, atau WSL2:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.ps1 | iex
+```
+
+Installer akan clone atau memakai checkout aktif, membuat `.env`, meminta vault,
+nomor WhatsApp admin, dan Flaz API key, menghasilkan key internal secara acak,
+menjalankan validasi Compose, lalu membangun dan menyalakan service. API key
+dibaca tanpa echo dan tidak dicetak. Setelah selesai, ikuti log WA untuk scan QR.
+
+Audit isi script dari GitHub sebelum memakai pola pipe-to-shell pada mesin yang
+tidak sepenuhnya Anda kontrol. Jalur manual berikut memberikan hasil yang sama.
+
+## Dukungan platform
+
+| Platform | Runtime | Startup otomatis |
+|---|---|---|
+| Linux | Docker Engine + Compose | Aktifkan service Docker melalui systemd |
+| macOS | Docker Desktop | Aktifkan “Start Docker Desktop when you sign in” |
+| Windows | Docker Desktop + WSL2 | Aktifkan “Start Docker Desktop when you sign in” |
+| WSL2 | Docker Desktop integration | Mengikuti startup Docker Desktop Windows |
+
+Volume vault memakai absolute path native platform. Jangan memakai path network
+yang belum dibagikan ke Docker Desktop.
+
+## 1. Siapkan environment secara manual
 
 Dari root repository:
 
@@ -46,6 +85,14 @@ FLAZ_BASE_URL=https://ai.flaz.id/v1
 FLAZ_MODEL=deepseek-v4-pro
 ```
 
+Lengkapi autentikasi internal tanpa menampilkan secret:
+
+```bash
+cd services/ai
+uv run python scripts/configure_internal_auth.py
+cd ../..
+```
+
 ## 3. Hubungkan data host
 
 Cari identitas user host:
@@ -64,6 +111,8 @@ OBSIDIAN_VAULT_HOST_PATH=/absolute/path/to/obsidian-vault
 ADMIN_JID=628xxxxxxxxxx@s.whatsapp.net
 ADMIN_NAMES=your_name
 APP_TIMEZONE=Asia/Jakarta
+WA_STARTUP_MENU_ENABLED=true
+WA_STARTUP_MENU_DELAY_MS=1500
 ```
 
 `OBSIDIAN_VAULT_HOST_PATH` harus absolute. Compose menolak start ketika nilainya kosong.
@@ -95,6 +144,29 @@ docker compose logs -f wa-enggine
 ```
 
 Selesaikan QR atau pairing melalui **WhatsApp → Linked devices**.
+
+Setelah koneksi pertama berstatus `open`, admin menerima lima kartu menu berisi
+15 tombol command. Menu hanya dikirim sekali untuk setiap process launch, bukan
+setiap reconnect. Jika button tidak didukung, sistem mengirim fallback teks.
+
+## Startup otomatis saat laptop boot atau login
+
+Pada Linux dengan systemd:
+
+```bash
+sudo systemctl enable --now docker
+systemctl is-enabled docker
+systemctl is-active docker
+```
+
+Compose menetapkan `restart: unless-stopped` untuk AI dan WA engine. Setelah
+container dibuat, keduanya kembali hidup bersama Docker saat laptop boot. Hindari
+`docker compose down` apabila container harus tetap terdaftar untuk startup
+otomatis.
+
+Pada macOS dan Windows, buka Docker Desktop → Settings → General, lalu aktifkan
+startup saat login. Pada WSL2, pastikan integration distro aktif. Container akan
+dipulihkan oleh Docker Desktop dengan policy yang sama.
 
 ## 6. Verifikasi health
 

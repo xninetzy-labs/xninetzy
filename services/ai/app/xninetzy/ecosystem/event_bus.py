@@ -11,6 +11,49 @@ from app.xninetzy.core.logging import logging
 logger = logging.getLogger(__name__)
 
 
+def record_event_in_transaction(
+    conn,
+    chat_id: str,
+    event_type: str,
+    source: str,
+    entity_type: str | None = None,
+    entity_id: str | None = None,
+    payload: dict | None = None,
+    created_at: str | None = None,
+) -> int:
+    """Persist an ecosystem event using the caller's active transaction."""
+    now = created_at or datetime.now(
+        ZoneInfo(get_settings().APP_TIMEZONE)
+    ).isoformat()
+    result = conn.execute(
+        """
+        INSERT INTO ecosystem_events
+          (chat_id, event_type, source, entity_type, entity_id, payload_json, created_at)
+        VALUES (?,?,?,?,?,?,?)
+        """,
+        (
+            chat_id,
+            event_type,
+            source,
+            entity_type,
+            entity_id,
+            json.dumps(payload or {}, ensure_ascii=False),
+            now,
+        ),
+    )
+    return int(result.lastrowid)
+
+
+def dispatch_recorded_event(event_id: int) -> None:
+    """Run reducers after the transaction containing an event has committed."""
+    try:
+        from app.xninetzy.ecosystem.reducers import consume_event
+
+        consume_event(event_id)
+    except Exception:
+        logger.exception("Ecosystem reducer failed for event %s", event_id)
+
+
 def record_event(
     chat_id: str,
     event_type: str,
@@ -21,31 +64,17 @@ def record_event(
 ) -> int:
     """Record a lifecycle event to the ecosystem timeline."""
     init_db()
-    now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).isoformat()
     with connect() as conn:
-        result = conn.execute(
-            """
-            INSERT INTO ecosystem_events
-              (chat_id, event_type, source, entity_type, entity_id, payload_json, created_at)
-            VALUES (?,?,?,?,?,?,?)
-            """,
-            (
-                chat_id,
-                event_type,
-                source,
-                entity_type,
-                entity_id,
-                json.dumps(payload or {}, ensure_ascii=False),
-                now,
-            ),
+        event_id = record_event_in_transaction(
+            conn,
+            chat_id,
+            event_type,
+            source,
+            entity_type,
+            entity_id,
+            payload,
         )
-        event_id = int(result.lastrowid)
-    try:
-        from app.xninetzy.ecosystem.reducers import consume_event
-
-        consume_event(event_id)
-    except Exception:
-        logger.exception("Ecosystem reducer failed for event %s", event_id)
+    dispatch_recorded_event(event_id)
     return event_id
 
 

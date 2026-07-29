@@ -35,7 +35,7 @@ def extract_resource_detail_from_html(html: str, base_url: str, *, source: str =
     return {
         "title": title,
         "description": description,
-        "files": [l.model_dump() for l in files],
+        "files": [link.model_dump() for link in files],
         "file_count": len(files),
         "readable_text": html_to_readable_text(html),
     }

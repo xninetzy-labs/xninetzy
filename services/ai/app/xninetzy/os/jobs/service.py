@@ -279,6 +279,14 @@ def build_weekly_review(chat_id: str, now: datetime) -> str:
 
 def _context_lines(context: dict) -> list[str]:
     lines: list[str] = []
+    if context.get("attention_queue"):
+        lines += [
+            "",
+            "*Attention queue:*",
+            *[f"• {item}" for item in context["attention_queue"]],
+        ]
+    if context.get("os_inbox_count"):
+        lines.append(f"📥 {context['os_inbox_count']} capture perlu ditriage.")
     if context["today_tasks"]:
         lines += [
             "",

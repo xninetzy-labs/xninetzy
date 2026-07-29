@@ -10,6 +10,8 @@ from app.xninetzy.interfaces.mcp_tool_adapter import (
     expose_xninetzy_tools,
     mcp_principal,
 )
+from app.xninetzy.db.migrations import run_migrations
+from app.xninetzy.db.sqlite import init_db
 
 from app.xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_answer as _knowledge_answer,
@@ -41,6 +43,9 @@ from app.xninetzy.tools.internal.reminder import (
     reminder_create as _reminder_create,
     reminder_list as _reminder_list,
 )
+
+init_db()
+run_migrations()
 
 # stdio MCP reserves stdout for protocol messages, so bootstrap stays silent.
 assert isinstance(_MCP_PATH_OVERRIDES, dict)

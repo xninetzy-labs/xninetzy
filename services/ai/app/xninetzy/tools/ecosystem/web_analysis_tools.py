@@ -32,7 +32,11 @@ async def web_analysis_refresh(site_slug: str = "hebat", authenticated: bool = F
         site_slug: hebat atau mahasiswa
         authenticated: gunakan session manual local-owner; default false
     """
-    result = await AnalyzerService().analyze_site(site_slug, authenticated=authenticated)
+    result = await AnalyzerService().analyze_site(
+        site_slug,
+        authenticated=authenticated,
+        force=True,
+    )
     return (
         f"*Web Analysis {result.site_slug}*\n"
         f"• Status: {result.status}\n"

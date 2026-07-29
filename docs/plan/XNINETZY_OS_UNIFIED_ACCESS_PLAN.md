@@ -6,9 +6,9 @@ This is the execution tracker for turning Xninetzy from a feature-rich assistant
 into one OS shared by WhatsApp, internal LangGraph, Codex, Claude Code, and
 OpenCode.
 
-The planned Cyber Campus KRS/grades and Telegram extension is tracked separately
-in `docs/plan/CYBER_CAMPUS_KRS_GRADES_TELEGRAM_PLAN.md`. It remains planning-only
-until its read-only and approval-hardening gates are implemented.
+The Cyber Campus KRS, grades, and WhatsApp verification extension is tracked in
+`docs/plan/CYBER_CAMPUS_KRS_GRADES_WHATSAPP_PLAN.md`. Portal writes remain
+disabled until its read-only and approval-hardening gates are implemented.
 
 ## Architecture decision
 
@@ -69,12 +69,19 @@ Acceptance:
 - [x] Include roadmap, habit, workout, and recent events in Personal Context v2.
 - [x] Build idempotent morning briefing, evening check-in, and weekly review jobs.
 - [x] Add periodic HEBAT sync with freshness and failure status.
+- [x] Add an installation-global OS Inbox for ambiguous capture.
+- [x] Add atomic, replay-safe triage from capture to shared task or archive.
+- [x] Replace `/today` with a deterministic attention queue across task,
+  learning state, and pending capture.
+- [x] Inject the same attention state into LangGraph context and automation.
 
 Acceptance:
 
 - Completing a linked task updates the associated roadmap or goal.
 - A briefing is generated at most once per owner/date and identifies stale data.
 - Weekly review uses actual events instead of a static question template.
+- The same capture key produces one inbox item and one lifecycle event.
+- Replaying triage produces no duplicate task, link, or reducer consumption.
 
 ## P2 — Adaptive Learning OS
 
@@ -111,6 +118,10 @@ Acceptance:
 - Added event-backed morning/evening/weekly messages and inspectable HEBAT freshness.
 - Added duration/level-aware roadmap phases and persisted knowledge source links.
 - Added idempotent study sessions, progress metrics, and mastery/energy adaptive daily plans.
+- Added a shared OS Inbox, atomic triage, and deterministic attention queue.
+- Routed `/today`, Personal Context, morning briefing, and MCP through the same OS state.
+- Added an admin-only WhatsApp startup menu with 15 command buttons, reconnect
+  deduplication, and complete text fallback.
 
 ### 2026-07-28
 

@@ -4,7 +4,7 @@ import Icon from '../components/Icon.astro';
 import { navigation } from '../data/navigation';
 
 const capabilities = [
-  { number: '01', title: 'WhatsApp native', text: 'Chat, media, group, reminder, dan command dalam satu antarmuka yang selalu dekat.' },
+  { number: '01', title: 'Closed-loop OS', text: 'Capture, triage, focus, execute, dan review memakai state yang sama di setiap interface.' },
   { number: '02', title: 'Knowledge connected', text: 'Obsidian, FAISS, Graph RAG, HEBAT, serta personal memory berbagi satu tool registry.' },
   { number: '03', title: 'Model freedom', text: 'Flaz sebagai default, dengan OpenAI, Anthropic, OpenRouter, Ollama, dan endpoint compatible.' },
   { number: '04', title: 'Agent interoperable', text: 'Codex, Claude Code, dan OpenCode mengakses kemampuan yang sama melalui MCP global.' }
@@ -18,14 +18,14 @@ const capabilities = [
       <div class="hero-content">
         <p class="signal"><span></span> PERSONAL LEARNING OS / ONLINE</p>
         <h1>Your knowledge.<br /><em>In one orbit.</em></h1>
-        <p class="lead">Xninetzy menghubungkan WhatsApp, Obsidian, pembelajaran kampus, dan coding agents menjadi satu sistem AI yang tetap berada di bawah kendalimu.</p>
+        <p class="lead">Xninetzy menghubungkan WhatsApp, Obsidian, pembelajaran kampus, dan coding agents ke satu OS yang mengubah capture menjadi fokus dan tindakan terukur.</p>
         <div class="hero-actions">
           <a class="primary" href="/docs/getting-started/">Mulai instalasi <Icon name="arrow" /></a>
           <a class="secondary" href="/docs/introduction/"><Icon name="book" /> Baca konsep</a>
         </div>
         <div class="status-line">
           <span><i></i> Local-first</span>
-          <span>149 MCP tools</span>
+          <span>168 MCP tools</span>
           <span>6 LLM providers</span>
         </div>
       </div>
@@ -48,13 +48,13 @@ const capabilities = [
       <div class="section-copy">
         <p class="kicker">ONE SYSTEM / CLEAR BOUNDARIES</p>
         <h2>From message<br />to meaningful action.</h2>
-        <p>Pesan dirutekan oleh LangGraph ke jawaban langsung, workflow, atau tool. Aksi sensitif tetap berhenti di approval boundary.</p>
+        <p>Pesan dirutekan ke OS Inbox, jawaban, workflow, atau tool. Attention queue memilih fokus dari state nyata; aksi sensitif tetap berhenti di approval boundary.</p>
         <a href="/docs/architecture/">Pelajari arsitektur <Icon name="arrow" /></a>
       </div>
       <div class="flow-card">
         <div class="flow-node active"><small>INTERFACE</small><strong>WhatsApp / CLI</strong></div>
         <span class="flow-line"><i></i></span>
-        <div class="flow-node"><small>ORCHESTRATION</small><strong>FastAPI + LangGraph</strong></div>
+        <div class="flow-node"><small>OS KERNEL</small><strong>Inbox + Attention + Events</strong></div>
         <span class="flow-line"><i></i></span>
         <div class="flow-grid">
           <div class="flow-node"><small>KNOWLEDGE</small><strong>Obsidian / FAISS</strong></div>
@@ -90,6 +90,7 @@ const capabilities = [
       <h2>Ready to connect<br />your second brain?</h2>
       <p>Siapkan environment, pilih provider, lalu hubungkan WhatsApp dan vault pertamamu.</p>
       <a href="/docs/getting-started/">Buka quick start <Icon name="arrow" /></a>
+      <p class="creator-links">Dibuat oleh <a href="https://misbahul-muttaqin.vercel.app/" target="_blank" rel="noreferrer">Misbahul Muttaqin</a> · <a href="https://github.com/misbahul45" target="_blank" rel="noreferrer">GitHub</a></p>
     </section>
   </main>
 </BaseLayout>
@@ -155,6 +156,8 @@ const capabilities = [
   .final-cta { position: relative; padding: 9rem 2rem; overflow: hidden; border-top: 1px solid rgba(124,58,237,.23); text-align: center; background: radial-gradient(circle at 50% 100%, rgba(109,40,217,.18), transparent 45%); }
   .final-cta::before { content: ''; position: absolute; left: 50%; bottom: -28rem; width: 48rem; height: 48rem; border: 1px solid rgba(249,115,22,.25); border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 80px rgba(249,115,22,.07); }
   .final-cta h2, .final-cta p, .final-cta a { position: relative; }.final-cta > p:not(.kicker) { max-width: 35rem; margin: 0 auto 2rem; color: var(--muted); line-height: 1.7; }
+  .final-cta .creator-links { margin-top: 1.3rem; font: .68rem var(--font-mono); }
+  .final-cta .creator-links a { padding: 0; color: var(--purple-bright); background: none; box-shadow: none; }
   @media(max-width: 900px) { .hero { padding: 6rem 2rem 4rem; grid-template-columns: 1fr; }.orbit-visual { width: min(29rem, 94vw); }.capability-strip { grid-template-columns: 1fr 1fr; }.capability-strip article:nth-child(2) { border-right: 0; }.capability-strip article:nth-child(-n+2) { border-bottom: 1px solid rgba(124,58,237,.16); }.architecture { grid-template-columns: 1fr; gap: 3rem; }.docs-index > header { grid-template-columns: 1fr; gap: .2rem; } }
   @media(max-width: 600px) { .hero { min-height: auto; padding: 4.5rem 1.2rem 3rem; }.orbit-visual { transform: scale(.78); margin-block: -3rem; }.capability-strip { grid-template-columns: 1fr; }.capability-strip article { min-height: auto; border-right: 0; border-bottom: 1px solid rgba(124,58,237,.16); }.section { padding: 6rem 0; }.flow-card { padding: 1rem; }.flow-grid, .doc-groups { grid-template-columns: 1fr; }.doc-groups > section { padding: 1.5rem 0; border-right: 0; }.docs-index > header { gap: 0; }.final-cta { padding: 7rem 1.2rem; } }
 </style>

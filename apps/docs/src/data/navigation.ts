@@ -26,6 +26,7 @@ export const navigation: NavGroup[] = [
       { title: 'WhatsApp', description: 'Chat, group, media, dan command.', href: '/docs/whatsapp/' },
       { title: 'Obsidian', description: 'Vault, note, knowledge, dan guard.', href: '/docs/obsidian/' },
       { title: 'HEBAT / Moodle', description: 'Course, activity, file, dan tugas.', href: '/docs/hebat/' },
+      { title: 'OS kernel', description: 'Capture, triage, dan attention queue.', href: '/docs/os-kernel/' },
       { title: 'Learning roadmap', description: 'Planner adaptif dan source linkage.', href: '/docs/learning-roadmaps/' }
     ]
   },

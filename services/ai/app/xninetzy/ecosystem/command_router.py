@@ -5,7 +5,8 @@ import re
 # Maps slash commands to (tool_name, args_dict) or special handler keys
 SLASH_COMMANDS: dict[str, str] = {
     "/helper": "helper_get",
-    "/today": "task_today",
+    "/today": "os_today",
+    "/inbox": "os_inbox",
     "/goals": "goal_list",
     "/tasks": "task_today",
     "/money": "money_summary",
@@ -22,8 +23,11 @@ SLASH_COMMANDS: dict[str, str] = {
     "/study-review": "learning_review_week",
     "/approvals": "hitl_list_pending",
     "/hebat-debug": "hebat_debug_login",
+    "/nilai": "portal_grades",
     "/jadwal": "portal_schedule",
     "/portalinfo": "portal_info",
+    "/portal-nav": "portal_navigation",
+    "/krs-capabilities": "portal_krs_capabilities",
     "/krs-watcher": "portal_krs_watcher_status",
     "/web-analysis": "web_analysis_status",
     "/media-info": "media_info",
@@ -51,7 +55,13 @@ LLM_USE_PATTERN = re.compile(r"^/llm\s+use\s+([\w-]+)(?:\s+(.+))?$", re.I | re.S
 AGENT_LIST_PATTERN = re.compile(r"^/agent\s+list$", re.I)
 AGENT_USE_PATTERN = re.compile(r"^/agent\s+use\s+([\w-]+)$", re.I)
 CODE_PATTERN = re.compile(r"^/code\s+(.+)$", re.I | re.S)
+CAPTURE_PATTERN = re.compile(r"^/capture\s+(.+)$", re.I | re.S)
+TRIAGE_PATTERN = re.compile(r"^/triage\s+(\d+)\s+(task|archive)$", re.I)
 CAPTCHA_PATTERN = re.compile(r"^/captcha\s+([A-Za-z0-9_-]+)\s+([^\s]+)$", re.I)
+GRADE_TOKEN_PATTERN = re.compile(
+    r"^/grade-token\s+([A-Za-z0-9_-]+)\s+(\d{4,10})$", re.I
+)
+GRADE_REQUEST_PATTERN = re.compile(r"^/nilai(?:\s+(.+))?$", re.I)
 CYBER_LOGIN_CANCEL_PATTERN = re.compile(
     r"^/cyber-login-cancel\s+([A-Za-z0-9_-]+)$", re.I
 )
@@ -116,13 +126,34 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     if m:
         return "coding_agent_run", {"task": m.group(1).strip()}
 
+    m = CAPTURE_PATTERN.match(stripped)
+    if m:
+        return "os_capture", {"content": m.group(1).strip()}
+    m = TRIAGE_PATTERN.match(stripped)
+    if m:
+        return "os_triage", {
+            "capture_id": int(m.group(1)),
+            "target": m.group(2).lower(),
+        }
+
     if stripped.lower() == "/cyber-login":
         return "portal_login_start", {}
+    m = GRADE_REQUEST_PATTERN.match(stripped)
+    if m:
+        return "portal_grades", {
+            "academic_period": (m.group(1) or "latest").strip()
+        }
     m = CAPTCHA_PATTERN.match(stripped)
     if m:
         return "portal_login_submit_captcha", {
             "challenge_id": m.group(1),
             "captcha_answer": m.group(2),
+        }
+    m = GRADE_TOKEN_PATTERN.match(stripped)
+    if m:
+        return "__portal_grade_token_submit", {
+            "challenge_id": m.group(1),
+            "token": m.group(2),
         }
     m = CYBER_LOGIN_CANCEL_PATTERN.match(stripped)
     if m:
@@ -169,7 +200,11 @@ def parse_command(message: str) -> tuple[str | None, dict]:
         return "web_analysis_status", {"site_slug": m.group(1).lower()}
     m = WEB_REFRESH_PATTERN.match(stripped)
     if m:
-        return "web_analysis_refresh", {"site_slug": m.group(1).lower()}
+        site_slug = m.group(1).lower()
+        return "web_analysis_refresh", {
+            "site_slug": site_slug,
+            "authenticated": site_slug == "mahasiswa",
+        }
 
     # /rule subcommands
     m = RULE_ADD_PATTERN.match(stripped)

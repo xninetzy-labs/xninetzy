@@ -16,10 +16,16 @@ code, tests, configuration, and documentation agree.
 | P0-03 | Verified SQLite/FAISS backup and restore | Complete | 2 backup tests; AI lint |
 | P1-01 | Event reducers, entity links, and Personal Context v2 | Complete | 31 focused + 264 full AI tests; focused lint |
 | P1-02 | Scheduled briefing/review and HEBAT freshness worker | Complete | 6 scheduler + 29 parity + 264 full AI tests |
+| P1-03 | OS Inbox, replay-safe triage, and shared attention queue | Complete | 15 focused + 307 full AI tests; full lint; WA/docs/runtime gates |
 | P2-01 | Duration/level/source-aware roadmap planner | Complete | 21 focused + 264 full AI tests; focused lint |
 | P2-02 | Study sessions, progress metrics, and adaptive today plan | Complete | 21 focused + 271 full AI tests; focused lint |
 | Security-02 | Per-installation runtime data isolation | Complete | Git tracked-file audit; docs build |
-| Academic/Telegram plan | Cyber Campus KRS, grades, and owner Telegram bridge | Planned | Design only; no actions enabled |
+| Academic-01a | Cyber login, CAPTCHA HITL, encrypted session, runtime navigation | Partial | 315 full AI tests; 27/27 safe unique routes reachable |
+| WA-Approval-01 | Admin buttons, media forwarding, LID normalization | Complete | 11 WA tests; 6 AI notification/media tests; TypeScript lint/build |
+| WA-Menu-01 | Admin startup menu with 15 buttons and fallback | Complete | 20 WA tests; lint/build; live 5-card/15-button delivery |
+| Runtime-01 | Fixed Playwright Docker layer and laptop boot restart | Complete | Docker images built; both services healthy; Docker enabled/active |
+| Academic-01b | Live schedule + private WhatsApp grade-token reader | Partial | 322 AI tests; real 10-course schedule; live KHS token pending |
+| Runtime-02 | Cross-platform bridge Compose + bootstrap installers | Complete | Compose config; Bash syntax; Docker health; docs build |
 
 ## Batch P0-01 — API authentication and owner boundary
 
@@ -89,6 +95,29 @@ Periodic HEBAT sync remains opt-in (`HEBAT_PERIODIC_SYNC_ENABLED=false`) because
 it uses an authenticated institutional session. A `delivery_uncertain` job is
 never retried automatically; inspect WhatsApp and the status tool first.
 
+## Batch P1-03 — OS Inbox and attention kernel
+
+Completed: 2026-07-29
+
+- [x] Add an installation-global inbox for important, ambiguous capture.
+- [x] Classify capture deterministically without another LLM call.
+- [x] Make capture idempotent by caller-supplied key.
+- [x] Promote capture to a shared task or archive it in one transaction.
+- [x] Persist exactly one entity link, lifecycle event, and reducer consumption.
+- [x] Replace `/today` with a deterministic attention queue across tasks,
+  learning state, and pending capture.
+- [x] Inject the same attention state into Personal Context and morning briefing.
+- [x] Expose the four OS tools through the central registry and dynamic MCP.
+- [x] Document the behavior and known boundaries in Astro docs.
+- [x] Finish the full AI, WA, docs, Docker, and MCP verification gates.
+
+Verification: 15 focused OS tests, 307 full AI tests, full Ruff, 11 WA tests,
+WA lint/build, Astro check/build with 21 pages, healthy Docker services, and a
+runtime registry/schema smoke check.
+
+Next OS-kernel work should add typed promotion adapters for note, knowledge,
+goal, and roadmap without moving domain behavior into the interface layer.
+
 ## Batch P2-01 — Source-aware adaptive roadmap
 
 Completed: 2026-07-29
@@ -129,3 +158,108 @@ Completed: 2026-07-29
 This removes runtime files from the current repository tree. Existing public Git
 history must still be sanitized separately; history rewrite is intentionally not
 automated because it affects every collaborator.
+
+## Batch Academic-01a — Cyber Campus login foundation
+
+Completed scope: 2026-07-29
+
+- [x] Reuse HEBAT credential through an in-memory provider.
+- [x] Open Cyber Campus in a bounded background Chromium context.
+- [x] Fill credentials without exposing them to prompts or tool schemas.
+- [x] Send CAPTCHA image only to WhatsApp `ADMIN_JID`.
+- [x] Bind CAPTCHA challenge to owner, TTL, and attempt limit.
+- [x] Route replied or bare CAPTCHA values directly without invoking the LLM.
+- [x] Normalize `/catchpa`, Baileys device suffixes, and cached quoted messages.
+- [x] Save successful session through the encrypted local session manager.
+- [x] Register the same tools through the central registry and MCP adapter.
+- [x] Inventory all live frame navigation with same-origin path sanitization.
+- [x] Generate a KRS capability manifest and structure hash from runtime DOM and
+  sanitized inline-script targets.
+- [x] Verify 29 navigation items, 27 unique safe routes with zero unreachable,
+  and four KRS tabs against the live owner session.
+- [x] Make `/web-refresh` force a real authenticated refresh.
+- [x] Add sanitized schedule/KHS fixtures and deterministic read-only parsers.
+- [x] Read 10 live schedule entries from the encrypted owner session.
+- [x] Add owner-bound, volatile, single-use grade-token intake through WhatsApp.
+- [x] Keep the private token-submit command outside registry, MCP, and LLM tools.
+- [ ] Implement bound, expiring, single-use KRS approval before any write action.
+
+## Batch Academic-01b — Schedule and grade-token reads
+
+Completed scope: 2026-07-29
+
+- [x] Parse the live six-column Cyber Campus schedule deterministically.
+- [x] Read schedule data only from the encrypted owner session.
+- [x] Parse KHS tables into header-bound values without an LLM call.
+- [x] Request the KHS token only through fixed WhatsApp `ADMIN_JID`.
+- [x] Open the live KHS page first so Cyber Campus triggers its registered
+  Telegram delivery; keep Telegram configuration outside Xninetzy.
+- [x] Bind challenge to normalized owner, TTL, attempt limit, and single use.
+- [x] Route replied token text deterministically through the WA cache fallback.
+- [x] Prevent token submission through registry, MCP, or LangGraph tools.
+- [x] Keep the prepared KHS browser page alive until token consumption or expiry.
+- [x] Select the requested semester and use native same-origin fetch without
+  relying on portal jQuery.
+- [x] Enforce the live portal order: open, wait, fill token, set semester, fetch.
+- [x] Confirm the dropdown remains at its default value until token submission.
+- [x] Support student-semester aliases from entry year without an LLM call.
+- [x] Verify a live Semester Genap 2025/2026 schedule with 10 entries.
+- [ ] Complete a live KHS read with a fresh owner token.
+
+Verification: 331 full AI tests, full Ruff, 26 WA tests, WA lint/build, and
+healthy real Compose services.
+
+## Batch Runtime-02 — Cross-platform installation
+
+Completed: 2026-07-29
+
+- [x] Replace Linux-only host networking with a bridge network.
+- [x] Publish AI and WA ports only on host loopback.
+- [x] Add `host.docker.internal` routing for an optional host Ollama runtime.
+- [x] Add interactive Linux/macOS/WSL2 and Windows PowerShell installers.
+- [x] Generate internal keys locally and keep provider input hidden.
+- [x] Document Docker Desktop startup behavior for macOS and Windows.
+- [x] Add portfolio and GitHub links to the docs landing page and footer.
+- [x] Redact libsignal session objects before third-party console output.
+
+## Batch WA-Approval-01 — Canonical WhatsApp verification
+
+Completed: 2026-07-29
+
+- [x] Send approval to fixed `ADMIN_JID` using Baileys Approve/Reject buttons.
+- [x] Fall back to `/approve` and `/reject` text when interactive buttons fail.
+- [x] Forward durable image/document content to admin before verification.
+- [x] Parse button IDs as commands instead of visible labels.
+- [x] Resolve Baileys `@lid` to a phone JID when mapping is available.
+- [x] Accept only explicit `OWNER_ALLOWED_JIDS` when mapping is unavailable.
+- [x] Keep all approval, CAPTCHA, and verification flows on WhatsApp admin.
+- [x] Remove all legacy alternate-channel configuration and documentation contracts.
+
+## Batch WA-Menu-01 — Startup admin command menu
+
+Completed: 2026-07-29
+
+- [x] Trigger menu only after the first successful connection `open`.
+- [x] Send five capability cards with 15 deterministic slash-command buttons.
+- [x] Keep every card within the three-button Baileys compatibility boundary.
+- [x] Deliver only to normalized `ADMIN_JID`, never an LLM-selected target.
+- [x] Prevent duplicate delivery during reconnect in the same process.
+- [x] Retry on a later reconnect only when button and text delivery both fail.
+- [x] Fall back to one complete text menu when interactive buttons fail.
+- [x] Add environment configuration and operator documentation.
+- [x] Verify Docker delivery against the connected admin account: five cards and
+  15 buttons sent once on process startup.
+
+Verification: 20 WA tests, TypeScript lint/build, healthy Compose services, and
+runtime `startup_menu_sent` evidence with `messagesSent=5` and `buttonsSent=15`.
+
+## Batch Runtime-01 — Docker and automatic startup
+
+Completed: 2026-07-29
+
+- [x] Install Playwright Chromium before changing `/ms-playwright` permissions.
+- [x] Build both AI and WA Docker images successfully.
+- [x] Generate missing internal auth keys without printing secrets.
+- [x] Run AI and WA engine healthy with authenticated internal API calls.
+- [x] Keep both services on `restart: unless-stopped`.
+- [x] Enable and verify the Docker systemd service on the current laptop.

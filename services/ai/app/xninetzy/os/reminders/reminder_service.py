@@ -2,7 +2,6 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
-from typing import Any
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.os.reminders.reminder_content import ReminderContentNormalizer

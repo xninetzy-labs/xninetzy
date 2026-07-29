@@ -1,5 +1,10 @@
 import type { McpTool } from "../types";
 import { logger } from "../../utils/logger";
+import {
+  cacheMessage,
+  clearActiveCaptchaChallenge,
+  rememberCaptchaChallenge,
+} from "../../whatsapp/socket-state";
 import { sourceToMessageMedia, publicMessageResult } from "../media";
 import {
   optionalBoolean,
@@ -24,9 +29,14 @@ export const messageTools: McpTool[] = [
       },
     },
     async handler(input, { sock }) {
+      const text = requireString(input, "text");
       const message = await sock.sendMessage(requireString(input, "jid"), {
-        text: requireString(input, "text"),
+        text,
       });
+      if (message) cacheMessage(message);
+      if (text.includes("Cyber Campus berhasil login")) {
+        clearActiveCaptchaChallenge();
+      }
       return publicMessageResult(message);
     },
   },
@@ -41,10 +51,16 @@ export const messageTools: McpTool[] = [
       },
     },
     async handler(input, { sock }) {
-      const message = await sock.sendMessage(requireString(input, "jid"), {
+      const jid = requireString(input, "jid");
+      const caption = optionalString(input, "caption") ?? "";
+      const message = await sock.sendMessage(jid, {
         image: sourceToMessageMedia(requireString(input, "source")),
-        caption: optionalString(input, "caption"),
+        caption,
       } as any);
+      if (message) {
+        cacheMessage(message);
+        rememberCaptchaChallenge(jid, caption);
+      }
       return publicMessageResult(message);
     },
   },

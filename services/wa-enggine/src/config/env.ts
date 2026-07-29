@@ -75,6 +75,8 @@ export const env = {
   WA_MESSAGE_LEASE_MS: parseNumber(process.env.WA_MESSAGE_LEASE_MS, 5 * 60_000),
   WA_MESSAGE_RETRY_DELAY_MS: parseNumber(process.env.WA_MESSAGE_RETRY_DELAY_MS, 60_000),
   WA_MESSAGE_RETENTION: parseNumber(process.env.WA_MESSAGE_RETENTION, 5_000),
+  WA_STARTUP_MENU_ENABLED: process.env.WA_STARTUP_MENU_ENABLED !== "false",
+  WA_STARTUP_MENU_DELAY_MS: parseNumber(process.env.WA_STARTUP_MENU_DELAY_MS, 1_500),
   AI_BASE_URL: process.env.AI_API_URL ?? process.env.AI_BASE_URL ?? "http://ai:8000",
   AI_CHAT_ENDPOINT: process.env.AI_CHAT_ENDPOINT ?? "/api/chat",
   AI_TIMEOUT_MS: parseNumber(process.env.AI_TIMEOUT_MS, 60_000),
@@ -86,6 +88,7 @@ export const env = {
   MCP_API_KEY: process.env.WA_MCP_API_KEY ?? process.env.MCP_API_KEY ?? "",
   BOT_NAME: process.env.BOT_NAME ?? "Xninetzy AI",
   BOT_OWNER: process.env.BOT_OWNER ?? "Misbahul Muttaqin",
+  ADMIN_JID: process.env.ADMIN_JID?.trim() ?? "",
 };
 
 export function validateEnv(): void {

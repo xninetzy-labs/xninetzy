@@ -1,6 +1,6 @@
 import type { WASocket, WAMessage } from "@whiskeysockets/baileys";
 import { sendChatToAI } from "../ai/ai-client";
-import { buildAIChatPayload } from "../ai/ai-payload";
+import { buildAIChatPayload, resolveSenderId } from "../ai/ai-payload";
 import { env } from "../config/env";
 import { logger } from "../utils/logger";
 import {
@@ -8,6 +8,8 @@ import {
   getChatType,
   getMessageContextInfo,
   getMediaType,
+  resolveCaptchaReply,
+  resolveGradeTokenReply,
   type MediaKind,
 } from "./message-parser";
 import { shouldProcessMessage } from "./trigger";
@@ -15,9 +17,14 @@ import { sendWhatsAppReply } from "./reply-context";
 import { sendTextMessage } from "./message-sender";
 import { createTraceId, maskJid } from "../utils/observability";
 import { isProcessableChatType } from "../types/chat";
-import { cacheMessage } from "./socket-state";
+import {
+  cacheMessage,
+  getCachedMessage,
+  resolveActiveCaptchaCommand,
+} from "./socket-state";
 import { persistMediaMessage } from "../mcp/media-store";
 import { runInChatQueue } from "./chat-queue";
+import { resolveCanonicalJid } from "./jid-resolver";
 import {
   claimMessage,
   markMessageCompleted,
@@ -118,7 +125,24 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
       return;
     }
 
-    const effectiveText = rawText ?? syntheticMediaText(mediaType);
+    const senderId = await resolveCanonicalJid(
+      sock,
+      resolveSenderId({ remoteJid, msg: message, chatType }),
+    );
+    const contextInfo = getMessageContextInfo(message.message);
+    const cachedQuotedMessage = getCachedMessage(contextInfo?.stanzaId)?.message;
+    const captchaBoundText = resolveCaptchaReply(
+      rawText ?? syntheticMediaText(mediaType),
+      message.message,
+      cachedQuotedMessage,
+    );
+    const replyBoundText = resolveGradeTokenReply(
+      captchaBoundText,
+      message.message,
+      cachedQuotedMessage,
+    );
+    const effectiveText = resolveActiveCaptchaCommand(replyBoundText, senderId)
+      ?? replyBoundText;
 
     if (mediaType) {
       logger.info(
@@ -217,9 +241,9 @@ async function handleIncomingMessage(sock: WASocket, message: WAMessage): Promis
     const groupMeta = chatType === "group"
       ? await resolveGroupAdminMetadata(sock, remoteJid, message.key.participant || undefined)
       : { groupName: null, groupAdmins: [], isGroupAdmin: false };
-
     const payload = buildAIChatPayload({
       remoteJid,
+      senderId,
       msg: message,
       chatType,
       normalizedText: text,

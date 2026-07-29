@@ -7,7 +7,7 @@ import pytest
 from app.xninetzy.workflow.executor import WorkflowExecutor
 from app.xninetzy.workflow.models import (
     WorkflowAction, WorkflowActionResult, WorkflowActionStatus, WorkflowActionType,
-    WorkflowPlan, WorkflowState,
+    WorkflowPlan,
 )
 
 

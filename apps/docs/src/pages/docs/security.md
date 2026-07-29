@@ -18,6 +18,9 @@ Xninetzy memproses data personal dan dapat menjalankan aksi eksternal. Default d
 - [ ] `ADMIN_JID` eksplisit; display name bukan satu-satunya identity.
 - [ ] `OBSIDIAN_ALLOW_DELETE=false`.
 - [ ] `HEBAT_ALLOW_AUTO_SUBMIT=false` dan confirmation aktif.
+- [ ] CAPTCHA/OTP selalu diselesaikan manual oleh owner.
+- [ ] Approval dan verifikasi hanya dikirim ke `ADMIN_JID` WhatsApp.
+- [x] Token nilai hanya diterima melalui challenge WhatsApp owner.
 - [ ] Coding runtime admin-only dengan allowed root sempit.
 - [ ] Vault dan database memiliki backup yang pernah diuji restore.
 - [ ] Secret yang pernah terekspos sudah dirotasi.
@@ -42,7 +45,9 @@ dikonfigurasi. Health check tetap publik. Authentication aplikasi tidak
 menggantikan firewall: bind ke loopback/private network dan gunakan VPN atau
 reverse proxy dengan TLS untuk akses lintas host.
 
-Docker Compose memakai host networking. Firewall host adalah bagian dari security model.
+Docker Compose memakai bridge network dan hanya mempublikasikan port AI/WA ke
+`127.0.0.1`. Jangan mengubah binding menjadi `0.0.0.0` tanpa reverse proxy,
+autentikasi, TLS, allowlist, dan firewall yang diaudit.
 
 ## WhatsApp identity
 
@@ -58,6 +63,15 @@ Dalam `SINGLE_OWNER_MODE=true`, `/api/chat` juga memeriksa `sender_id` terhadap
 `ADMIN_JID` dan `OWNER_ALLOWED_JIDS`. Header yang valid tidak membuat caller
 menjadi owner; keduanya adalah boundary yang berbeda.
 
+Baileys dapat melaporkan private sender sebagai `@lid`. WA engine mencoba
+memetakannya ke phone JID. Alias yang tidak dapat dipetakan harus ditambahkan
+secara eksplisit ke `OWNER_ALLOWED_JIDS`; sistem tidak belajar identitas owner
+secara otomatis.
+
+Approval berdampak besar memakai tombol Approve/Reject yang dikirim hanya ke
+`ADMIN_JID`. Jika interactive button tidak didukung, sistem mengirim fallback
+teks `/approve <id>` dan `/reject <id>` ke nomor yang sama.
+
 ## Filesystem dan Obsidian
 
 - Semua tool path relatif terhadap vault.
@@ -71,6 +85,15 @@ menjadi owner; keduanya adalah boundary yang berbeda.
 ## HEBAT
 
 Browser session setara dengan authenticated credential. Lindungi browser profile, cookie, screenshot debug, dan download materi. Submission harus selalu direview oleh pemilik.
+
+Cyber Campus menggunakan credential HEBAT secara in-memory. Agent boleh mengisi
+credential dan menjalankan browser headless, tetapi CAPTCHA/OTP tidak pernah
+dipecahkan atau dilewati. Challenge dikirim sebagai image ke WhatsApp admin,
+memiliki TTL dan batas percobaan, lalu session berhasil disimpan terenkripsi.
+
+Token nilai Cyber Campus hanya diterima dari `ADMIN_JID` melalui rute
+deterministik. Token tidak masuk prompt, MCP, database, snapshot, atau log dan
+dihapus dari memori setelah satu percobaan.
 
 ## MCP global
 

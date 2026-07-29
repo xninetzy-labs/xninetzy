@@ -19,6 +19,8 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         "habit_status": [],
         "workout_summary": None,
         "recent_events": [],
+        "os_inbox_count": 0,
+        "attention_queue": [],
     }
 
     try:
@@ -41,6 +43,20 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         ]
     except Exception as e:
         logger.debug("Context: tasks fetch failed: %s", e)
+
+    try:
+        from app.xninetzy.os.inbox.service import (
+            build_attention_queue,
+            capture_summary,
+        )
+
+        context["os_inbox_count"] = capture_summary()["inbox"]
+        context["attention_queue"] = [
+            f"[{item['kind']}] {item['title']} — {item['reason']}"
+            for item in build_attention_queue(limit=3)
+        ]
+    except Exception as e:
+        logger.debug("Context: OS inbox fetch failed: %s", e)
 
     try:
         from app.xninetzy.os.academic.hebat.storage import list_assignments
@@ -161,6 +177,12 @@ def format_context_for_prompt(ctx: dict) -> str:
 
     if ctx.get("today_tasks"):
         parts.append("Today tasks: " + " | ".join(ctx["today_tasks"]))
+
+    if ctx.get("attention_queue"):
+        parts.append("OS attention queue: " + " | ".join(ctx["attention_queue"]))
+
+    if ctx.get("os_inbox_count"):
+        parts.append(f"OS inbox pending: {ctx['os_inbox_count']}")
 
     if ctx.get("urgent_deadlines"):
         parts.append("Urgent HEBAT deadlines: " + " | ".join(ctx["urgent_deadlines"]))

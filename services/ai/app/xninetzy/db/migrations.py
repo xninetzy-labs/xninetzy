@@ -157,6 +157,25 @@ def run_migrations() -> None:
         """,
         "CREATE INDEX IF NOT EXISTS idx_os_job_runs_status ON os_job_runs(status, next_retry_at)",
         """
+        CREATE TABLE IF NOT EXISTS os_inbox_items (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            capture_key TEXT NOT NULL UNIQUE,
+            chat_id TEXT,
+            content TEXT NOT NULL,
+            title TEXT NOT NULL,
+            inferred_kind TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'inbox',
+            target_type TEXT,
+            target_id TEXT,
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            processed_at TEXT
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_os_inbox_status ON os_inbox_items(status, id)",
+        "CREATE INDEX IF NOT EXISTS idx_os_inbox_kind ON os_inbox_items(inferred_kind, status)",
+        """
         CREATE TABLE IF NOT EXISTS graph_nodes (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             node_type TEXT NOT NULL,

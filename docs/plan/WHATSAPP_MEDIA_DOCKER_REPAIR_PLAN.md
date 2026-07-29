@@ -31,8 +31,8 @@ begitu pembacaan tidak bergantung pada cache RAM atau umur proses WA Engine.
    identitas personal.
 2. Konfigurasikan `FLAZ_BASE_URL` dan `FLAZ_MODEL` secara eksplisit.
 3. Simpan `FLAZ_API_KEY` hanya di `.env` lokal yang diabaikan Git.
-4. Gunakan Linux host networking untuk komunikasi internal AI, WA, dan CLI pada
-   port unik `8000` dan `8081`; akses Flaz keluar melalui HTTPS.
+4. Gunakan bridge network Compose untuk komunikasi internal AI, WA, dan CLI;
+   publish port `8000` dan `8081` hanya ke loopback host.
 
 ### Phase 2 — Docker reliability
 
@@ -42,7 +42,7 @@ begitu pembacaan tidak bergantung pada cache RAM atau umur proses WA Engine.
    host tidak memblokir update credential.
 4. Pertahankan `wa-media` sebagai shared named volume pada path identik
    `/app/data/wa-media`.
-5. Jalankan client CLI pada host network yang sama ketika profile `tools` dipakai.
+5. Jalankan client CLI melalui service DNS `ai` ketika profile `tools` dipakai.
 
 ### Phase 3 — Durable WhatsApp media
 

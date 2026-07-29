@@ -4,8 +4,10 @@ import { startWhatsAppSocket } from "./whatsapp/socket";
 import { logger } from "./utils/logger";
 import fs from "node:fs";
 import { startMcpServer } from "./mcp/server";
+import { installConsoleRedaction } from "./utils/console-redaction";
 
 async function main(): Promise<void> {
+  installConsoleRedaction();
   if (
     !["qr", "pairing_code", "pairing-code", "code"].includes(env.WA_LOGIN_MODE_RAW.trim().toLowerCase())
   ) {

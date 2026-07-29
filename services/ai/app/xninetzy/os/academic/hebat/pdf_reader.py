@@ -37,11 +37,15 @@ def summarize_pdf(file_path: str | Path, max_chars: int = 3000) -> dict:
         return result
 
     text = result["text"]
-    lines = [l.strip() for l in text.splitlines() if l.strip()]
+    lines = [line.strip() for line in text.splitlines() if line.strip()]
     cleaned = "\n".join(lines)
 
     # Try to extract headings as outline
-    headings = [l for l in lines if re.match(r"^[A-Z\d][\w\s\-:]{3,60}$", l) and len(l) < 80]
+    headings = [
+        line
+        for line in lines
+        if re.match(r"^[A-Z\d][\w\s\-:]{3,60}$", line) and len(line) < 80
+    ]
 
     preview = cleaned[:max_chars]
     if len(cleaned) > max_chars:

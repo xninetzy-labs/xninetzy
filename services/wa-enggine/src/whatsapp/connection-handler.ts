@@ -9,6 +9,7 @@ import { cleanupCurrentSocket, setConnectionStatus } from "./socket-state";
 import { scheduleReconnect, resetReconnectAttempts, getReconnectAttempts } from "./reconnect-manager";
 import { isInsidePairingWindow, getPairingWaitRemainingMs, resetPairingState } from "./pairing-manager";
 import { clearAuthState } from "./auth";
+import { sendStartupAdminMenuOnce } from "./startup-menu";
 
 let isResettingAuthState = false;
 
@@ -76,6 +77,8 @@ export async function handleConnectionUpdate(
       },
       "WhatsApp connected successfully"
     );
+
+    void sendStartupAdminMenuOnce(currentSock);
 
     return;
   }

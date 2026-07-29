@@ -2,17 +2,13 @@ from __future__ import annotations
 
 import asyncio
 import secrets
-from pathlib import Path
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
-from app.xninetzy.os.academic.hebat.models import EditSubmissionFields, UploadStatus
-from app.xninetzy.os.academic.hebat.parsers import parse_assignment_page, parse_edit_submission_page
+from app.xninetzy.os.academic.hebat.models import UploadStatus
+from app.xninetzy.os.academic.hebat.parsers import parse_assignment_page
 from app.xninetzy.os.academic.hebat.storage import (
     audit_log,
-    create_submission,
-    get_assignment_by_activity,
-    get_submission_by_token,
     update_submission_status,
 )
 

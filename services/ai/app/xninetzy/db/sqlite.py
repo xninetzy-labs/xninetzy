@@ -341,6 +341,25 @@ def init_db() -> None:
         "CREATE INDEX IF NOT EXISTS idx_tasks_status ON tasks(status)",
         "CREATE INDEX IF NOT EXISTS idx_tasks_due ON tasks(due_at)",
         """
+        CREATE TABLE IF NOT EXISTS os_inbox_items (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          capture_key TEXT NOT NULL UNIQUE,
+          chat_id TEXT,
+          content TEXT NOT NULL,
+          title TEXT NOT NULL,
+          inferred_kind TEXT NOT NULL,
+          status TEXT NOT NULL DEFAULT 'inbox',
+          target_type TEXT,
+          target_id TEXT,
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          processed_at TEXT
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_os_inbox_status ON os_inbox_items(status, id)",
+        "CREATE INDEX IF NOT EXISTS idx_os_inbox_kind ON os_inbox_items(inferred_kind, status)",
+        """
         CREATE TABLE IF NOT EXISTS money_accounts (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           name TEXT NOT NULL UNIQUE,

@@ -70,8 +70,8 @@ def extract_assignment_detail_from_html(html: str, base_url: str) -> dict:
         "grading_status": base.get("grading_status"),
         "last_modified": base.get("last_modified"),
         "can_submit": base.get("can_submit"),
-        "attachments": [l.model_dump() for l in attachments],
-        "submission_files": [l.model_dump() for l in submission_files],
-        "feedback_files": [l.model_dump() for l in feedback_files],
+        "attachments": [link.model_dump() for link in attachments],
+        "submission_files": [link.model_dump() for link in submission_files],
+        "feedback_files": [link.model_dump() for link in feedback_files],
         "raw_clean_text": html_to_readable_text(html),
     }

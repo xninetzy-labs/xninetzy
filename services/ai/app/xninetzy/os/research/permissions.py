@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from app.xninetzy.core.config import get_settings
+from app.xninetzy.core.identity import normalize_whatsapp_jid
 
 
 def _norm(value: str | None) -> str:
@@ -11,10 +12,20 @@ def _admin_names() -> list[str]:
     return [n.strip().lower() for n in get_settings().ADMIN_NAMES.split(",") if n.strip()]
 
 
-def is_owner_admin(sender_id: str | None, sender_name: str | None) -> bool:
+def _owner_jids() -> set[str]:
     settings = get_settings()
-    admin_jid = _norm(settings.ADMIN_JID)
-    return bool(admin_jid and _norm(sender_id) == admin_jid) or is_sender_named_misbahul(sender_name)
+    values = [settings.ADMIN_JID, *settings.OWNER_ALLOWED_JIDS.split(",")]
+    return {
+        normalize_whatsapp_jid(value)
+        for value in values
+        if normalize_whatsapp_jid(value)
+    }
+
+
+def is_owner_admin(sender_id: str | None, sender_name: str | None) -> bool:
+    return normalize_whatsapp_jid(sender_id) in _owner_jids() or is_sender_named_misbahul(
+        sender_name
+    )
 
 
 def is_sender_named_misbahul(sender_name: str | None) -> bool:
@@ -50,7 +61,7 @@ def can_run_deep_research(
     if not settings.DEEP_RESEARCH_ADMIN_ONLY:
         return True, "deep_research_open"
 
-    if _norm(settings.ADMIN_JID) and _norm(sender_id) == _norm(settings.ADMIN_JID):
+    if normalize_whatsapp_jid(sender_id) in _owner_jids():
         return True, "admin_jid"
 
     if settings.DEEP_RESEARCH_ALLOW_ADMIN_NAMES and is_sender_named_misbahul(sender_name):

@@ -19,6 +19,8 @@ def test_mcp_server_exposes_all_registered_xninetzy_tools():
     assert "hebat_list_courses" in names
     assert "portal_schedule" in names
     assert "coding_agent_run" in names
+    assert "os_capture" in names
+    assert "os_today" in names
 
     coding_tool = mcp._tool_manager.get_tool("coding_agent_run")
     assert coding_tool is not None
@@ -86,6 +88,11 @@ async def test_mcp_stdio_host_mode_can_read_tasks_without_app_path(
         async with ClientSession(read_stream, write_stream) as session:
             await session.initialize()
             result = await session.call_tool("task_today", {})
+            capture_result = await session.call_tool(
+                "os_capture",
+                {"content": "ide MCP capture", "idempotency_key": "mcp-capture-1"},
+            )
+            inbox_result = await session.call_tool("os_inbox", {})
 
     text = "\n".join(
         getattr(item, "text", "")
@@ -94,3 +101,15 @@ async def test_mcp_stdio_host_mode_can_read_tasks_without_app_path(
     )
     assert "Permission denied" not in text
     assert "Hari ini" in text
+    capture_text = "\n".join(
+        getattr(item, "text", "")
+        for item in capture_result.content
+        if getattr(item, "text", "")
+    )
+    inbox_text = "\n".join(
+        getattr(item, "text", "")
+        for item in inbox_result.content
+        if getattr(item, "text", "")
+    )
+    assert "OS Inbox" in capture_text
+    assert "ide MCP capture" in inbox_text

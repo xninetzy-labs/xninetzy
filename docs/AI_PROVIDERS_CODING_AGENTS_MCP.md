@@ -415,7 +415,10 @@ Ada dua mode yang disarankan:
 
 Jangan mount seluruh home directory ke container hanya untuk mengambil session CLI. Jika coding agent harus berada dalam container, buat image khusus, install binary tertentu, mount credential seminimal mungkin, dan pertahankan `CODING_AGENT_ALLOWED_ROOT` pada satu workspace.
 
-Jika Ollama berjalan di host dan service AI memakai `network_mode: host`, gunakan base URL host yang sesuai. Pada konfigurasi Docker bridge, `127.0.0.1` merujuk ke container sendiri.
+Jika Ollama berjalan di host, Compose memakai
+`OLLAMA_DOCKER_BASE_URL=http://host.docker.internal:11434/v1`. Nama host itu
+dipetakan melalui `host-gateway` di Linux dan tersedia melalui Docker Desktop di
+macOS/Windows. `127.0.0.1` di dalam container merujuk ke container sendiri.
 
 ## Pengujian dan diagnosis
 

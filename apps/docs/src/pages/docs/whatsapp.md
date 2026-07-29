@@ -30,6 +30,31 @@ docker compose logs -f wa-enggine
 
 Session disimpan pada named volume `wa-session` dalam Docker atau `WA_AUTH_DIR` saat lokal.
 
+## Startup admin menu
+
+Pada connection `open` pertama setiap process launch, WA engine otomatis
+mengirim lima kartu ke `ADMIN_JID`. Setiap kartu memakai maksimal tiga button
+Baileys agar payload tetap kompatibel.
+
+| Kartu | Tombol |
+|---|---|
+| Harian | `/today`, `/inbox`, `/review` |
+| Life OS | `/tasks`, `/goals`, `/workout` |
+| Learning OS | `/hebat`, `/roadmaps`, `/study-today` |
+| Knowledge | `/memory`, `/skills`, `/helper knowledge` |
+| Kontrol AI | `/approvals`, `/llm`, `/agent` |
+
+```dotenv
+ADMIN_JID=628xxxxxxxxxx@s.whatsapp.net
+WA_STARTUP_MENU_ENABLED=true
+WA_STARTUP_MENU_DELAY_MS=1500
+```
+
+State `once per launch` disimpan di proses WA engine. Reconnect tidak mengirim
+menu kedua; restart container mengawali launch baru dan mengirim menu lagi. Jika
+interactive button gagal, satu pesan fallback berisi semua command dikirim.
+`ADMIN_JID` boleh berupa nomor atau JID penuh dan dinormalisasi sebelum delivery.
+
 ## Trigger private dan group
 
 Private chat diproses langsung. Group diproses jika salah satu kondisi terpenuhi:
@@ -52,7 +77,9 @@ WA_GROUP_ALLOW_ALL=false
 | Command | Fungsi |
 |---|---|
 | `/helper [topic]` | panduan kemampuan |
-| `/today`, `/tasks`, `/goals` | life OS |
+| `/today` | attention queue OS |
+| `/capture`, `/inbox`, `/triage` | capture dan triage lintas interface |
+| `/tasks`, `/goals` | life OS |
 | `/research`, `/deep-research` | research |
 | `/roadmaps`, `/study-today` | learning OS |
 | `/media-info`, `/analyze-media` | attachment/reply |

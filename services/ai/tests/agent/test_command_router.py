@@ -11,3 +11,14 @@ def test_approve_command():
 
 def test_hebat_debug_command():
     assert parse_command("/hebat-debug") == ("hebat_debug_login", {})
+
+
+def test_grade_command_preserves_requested_period():
+    assert parse_command("/nilai") == (
+        "portal_grades",
+        {"academic_period": "latest"},
+    )
+    assert parse_command("/nilai 287") == (
+        "portal_grades",
+        {"academic_period": "287"},
+    )

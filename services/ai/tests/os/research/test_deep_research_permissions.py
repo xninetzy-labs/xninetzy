@@ -1,5 +1,5 @@
 from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.research.permissions import can_run_deep_research
+from app.xninetzy.os.research.permissions import can_run_deep_research, is_owner_admin
 
 
 def test_sender_name_misbahul_allowed(monkeypatch):
@@ -14,6 +14,22 @@ def test_admin_jid_allowed(monkeypatch):
     get_settings.cache_clear()
     monkeypatch.setenv("ADMIN_JID", "628@s.whatsapp.net")
     allowed, reason = can_run_deep_research("628@s.whatsapp.net", "User", "private", {})
+    assert allowed
+    assert reason == "admin_jid"
+
+
+def test_admin_device_jid_allowed(monkeypatch):
+    get_settings.cache_clear()
+    monkeypatch.setenv("ADMIN_JID", "628@s.whatsapp.net")
+    assert is_owner_admin("628:7@s.whatsapp.net", None)
+
+
+def test_owner_lid_allowlist_allowed(monkeypatch):
+    get_settings.cache_clear()
+    monkeypatch.setenv("ADMIN_JID", "628@s.whatsapp.net")
+    monkeypatch.setenv("OWNER_ALLOWED_JIDS", "991@lid,another@s.whatsapp.net")
+    assert is_owner_admin("991@lid", None)
+    allowed, reason = can_run_deep_research("991@lid", "User", "private", {})
     assert allowed
     assert reason == "admin_jid"
 

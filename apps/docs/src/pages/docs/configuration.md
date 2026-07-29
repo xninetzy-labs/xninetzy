@@ -99,8 +99,54 @@ OWNER_ALLOWED_JIDS=
 engine dan CLI ke chat, reminder, dan debug API. Buat key acak, misalnya dengan
 `openssl rand -hex 32`; jangan menggunakan password akun atau API key provider.
 
+Untuk instalasi lokal, jalankan `uv run python scripts/configure_internal_auth.py`
+dari `services/ai`. Script menambah konfigurasi yang belum ada, membuat key
+internal secara kriptografis aman, tidak mencetak secret, dan tidak menimpa nilai
+yang sudah terisi.
+
 `ADMIN_JID` adalah identitas owner utama. `OWNER_ALLOWED_JIDS` hanya untuk alias
 owner yang memang diperlukan, misalnya JID `@lid`; pisahkan dengan koma.
+
+Startup menu WhatsApp dikendalikan dengan:
+
+```dotenv
+WA_STARTUP_MENU_ENABLED=true
+WA_STARTUP_MENU_DELAY_MS=1500
+```
+
+Target selalu `ADMIN_JID`; LLM tidak dapat memilih penerimanya. Delay memberi
+waktu singkat agar socket stabil setelah connection `open`. Nilai `false`
+menonaktifkan menu tanpa memengaruhi approval atau notifikasi lain.
+
+WA engine juga mencoba memetakan Baileys `@lid` ke phone JID sebelum request
+masuk ke AI. Jika WhatsApp tidak menyediakan mapping, tambahkan alias `@lid`
+owner secara eksplisit ke `OWNER_ALLOWED_JIDS`.
+
+## Cyber Campus dan token nilai
+
+```dotenv
+CYBER_CAMPUS_ENABLED=false
+CYBER_CAMPUS_BASE_URL=https://mahasiswa.unair.ac.id
+CYBER_CAMPUS_CREDENTIAL_SOURCE=hebat
+CYBER_CAMPUS_BROWSER_HEADLESS=true
+CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS=180
+CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS=3
+CYBER_CAMPUS_GRADE_TOKEN_TTL_SECONDS=180
+CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS=3
+CYBER_CAMPUS_ENTRY_YEAR=0
+```
+
+Cyber Campus mengambil username/password langsung dari `HEBAT_USERNAME` dan
+`HEBAT_PASSWORD` hanya saat login. CAPTCHA dikirim ke WhatsApp admin dan harus
+dijawab manual. Owner dapat reply gambar dengan nilai, mengirim nilai tunggal
+selama challenge aktif, atau memakai `/captcha <id> <jawaban>`. Token nilai juga
+hanya diterima dari WhatsApp admin melalui challenge berumur pendek dan tidak
+pernah dipersistenkan.
+
+`CYBER_CAMPUS_ENTRY_YEAR` mengaktifkan alias seperti `/nilai semester 1`.
+Nilai `0` membuat Xninetzy mencoba menurunkan tahun masuk dari format NIM UNAIR.
+Target semester dipilih secara deterministik, tetapi dropdown portal baru diisi
+setelah verified token diterima pada challenge yang sama.
 
 ## Replay safety dan backup
 

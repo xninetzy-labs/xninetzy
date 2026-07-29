@@ -24,6 +24,47 @@ export function extractMessageText(rawMessage?: proto.IMessage | null): string |
   return text?.trim() || null;
 }
 
+export function resolveCaptchaReply(
+  text: string,
+  rawMessage?: proto.IMessage | null,
+  fallbackQuotedMessage?: proto.IMessage | null,
+): string {
+  const normalized = text.trim();
+  if (/^\/captcha\s+/i.test(normalized)) return normalized;
+  if (/^\/catchpa\s+/i.test(normalized)) {
+    return normalized.replace(/^\/catchpa/i, "/captcha");
+  }
+  const context = getMessageContextInfo(rawMessage);
+  const quotedMessage = context?.quotedMessage ?? fallbackQuotedMessage;
+  const quotedText = quotedMessage
+    ? extractMessageText(quotedMessage)
+    : null;
+  const challenge = quotedText?.match(
+    /\/captcha\s+([A-Za-z0-9_-]+)\s+JAWABAN/i,
+  )?.[1];
+  if (!challenge) return normalized;
+  const answer = normalized.match(/([A-Za-z0-9+*/=_-]+)$/)?.[1];
+  return answer ? `/captcha ${challenge} ${answer}` : normalized;
+}
+
+export function resolveGradeTokenReply(
+  text: string,
+  rawMessage?: proto.IMessage | null,
+  fallbackQuotedMessage?: proto.IMessage | null,
+): string {
+  const normalized = text.trim();
+  if (/^\/grade-token\s+/i.test(normalized)) return normalized;
+  const context = getMessageContextInfo(rawMessage);
+  const quotedMessage = context?.quotedMessage ?? fallbackQuotedMessage;
+  const quotedText = quotedMessage ? extractMessageText(quotedMessage) : null;
+  const challenge = quotedText?.match(
+    /\/grade-token\s+([A-Za-z0-9_-]+)\s+TOKEN/i,
+  )?.[1];
+  if (!challenge) return normalized;
+  const token = normalized.match(/(\d{4,10})$/)?.[1];
+  return token ? `/grade-token ${challenge} ${token}` : normalized;
+}
+
 export type MediaKind = "image" | "video" | "audio" | "document";
 
 /** The media kind carried by a message (after unwrapping), or null if none. */

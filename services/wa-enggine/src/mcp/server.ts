@@ -7,6 +7,7 @@ import {
   isSocketReady,
 } from "../whatsapp/socket-state";
 import { logger } from "../utils/logger";
+import { mcpCallLogFields } from "./logging";
 import { getTool, listToolDefinitions } from "./tool-registry";
 import type { McpCallRequest, McpCallResponse } from "./types";
 
@@ -62,7 +63,10 @@ async function routeRequest(req: http.IncomingMessage, res: http.ServerResponse)
 
   if (req.method === "POST" && url.pathname === "/mcp/call") {
     const body = await readJsonBody(req);
-    logger.info({ step: "mcp_call_received", body }, "MCP tool call received");
+    logger.info(
+      { step: "mcp_call_received", ...mcpCallLogFields(body) },
+      "MCP tool call received",
+    );
     const response = await callTool(body);
     logger.info({ step: "mcp_call_completed", tool: response.tool, success: response.success }, "MCP tool call completed");
     sendJson(res, response.success ? 200 : 400, response);

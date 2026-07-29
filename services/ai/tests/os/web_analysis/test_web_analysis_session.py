@@ -23,6 +23,33 @@ def test_session_is_encrypted_and_profile_name_not_in_path(tmp_path):
     assert manager.load_storage_state("hebat", "my-local-owner") == state
 
 
+def test_session_persists_sanitized_landing_url(tmp_path):
+    key = Fernet.generate_key().decode()
+    manager = SessionManager(root=tmp_path, key=key)
+    manager.save_storage_state(
+        "mahasiswa",
+        {"cookies": [], "origins": []},
+        profile_id="owner",
+        landing_url="https://mahasiswa.unair.ac.id/dashboard?token=secret#profile",
+    )
+
+    assert manager.load_landing_url("mahasiswa", "owner") == (
+        "https://mahasiswa.unair.ac.id/dashboard"
+    )
+
+
+def test_session_rejects_cross_origin_landing_url(tmp_path):
+    key = Fernet.generate_key().decode()
+    manager = SessionManager(root=tmp_path, key=key)
+
+    with pytest.raises(ValueError, match="luar origin"):
+        manager.save_storage_state(
+            "mahasiswa",
+            {"cookies": [], "origins": []},
+            landing_url="https://example.com/dashboard",
+        )
+
+
 def test_session_fails_closed_without_key(tmp_path):
     with pytest.raises(SessionEncryptionUnavailable):
         SessionManager(root=tmp_path, key="")

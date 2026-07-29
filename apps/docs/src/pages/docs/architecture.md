@@ -18,7 +18,7 @@ AI service / FastAPI :8000
   ↓
 LangGraph → direct | clarify | agent | workflow
   ↓
-Tool registry → Obsidian | HEBAT | SQLite | FAISS | WA
+Tool registry → OS kernel | Obsidian | HEBAT | SQLite | FAISS | WA
 ```
 
 ### AI service
@@ -97,6 +97,27 @@ Scheduled jobs memakai tabel run yang sama untuk semua interface. Daily/weekly
 key mencegah briefing dibuat dua kali, lease memulihkan job internal yang
 terputus, dan weekly review menghitung event nyata. Detail operasional tersedia
 di [Automation](/docs/automation/).
+
+## OS Inbox dan attention kernel
+
+OS Inbox adalah boundary antara capture dan commitment. WhatsApp, LangGraph,
+MCP, Codex, Claude Code, dan OpenCode memanggil tool registry yang sama:
+
+```text
+input penting
+  → os_capture
+  → os_inbox_items
+  → os_triage ──→ task bersama ──→ event/reducer
+              └─→ archive
+
+tasks + learning state + inbox
+  → deterministic scoring
+  → os_today / Personal Context / morning briefing
+```
+
+Capture dengan idempotency key yang sama tidak membuat row atau event kedua.
+Promosi capture menulis task, entity link, perubahan status, dan event dalam
+satu transaksi. Detail kontraknya tersedia di [OS kernel](/docs/os-kernel/).
 
 ## Security boundary
 

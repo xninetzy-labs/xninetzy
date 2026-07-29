@@ -4,31 +4,42 @@ import base64
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
+from app.xninetzy.core.identity import normalize_whatsapp_jid
 from app.xninetzy.interfaces.whatsapp.client import WaToolError, call_wa_tool
-from app.xninetzy.os.notifications.admin_notifier import admin_jid
-from app.xninetzy.os.research.permissions import is_owner_admin
 from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
     LOGIN_COORDINATOR,
     CampusLoginError,
 )
+from app.xninetzy.os.academic.mahasiswa_portal.grade_token import (
+    GRADE_TOKEN_COORDINATOR,
+)
+from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+    ACADEMIC_PORTAL_READER,
+    GradeResult,
+    ScheduleResult,
+)
+from app.xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
+    PortalRuntimeAnalyzer,
+)
+from app.xninetzy.os.notifications.admin_notifier import admin_jid
+from app.xninetzy.os.research.permissions import is_owner_admin
 from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
 from app.xninetzy.os.web_analysis.session_manager import (
     SessionEncryptionUnavailable,
     SessionManager,
 )
-from app.xninetzy.os.web_analysis.snapshot_manager import SnapshotManager
 
 
 def _owner_id(sender_id: str | None, chat_id: str) -> str:
-    return (sender_id or chat_id or "local-owner").strip()
+    raw = (sender_id or chat_id or "local-owner").strip()
+    return normalize_whatsapp_jid(raw) or raw
 
 
 def _notification_jid() -> str:
     return admin_jid()
 
 
-async def _send_captcha(chat_id: str, owner_id: str, challenge: dict) -> None:
+async def _send_captcha(owner_id: str, challenge: dict) -> None:
     jid = _notification_jid()
     if not jid:
         raise CampusLoginError(
@@ -63,7 +74,7 @@ async def portal_login_start(
     challenge: dict | None = None
     try:
         challenge = await LOGIN_COORDINATOR.start(owner_id)
-        await _send_captcha(chat_id, owner_id, challenge)
+        await _send_captcha(owner_id, challenge)
     except Exception as exc:
         if challenge:
             try:
@@ -97,7 +108,7 @@ async def portal_login_submit_captcha(
             challenge_id, owner_id, captcha_answer
         )
         if result.get("retry_required"):
-            await _send_captcha(chat_id, owner_id, result)
+            await _send_captcha(owner_id, result)
             return (
                 "CAPTCHA salah atau login belum berhasil. CAPTCHA baru sudah dikirim.\n"
                 f"Sisa percobaan: {result['remaining_attempts']}"
@@ -180,27 +191,106 @@ def portal_info() -> str:
     return "\n".join(lines)
 
 
-@tool
-def portal_schedule() -> str:
-    """Baca snapshot jadwal terenkripsi milik owner instalasi lokal."""
-    try:
-        snapshot = SnapshotManager().load("mahasiswa", "schedule")
-    except SessionEncryptionUnavailable:
-        snapshot = None
-    if not snapshot:
-        return (
-            "Belum ada snapshot jadwal lokal. Isi `WEB_ANALYSIS_ENCRYPTION_KEY`, "
-            "login manual portal, lalu jalankan collector read-only setelah selector tervalidasi."
+def _format_schedule(result: ScheduleResult) -> str:
+    lines = [f"*{result.period}*", f"Total mata ajar: {len(result.entries)}"]
+    for index, item in enumerate(result.entries, start=1):
+        lines.extend(
+            [
+                "",
+                f"{index}. *{item.course}* ({item.credits} SKS, kelas {item.class_code})",
+                f"   {item.schedule} — {item.room}",
+                f"   Petugas: {item.lecturers}",
+            ]
         )
-    items = snapshot.get("items") or []
-    if not items:
-        return "Snapshot jadwal ada tetapi kosong."
-    lines = [f"*Jadwal Lokal* (snapshot {snapshot.get('captured_at', '-')})"]
-    for item in items[:20]:
-        label = item.get("label") or item.get("course") or "Jadwal"
-        when = item.get("when") or item.get("start") or "-"
-        lines.append(f"• {when} — {label}")
     return "\n".join(lines)
+
+
+def _format_grades(result: GradeResult) -> str:
+    lines = ["*Nilai Cyber Campus*", f"Periode: {result.period}"]
+    for index, entry in enumerate(result.entries, start=1):
+        values = [(key, value) for key, value in entry.values if value]
+        if not values:
+            continue
+        lines.append("")
+        lines.append(f"{index}. " + " | ".join(f"{key}: {value}" for key, value in values))
+    return "\n".join(lines)
+
+
+@tool
+async def portal_schedule() -> str:
+    """Baca jadwal kuliah real-time dari session Cyber Campus owner."""
+    try:
+        return _format_schedule(await ACADEMIC_PORTAL_READER.read_schedule())
+    except Exception as exc:
+        return f"Jadwal Cyber Campus belum dapat dibaca: {exc}"
+
+
+@tool
+async def portal_grades(
+    academic_period: str = "latest",
+    chat_id: str = "system",
+    sender_id: str | None = None,
+) -> str:
+    """Minta token KHS melalui WhatsApp admin untuk pembacaan nilai sekali pakai."""
+    if not is_owner_admin(sender_id or chat_id, None):
+        return "Pembacaan nilai hanya dapat dimulai oleh owner."
+    jid = _notification_jid()
+    if not jid:
+        return "ADMIN_JID WhatsApp belum dikonfigurasi."
+    challenge: dict | None = None
+    try:
+        challenge = await GRADE_TOKEN_COORDINATOR.start(jid, academic_period)
+        period = await ACADEMIC_PORTAL_READER.prepare_grade_request(
+            challenge["challenge_id"], academic_period
+        )
+        text = (
+            "*Verified Token Cyber Campus*\n\n"
+            "Halaman KHS sudah dibuka. Cyber Campus menyatakan token dikirim "
+            "ke akun Telegram yang terdaftar pada portal.\n\n"
+            f"Periode nilai: *{period.label}*\n\n"
+            "Balas pesan ini dengan token nilai saja, atau kirim:\n"
+            f"`/grade-token {challenge['challenge_id']} TOKEN`\n\n"
+            f"Berlaku sampai: {challenge['expires_at']}\n"
+            "Token dipakai sekali, tidak masuk LLM, dan tidak disimpan."
+        )
+        await call_wa_tool("send_text_message", {"jid": jid, "text": text})
+    except Exception as exc:
+        if challenge:
+            await GRADE_TOKEN_COORDINATOR.cancel(challenge["challenge_id"])
+            await ACADEMIC_PORTAL_READER.cancel_grade_request(
+                challenge["challenge_id"]
+            )
+        return f"Permintaan token nilai gagal dibuat: {exc}"
+    return (
+        f"Halaman KHS periode {period.label} sudah dibuka dan permintaan "
+        "verified token sudah dikirim ke WhatsApp admin."
+    )
+
+
+async def submit_grade_token(
+    challenge_id: str,
+    token: str,
+    sender_id: str,
+    sender_name: str | None = None,
+) -> str:
+    if not is_owner_admin(sender_id, sender_name):
+        return "Token nilai hanya dapat dikirim oleh WhatsApp admin."
+    try:
+        clean_token, academic_period = await GRADE_TOKEN_COORDINATOR.consume(
+            challenge_id,
+            _notification_jid(),
+            token,
+        )
+        result = await ACADEMIC_PORTAL_READER.read_grades(
+            clean_token,
+            academic_period,
+            challenge_id,
+        )
+        return _format_grades(result)
+    except Exception as exc:
+        return f"Nilai Cyber Campus belum dapat dibaca: {exc}"
+    finally:
+        token = ""
 
 
 @tool
@@ -214,4 +304,45 @@ def portal_krs_watcher_status() -> str:
     return (
         "Watcher KRS belum diaktifkan sampai selector portal tervalidasi manual. "
         "Batas permanen: READ + NOTIFY saja, tidak pernah klik/submit."
+    )
+
+
+@tool
+async def portal_navigation(verify: bool = True) -> str:
+    """Inventaris navigasi Cyber Campus dari session owner secara GET/HEAD-only."""
+    try:
+        manifest = await PortalRuntimeAnalyzer().inspect(verify_navigation=verify)
+    except Exception as exc:
+        return f"Navigasi Cyber Campus belum dapat dianalisis: {exc}"
+    lines = [
+        "*Navigasi Cyber Campus*",
+        f"• Snapshot: `{manifest.structure_hash[:16]}`",
+        f"• Total: {len(manifest.navigation)}",
+    ]
+    if verify:
+        lines.append(f"• Reachable: {len(manifest.verified_paths)}")
+        lines.append(f"• Unreachable: {len(manifest.unreachable_paths)}")
+    for item in manifest.navigation[:120]:
+        lines.append(f"• [{item.policy}] {item.label} — `{item.path}`")
+    return "\n".join(lines)
+
+
+@tool
+async def portal_krs_capabilities() -> str:
+    """Analisis capability KRS runtime tanpa mengeksekusi action portal."""
+    try:
+        manifest = await PortalRuntimeAnalyzer().inspect()
+    except Exception as exc:
+        return f"Capability KRS belum dapat dianalisis: {exc}"
+    tabs = ", ".join(manifest.krs_tabs) or "-"
+    methods = ", ".join(manifest.form_methods) or "-"
+    targets = ", ".join(manifest.internal_targets) or "-"
+    return (
+        "*KRS Runtime Capability*\n"
+        f"• Snapshot: `{manifest.structure_hash}`\n"
+        f"• Tab: {tabs}\n"
+        f"• Form methods: {methods}\n"
+        f"• Internal targets: {targets}\n"
+        f"• Write controls aktif: {'ya' if manifest.write_controls_present else 'tidak'}\n"
+        "• JavaScript mentah tidak pernah dieksekusi dari output LLM."
     )

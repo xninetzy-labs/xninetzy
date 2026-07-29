@@ -9,7 +9,6 @@ from app.xninetzy.os.life.goal_manager import (
     get_goal_logs,
     list_goals,
     log_progress,
-    update_goal_status,
 )
 
 
@@ -34,7 +33,6 @@ def goal_create(title: str, description: str = "", domain: str = "personal",
 
     try:
         from app.xninetzy.os.notes.vault_service import ObsidianVaultService
-        from app.xninetzy.os.notes.template_service import TemplateService
         note = (
             f"---\ntype: goal\ndomain: {domain}\nstatus: active\n"
             f"horizon: {horizon}\npriority: {priority}\ndue: {due_date or ''}\n"
@@ -124,7 +122,12 @@ def goal_review(goal_id: int) -> str:
         return f"Goal ID `{goal_id}` tidak ditemukan."
 
     logs = get_goal_logs(goal_id, limit=5)
-    log_lines = "\n".join(f"• {l['created_at'][:10]}: {l['log_text']}" for l in logs) or "Belum ada log."
+    log_lines = (
+        "\n".join(
+            f"• {log['created_at'][:10]}: {log['log_text']}" for log in logs
+        )
+        or "Belum ada log."
+    )
 
     progress_str = ""
     if g.get("target_value"):

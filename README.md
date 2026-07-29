@@ -11,7 +11,10 @@
 
 Xninetzy AI mengubah WhatsApp menjadi antarmuka untuk belajar, riset, catatan, tugas, dan otomasi personal. Pesan natural maupun slash command dirutekan ke agent dan tool yang sesuai; aksi sensitif tetap melewati confirmation token, approval, allowlist, dan pembatasan workspace.
 
-Project ini ditujukan untuk instalasi lokal/single-owner. Docker Compose yang disediakan bersifat Linux-first karena menggunakan `network_mode: host`. Jangan mengekspos service ke internet sebelum membaca bagian [Keamanan](#keamanan).
+Project ini ditujukan untuk instalasi lokal/single-owner. Docker Compose memakai
+bridge network dan hanya mempublikasikan API ke loopback host, sehingga dapat
+digunakan di Linux, macOS, Windows, dan WSL2. Jangan mengekspos service ke
+internet sebelum membaca bagian [Keamanan](#keamanan).
 
 ## Daftar Isi
 
@@ -37,6 +40,7 @@ Project ini ditujukan untuk instalasi lokal/single-owner. Docker Compose yang di
 |---|---|
 | Chat agent | Routing LangGraph, jawaban langsung, ReAct tools, workflow multi-aksi, dan slash command deterministik |
 | LLM | Flaz sebagai default melalui `langchain-openai`, plus OpenAI, Anthropic, OpenRouter, Ollama, dan endpoint OpenAI-compatible |
+| OS kernel | Universal inbox, deterministic triage, attention queue lintas task/learning/capture, dan event yang replay-safe |
 | Learning OS | Roadmap adaptif, study session, mastery, task belajar, review mingguan, resource attachment, dan approval aktivasi |
 | HEBAT/Moodle | Login Playwright, sinkronisasi course/activity/tugas, deadline digest, download file asli, baca PDF, dan submission dengan konfirmasi |
 | Obsidian | List, search, read, create, append, frontmatter, tag, heading, backlink, todo, MOC, daily note, dan backup sebelum overwrite |
@@ -57,6 +61,7 @@ flowchart LR
     CLI[Terminal CLI] -->|POST /api/chat| AI
     AI --> LLM[Selected LLM provider]
     AI --> REG[Tool registry]
+    REG --> OSK[OS Inbox + Attention Kernel]
     REG --> OBS[Obsidian vault]
     REG --> HEBAT[HEBAT / Moodle]
     REG --> DB[(SQLite / FAISS)]
@@ -113,7 +118,7 @@ WhatsApp atau CLI
 
 ### Jalur Docker
 
-- Linux host dengan Docker Engine dan Docker Compose plugin.
+- Docker Engine + Compose di Linux, atau Docker Desktop di macOS/Windows.
 - Flaz API key atau provider LLM lain yang didukung.
 - Absolute path ke Obsidian vault atau folder kosong yang akan dijadikan vault.
 - Akun WhatsApp yang dapat ditautkan sebagai linked device.
@@ -129,6 +134,27 @@ WhatsApp atau CLI
 Provider search seperti Tavily, Serper, dan YouTube bersifat opsional. Tanpa API key tersebut, deep research tetap dapat berjalan tetapi sumber eksternalnya lebih terbatas.
 
 ## Quick Start dengan Docker
+
+Instalasi terpandu Linux, macOS, atau WSL2:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.sh | bash
+```
+
+Windows PowerShell:
+
+```powershell
+irm https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.ps1 | iex
+```
+
+Script meminta secret secara interaktif, membuat key internal, menyiapkan vault,
+memvalidasi Compose, dan menjalankan AI serta WhatsApp engine. Dokumentasi lengkap
+tersedia di `apps/docs`, portofolio pembuat di
+<https://misbahul-muttaqin.vercel.app/>, dan source profile di
+<https://github.com/misbahul45>.
+
+Compose menggunakan bridge network dan port loopback sehingga jalur Docker yang
+sama berjalan di Linux, macOS, Windows, dan WSL2.
 
 ### 1. Buat environment lokal
 
@@ -160,6 +186,18 @@ LLM_DEFAULT_PROVIDER=flaz
 LLM_ENABLED_PROVIDERS=flaz
 ```
 
+Lengkapi key internal AI dan WA MCP tanpa mencetak secret:
+
+```bash
+cd services/ai
+uv run python scripts/configure_internal_auth.py
+cd ../..
+```
+
+Script menambahkan key konfigurasi yang belum ada, membuat `AI_API_KEY`,
+menyamakan `MCP_API_KEY` dengan `WA_MCP_API_KEY`, dan menjaga `.env` tetap
+berpermission `600`. Nilai yang sudah ada tidak ditimpa.
+
 ### 3. Atur path dan identitas host
 
 Cari UID/GID host:
@@ -178,6 +216,8 @@ OBSIDIAN_VAULT_HOST_PATH=/absolute/path/to/your/obsidian-vault
 ADMIN_JID=628xxxxxxxxxx@s.whatsapp.net
 ADMIN_NAMES=your_name
 APP_TIMEZONE=Asia/Jakarta
+WA_STARTUP_MENU_ENABLED=true
+WA_STARTUP_MENU_DELAY_MS=1500
 ```
 
 `OBSIDIAN_VAULT_HOST_PATH` wajib berupa absolute path. Docker Compose sengaja menolak start jika nilainya kosong.
@@ -215,6 +255,27 @@ docker compose logs -f wa-enggine
 
 QR atau pairing code muncul di log. Di ponsel buka **WhatsApp → Linked devices** lalu selesaikan proses login.
 
+Saat koneksi pertama pada setiap process launch berhasil, WA engine mengirim
+lima kartu menu dengan total 15 tombol ke `ADMIN_JID`: Harian, Life OS,
+Learning OS, Knowledge, dan Kontrol AI. Reconnect dalam proses yang sama tidak
+mengirim ulang. Jika interactive button ditolak oleh client/protokol WhatsApp,
+sistem mengirim satu fallback teks berisi command yang sama.
+
+### Menyalakan bot otomatis saat laptop boot
+
+Aktifkan Docker sekali:
+
+```bash
+sudo systemctl enable --now docker
+systemctl is-enabled docker
+systemctl is-active docker
+```
+
+Service `ai` dan `wa-enggine` memakai `restart: unless-stopped`. Setelah
+container pernah dibuat dengan `docker compose up -d`, Docker akan menyalakannya
+kembali saat laptop boot. Jangan menjalankan `docker compose down` jika ingin
+startup otomatis tetap berlaku karena perintah itu menghapus container.
+
 ### 6. Verifikasi health
 
 ```bash
@@ -229,6 +290,54 @@ Respons AI yang diharapkan:
 ```
 
 Health WA juga menampilkan `socket_ready` dan status koneksi WhatsApp.
+
+### Login Cyber Campus dengan CAPTCHA manual
+
+Cyber Campus memakai credential HEBAT dari `.env`; credential tidak masuk
+prompt, tool schema, atau database. Aktifkan:
+
+```env
+CYBER_CAMPUS_ENABLED=true
+CYBER_CAMPUS_CREDENTIAL_SOURCE=hebat
+WEB_ANALYSIS_ENCRYPTION_KEY=<fernet-key-lokal>
+ADMIN_JID=628xxxxxxxxxx@s.whatsapp.net
+```
+
+Atau aktifkan sekaligus buat encryption key secara aman:
+
+```bash
+cd services/ai
+uv run python scripts/configure_internal_auth.py --enable-cyber-campus
+cd ../..
+```
+
+Perintah berhenti jika credential HEBAT atau `ADMIN_JID` belum tersedia dan
+tidak pernah mencetak nilainya.
+
+Dari WhatsApp admin kirim `/cyber-login`. Agent membuka browser di background,
+mengisi NIM/password, lalu mengirim gambar CAPTCHA ke `ADMIN_JID`. Owner menjawab
+gambar dengan nilai saja, mengirim nilai saja selama challenge aktif, atau memakai
+`/captcha <challenge-id> <jawaban>`. Salah ketik `/catchpa` juga dinormalisasi.
+Jawaban hanya diterima dari JID admin dan tidak melewati LLM. CAPTCHA tidak
+dipecahkan otomatis. Setelah login berhasil, session disimpan terenkripsi.
+
+Gunakan `/portal-nav` untuk inventaris navigasi real-time, `/krs-capabilities`
+untuk capability manifest KRS, dan `/web-refresh mahasiswa` untuk audit struktur.
+Analyzer hanya memakai GET/HEAD, memblokir mutasi, dan tidak mengeksekusi
+JavaScript mentah dari LLM. Semua approval dikirim ke WhatsApp dengan tombol
+Approve/Reject dan fallback `/approve` atau `/reject`.
+
+Token nilai Cyber Campus hanya diterima dari WhatsApp admin melalui challenge
+yang terikat owner dan berumur pendek. Token tidak melewati LLM, tidak disimpan,
+dan dikonsumsi setelah satu percobaan pembacaan nilai.
+
+Untuk membaca KHS, kirim `/nilai`, `/nilai semester 1`, atau
+`/nilai <kode-periode>`. Urutan portal wajib dipertahankan: Xninetzy membuka halaman KHS,
+owner menunggu dan membalas verified token terbaru, reader mengisi token pada
+halaman yang sama, lalu reader memilih semester dan mengambil tabel nilai.
+Dropdown semester tidak boleh dipilih sebelum token terisi karena portal akan
+menolak token tersebut. Abaikan token yang terbit dari challenge lama dan selalu
+gunakan token yang muncul setelah prompt WhatsApp terbaru.
 
 ### 7. Kirim pesan pertama
 
@@ -255,7 +364,9 @@ docker compose down
 
 ## Menjalankan untuk Development
 
-Docker Compose menggunakan host network dan port yang sama dengan proses lokal. Jangan menjalankan instance Docker dan lokal secara bersamaan pada port atau akun WhatsApp yang sama.
+Docker Compose mempublikasikan port loopback yang sama dengan proses lokal.
+Jangan menjalankan instance Docker dan lokal bersamaan pada port atau akun
+WhatsApp yang sama.
 
 ### AI service
 
@@ -420,7 +531,27 @@ internal jika tersedia. Draft menampilkan ID/judul sumber yang dipakai; jika
 tidak ada evidence, draft meminta validasi sumber dan tidak mengklaim berasal
 dari vault.
 
-### Tutorial 5 — Reminder natural language
+### Tutorial 5 — Capture, triage, dan fokus harian
+
+Gunakan OS Inbox saat sesuatu penting tetapi belum jelas harus menjadi task,
+note, atau knowledge:
+
+```text
+/capture ide belajar database dengan membuat mini project
+/capture cek lagi materi Data Analytics minggu depan
+/inbox
+/triage 12 task
+/today
+```
+
+`/capture` menyimpan input terlebih dahulu tanpa memaksa bentuk akhirnya.
+`/triage` mempromosikan satu capture menjadi task bersama atau mengarsipkannya.
+`/today` bukan lagi daftar task mentah: command ini menyusun attention queue dari
+deadline, prioritas, learning state, dan capture yang belum ditriage. Capture
+idempotent berdasarkan key dari caller; triage replay-safe berdasarkan ID
+capture melalui semua interface.
+
+### Tutorial 6 — Reminder natural language
 
 ```text
 ingatkan aku 15 menit lagi untuk minum obat
@@ -435,7 +566,7 @@ Periksa task dan reminder dari WhatsApp:
 /review
 ```
 
-### Tutorial 5b — Automation closed-loop
+### Tutorial 6b — Automation closed-loop
 
 Aktifkan target dan jam di `.env`:
 
@@ -452,7 +583,7 @@ Evening/weekly review memakai event yang benar-benar tersimpan. Dari WhatsApp,
 Codex, Claude, atau OpenCode, minta agent menjalankan `os_job_status` untuk
 melihat attempt, kegagalan, dan status pengiriman yang sama.
 
-### Tutorial 6 — Provider dan model per pengguna
+### Tutorial 7 — Provider dan model per pengguna
 
 ```text
 /llm
@@ -469,7 +600,9 @@ Slash command diproses deterministik oleh `services/ai/app/xninetzy/ecosystem/co
 | Command | Fungsi |
 |---|---|
 | `/helper [topic]` | Panduan kemampuan bot |
-| `/today`, `/tasks` | Task hari ini |
+| `/today` | Attention queue dari task, learning state, dan OS Inbox |
+| `/capture <isi>`, `/inbox`, `/triage <id> task\|archive` | Capture dan proses input lintas interface |
+| `/tasks` | Daftar task |
 | `/goals` | Daftar goal |
 | `/review` | Daily review |
 | `/hebat`, `/hebat-debug` | Digest atau debug aman HEBAT |

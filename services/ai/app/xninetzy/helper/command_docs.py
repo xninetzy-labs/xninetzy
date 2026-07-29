@@ -1,6 +1,16 @@
 from __future__ import annotations
 
 CATEGORIES = {
+    "os": {
+        "title": "Xninetzy OS Kernel",
+        "examples": [
+            "/capture ide atau informasi yang belum jelas",
+            "/inbox — lihat capture yang belum diproses",
+            "/triage 12 task — promosikan capture menjadi task",
+            "/triage 12 archive — arsipkan capture",
+            "/today — attention queue lintas task, learning, dan inbox",
+        ],
+    },
     "learning": {
         "title": "Learning OS",
         "examples": [
@@ -127,38 +137,41 @@ CATEGORIES = {
 
 FULL_OVERVIEW = """🤖 *Xninetzy AI — Capability Map*
 
-*1. Learning OS*
+*1. Xninetzy OS Kernel*
+Universal capture, inbox, triage, dan attention queue lintas interface
+
+*2. Learning OS*
 Roadmap belajar, materi HEBAT, PDF, video YouTube, workspace Q&A
 
-*2. HEBAT / E-Learning UNAIR*
+*3. HEBAT / E-Learning UNAIR*
 Login, sync course, cek tugas, download PDF, upload dengan konfirmasi
 
-*3. Life OS*
+*4. Life OS*
 Goal tracking, daily review, roadmap pribadi
 
-*4. Task Management*
+*5. Task Management*
 Catat task, lihat task hari ini, centang selesai
 
-*5. Money OS*
+*6. Money OS*
 Catat pengeluaran/pemasukan, ringkasan bulanan
 
-*6. Workout OS*
+*7. Workout OS*
 Log sesi olahraga, ringkasan, plan latihan
 
-*7. Knowledge OS*
+*8. Knowledge OS*
 Simpan & cari knowledge dari PDF/note/web secara semantik
 
-*8. Research*
+*9. Research*
 Web search, YouTube search, deep research brief
 
-*9. Obsidian Vault*
+*10. Obsidian Vault*
 Daily note, learning note, project note, append, search
 
-*10. AI Runtime*
+*11. AI Runtime*
 Pilih provider/model chat dan jalankan Codex, Claude Code, atau OpenCode (admin)
 
-*11. Slash Commands*
-/today, /review, /goals, /tasks, /llm, /agent, /code, /hebat, /jadwal, /portalinfo
+*12. Slash Commands*
+/capture, /inbox, /triage, /today, /review, /goals, /tasks, /llm, /agent, /code
 
 Ketik: */helper <kategori>* untuk detail
 Contoh: /helper learning"""

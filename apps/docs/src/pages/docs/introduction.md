@@ -12,6 +12,7 @@ Xninetzy adalah **WhatsApp-first Personal Learning OS dan Life OS**. Sistem ini 
 Informasi personal biasanya tersebar: materi kuliah ada di Moodle, insight ada di chat, catatan ada di Obsidian, dan tugas teknis ada di repository. Xninetzy memberi satu pintu masuk untuk:
 
 - menangkap informasi dari pesan, dokumen, PDF, atau gambar;
+- menahan input ambigu di OS Inbox sampai bentuk tindak lanjutnya jelas;
 - mencari dan mengembangkan catatan Obsidian;
 - membaca course serta materi HEBAT/Moodle;
 - membuat roadmap, task, goal, dan reminder;
@@ -31,6 +32,13 @@ Pesan biasa diproses melalui LangGraph. Slash command seperti `/llm`, `/approve`
 ### Human in the loop
 
 Draft roadmap tidak otomatis aktif. Upload tugas, overwrite tertentu, dan aksi berdampak besar memakai confirmation token atau approval admin.
+
+### Capture before commitment
+
+Xninetzy tidak mengubah setiap ide menjadi task. Input penting yang belum jelas
+masuk ke OS Inbox, lalu diproses menjadi task atau archive. Attention queue
+menggabungkan deadline, prioritas, learning state, dan inbox sehingga `/today`
+menjawab “apa fokus berikutnya?” dari state nyata.
 
 ### Provider freedom
 
@@ -58,5 +66,6 @@ pengganti backup vault, LMS resmi, atau WhatsApp Business API.
 - Baru memasang project: buka [Quick start](/docs/getting-started/).
 - Ingin memilih model: buka [Provider LLM](/docs/providers/).
 - Ingin memakai vault: buka [Obsidian](/docs/obsidian/).
+- Ingin memahami capture dan fokus harian: buka [OS kernel](/docs/os-kernel/).
 - Ingin memakai coding client dari folder mana pun: buka [MCP global](/docs/mcp/).
 - Ingin memahami batas keamanan: buka [Keamanan](/docs/security/).

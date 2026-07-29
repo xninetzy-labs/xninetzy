@@ -163,6 +163,9 @@ class Settings(BaseSettings):
     CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS: int = 180
     CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS: int = 3
     CYBER_CAMPUS_LOGIN_TIMEOUT_MS: int = 30_000
+    CYBER_CAMPUS_GRADE_TOKEN_TTL_SECONDS: int = 180
+    CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS: int = 3
+    CYBER_CAMPUS_ENTRY_YEAR: int = 0
 
     # HEBAT / Moodle integration
     HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"

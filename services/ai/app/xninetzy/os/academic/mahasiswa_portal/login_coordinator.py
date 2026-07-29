@@ -209,7 +209,11 @@ class CampusLoginCoordinator:
                 }
             storage_state = await challenge.context.storage_state()
             manager = SessionManager()
-            manager.save_storage_state("mahasiswa", storage_state)
+            manager.save_storage_state(
+                "mahasiswa",
+                storage_state,
+                landing_url=challenge.page.url,
+            )
             result = {
                 "authenticated": True,
                 "current_url": challenge.page.url,

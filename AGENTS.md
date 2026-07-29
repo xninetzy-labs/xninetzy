@@ -84,6 +84,23 @@ When no evidence exists, say so. Do not make a general-model answer look as if
 it came from the user's vault. Research and model knowledge may be used only
 when clearly labelled as external or general knowledge.
 
+## Learning state contract
+
+Learning progress follows this shared loop:
+`roadmap -> concept -> task/session -> evidence -> mastery -> next focus`.
+Concepts, prerequisites, milestone/task links, evidence,
+and mastery belong in the shared IT-learning domain, not in WhatsApp or MCP
+adapters. Evidence writes must be idempotent, reject payload reuse, and update
+mastery transactionally. A concept with unmet prerequisites must not become the
+next adaptive focus. Evidence references do not replace grounded knowledge
+citations.
+
+Active recall is deterministic: questions must not expose expected answers
+before an attempt, grading uses explicit keywords, confidence remains separate
+from correctness, and scheduling updates atomically with evidence and mastery.
+Due recall should enter shared attention and Personal Context instead of being
+implemented as a client-specific notification.
+
 ## Interface parity
 
 Implement domain behavior once, below the interface layer. The expected route

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Graph RAG"
+  short_description: "Reason over relationships with explicit evidence"
+  default_prompt: "Use $graph-rag to explain and verify the relationships behind this topic."

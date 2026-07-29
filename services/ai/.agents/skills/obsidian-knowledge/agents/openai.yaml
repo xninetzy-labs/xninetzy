@@ -1,0 +1,4 @@
+interface:
+  display_name: "Obsidian Knowledge"
+  short_description: "Read and maintain grounded personal knowledge"
+  default_prompt: "Use $obsidian-knowledge to answer from or safely update my permanent notes."

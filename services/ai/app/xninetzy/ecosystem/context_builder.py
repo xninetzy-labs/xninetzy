@@ -17,6 +17,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         "active_roadmaps": [],
         "learning_focus": None,
         "learning_mastery": [],
+        "due_recall": [],
         "habit_status": [],
         "workout_summary": None,
         "recent_events": [],
@@ -136,6 +137,16 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: learning mastery fetch failed: %s", e)
 
     try:
+        from app.xninetzy.domains.it_learning.recall import due_recall_cards
+
+        context["due_recall"] = [
+            f"#{item['id']} {item['question']}"
+            for item in due_recall_cards(limit=3)
+        ]
+    except Exception as e:
+        logger.debug("Context: due recall fetch failed: %s", e)
+
+    try:
         from app.xninetzy.os.life.habit_manager import get_habit_today
 
         context["habit_status"] = [
@@ -216,6 +227,9 @@ def format_context_for_prompt(ctx: dict) -> str:
 
     if ctx.get("learning_mastery"):
         parts.append("Weakest learning concepts: " + " | ".join(ctx["learning_mastery"]))
+
+    if ctx.get("due_recall"):
+        parts.append("Due active recall: " + " | ".join(ctx["due_recall"]))
 
     if ctx.get("habit_status"):
         parts.append("Today habits: " + " | ".join(ctx["habit_status"]))

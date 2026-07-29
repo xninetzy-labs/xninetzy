@@ -22,6 +22,7 @@ CATEGORIES = {
             "buat workspace APSI dari semua materi",
             "deep research tentang AI agent security",
             "/concepts 12 — concept graph, prerequisite, evidence, dan mastery",
+            "/recall — pertanyaan active recall yang jatuh tempo",
         ],
     },
     "hebat": {

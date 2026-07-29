@@ -179,6 +179,7 @@ def test_study_session_closes_loop_into_concept_mastery_and_next_focus():
     assert ready["id"] == second_id
     assert plan["mode"] == "advance"
     assert plan["concept_id"] == second_id
+    assert "Latih model" in plan["focus"]
 
 
 def test_migration_backfills_existing_roadmap_without_duplicate_concepts():

@@ -70,6 +70,10 @@ GRADE_CHANGES_PATTERN = re.compile(
 )
 KRS_STATUS_PATTERN = re.compile(r"^/krs\s+status$", re.I)
 CONCEPT_MAP_PATTERN = re.compile(r"^/concepts\s+(\d+)$", re.I)
+RECALL_ANSWER_PATTERN = re.compile(
+    r"^/recall\s+answer\s+(\d+)\s+([1-5])\s+(.+)$", re.I | re.S
+)
+RECALL_DUE_PATTERN = re.compile(r"^/recall(?:\s+(\d+))?$", re.I)
 CYBER_LOGIN_CANCEL_PATTERN = re.compile(
     r"^/cyber-login-cancel\s+([A-Za-z0-9_-]+)$", re.I
 )
@@ -151,6 +155,18 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     m = CONCEPT_MAP_PATTERN.match(stripped)
     if m:
         return "learning_get_concept_map", {"roadmap_id": int(m.group(1))}
+    m = RECALL_ANSWER_PATTERN.match(stripped)
+    if m:
+        return "learning_submit_recall_answer", {
+            "card_id": int(m.group(1)),
+            "confidence": int(m.group(2)),
+            "answer": m.group(3).strip(),
+        }
+    m = RECALL_DUE_PATTERN.match(stripped)
+    if m:
+        return "learning_due_recall", {
+            "roadmap_id": int(m.group(1)) if m.group(1) else None
+        }
     m = GRADE_CHANGES_PATTERN.match(stripped)
     if m:
         return "portal_grade_changes", {

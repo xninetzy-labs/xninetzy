@@ -55,10 +55,101 @@ Tool yang tersedia pada registry bersama:
 | `learning_list_study_sessions` | Lihat riwayat sesi |
 | `learning_get_study_progress` | Ringkas task, sesi, menit, dan mastery |
 | `learning_generate_today_plan` | Buat fokus adaptif untuk hari ini |
+| `learning_define_concept` | Tambahkan konsep serta relasi prerequisite/milestone/task |
+| `learning_record_concept_evidence` | Catat evidence idempotent dan update mastery |
+| `learning_get_concept_map` | Lihat graph konsep dan readiness roadmap |
 
 Completion menulis progress dan event `learning_session_completed` dalam
 transaksi SQLite yang sama. Retry completion tidak menggandakan progress atau
 event.
+
+## Concept graph dan evidence
+
+Setiap milestone roadmap sekarang menjadi konsep typed. Konsep berurutan
+terhubung sebagai prerequisite, lalu task hari pertama dipetakan ke konsep yang
+relevan. Roadmap lama di-backfill secara idempotent saat migration startup.
+
+```text
+roadmap
+  -> milestone
+  -> concept
+       -> prerequisite concept
+       -> learning task
+       -> study session
+       -> evidence
+       -> mastery 0..1
+```
+
+Evidence memiliki idempotency key dan payload hash. Retry dengan payload sama
+tidak mengubah mastery dua kali; key sama dengan payload berbeda ditolak.
+Evidence pertama menetapkan baseline mastery. Evidence berikutnya memakai
+weighted update `40% mastery lama + 60% score baru`. Nilai minimal 80% berstatus
+`mastered`, sedangkan prerequisite baru dianggap siap pada minimal 70%.
+
+Penyelesaian study session otomatis menghasilkan evidence untuk konsep yang
+terikat pada sesi tersebut dalam transaksi yang sama. Concept graph kemudian
+mengarahkan today plan, review mingguan, attention queue, dan Personal Context
+ke konsep lemah berikutnya.
+
+WhatsApp dapat membaca map dengan:
+
+```text
+/concepts <roadmap-id>
+```
+
+Codex, Claude Code, OpenCode, dan LangGraph memakai tiga tool registry yang sama.
+Reference evidence adalah data lokal dan bukan sumber grounded otomatis; klaim
+knowledge tetap harus melewati `knowledge_answer` dan citation validation.
+
+## Active recall dan spaced repetition
+
+Recall card terikat ke satu konsep dan menyimpan pertanyaan, expected answer,
+keyword jawaban eksplisit, serta referensi sumber opsional. Pertanyaan yang jatuh
+tempo dapat dibaca tanpa mengekspos expected answer:
+
+```text
+/recall
+/recall <roadmap-id>
+```
+
+Jawab dari WhatsApp dengan confidence `1–5`:
+
+```text
+/recall answer <card-id> <confidence> <jawaban>
+```
+
+Grading bersifat deterministik berdasarkan coverage keyword, bukan keputusan
+LLM. Expected answer baru ditampilkan setelah jawaban disimpan agar recall tidak
+bocor sebelum attempt. Confidence dicatat sebagai metacognitive signal tetapi
+tidak digunakan untuk menaikkan skor correctness.
+
+Scheduling mengikuti aturan SM-2 yang dibatasi:
+
+- quality di bawah `3` menghitung lapse, mengulang setelah satu hari, dan
+  mereset repetition;
+- review berhasil pertama dijadwalkan satu hari;
+- review berhasil kedua dijadwalkan enam hari;
+- review berikutnya menggunakan interval sebelumnya dan ease factor minimal
+  `1.3`.
+
+Attempt, perubahan jadwal, concept evidence, mastery, dan event completion
+ditulis dalam satu transaksi. Retry pada hari dan payload yang sama tidak
+menggandakan attempt. MCP caller dapat memberikan `idempotency_key` eksplisit;
+WhatsApp command menggunakan key turunan dari kartu, tanggal lokal, confidence,
+dan jawaban.
+
+Recall due muncul sebelum sesi baru pada adaptive today plan, mendapat prioritas
+khusus di OS attention queue, masuk ke Personal Context, dan diringkas dalam
+weekly review. Sesi belajar yang masih aktif tetap didahulukan agar state tidak
+ditinggalkan setengah jalan.
+
+Tool registry bersama:
+
+| Tool | Fungsi |
+|---|---|
+| `learning_create_recall_card` | Buat kartu immutable untuk satu konsep |
+| `learning_due_recall` | Lihat pertanyaan yang jatuh tempo |
+| `learning_submit_recall_answer` | Grade, evidence, mastery, dan schedule atomik |
 
 ## Adaptive today plan
 
@@ -69,6 +160,10 @@ Mode rencana berubah mengikuti state aktual:
 - `reinforce`: mastery terakhir di bawah 60%;
 - `practice`: mastery 60–79%;
 - `advance`: mastery minimal 80%.
+
+Jika concept graph tersedia, planner hanya memilih konsep yang seluruh
+prerequisite-nya telah mencapai ambang readiness. Fokus konsep terlemah juga
+masuk ke Personal Context dan review aktual.
 
 Energi terakhir menyesuaikan timebox menjadi 15, 25, atau 35 menit. Fokus
 adaptif juga masuk ke Personal Context internal LangGraph, sehingga WhatsApp dan

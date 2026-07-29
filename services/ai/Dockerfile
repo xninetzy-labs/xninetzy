@@ -1,3 +1,5 @@
+FROM ghcr.io/anomalyco/opencode:1.18.9 AS opencode
+
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
 ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
@@ -5,6 +7,8 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     HOME=/tmp/xninetzy-home
 
 WORKDIR /app
+
+COPY --from=opencode /usr/local/bin/opencode /usr/local/bin/opencode
 
 # System deps: Chromium for Playwright + PDF libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -23,11 +27,14 @@ RUN uv sync --no-dev
 # Install Playwright browser binaries (Chromium only)
 RUN uv run --no-dev playwright install chromium \
     && mkdir -p /app/data/hebat/downloads /app/data/hebat/browser-profiles \
-        /app/data/wa-media /app/data/backups /tmp/xninetzy-home /tmp/uv-cache \
+        /app/data/wa-media /app/data/backups \
+        /app/data/opencode-config/opencode/skills \
+        /tmp/xninetzy-home /tmp/uv-cache \
     && chmod -R a+rX /ms-playwright \
     && chmod -R a+rwX /app/data /tmp/xninetzy-home /tmp/uv-cache
 COPY app ./app
 COPY scripts ./scripts
+COPY .agents ./.agents
 
 EXPOSE 8000
 

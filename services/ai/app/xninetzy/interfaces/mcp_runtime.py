@@ -15,6 +15,7 @@ _CONTAINER_PATHS = {
     "WEB_ANALYSIS_DATA_DIR": "data/web-analysis",
     "HEBAT_DATA_DIR": "data/hebat",
     "HEBAT_DOWNLOAD_DIR": "data/hebat/downloads",
+    "XNINETZY_SKILLS_DIR": "data/opencode-config/opencode/skills",
 }
 _VALID_MODES = {"auto", "host", "container"}
 

@@ -59,7 +59,9 @@ mcp = FastMCP(
         "Akses Xninetzy OS milik owner lokal: Obsidian, knowledge, learning, HEBAT, "
         "life OS, task, reminder, research, dan workflow. Gunakan knowledge_answer "
         "untuk jawaban tersintesis dan tersitasi; knowledge_search hanya untuk inspeksi "
-        "bukti. Semua path vault harus relatif terhadap vault."
+        "bukti. Gunakan skill_suggest_for_request lalu skill_get untuk memuat workflow "
+        "dinamis. Skill baru dipasang owner melalui skill_validate dan skill_install, "
+        "tanpa menambah tool atau kode client. Semua path vault harus relatif terhadap vault."
     ),
 )
 

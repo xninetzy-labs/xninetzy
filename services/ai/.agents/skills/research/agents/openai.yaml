@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grounded Research"
+  short_description: "Synthesize verified internal and external evidence"
+  default_prompt: "Use $research to investigate this topic and produce a grounded synthesis."

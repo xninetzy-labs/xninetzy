@@ -28,6 +28,19 @@ async def orchestrator_node(state: AgentState) -> dict:
             "messages": [HumanMessage(content=state["message"])],
         }
 
+    try:
+        from app.xninetzy.skills.registry import rank_skills
+
+        matches = rank_skills(state["message"], limit=1)
+        if matches and matches[0].score >= settings.XNINETZY_SKILL_MATCH_THRESHOLD:
+            return {
+                "route": RouteDecision.AGENT.value,
+                "clarification_question": None,
+                "messages": [HumanMessage(content=state["message"])],
+            }
+    except Exception:
+        pass
+
     packet = None
     try:
         from app.xninetzy.context.builder import build_context_packet

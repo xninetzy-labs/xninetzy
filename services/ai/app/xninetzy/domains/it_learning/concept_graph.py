@@ -244,6 +244,23 @@ def next_ready_concept(
     return dict(row) if row else None
 
 
+def concept_for_task(
+    conn: Connection, roadmap_id: int, learning_task_id: int
+) -> dict | None:
+    row = conn.execute(
+        """
+        SELECT concept.*
+        FROM learning_concepts concept
+        JOIN learning_concept_tasks task_link ON task_link.concept_id=concept.id
+        WHERE concept.roadmap_id=? AND task_link.learning_task_id=?
+        ORDER BY concept.mastery ASC, concept.id ASC
+        LIMIT 1
+        """,
+        (roadmap_id, learning_task_id),
+    ).fetchone()
+    return dict(row) if row else None
+
+
 def link_session_concept(
     conn: Connection, session_id: int, concept_id: int, now: str
 ) -> None:
@@ -417,7 +434,7 @@ def concept_map(roadmap_id: int) -> list[dict]:
 def mastery_focus(roadmap_id: int | None = None, limit: int = 3) -> list[dict]:
     init_db()
     bounded = min(max(int(limit), 1), 10)
-    conditions = ["roadmap.status='active'"]
+    conditions = [] if roadmap_id is not None else ["roadmap.status='active'"]
     params: list[object] = []
     if roadmap_id is not None:
         conditions.append("concept.roadmap_id=?")
@@ -431,7 +448,7 @@ def mastery_focus(roadmap_id: int | None = None, limit: int = 3) -> list[dict]:
                    roadmap.id AS roadmap_id, roadmap.title AS roadmap_title
             FROM learning_concepts concept
             JOIN learning_roadmaps roadmap ON roadmap.id=concept.roadmap_id
-            WHERE {' AND '.join(conditions)}
+            WHERE {' AND '.join(conditions) if conditions else '1=1'}
             ORDER BY concept.mastery ASC, concept.evidence_count ASC, concept.id ASC
             LIMIT ?
             """,

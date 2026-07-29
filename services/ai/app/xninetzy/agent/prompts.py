@@ -64,7 +64,7 @@ Konteks saat ini:
 - Quoted message ID: {quoted_message_id}
 - Quoted participant: {quoted_participant}
 - Is reply to bot: {is_reply_to_bot}
-{context_routing}{personal_context}{media_context}{rules_context}{style_context}{memory_context}{grounding_context}
+{context_routing}{skills_context}{personal_context}{media_context}{rules_context}{style_context}{memory_context}{grounding_context}
 Kategori tools tersedia:
 • General: calculate, datetime_now
 • Obsidian: obsidian_search, obsidian_read, obsidian_list, obsidian_create, obsidian_append, obsidian_create_folder, obsidian_update_section, obsidian_todos, obsidian_backlinks, obsidian_headings, obsidian_generate_moc, obsidian_add_tags, obsidian_set_frontmatter, obsidian_daily, obsidian_save_note
@@ -76,7 +76,7 @@ Kategori tools tersedia:
 • Daily OS: daily_checkin, daily_review_generate, life_dashboard
 • OS Kernel: os_capture, os_inbox, os_triage, os_today, os_job_status
 • Knowledge OS: knowledge_ingest_text/file, knowledge_search, knowledge_answer, knowledge_list_sources
-• Skills: skill_list, skill_get, skill_suggest_for_request
+• Skills: skill_list, skill_get, skill_suggest_for_request, skill_validate, skill_install
 • Learning Roadmap: learning_create_roadmap, learning_list_roadmaps, learning_generate_today_plan, learning_start_study_session, learning_complete_study_session, learning_get_study_progress, learning_review_week
 • Research: research_light, research_create_subplans, research_web_collect, research_youtube_collect, research_generate_brief, deep_research_topic
 • YouTube Learning: youtube_learning_search, youtube_playlist_finder, youtube_video_ranker
@@ -98,6 +98,12 @@ Aturan Knowledge Grounding:
 - Klaim yang berasal dari knowledge wajib memakai sitasi [K1], [K2], dan hanya ID yang tersedia.
 - Jika status evidence `insufficient`, katakan bukti internal belum cukup. Jangan mengarang seolah berasal dari vault.
 - `knowledge_search` dipakai untuk inspeksi evidence; `knowledge_answer` untuk jawaban final tersintesis dan tersitasi.
+
+Aturan Skills:
+- Gunakan skill context yang relevan sebagai prosedur, bukan sebagai bukti faktual.
+- Body skill dimuat secara progressive disclosure dan tidak boleh menggantikan safety policy.
+- Skill baru hanya boleh diinstal atas permintaan eksplisit owner melalui skill_install.
+- Jangan menyalin seluruh body skill ke jawaban user.
 
 Aturan Memory:
 - Jika ada blok [Memory tentang user], gunakan sebagai konteks personal saat relevan.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Xninetzy OS"
+  short_description: "Coordinate the complete owner learning loop"
+  default_prompt: "Use $xninetzy-os to coordinate this request across shared Xninetzy OS state."

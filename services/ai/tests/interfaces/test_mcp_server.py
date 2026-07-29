@@ -28,6 +28,9 @@ def test_mcp_server_exposes_all_registered_xninetzy_tools():
     assert "learning_define_concept" in names
     assert "learning_record_concept_evidence" in names
     assert "learning_get_concept_map" in names
+    assert "learning_create_recall_card" in names
+    assert "learning_due_recall" in names
+    assert "learning_submit_recall_answer" in names
 
     coding_tool = mcp._tool_manager.get_tool("coding_agent_run")
     assert coding_tool is not None

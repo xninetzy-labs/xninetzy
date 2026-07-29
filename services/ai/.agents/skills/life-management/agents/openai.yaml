@@ -1,0 +1,4 @@
+interface:
+  display_name: "Life Management"
+  short_description: "Connect goals, tasks, routines, and reviews"
+  default_prompt: "Use $life-management to organize this commitment and its next review point."

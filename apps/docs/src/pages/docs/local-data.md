@@ -28,6 +28,8 @@ Seluruh `services/ai/data/**` diabaikan Git kecuali file kebijakan
 - HEBAT browser profile, cookie/state, download, dan debug HTML;
 - web-analysis snapshot/report;
 - snapshot nilai Cyber Campus yang sudah dinormalisasi tanpa verified token;
+- concept graph, evidence, dan mastery Learning OS;
+- recall cards, jawaban attempt, confidence, dan jadwal spaced repetition;
 - media WhatsApp dan backup lokal.
 
 Sebelum commit:

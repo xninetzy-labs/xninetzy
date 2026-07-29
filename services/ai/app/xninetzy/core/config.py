@@ -70,6 +70,22 @@ class Settings(BaseSettings):
     OPENCODE_BIN: str = "opencode"
     OPENCODE_MODEL: str = ""
 
+    CHAT_FAILOVER_ENABLED: bool = False
+    CHAT_FAILOVER_RUNTIME: str = "opencode"
+    CHAT_FAILOVER_MODEL: str = ""
+    CHAT_FAILOVER_TIMEOUT_SECONDS: float = 120.0
+    CHAT_FAILOVER_MAX_OUTPUT_CHARS: int = 8_000
+    CHAT_FAILOVER_SHOW_NOTICE: bool = True
+    CHAT_FAILOVER_WHATSAPP_ONLY: bool = True
+    CHAT_FAILOVER_MCP_PREFLIGHT_TIMEOUT_SECONDS: float = 20.0
+
+    XNINETZY_SKILLS_DIR: str = ""
+    XNINETZY_SKILL_MAX_BYTES: int = 65_536
+    XNINETZY_SKILL_MATCH_THRESHOLD: int = 4
+    XNINETZY_SKILL_AUTO_INJECT_LIMIT: int = 2
+    XNINETZY_SKILL_AUTO_INJECT_MAX_CHARS: int = 8_000
+    XNINETZY_SKILL_ALLOW_BUILTIN_OVERRIDE: bool = False
+
     BOT_NAME: str = "Xninetzy AI"
     BOT_OWNER: str = "Misbahul Muttaqin"
     AI_API_KEY: str = ""

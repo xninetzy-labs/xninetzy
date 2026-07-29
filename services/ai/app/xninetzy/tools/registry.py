@@ -148,7 +148,13 @@ from app.xninetzy.tools.ecosystem.ai_runtime_tools import (
     coding_agent_use,
     coding_agent_run,
 )
-from app.xninetzy.skills.tools import skill_get, skill_list, skill_suggest_for_request
+from app.xninetzy.skills.tools import (
+    skill_get,
+    skill_install,
+    skill_list,
+    skill_suggest_for_request,
+    skill_validate,
+)
 from app.xninetzy.os.hitl.approval_tools import (
     hitl_approve,
     hitl_get_status,
@@ -184,6 +190,11 @@ from app.xninetzy.domains.it_learning.concept_graph import (
     learning_define_concept,
     learning_get_concept_map,
     learning_record_concept_evidence,
+)
+from app.xninetzy.domains.it_learning.recall import (
+    learning_create_recall_card,
+    learning_due_recall,
+    learning_submit_recall_answer,
 )
 from app.xninetzy.os.notifications.admin_notifier import admin_notify_progress
 from app.xninetzy.interfaces.media.media_tools import (
@@ -357,6 +368,8 @@ def get_all_tools() -> list[BaseTool]:
             skill_list,
             skill_get,
             skill_suggest_for_request,
+            skill_validate,
+            skill_install,
             # Learning Roadmap
             learning_create_roadmap,
             learning_list_roadmaps,
@@ -372,6 +385,9 @@ def get_all_tools() -> list[BaseTool]:
             learning_define_concept,
             learning_record_concept_evidence,
             learning_get_concept_map,
+            learning_create_recall_card,
+            learning_due_recall,
+            learning_submit_recall_answer,
             # Graph RAG
             graph_add_node,
             graph_add_edge,

@@ -1,0 +1,4 @@
+interface:
+  display_name: "HEBAT Academic"
+  short_description: "Work safely with courses, materials, and deadlines"
+  default_prompt: "Use $hebat-academic to inspect my HEBAT course state and propose the next action."

@@ -188,6 +188,50 @@ def run_migrations() -> None:
         """,
         "CREATE INDEX IF NOT EXISTS idx_learning_evidence_concept ON learning_concept_evidence(concept_id, id)",
         """
+        CREATE TABLE IF NOT EXISTS learning_recall_cards (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            card_key TEXT NOT NULL UNIQUE,
+            payload_hash TEXT NOT NULL,
+            roadmap_id INTEGER NOT NULL,
+            concept_id INTEGER NOT NULL,
+            question TEXT NOT NULL,
+            expected_answer TEXT NOT NULL,
+            keywords_json TEXT NOT NULL DEFAULT '[]',
+            source_reference TEXT NOT NULL DEFAULT '',
+            status TEXT NOT NULL DEFAULT 'active',
+            ease_factor REAL NOT NULL DEFAULT 2.5,
+            interval_days INTEGER NOT NULL DEFAULT 0,
+            repetitions INTEGER NOT NULL DEFAULT 0,
+            lapse_count INTEGER NOT NULL DEFAULT 0,
+            due_at TEXT NOT NULL,
+            last_reviewed_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            FOREIGN KEY(roadmap_id) REFERENCES learning_roadmaps(id) ON DELETE CASCADE,
+            FOREIGN KEY(concept_id) REFERENCES learning_concepts(id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_learning_recall_due ON learning_recall_cards(status, due_at, id)",
+        "CREATE INDEX IF NOT EXISTS idx_learning_recall_concept ON learning_recall_cards(concept_id, status)",
+        """
+        CREATE TABLE IF NOT EXISTS learning_recall_attempts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            attempt_key TEXT NOT NULL UNIQUE,
+            payload_hash TEXT NOT NULL,
+            card_id INTEGER NOT NULL,
+            answer TEXT NOT NULL,
+            confidence INTEGER NOT NULL,
+            keyword_coverage REAL NOT NULL,
+            quality INTEGER NOT NULL,
+            previous_interval_days INTEGER NOT NULL,
+            next_interval_days INTEGER NOT NULL,
+            next_due_at TEXT NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(card_id) REFERENCES learning_recall_cards(id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_learning_recall_attempts_card ON learning_recall_attempts(card_id, id)",
+        """
         CREATE TABLE IF NOT EXISTS entity_links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id TEXT,

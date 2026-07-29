@@ -67,7 +67,16 @@ def get_roadmap_progress(roadmap_id: int) -> dict | None:
     }
 
 
-def build_today_plan(roadmap_id: int | None = None) -> dict | None:
+def build_today_plan(
+    roadmap_id: int | None = None,
+    now: datetime | None = None,
+) -> dict | None:
+    timezone = ZoneInfo(get_settings().APP_TIMEZONE)
+    current = now or datetime.now(timezone)
+    if current.tzinfo is None:
+        current = current.replace(tzinfo=timezone)
+    else:
+        current = current.astimezone(timezone)
     with connect() as conn:
         active = conn.execute(
             """
@@ -88,6 +97,43 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
                 "recall": "Lanjutkan dari titik terakhir dan catat evidence saat selesai.",
                 "session_id": active["id"],
                 "concept_id": None,
+                "recall_card_id": None,
+            }
+        recall_params: list[object] = [current.isoformat()]
+        recall_filter = ""
+        if roadmap_id is not None:
+            recall_filter = "AND card.roadmap_id=?"
+            recall_params.append(roadmap_id)
+        due_recall = conn.execute(
+            f"""
+            SELECT card.*, concept.title AS concept_title,
+                   roadmap.title AS roadmap_title
+            FROM learning_recall_cards card
+            JOIN learning_concepts concept ON concept.id=card.concept_id
+            JOIN learning_roadmaps roadmap ON roadmap.id=card.roadmap_id
+            WHERE card.status='active' AND card.due_at<=? {recall_filter}
+            ORDER BY card.due_at ASC, card.id ASC LIMIT 1
+            """,
+            recall_params,
+        ).fetchone()
+        if due_recall:
+            return {
+                "roadmap_id": due_recall["roadmap_id"],
+                "roadmap_title": due_recall["roadmap_title"],
+                "mode": "recall",
+                "focus": due_recall["question"],
+                "minutes": 10,
+                "reason": (
+                    f"Recall card #{due_recall['id']} jatuh tempo sejak "
+                    f"{due_recall['due_at']}."
+                ),
+                "recall": (
+                    f"Jawab tanpa membuka catatan: /recall answer "
+                    f"{due_recall['id']} <confidence 1-5> <jawaban>"
+                ),
+                "session_id": None,
+                "concept_id": due_recall["concept_id"],
+                "recall_card_id": due_recall["id"],
             }
         if roadmap_id is None:
             roadmap = conn.execute(
@@ -100,10 +146,24 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
             ).fetchone()
         if not roadmap:
             return None
-        pending = conn.execute(
-            "SELECT * FROM learning_tasks WHERE roadmap_id=? AND status!='done' ORDER BY day_index, id LIMIT 1",
-            (roadmap["id"],),
-        ).fetchone()
+        concept = next_ready_concept(conn, int(roadmap["id"]))
+        pending = None
+        if concept:
+            pending = conn.execute(
+                """
+                SELECT task.*
+                FROM learning_tasks task
+                JOIN learning_concept_tasks link ON link.learning_task_id=task.id
+                WHERE task.roadmap_id=? AND task.status!='done' AND link.concept_id=?
+                ORDER BY task.day_index, task.id LIMIT 1
+                """,
+                (roadmap["id"], concept["id"]),
+            ).fetchone()
+        if pending is None:
+            pending = conn.execute(
+                "SELECT * FROM learning_tasks WHERE roadmap_id=? AND status!='done' ORDER BY day_index, id LIMIT 1",
+                (roadmap["id"],),
+            ).fetchone()
         latest = conn.execute(
             """
             SELECT * FROM learning_study_sessions
@@ -112,7 +172,6 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
             """,
             (roadmap["id"],),
         ).fetchone()
-        concept = next_ready_concept(conn, int(roadmap["id"]))
     task_focus = pending["title"] if pending else roadmap["target"] or roadmap["topic"]
     focus = f"{task_focus} — {concept['title']}" if concept else task_focus
     concept_reason = (
@@ -131,6 +190,7 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
             "recall": "Tulis apa yang sudah diketahui sebelum membuka materi.",
             "session_id": None,
             "concept_id": int(concept["id"]) if concept else None,
+            "recall_card_id": None,
         }
     mastery = float(latest["mastery_after"] or 0)
     energy = latest["energy_after"] or latest["energy_before"] or 3
@@ -166,6 +226,7 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
         "recall": recall,
         "session_id": None,
         "concept_id": int(concept["id"]) if concept else None,
+        "recall_card_id": None,
     }
 
 

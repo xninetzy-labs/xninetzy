@@ -59,6 +59,14 @@ async def agent_node(state: AgentState) -> dict:
     except Exception:
         pass
 
+    skills_context = ""
+    try:
+        from app.xninetzy.skills.prompting import build_relevant_skill_context
+
+        skills_context = build_relevant_skill_context(state.get("message", ""))
+    except Exception:
+        pass
+
     # Build personal context (best-effort, silent on failure)
     personal_context = ""
     try:
@@ -156,6 +164,7 @@ async def agent_node(state: AgentState) -> dict:
         or "",
         is_reply_to_bot=metadata.get("isReplyToBot", False),
         context_routing=context_routing,
+        skills_context=skills_context,
         personal_context=personal_context,
         media_context=media_context,
         rules_context=rules_context,

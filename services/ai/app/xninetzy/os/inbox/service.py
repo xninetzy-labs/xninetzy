@@ -375,18 +375,23 @@ def build_attention_queue(limit: int = 5, now: datetime | None = None) -> list[d
     try:
         from app.xninetzy.domains.it_learning.progress_tracker import build_today_plan
 
-        plan = build_today_plan()
+        plan = build_today_plan(now=current)
     except Exception:
         plan = None
     if plan and plan["focus"].casefold().strip() not in task_titles:
+        is_recall = plan["mode"] == "recall"
         items.append(
             {
-                "kind": "learning",
-                "id": int(plan["roadmap_id"]),
+                "kind": "recall" if is_recall else "learning",
+                "id": int(plan.get("recall_card_id") or plan["roadmap_id"]),
                 "title": plan["focus"],
-                "score": 60 if plan["mode"] == "resume" else 50,
+                "score": 75 if is_recall else 60 if plan["mode"] == "resume" else 50,
                 "reason": plan["reason"],
-                "action": f"Mulai sesi belajar {plan['minutes']} menit",
+                "action": (
+                    f"Jawab recall card #{plan['recall_card_id']}"
+                    if is_recall
+                    else f"Mulai sesi belajar {plan['minutes']} menit"
+                ),
             }
         )
     for position, row in enumerate(captures):

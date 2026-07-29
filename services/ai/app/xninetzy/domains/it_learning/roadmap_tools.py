@@ -156,6 +156,18 @@ def learning_review_week(chat_id: str = "system", roadmap_id: int | None = None)
                 f"• {concept['title']} — {float(concept['mastery']):.0%}, "
                 f"{concept['evidence_count']} evidence"
             )
+    from app.xninetzy.domains.it_learning.recall import recall_summary
+
+    recall = recall_summary(roadmap_id)
+    coverage = recall["average_coverage"]
+    coverage_text = f"{coverage:.0%}" if coverage is not None else "belum ada"
+    lines.extend(
+        [
+            "Active recall:",
+            f"• {recall['attempts']} attempt, coverage {coverage_text}, "
+            f"{recall['lapses']} lapse, {recall['due']} due",
+        ]
+    )
     return "\n".join(lines)
 
 

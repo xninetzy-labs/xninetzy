@@ -43,3 +43,22 @@ def test_concept_map_command_uses_shared_learning_tool():
         "learning_get_concept_map",
         {"roadmap_id": 12},
     )
+
+
+def test_recall_commands_use_shared_learning_tools():
+    assert parse_command("/recall") == (
+        "learning_due_recall",
+        {"roadmap_id": None},
+    )
+    assert parse_command("/recall 12") == (
+        "learning_due_recall",
+        {"roadmap_id": 12},
+    )
+    assert parse_command("/recall answer 7 4 model memakai data berlabel") == (
+        "learning_submit_recall_answer",
+        {
+            "card_id": 7,
+            "confidence": 4,
+            "answer": "model memakai data berlabel",
+        },
+    )

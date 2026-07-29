@@ -41,7 +41,7 @@ internet sebelum membaca bagian [Keamanan](#keamanan).
 | Chat agent | Routing LangGraph, jawaban langsung, ReAct tools, workflow multi-aksi, dan slash command deterministik |
 | LLM | Flaz sebagai default melalui `langchain-openai`, plus OpenAI, Anthropic, OpenRouter, Ollama, dan endpoint OpenAI-compatible |
 | OS kernel | Universal inbox, deterministic triage, attention queue lintas task/learning/capture, dan event yang replay-safe |
-| Learning OS | Roadmap adaptif, study session, mastery, task belajar, review mingguan, resource attachment, dan approval aktivasi |
+| Learning OS | Roadmap adaptif, concept/prerequisite graph, active recall, spaced repetition, evidence-backed mastery, study session, dan review mingguan |
 | HEBAT/Moodle | Login Playwright, sinkronisasi course/activity/tugas, deadline digest, download file asli, baca PDF, dan submission dengan konfirmasi |
 | Obsidian | List, search, read, create, append, frontmatter, tag, heading, backlink, todo, MOC, daily note, dan backup sebelum overwrite |
 | Knowledge | Ingest teks/file, hybrid FAISS+FTS, evidence selection, grounded Q&A bersitasi, dan Graph RAG |

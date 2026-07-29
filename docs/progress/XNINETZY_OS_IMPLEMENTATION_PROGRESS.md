@@ -19,6 +19,8 @@ code, tests, configuration, and documentation agree.
 | P1-03 | OS Inbox, replay-safe triage, and shared attention queue | Complete | 15 focused + 307 full AI tests; full lint; WA/docs/runtime gates |
 | P2-01 | Duration/level/source-aware roadmap planner | Complete | 21 focused + 264 full AI tests; focused lint |
 | P2-02 | Study sessions, progress metrics, and adaptive today plan | Complete | 21 focused + 271 full AI tests; focused lint |
+| P2-03 | Concept/prerequisite graph and evidence-backed mastery | Complete | 23 focused + 354 full AI tests; Ruff; docs build |
+| P2-04 | Active recall and bounded spaced repetition | Complete | 34 focused + 365 full AI tests; Ruff; docs build |
 | Security-02 | Per-installation runtime data isolation | Complete | Git tracked-file audit; docs build |
 | Academic-01a | Cyber login, CAPTCHA HITL, encrypted session, runtime navigation | Partial | 315 full AI tests; 27/27 safe unique routes reachable |
 | WA-Approval-01 | Admin buttons, media forwarding, LID normalization | Complete | 11 WA tests; 6 AI notification/media tests; TypeScript lint/build |
@@ -142,8 +144,53 @@ Completed: 2026-07-29
 - [x] Include adaptive focus in Personal Context for internal LangGraph.
 - [x] Expose the same tools through the central registry and dynamic MCP adapter.
 
-Next P2 work: prerequisite/concept/mastery relationships, active recall and
-spaced-repetition scheduling, deadline-aware plan adaptation, and retrieval evals.
+## Batch P2-03 — Concept graph and evidence-backed mastery
+
+Completed: 2026-07-29
+
+- [x] Persist concepts scoped to a roadmap with stable derived identity.
+- [x] Link concepts to prerequisite concepts, milestones, tasks, and study sessions.
+- [x] Reject self-dependencies, cross-roadmap links, and prerequisite cycles.
+- [x] Seed new roadmaps and idempotently backfill existing local roadmaps.
+- [x] Persist evidence with idempotency key and payload mismatch protection.
+- [x] Update mastery deterministically and unlock the next ready concept.
+- [x] Record study-session mastery as concept evidence in the same transaction.
+- [x] Include weak concepts in today planning, weekly review, and Personal Context.
+- [x] Expose define, evidence, and concept-map tools through the registry and MCP.
+- [x] Route `/concepts <roadmap-id>` to the shared read tool.
+
+Next P2 work: richer quizzes, deadline-aware planning, and retrieval evaluation
+datasets.
+
+Verification: 23 focused concept/study/parity tests, 354 full AI tests, full
+Ruff, Astro check/build with 21 pages, and replay-safe migration coverage.
+
+## Batch P2-04 — Active recall and bounded spaced repetition
+
+Completed: 2026-07-29
+
+- [x] Persist immutable recall cards and replay-safe attempts with payload hashes.
+- [x] Scope every card to an existing roadmap concept.
+- [x] Derive explicit, deterministic keyword evidence instead of asking an LLM
+  to grade recall.
+- [x] Keep self-reported confidence separate from answer quality.
+- [x] Apply bounded SM-2 scheduling with lapse tracking and a minimum ease factor.
+- [x] Hide expected answers until the owner submits an attempt.
+- [x] Update the recall schedule, concept evidence, mastery, and lifecycle event
+  atomically.
+- [x] Prioritize an active study session first and due recall before starting a
+  new session.
+- [x] Include due recall in the shared attention queue and Personal Context.
+- [x] Include recall coverage and lapses in the weekly learning review.
+- [x] Expose create, due, and submit behavior through the central registry,
+  dynamic MCP, LangGraph, and deterministic WhatsApp commands.
+- [x] Preserve caller-supplied idempotency keys through the MCP schema while
+  continuing to inject trusted owner identity at the server boundary.
+- [x] Document the commands, scheduling model, replay guarantees, and local-data
+  policy.
+
+Verification: 34 focused recall/concept/study/parity tests, 365 full AI tests,
+full Ruff, and Astro check/build with 21 pages.
 
 ## Batch Security-02 — Open-source local data isolation
 

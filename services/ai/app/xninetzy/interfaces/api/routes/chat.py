@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends
+from langchain_core.messages import AIMessage, HumanMessage
 
 from app.xninetzy.agent.graph import get_compiled_graph
 from app.xninetzy.ecosystem.command_router import parse_command
@@ -12,6 +13,10 @@ from app.xninetzy.interfaces.api.owner_policy import (
     authorize_owner,
     owner_denied_message,
 )
+from app.xninetzy.core.config import get_settings
+from app.xninetzy.core.logging import logging
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"], dependencies=[Depends(require_api_key)])
 
@@ -144,7 +149,60 @@ async def chat(request: ChatRequest) -> ChatResponse:
     }
 
     graph = get_compiled_graph()
-    result = await graph.ainvoke(initial_state)
+    try:
+        result = await graph.ainvoke(initial_state)
+    except Exception as exc:
+        _log_trace(
+            request,
+            {"response": "", "route": "langgraph"},
+            [],
+            status="failed",
+            error_type=type(exc).__name__,
+            error_message=str(exc)[:500],
+        )
+        settings = get_settings()
+        from_whatsapp = bool((request.metadata or {}).get("messageId"))
+        should_failover = settings.CHAT_FAILOVER_ENABLED and (
+            from_whatsapp or not settings.CHAT_FAILOVER_WHATSAPP_ONLY
+        )
+        if should_failover:
+            from app.xninetzy.core.chat_failover import run_chat_failover
+
+            fallback = await run_chat_failover(
+                request.message,
+                user_id=user_key,
+                chat_id=request.chat_id,
+                history=history,
+                metadata=prepared_metadata,
+            )
+            if fallback.status == "completed" and fallback.output:
+                reply = fallback.output
+                if settings.CHAT_FAILOVER_SHOW_NOTICE:
+                    reply = "_OpenCode failover aktif._\n\n" + reply
+                fallback_messages = [
+                    HumanMessage(content=request.message),
+                    AIMessage(content=reply),
+                ]
+                store.save_messages(request.chat_id, fallback_messages)
+                _log_trace(
+                    request,
+                    {"response": reply, "route": "opencode_failover"},
+                    fallback_messages,
+                    status="failover",
+                    error_type=type(exc).__name__,
+                )
+                return ChatResponse(reply=reply)
+            logger.error(
+                "OpenCode chat failover failed: status=%s error=%s",
+                fallback.status,
+                fallback.error,
+            )
+        return ChatResponse(
+            reply=(
+                "Maaf, agent utama sedang tidak tersedia dan failover aman belum "
+                "berhasil. Coba ulangi sebentar lagi atau gunakan slash command."
+            )
+        )
 
     new_messages = result["messages"][len(history) :]
     if new_messages:

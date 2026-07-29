@@ -1,0 +1,4 @@
+interface:
+  display_name: "Cyber Campus"
+  short_description: "Read academic state and gate portal changes"
+  default_prompt: "Use $cyber-campus to inspect my academic portal state with the required safeguards."

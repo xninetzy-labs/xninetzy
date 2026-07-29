@@ -12,6 +12,7 @@ from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
 from app.xninetzy.db.sqlite import connect, init_db
 from app.xninetzy.domains.it_learning.concept_graph import (
+    concept_for_task,
     link_session_concept,
     next_ready_concept,
     record_evidence_in_transaction,
@@ -92,18 +93,28 @@ def start_study_session(
                 raise LookupError(
                     "Learning task tidak ditemukan pada roadmap tersebut."
                 )
+            concept = concept_for_task(
+                conn, int(roadmap["id"]), int(selected_task["id"])
+            )
         else:
-            selected_task = conn.execute(
-                "SELECT * FROM learning_tasks WHERE roadmap_id=? AND status!='done' ORDER BY day_index, id LIMIT 1",
-                (roadmap["id"],),
-            ).fetchone()
-        concept = next_ready_concept(
-            conn,
-            int(roadmap["id"]),
-            int(selected_task["id"]) if selected_task else None,
-        )
-        if concept is None:
             concept = next_ready_concept(conn, int(roadmap["id"]))
+            selected_task = None
+            if concept:
+                selected_task = conn.execute(
+                    """
+                    SELECT task.*
+                    FROM learning_tasks task
+                    JOIN learning_concept_tasks link ON link.learning_task_id=task.id
+                    WHERE task.roadmap_id=? AND task.status!='done' AND link.concept_id=?
+                    ORDER BY task.day_index, task.id LIMIT 1
+                    """,
+                    (roadmap["id"], concept["id"]),
+                ).fetchone()
+            if selected_task is None:
+                selected_task = conn.execute(
+                    "SELECT * FROM learning_tasks WHERE roadmap_id=? AND status!='done' ORDER BY day_index, id LIMIT 1",
+                    (roadmap["id"],),
+                ).fetchone()
         resolved_objective = objective.strip()
         if not resolved_objective and selected_task:
             resolved_objective = selected_task["title"]

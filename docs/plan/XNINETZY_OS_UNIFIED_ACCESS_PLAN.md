@@ -87,8 +87,8 @@ Acceptance:
 
 - [x] Replace the fixed 14-day roadmap template with a source-aware planner.
 - [x] Implement study sessions and progress tracker modules.
-- [ ] Model prerequisite, concept, milestone, evidence, and mastery relationships.
-- [ ] Add quizzes, active recall, and spaced repetition scheduling.
+- [x] Model prerequisite, concept, milestone, task, session, evidence, and mastery relationships.
+- [x] Add deterministic active recall and spaced repetition scheduling.
 - [ ] Adapt the daily plan to mastery, available time, energy, and deadlines.
 - [ ] Add a retrieval evaluation set for ranking, groundedness, and citations.
 
@@ -120,6 +120,10 @@ Acceptance:
 - Added idempotent study sessions, progress metrics, and mastery/energy adaptive daily plans.
 - Added a shared OS Inbox, atomic triage, and deterministic attention queue.
 - Routed `/today`, Personal Context, morning briefing, and MCP through the same OS state.
+- Added a replay-safe concept graph linked to roadmap milestones, tasks, study
+  sessions, evidence, mastery, today planning, review, Personal Context, and MCP.
+- Added recall cards, keyword-based grading, confidence tracking, SM-2 scheduling,
+  and atomic mastery evidence shared across WhatsApp, LangGraph, and MCP.
 - Added an admin-only WhatsApp startup menu with 15 command buttons, reconnect
   deduplication, and complete text fallback.
 

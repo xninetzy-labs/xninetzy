@@ -1,0 +1,4 @@
+interface:
+  display_name: "IT Learning OS"
+  short_description: "Build evidence-backed IT learning workflows"
+  default_prompt: "Use $it-learning to plan and run my next evidence-backed IT learning step."

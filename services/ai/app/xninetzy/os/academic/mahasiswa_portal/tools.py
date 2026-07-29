@@ -13,8 +13,15 @@ from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
 from app.xninetzy.os.academic.mahasiswa_portal.grade_token import (
     GRADE_TOKEN_COORDINATOR,
 )
+from app.xninetzy.os.academic.mahasiswa_portal.grade_snapshots import (
+    GRADE_SNAPSHOT_REPOSITORY,
+    GradeSnapshotOutcome,
+)
 from app.xninetzy.os.academic.mahasiswa_portal.reader import (
     ACADEMIC_PORTAL_READER,
+    AcademicProfile,
+    AcademicStatusEntry,
+    CurrentKrsResult,
     GradeResult,
     ScheduleResult,
 )
@@ -205,7 +212,50 @@ def _format_schedule(result: ScheduleResult) -> str:
     return "\n".join(lines)
 
 
-def _format_grades(result: GradeResult) -> str:
+def _format_academic_profile(profile: AcademicProfile) -> str:
+    return "\n".join(
+        [
+            "*Profil Akademik Cyber Campus*",
+            f"• Nama: {profile.name}",
+            f"• NIM: {profile.student_id}",
+            f"• Fakultas: {profile.faculty or '-'}",
+            f"• Program studi: {profile.study_program or '-'}",
+        ]
+    )
+
+
+def _format_academic_status(entries: tuple[AcademicStatusEntry, ...]) -> str:
+    lines = ["*Status Akademik Cyber Campus*", f"Total semester: {len(entries)}"]
+    for entry in entries:
+        details = [entry.status]
+        if entry.decree_number and entry.decree_number != "-":
+            details.append(f"SK {entry.decree_number}")
+        if entry.decree_date and entry.decree_date != "-":
+            details.append(entry.decree_date)
+        if entry.description and entry.description != "-":
+            details.append(entry.description)
+        lines.append(f"• {entry.semester}: {' — '.join(details)}")
+    return "\n".join(lines)
+
+
+def _format_current_krs(result: CurrentKrsResult) -> str:
+    lines = [
+        "*KRS Aktif Cyber Campus*",
+        f"Total mata kuliah: {len(result.entries)}",
+        f"Total SKS: {result.total_credits}",
+    ]
+    for index, entry in enumerate(result.entries, start=1):
+        lines.append(
+            f"{index}. *{entry.course_name}* ({entry.course_code}) — "
+            f"{entry.credits} SKS, kelas {entry.class_code}, {entry.status}"
+        )
+    return "\n".join(lines)
+
+
+def _format_grades(
+    result: GradeResult,
+    snapshot: GradeSnapshotOutcome | None = None,
+) -> str:
     lines = ["*Nilai Cyber Campus*", f"Periode: {result.period}"]
     for index, entry in enumerate(result.entries, start=1):
         values = [(key, value) for key, value in entry.values if value]
@@ -213,6 +263,37 @@ def _format_grades(result: GradeResult) -> str:
             continue
         lines.append("")
         lines.append(f"{index}. " + " | ".join(f"{key}: {value}" for key, value in values))
+    if snapshot:
+        lines.extend(["", f"Snapshot lokal: #{snapshot.snapshot_id}"])
+        if snapshot.changes:
+            lines.append(f"Perubahan sejak snapshot sebelumnya: {len(snapshot.changes)}")
+        elif snapshot.created:
+            lines.append("Perubahan sejak snapshot sebelumnya: tidak ada")
+        else:
+            lines.append("Snapshot sama dengan pembacaan terakhir")
+    return "\n".join(lines)
+
+
+def _format_grade_changes(snapshot: GradeSnapshotOutcome | None) -> str:
+    if snapshot is None:
+        return "Belum ada snapshot nilai lokal. Jalankan /nilai terlebih dahulu."
+    lines = [
+        "*Perubahan Nilai Cyber Campus*",
+        f"Periode: {snapshot.period}",
+        f"Snapshot: #{snapshot.snapshot_id}",
+    ]
+    if not snapshot.changes:
+        lines.append("Belum ada perubahan antar-snapshot untuk periode ini.")
+        return "\n".join(lines)
+    for change in snapshot.changes:
+        identity = change.course_name or change.course_code or change.course_key
+        if change.kind == "added":
+            detail = f"baru: {change.current_grade or 'belum tersedia'}"
+        elif change.kind == "removed":
+            detail = f"dihapus dari snapshot, sebelumnya: {change.previous_grade or '-'}"
+        else:
+            detail = f"{change.previous_grade or '-'} → {change.current_grade or '-'}"
+        lines.append(f"• {identity}: {detail}")
     return "\n".join(lines)
 
 
@@ -223,6 +304,46 @@ async def portal_schedule() -> str:
         return _format_schedule(await ACADEMIC_PORTAL_READER.read_schedule())
     except Exception as exc:
         return f"Jadwal Cyber Campus belum dapat dibaca: {exc}"
+
+
+@tool
+async def portal_profile() -> str:
+    """Baca identitas akademik minimal dari session Cyber Campus owner."""
+    try:
+        return _format_academic_profile(await ACADEMIC_PORTAL_READER.read_profile())
+    except Exception as exc:
+        return f"Profil Cyber Campus belum dapat dibaca: {exc}"
+
+
+@tool
+async def portal_academic_status() -> str:
+    """Baca riwayat status akademik dari session Cyber Campus owner."""
+    try:
+        return _format_academic_status(
+            await ACADEMIC_PORTAL_READER.read_academic_status()
+        )
+    except Exception as exc:
+        return f"Status akademik Cyber Campus belum dapat dibaca: {exc}"
+
+
+@tool
+async def portal_current_krs() -> str:
+    """Baca mata kuliah KRS aktif tanpa mengubah pilihan portal."""
+    try:
+        return _format_current_krs(await ACADEMIC_PORTAL_READER.read_current_krs())
+    except Exception as exc:
+        return f"KRS aktif Cyber Campus belum dapat dibaca: {exc}"
+
+
+@tool
+def portal_grade_changes(academic_period: str = "") -> str:
+    """Bandingkan dua snapshot nilai lokal terbaru untuk satu periode."""
+    try:
+        return _format_grade_changes(
+            GRADE_SNAPSHOT_REPOSITORY.latest_changes(academic_period)
+        )
+    except Exception as exc:
+        return f"Perubahan nilai belum dapat dibaca: {exc}"
 
 
 @tool
@@ -286,7 +407,8 @@ async def submit_grade_token(
             academic_period,
             challenge_id,
         )
-        return _format_grades(result)
+        snapshot = GRADE_SNAPSHOT_REPOSITORY.save(result)
+        return _format_grades(result, snapshot)
     except Exception as exc:
         return f"Nilai Cyber Campus belum dapat dibaca: {exc}"
     finally:

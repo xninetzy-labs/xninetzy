@@ -30,7 +30,9 @@ Claude Code, and OpenCode through the central registry and `xninetzy` MCP.
 - [x] Legacy alternate-channel configuration and documentation removed.
 - [x] Deterministic schedule and generic KHS table parsers with sanitized fixtures.
 - [x] Owner-bound WhatsApp grade-token handoff to the deterministic reader.
-- [ ] Profile, offering, current-KRS, and grade-change snapshot models.
+- [x] Minimal profile, academic-status, and current-KRS read models.
+- [ ] Course-offering and quota model for an active KRS period.
+- [x] Idempotent normalized grade snapshots and deterministic change detection.
 - [ ] Bound, expiring, single-use KRS approval model.
 - [ ] KRS planner and gated portal mutation workflow.
 
@@ -113,9 +115,12 @@ CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS=3
 - [x] Trigger the portal-owned token delivery before the WhatsApp handoff.
 - [x] Bind the selected semester and prepared browser page to the token challenge.
 - [x] Submit the KHS display request with native same-origin fetch without jQuery.
-- [ ] Implement profile, offerings, current KRS, and grade snapshots.
-- [ ] Persist normalized grade snapshots and calculate real changes.
-- [ ] Add interface-parity and session-expiry tests.
+- [x] Implement minimal profile, academic status, and current KRS models.
+- [ ] Implement offering and quota models when the KRS period exposes controls.
+- [x] Persist normalized grade snapshots and calculate real changes.
+- [x] Add WhatsApp command and MCP registry parity tests for shared readers.
+- [x] Verify minimal profile, academic status, and current KRS against the live owner session.
+- [ ] Add explicit session-expiry tests for all academic read models.
 
 ### Academic-02 — Approval hardening
 

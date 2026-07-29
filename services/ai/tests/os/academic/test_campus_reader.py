@@ -7,6 +7,9 @@ from app.xninetzy.os.academic.mahasiswa_portal.reader import (
     GRADE_FETCH_SCRIPT,
     GradeTokenRejected,
     PreparedGradeRequest,
+    parse_academic_profile_html,
+    parse_academic_status_html,
+    parse_current_krs_html,
     parse_grade_html,
     parse_schedule_html,
     select_academic_period,
@@ -39,6 +42,73 @@ GRADE_HTML_WITH_TITLE = """
   <tr><td>1</td><td>SI301</td><td>Pembelajaran Mesin</td><td>3</td><td>AB</td></tr>
 </table>
 """
+
+
+PROFILE_HTML = """
+<table>
+  <tr><td>Nama</td><td><input value="Mahasiswa Contoh"></td></tr>
+  <tr><td>NIM</td><td>123456789</td></tr>
+  <tr><td>Fakultas</td><td><select><option selected>Fakultas Teknologi Maju</option></select></td></tr>
+  <tr><td>Program Studi</td><td><input value="Sistem Informasi"></td></tr>
+  <tr><td>Alamat</td><td>Data privat lain tidak diekspos</td></tr>
+</table>
+"""
+
+
+ACADEMIC_STATUS_HTML = """
+<table>
+  <tr><th>Semester</th><th>Status</th><th>No. SK.</th><th>Tgl SK.</th><th>Keterangan</th></tr>
+  <tr><td>2025/2026 Genap</td><td>AKTIF</td><td>-</td><td>-</td><td>Registrasi</td></tr>
+</table>
+"""
+
+
+CURRENT_KRS_HTML = """
+<table>
+  <tr><th>No..</th><th>KODE MK</th><th>NAMA MATA KULIAH</th><th>SKS MATA KULIAH</th><th>KELAS</th><th>STATUS</th></tr>
+  <tr><td>1</td><td>SI301</td><td>Pembelajaran Mesin</td><td>3 SKS</td><td>A</td><td>Terambil</td></tr>
+  <tr><td>2</td><td>SI302</td><td>Data Analytics</td><td>2</td><td>B</td><td>Terambil</td></tr>
+  <tr><td colspan="6">Total data</td></tr>
+</table>
+"""
+
+
+def test_parse_academic_profile_exposes_only_minimal_allowlist():
+    result = parse_academic_profile_html(PROFILE_HTML)
+
+    assert result.name == "Mahasiswa Contoh"
+    assert result.student_id == "123456789"
+    assert result.faculty == "Fakultas Teknologi Maju"
+    assert result.study_program == "Sistem Informasi"
+    assert not hasattr(result, "address")
+
+
+def test_parse_academic_profile_requires_identity_fields():
+    with pytest.raises(AcademicPortalReadError):
+        parse_academic_profile_html("<table><tr><td>Fakultas</td><td>FTM</td></tr></table>")
+
+
+def test_parse_academic_status_matches_live_headers():
+    entries = parse_academic_status_html(ACADEMIC_STATUS_HTML)
+
+    assert len(entries) == 1
+    assert entries[0].semester == "2025/2026 Genap"
+    assert entries[0].status == "AKTIF"
+
+
+def test_parse_current_krs_sums_credits_and_ignores_summary_rows():
+    result = parse_current_krs_html(CURRENT_KRS_HTML)
+
+    assert len(result.entries) == 2
+    assert result.entries[0].course_code == "SI301"
+    assert result.total_credits == 5
+
+
+def test_academic_tables_fail_closed_when_headers_change():
+    with pytest.raises(AcademicPortalReadError):
+        parse_academic_status_html("<table><tr><th>Status Baru</th></tr></table>")
+    with pytest.raises(AcademicPortalReadError):
+        parse_current_krs_html("<table><tr><th>KRS Baru</th></tr></table>")
 
 
 def test_parse_schedule_matches_live_cyber_campus_headers():

@@ -25,6 +25,8 @@ SLASH_COMMANDS: dict[str, str] = {
     "/hebat-debug": "hebat_debug_login",
     "/nilai": "portal_grades",
     "/jadwal": "portal_schedule",
+    "/cyber-profile": "portal_profile",
+    "/status-akademik": "portal_academic_status",
     "/portalinfo": "portal_info",
     "/portal-nav": "portal_navigation",
     "/krs-capabilities": "portal_krs_capabilities",
@@ -62,6 +64,12 @@ GRADE_TOKEN_PATTERN = re.compile(
     r"^/grade-token\s+([A-Za-z0-9_-]+)\s+(\d{4,10})$", re.I
 )
 GRADE_REQUEST_PATTERN = re.compile(r"^/nilai(?:\s+(.+))?$", re.I)
+GRADE_CHANGES_PATTERN = re.compile(
+    r"^/nilai\s+(?:changes|perubahan)(?:\s+(.+))?$",
+    re.I,
+)
+KRS_STATUS_PATTERN = re.compile(r"^/krs\s+status$", re.I)
+CONCEPT_MAP_PATTERN = re.compile(r"^/concepts\s+(\d+)$", re.I)
 CYBER_LOGIN_CANCEL_PATTERN = re.compile(
     r"^/cyber-login-cancel\s+([A-Za-z0-9_-]+)$", re.I
 )
@@ -138,6 +146,16 @@ def parse_command(message: str) -> tuple[str | None, dict]:
 
     if stripped.lower() == "/cyber-login":
         return "portal_login_start", {}
+    if KRS_STATUS_PATTERN.match(stripped):
+        return "portal_current_krs", {}
+    m = CONCEPT_MAP_PATTERN.match(stripped)
+    if m:
+        return "learning_get_concept_map", {"roadmap_id": int(m.group(1))}
+    m = GRADE_CHANGES_PATTERN.match(stripped)
+    if m:
+        return "portal_grade_changes", {
+            "academic_period": (m.group(1) or "").strip()
+        }
     m = GRADE_REQUEST_PATTERN.match(stripped)
     if m:
         return "portal_grades", {

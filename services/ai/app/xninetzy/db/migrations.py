@@ -113,6 +113,81 @@ def run_migrations() -> None:
         "CREATE INDEX IF NOT EXISTS idx_learning_sessions_roadmap ON learning_study_sessions(roadmap_id, started_at)",
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_learning_sessions_single_active ON learning_study_sessions(status) WHERE status='active'",
         """
+        CREATE TABLE IF NOT EXISTS learning_concepts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            roadmap_id INTEGER NOT NULL,
+            slug TEXT NOT NULL,
+            title TEXT NOT NULL,
+            description TEXT NOT NULL DEFAULT '',
+            mastery REAL NOT NULL DEFAULT 0,
+            evidence_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'planned',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(roadmap_id, slug),
+            FOREIGN KEY(roadmap_id) REFERENCES learning_roadmaps(id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_learning_concepts_roadmap ON learning_concepts(roadmap_id, mastery, id)",
+        """
+        CREATE TABLE IF NOT EXISTS learning_concept_prerequisites (
+            concept_id INTEGER NOT NULL,
+            prerequisite_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY(concept_id, prerequisite_id),
+            CHECK(concept_id != prerequisite_id),
+            FOREIGN KEY(concept_id) REFERENCES learning_concepts(id) ON DELETE CASCADE,
+            FOREIGN KEY(prerequisite_id) REFERENCES learning_concepts(id) ON DELETE CASCADE
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS learning_concept_milestones (
+            concept_id INTEGER NOT NULL,
+            milestone_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY(concept_id, milestone_id),
+            FOREIGN KEY(concept_id) REFERENCES learning_concepts(id) ON DELETE CASCADE,
+            FOREIGN KEY(milestone_id) REFERENCES learning_milestones(id) ON DELETE CASCADE
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS learning_concept_tasks (
+            concept_id INTEGER NOT NULL,
+            learning_task_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY(concept_id, learning_task_id),
+            FOREIGN KEY(concept_id) REFERENCES learning_concepts(id) ON DELETE CASCADE,
+            FOREIGN KEY(learning_task_id) REFERENCES learning_tasks(id) ON DELETE CASCADE
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS learning_session_concepts (
+            session_id INTEGER NOT NULL,
+            concept_id INTEGER NOT NULL,
+            created_at TEXT NOT NULL,
+            PRIMARY KEY(session_id, concept_id),
+            FOREIGN KEY(session_id) REFERENCES learning_study_sessions(id) ON DELETE CASCADE,
+            FOREIGN KEY(concept_id) REFERENCES learning_concepts(id) ON DELETE CASCADE
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS learning_concept_evidence (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            evidence_key TEXT NOT NULL UNIQUE,
+            payload_hash TEXT NOT NULL,
+            roadmap_id INTEGER NOT NULL,
+            concept_id INTEGER NOT NULL,
+            evidence_type TEXT NOT NULL,
+            reference TEXT NOT NULL,
+            note TEXT NOT NULL DEFAULT '',
+            mastery_score REAL NOT NULL,
+            created_at TEXT NOT NULL,
+            FOREIGN KEY(roadmap_id) REFERENCES learning_roadmaps(id) ON DELETE CASCADE,
+            FOREIGN KEY(concept_id) REFERENCES learning_concepts(id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_learning_evidence_concept ON learning_concept_evidence(concept_id, id)",
+        """
         CREATE TABLE IF NOT EXISTS entity_links (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id TEXT,
@@ -375,11 +450,36 @@ def run_migrations() -> None:
         )
         """,
         "CREATE INDEX IF NOT EXISTS idx_coding_agent_runs_user ON coding_agent_runs(user_id, created_at)",
+        """
+        CREATE TABLE IF NOT EXISTS cyber_grade_snapshots (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_scope TEXT NOT NULL,
+            period TEXT NOT NULL,
+            content_hash TEXT NOT NULL,
+            captured_at TEXT NOT NULL,
+            UNIQUE(owner_scope, period, content_hash)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS cyber_grade_snapshot_items (
+            snapshot_id INTEGER NOT NULL,
+            course_key TEXT NOT NULL,
+            course_code TEXT,
+            course_name TEXT NOT NULL,
+            credits TEXT,
+            grade TEXT,
+            values_json TEXT NOT NULL DEFAULT '[]',
+            PRIMARY KEY(snapshot_id, course_key),
+            FOREIGN KEY(snapshot_id) REFERENCES cyber_grade_snapshots(id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_cyber_grade_snapshots_period ON cyber_grade_snapshots(owner_scope, period, id)",
     ]
     with connect() as conn:
         for statement in statements:
             conn.execute(statement)
         _migrate_reminders(conn)
+        _backfill_learning_concepts(conn)
 
 
 def _migrate_reminders(conn) -> None:
@@ -421,3 +521,35 @@ def _migrate_reminders(conn) -> None:
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_reminders_chat ON reminders(chat_id, status)"
     )
+
+
+def _backfill_learning_concepts(conn) -> None:
+    from app.xninetzy.domains.it_learning.concept_graph import seed_roadmap_concepts
+
+    roadmaps = conn.execute(
+        """
+        SELECT roadmap.id, roadmap.created_at
+        FROM learning_roadmaps roadmap
+        WHERE NOT EXISTS (
+            SELECT 1 FROM learning_concepts concept
+            WHERE concept.roadmap_id=roadmap.id
+        )
+        ORDER BY roadmap.id
+        """
+    ).fetchall()
+    for roadmap in roadmaps:
+        milestones = conn.execute(
+            "SELECT id, title FROM learning_milestones WHERE roadmap_id=? ORDER BY position, id",
+            (roadmap["id"],),
+        ).fetchall()
+        tasks = conn.execute(
+            "SELECT id, title FROM learning_tasks WHERE roadmap_id=? ORDER BY day_index, id",
+            (roadmap["id"],),
+        ).fetchall()
+        seed_roadmap_concepts(
+            conn,
+            int(roadmap["id"]),
+            [(int(row["id"]), row["title"]) for row in milestones],
+            [(int(row["id"]), row["title"]) for row in tasks],
+            roadmap["created_at"] or "1970-01-01T00:00:00+00:00",
+        )

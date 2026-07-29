@@ -69,6 +69,8 @@ from app.xninetzy.os.academic.hebat.tools import (
     hebat_login_status_verbose,
 )
 from app.xninetzy.os.academic.mahasiswa_portal.tools import (
+    portal_academic_status,
+    portal_current_krs,
     portal_info,
     portal_krs_capabilities,
     portal_krs_watcher_status,
@@ -77,6 +79,8 @@ from app.xninetzy.os.academic.mahasiswa_portal.tools import (
     portal_login_submit_captcha,
     portal_logout,
     portal_navigation,
+    portal_profile,
+    portal_grade_changes,
     portal_grades,
     portal_schedule,
     portal_session_status,
@@ -175,6 +179,11 @@ from app.xninetzy.domains.it_learning.study_session import (
     learning_complete_study_session,
     learning_list_study_sessions,
     learning_start_study_session,
+)
+from app.xninetzy.domains.it_learning.concept_graph import (
+    learning_define_concept,
+    learning_get_concept_map,
+    learning_record_concept_evidence,
 )
 from app.xninetzy.os.notifications.admin_notifier import admin_notify_progress
 from app.xninetzy.interfaces.media.media_tools import (
@@ -281,8 +290,12 @@ def get_all_tools() -> list[BaseTool]:
             web_analysis_status,
             web_analysis_refresh,
             portal_info,
+            portal_profile,
+            portal_academic_status,
+            portal_current_krs,
             portal_navigation,
             portal_krs_capabilities,
+            portal_grade_changes,
             portal_grades,
             portal_schedule,
             portal_krs_watcher_status,
@@ -356,6 +369,9 @@ def get_all_tools() -> list[BaseTool]:
             learning_start_study_session,
             learning_complete_study_session,
             learning_list_study_sessions,
+            learning_define_concept,
+            learning_record_concept_evidence,
+            learning_get_concept_map,
             # Graph RAG
             graph_add_node,
             graph_add_edge,
@@ -496,6 +512,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "portal_info",
             "portal_navigation",
             "portal_krs_capabilities",
+            "portal_grade_changes",
             "portal_grades",
             "portal_schedule",
             "portal_krs_watcher_status",

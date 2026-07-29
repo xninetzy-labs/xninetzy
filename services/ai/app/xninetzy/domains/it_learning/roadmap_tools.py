@@ -146,6 +146,16 @@ def learning_review_week(chat_id: str = "system", roadmap_id: int | None = None)
             )
     else:
         lines.append("Belum ada sesi selesai dalam 7 hari terakhir.")
+    from app.xninetzy.domains.it_learning.concept_graph import mastery_focus
+
+    concepts = mastery_focus(roadmap_id, limit=3)
+    if concepts:
+        lines.append("Konsep yang perlu perhatian:")
+        for concept in concepts:
+            lines.append(
+                f"• {concept['title']} — {float(concept['mastery']):.0%}, "
+                f"{concept['evidence_count']} evidence"
+            )
     return "\n".join(lines)
 
 
@@ -157,11 +167,17 @@ def learning_get_study_progress(roadmap_id: int) -> str:
         return f"Roadmap #{roadmap_id} tidak ditemukan."
     mastery = progress["average_mastery"]
     mastery_text = f"{mastery:.0%}" if mastery is not None else "belum ada"
+    concept_mastery = progress["concept_average_mastery"]
+    concept_mastery_text = (
+        f"{concept_mastery:.0%}" if concept_mastery is not None else "belum ada"
+    )
     return (
         f"*Progress {progress['roadmap']['title']}*\n"
         f"Task: {progress['task_done']}/{progress['task_total']} ({progress['task_ratio']:.0%})\n"
         f"Sesi: {progress['session_count']}\nTotal belajar: {progress['total_minutes']} menit\n"
-        f"Rata-rata mastery: {mastery_text}"
+        f"Rata-rata mastery sesi: {mastery_text}\n"
+        f"Konsep mastered: {progress['concept_mastered']}/{progress['concept_total']} "
+        f"(rata-rata {concept_mastery_text})"
     )
 
 

@@ -27,6 +27,7 @@ Seluruh `services/ai/data/**` diabaikan Git kecuali file kebijakan
 - FAISS index/map yang merepresentasikan knowledge pribadi;
 - HEBAT browser profile, cookie/state, download, dan debug HTML;
 - web-analysis snapshot/report;
+- snapshot nilai Cyber Campus yang sudah dinormalisasi tanpa verified token;
 - media WhatsApp dan backup lokal.
 
 Sebelum commit:

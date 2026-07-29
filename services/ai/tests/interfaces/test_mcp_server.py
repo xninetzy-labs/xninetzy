@@ -18,9 +18,16 @@ def test_mcp_server_exposes_all_registered_xninetzy_tools():
     assert "hebat_sync_courses" in names
     assert "hebat_list_courses" in names
     assert "portal_schedule" in names
+    assert "portal_grade_changes" in names
+    assert "portal_profile" in names
+    assert "portal_academic_status" in names
+    assert "portal_current_krs" in names
     assert "coding_agent_run" in names
     assert "os_capture" in names
     assert "os_today" in names
+    assert "learning_define_concept" in names
+    assert "learning_record_concept_evidence" in names
+    assert "learning_get_concept_map" in names
 
     coding_tool = mcp._tool_manager.get_tool("coding_agent_run")
     assert coding_tool is not None

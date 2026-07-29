@@ -38,6 +38,22 @@ async ({period, token}) => {
 }
 """
 
+PORTAL_READ_FETCH_SCRIPT = """
+async ({target, payload}) => {
+  const response = await fetch(target, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+      "X-Requested-With": "XMLHttpRequest"
+    },
+    body: new URLSearchParams(payload).toString()
+  });
+  if (!response.ok) throw new Error(`Portal endpoint ${response.status}`);
+  return await response.text();
+}
+"""
+
 
 @dataclass(frozen=True, slots=True)
 class ScheduleEntry:
@@ -72,6 +88,38 @@ class AcademicPeriod:
     label: str
 
 
+@dataclass(frozen=True, slots=True)
+class AcademicProfile:
+    name: str
+    student_id: str
+    faculty: str
+    study_program: str
+
+
+@dataclass(frozen=True, slots=True)
+class AcademicStatusEntry:
+    semester: str
+    status: str
+    decree_number: str
+    decree_date: str
+    description: str
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentKrsEntry:
+    course_code: str
+    course_name: str
+    credits: int
+    class_code: str
+    status: str
+
+
+@dataclass(frozen=True, slots=True)
+class CurrentKrsResult:
+    entries: tuple[CurrentKrsEntry, ...]
+    total_credits: int
+
+
 @dataclass(slots=True)
 class PreparedGradeRequest:
     challenge_id: str
@@ -102,6 +150,97 @@ def _table_rows(html: str) -> list[tuple[list[str], list[list[str]]]]:
         body = [row for row in body if any(row)]
         tables.append((headers, body))
     return tables
+
+
+def _cell_value(cell: Any) -> str:
+    selected = cell.select_one("select option[selected]") or cell.select_one(
+        "select option"
+    )
+    if selected:
+        return _text(selected.get_text(" ") or selected.get("value"))
+    field = cell.select_one("input:not([type=button]):not([type=submit])")
+    if field and _text(field.get("value")):
+        return _text(field.get("value"))
+    textarea = cell.select_one("textarea")
+    if textarea:
+        return _text(textarea.get_text(" "))
+    return _text(cell.get_text(" "))
+
+
+def parse_academic_profile_html(html: str) -> AcademicProfile:
+    aliases = {
+        "nama": "name",
+        "nim": "student_id",
+        "fakultas": "faculty",
+        "program studi": "study_program",
+        "prodi": "study_program",
+    }
+    values = {name: "" for name in aliases.values()}
+    soup = BeautifulSoup(html or "", "lxml")
+    for row in soup.select("tr"):
+        cells = row.select(":scope > th, :scope > td")
+        if len(cells) < 2:
+            continue
+        label = _text(cells[0].get_text(" ")).casefold().rstrip(":")
+        target = aliases.get(label)
+        if not target:
+            continue
+        for cell in cells[1:]:
+            value = _cell_value(cell)
+            if value:
+                values[target] = value
+                break
+    if not values["name"] or not values["student_id"]:
+        raise AcademicPortalReadError("Profil akademik tidak ditemukan dalam struktur portal.")
+    return AcademicProfile(**values)
+
+
+def parse_academic_status_html(html: str) -> tuple[AcademicStatusEntry, ...]:
+    expected = ("semester", "status", "no. sk.", "tgl sk.", "keterangan")
+    for headers, rows in _table_rows(html):
+        normalized = tuple(value.casefold() for value in headers[:5])
+        if normalized != expected:
+            continue
+        return tuple(
+            AcademicStatusEntry(*((row + [""] * 5)[:5]))
+            for row in rows
+            if len(row) >= 2
+        )
+    raise AcademicPortalReadError("Tabel status akademik tidak ditemukan.")
+
+
+def parse_current_krs_html(html: str) -> CurrentKrsResult:
+    expected = (
+        "no..",
+        "kode mk",
+        "nama mata kuliah",
+        "sks mata kuliah",
+        "kelas",
+        "status",
+    )
+    for headers, rows in _table_rows(html):
+        normalized = tuple(value.casefold() for value in headers[:6])
+        if normalized != expected:
+            continue
+        entries = []
+        for row in rows:
+            if len(row) < 6 or not row[0].strip().isdigit():
+                continue
+            credits_match = re.search(r"\d+", row[3])
+            entries.append(
+                CurrentKrsEntry(
+                    course_code=row[1],
+                    course_name=row[2],
+                    credits=int(credits_match.group()) if credits_match else 0,
+                    class_code=row[4],
+                    status=row[5],
+                )
+            )
+        return CurrentKrsResult(
+            entries=tuple(entries),
+            total_credits=sum(entry.credits for entry in entries),
+        )
+    raise AcademicPortalReadError("Tabel KRS terambil tidak ditemukan.")
 
 
 def parse_schedule_html(html: str) -> ScheduleResult:
@@ -308,6 +447,73 @@ class AcademicPortalReader:
                     "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
                 )
             return parse_schedule_html(html)
+        finally:
+            await context.close()
+            await browser.close()
+            await playwright.stop()
+
+    async def read_profile(self) -> AcademicProfile:
+        html = await self._read_post_fragment(
+            "/modul/mhs/biodata-data.php",
+            "proses/_biodata-data_simpan.php",
+        )
+        return parse_academic_profile_html(html)
+
+    async def read_academic_status(self) -> tuple[AcademicStatusEntry, ...]:
+        html = await self._read_page("/modul/mhs/akademik-status.php")
+        return parse_academic_status_html(html)
+
+    async def read_current_krs(self) -> CurrentKrsResult:
+        html = await self._read_post_fragment(
+            "/modul/mhs/akademik-krs.php",
+            "proses/_akademik-krs_dilihat.php",
+        )
+        return parse_current_krs_html(html)
+
+    async def _read_page(self, path: str) -> str:
+        playwright, browser, context = await self._browser()
+        try:
+            page = await context.new_page()
+            target = urljoin(self.settings.CYBER_CAMPUS_BASE_URL, path)
+            response = await page.goto(
+                target,
+                wait_until="domcontentloaded",
+                timeout=self.settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
+            )
+            html = await page.content()
+            if not response or response.status >= 400 or looks_like_login(html):
+                raise AcademicPortalReadError(
+                    "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
+                )
+            return html
+        finally:
+            await context.close()
+            await browser.close()
+            await playwright.stop()
+
+    async def _read_post_fragment(self, page_path: str, target: str) -> str:
+        playwright, browser, context = await self._browser()
+        try:
+            page = await context.new_page()
+            response = await page.goto(
+                urljoin(self.settings.CYBER_CAMPUS_BASE_URL, page_path),
+                wait_until="domcontentloaded",
+                timeout=self.settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
+            )
+            page_html = await page.content()
+            if not response or response.status >= 400 or looks_like_login(page_html):
+                raise AcademicPortalReadError(
+                    "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
+                )
+            html = await page.evaluate(
+                PORTAL_READ_FETCH_SCRIPT,
+                {"target": target, "payload": {"aksi": "tampil"}},
+            )
+            if looks_like_login(html):
+                raise AcademicPortalReadError(
+                    "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
+                )
+            return html
         finally:
             await context.close()
             await browser.close()

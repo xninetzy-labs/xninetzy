@@ -11,6 +11,11 @@ from langchain_core.tools import tool
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
 from app.xninetzy.db.sqlite import connect, init_db
+from app.xninetzy.domains.it_learning.concept_graph import (
+    link_session_concept,
+    next_ready_concept,
+    record_evidence_in_transaction,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -92,9 +97,18 @@ def start_study_session(
                 "SELECT * FROM learning_tasks WHERE roadmap_id=? AND status!='done' ORDER BY day_index, id LIMIT 1",
                 (roadmap["id"],),
             ).fetchone()
+        concept = next_ready_concept(
+            conn,
+            int(roadmap["id"]),
+            int(selected_task["id"]) if selected_task else None,
+        )
+        if concept is None:
+            concept = next_ready_concept(conn, int(roadmap["id"]))
         resolved_objective = objective.strip()
         if not resolved_objective and selected_task:
             resolved_objective = selected_task["title"]
+            if concept:
+                resolved_objective = f"{resolved_objective} — {concept['title']}"
         if not resolved_objective:
             resolved_objective = f"Belajar {roadmap['topic']}"
         session_key = idempotency_key or f"study:{roadmap['id']}:{uuid4().hex}"
@@ -131,6 +145,8 @@ def start_study_session(
                 return dict(existing), False
             raise
         session_id = int(result.lastrowid)
+        if concept:
+            link_session_concept(conn, session_id, int(concept["id"]), now)
     session = _get_session(session_id)
     if not session:
         raise RuntimeError("Sesi belajar gagal disimpan.")
@@ -170,6 +186,12 @@ def complete_study_session(
             "mastery_after": mastery_after,
             "energy_after": energy_after,
         }
+        concept_rows = conn.execute(
+            "SELECT concept_id FROM learning_session_concepts WHERE session_id=? ORDER BY concept_id",
+            (session_id,),
+        ).fetchall()
+        concept_ids = [int(row["concept_id"]) for row in concept_rows]
+        event_payload["concept_ids"] = concept_ids
         event = conn.execute(
             """
             INSERT INTO ecosystem_events
@@ -216,6 +238,17 @@ def complete_study_session(
             "UPDATE learning_roadmaps SET updated_at=? WHERE id=?",
             (now, session["roadmap_id"]),
         )
+        for concept_id in concept_ids:
+            record_evidence_in_transaction(
+                conn,
+                concept_id,
+                "study_session",
+                f"xninetzy://learning/session/{session_id}",
+                reflection.strip(),
+                mastery_after,
+                f"study-session:{session_id}:concept:{concept_id}",
+                now,
+            )
     if event_id is not None:
         try:
             from app.xninetzy.ecosystem.reducers import consume_event

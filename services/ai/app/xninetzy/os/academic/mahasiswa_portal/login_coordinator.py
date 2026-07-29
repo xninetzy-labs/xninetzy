@@ -95,6 +95,45 @@ class CampusLoginCoordinator:
         await username.fill(credentials.username)
         await password.fill(credentials.password.get_secret_value())
 
+    async def _open_login_page(self, page: Any, url: str, timeout: int) -> Any:
+        response = await page.goto(
+            url,
+            wait_until="commit",
+            timeout=timeout,
+        )
+        await page.locator(
+            "input[name='username'],input[name='nim']"
+        ).first.wait_for(
+            state="visible",
+            timeout=timeout,
+        )
+        return response
+
+    async def _capture_captcha(self, image: Any) -> bytes:
+        try:
+            payload = await image.evaluate(
+                """
+                async element => {
+                  const source = element.currentSrc || element.src;
+                  if (!source) throw new Error("CAPTCHA source missing");
+                  const response = await fetch(source, {
+                    credentials: "same-origin",
+                    cache: "no-store"
+                  });
+                  if (!response.ok) throw new Error(`CAPTCHA image ${response.status}`);
+                  return Array.from(new Uint8Array(await response.arrayBuffer()));
+                }
+                """
+            )
+            content = bytes(payload)
+            if not 16 <= len(content) <= 2_000_000:
+                raise CampusLoginError("Ukuran gambar CAPTCHA tidak valid.")
+            return content
+        except CampusLoginError:
+            raise
+        except Exception:
+            return await image.screenshot(type="png", timeout=5_000)
+
     async def start(self, owner_id: str) -> dict[str, Any]:
         settings = get_settings()
         if not settings.CYBER_CAMPUS_ENABLED:
@@ -112,16 +151,16 @@ class CampusLoginCoordinator:
             page = await context.new_page()
             try:
                 site = get_site("mahasiswa")
-                await page.goto(
+                await self._open_login_page(
+                    page,
                     settings.CYBER_CAMPUS_BASE_URL,
-                    wait_until="domcontentloaded",
-                    timeout=settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
+                    settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
                 )
                 if not is_allowed_url(site, page.url):
                     raise CampusLoginError("Login keluar dari origin Cyber Campus.")
                 await self._fill_credentials(page)
                 captcha = await self._captcha_image(page)
-                captcha_png = await captcha.screenshot(type="png")
+                captcha_png = await self._capture_captcha(captcha)
                 now = datetime.now(UTC)
                 challenge_id = secrets.token_urlsafe(12)
                 challenge = LoginChallenge(
@@ -196,7 +235,7 @@ class CampusLoginCoordinator:
             if not authenticated:
                 await self._fill_credentials(challenge.page)
                 captcha = await self._captcha_image(challenge.page)
-                challenge.captcha_png = await captcha.screenshot(type="png")
+                challenge.captcha_png = await self._capture_captcha(captcha)
                 challenge.expires_at = datetime.now(UTC) + timedelta(
                     seconds=settings.CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS
                 )

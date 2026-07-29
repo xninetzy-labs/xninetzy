@@ -23,6 +23,10 @@ nilai, jadwal, dan rencana KRS.
 - Authenticated crawler memprioritaskan struktur KRS, KPRS, nilai, jadwal, dan
   draft akademik, termasuk menu yang berada di frame.
 - `/jadwal` membaca jadwal real-time secara deterministik dari session owner.
+- `/cyber-profile` membaca hanya nama, NIM, fakultas, dan program studi.
+- `/status-akademik` membaca riwayat status akademik per semester.
+- `/krs status` membaca mata kuliah, kelas, status, dan total SKS aktif tanpa
+  mengubah portal.
 - `/nilai` membuka halaman KHS agar Cyber Campus mengirim token melalui akun
   Telegram yang terdaftar pada portal, lalu mengirim challenge balasan ke
   WhatsApp admin.
@@ -60,9 +64,19 @@ Setelah session tersedia, jalankan:
 /web-refresh mahasiswa
 /web-analysis mahasiswa
 /portalinfo
+/cyber-profile
+/status-akademik
+/krs status
 /jadwal
 /nilai
 ```
+
+Kemampuan read-only ini berada di shared Cyber Campus adapter. WhatsApp memakai
+slash command langsung, natural chat memakai LangGraph, sedangkan Codex, Claude
+Code, dan OpenCode memakai tool MCP `portal_profile`,
+`portal_academic_status`, `portal_current_krs`, dan `portal_schedule`. Semua
+interface membaca struktur dan session yang sama. Profil dibatasi ke empat field
+akademik; data biodata lain tidak dikembalikan atau disimpan.
 
 Untuk site `mahasiswa`, `/web-refresh` otomatis memakai encrypted owner session.
 Crawler hanya meneruskan GET/HEAD, memblokir request mutasi, menolak URL submit,
@@ -86,6 +100,11 @@ Halaman KRS memiliki tahap **Penawaran MK**, **MK Lintas Rumpun**,
 **MK Terambil**, dan **Cetak KRS**. Pada saat periode KRS tidak aktif, portal
 tidak menampilkan form atau checkbox pilihan. Xninetzy hanya melaporkan status
 tersebut; ia tidak mencoba memanggil endpoint POST internal.
+
+Pembacaan `MK Terambil` memakai endpoint tampilan fixed dengan payload
+`aksi=tampil`, lalu memvalidasi header enam kolom sebelum membentuk model typed.
+Status akademik juga divalidasi terhadap header portal. Jika struktur berubah,
+reader gagal secara eksplisit dan tidak menebak posisi kolom.
 
 Implementasi write KRS belum aktif. Target workflow adalah: baca penawaran dan
 status akademik, susun plan tanpa mutasi, minta approval WhatsApp untuk perubahan,
@@ -153,6 +172,27 @@ KHS. Alur ini tidak bergantung pada jQuery halaman.
 Jadwal nyata yang diverifikasi pada 29 Juli 2026 menghasilkan 10 mata ajar untuk
 Semester Genap 2025/2026. Nilai hanya dinyatakan berhasil setelah token aktif
 menghasilkan tabel KHS; token salah atau kedaluwarsa tidak menghasilkan klaim.
+
+## Snapshot dan perubahan nilai
+
+Pembacaan KHS yang berhasil dinormalisasi menjadi identitas mata kuliah, kode,
+SKS, nilai, dan field sumbernya. Xninetzy menghitung hash isi sebelum menyimpan
+snapshot ke SQLite lokal. Hasil yang identik bersifat replay-safe dan tidak
+membuat snapshot duplikat.
+
+```text
+/nilai changes
+/nilai perubahan
+```
+
+Kedua command membandingkan dua snapshot berbeda terakhir pada periode yang
+sama. Perubahan diklasifikasikan sebagai mata kuliah baru, nilai berubah, atau
+mata kuliah hilang dari snapshot. Snapshot pertama menjadi baseline dan tidak
+dianggap sebagai perubahan. Codex, Claude Code, OpenCode, dan LangGraph memakai
+tool bersama `portal_grade_changes` melalui registry dan MCP yang sama.
+
+Verified token tidak disimpan bersama snapshot. Database hanya berada pada
+instalasi owner dan tetap diabaikan Git.
 
 ## Konfigurasi
 

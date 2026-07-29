@@ -5,6 +5,7 @@ from zoneinfo import ZoneInfo
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.db.sqlite import connect
+from app.xninetzy.domains.it_learning.concept_graph import next_ready_concept
 
 
 def get_roadmap_progress(roadmap_id: int) -> dict | None:
@@ -40,6 +41,15 @@ def get_roadmap_progress(roadmap_id: int) -> dict | None:
             """,
             (roadmap_id,),
         ).fetchone()
+        concepts = conn.execute(
+            """
+            SELECT COUNT(*) AS total,
+                   SUM(CASE WHEN mastery>=0.8 THEN 1 ELSE 0 END) AS mastered,
+                   AVG(mastery) AS average_mastery
+            FROM learning_concepts WHERE roadmap_id=?
+            """,
+            (roadmap_id,),
+        ).fetchone()
     total = int(tasks["total"] or 0)
     done = int(tasks["done"] or 0)
     return {
@@ -51,6 +61,9 @@ def get_roadmap_progress(roadmap_id: int) -> dict | None:
         "total_minutes": int(sessions["minutes"] or 0),
         "average_mastery": sessions["average_mastery"],
         "latest_session": dict(latest) if latest else None,
+        "concept_total": int(concepts["total"] or 0),
+        "concept_mastered": int(concepts["mastered"] or 0),
+        "concept_average_mastery": concepts["average_mastery"],
     }
 
 
@@ -74,6 +87,7 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
                 "reason": f"Sesi #{active['id']} masih aktif.",
                 "recall": "Lanjutkan dari titik terakhir dan catat evidence saat selesai.",
                 "session_id": active["id"],
+                "concept_id": None,
             }
         if roadmap_id is None:
             roadmap = conn.execute(
@@ -98,7 +112,14 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
             """,
             (roadmap["id"],),
         ).fetchone()
-    focus = pending["title"] if pending else roadmap["target"] or roadmap["topic"]
+        concept = next_ready_concept(conn, int(roadmap["id"]))
+    task_focus = pending["title"] if pending else roadmap["target"] or roadmap["topic"]
+    focus = f"{task_focus} — {concept['title']}" if concept else task_focus
+    concept_reason = (
+        f" Konsep siap berikutnya: {concept['title']} ({float(concept['mastery']):.0%})."
+        if concept
+        else ""
+    )
     if not latest:
         return {
             "roadmap_id": roadmap["id"],
@@ -106,9 +127,10 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
             "mode": "start",
             "focus": focus,
             "minutes": 25,
-            "reason": "Belum ada sesi aktual untuk roadmap ini.",
+            "reason": "Belum ada sesi aktual untuk roadmap ini." + concept_reason,
             "recall": "Tulis apa yang sudah diketahui sebelum membuka materi.",
             "session_id": None,
+            "concept_id": int(concept["id"]) if concept else None,
         }
     mastery = float(latest["mastery_after"] or 0)
     energy = latest["energy_after"] or latest["energy_before"] or 3
@@ -122,11 +144,17 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
         )
     elif mastery < 0.8:
         mode = "practice"
-        reason = f"Mastery terakhir {mastery:.0%}; lanjutkan dengan latihan terarah."
+        reason = (
+            f"Mastery terakhir {mastery:.0%}; lanjutkan dengan latihan terarah."
+            + concept_reason
+        )
         recall = f"Mulai dengan recall singkat: {latest['objective']}."
     else:
         mode = "advance"
-        reason = f"Mastery terakhir {mastery:.0%}; siap maju sambil menjaga recall."
+        reason = (
+            f"Mastery terakhir {mastery:.0%}; siap maju sambil menjaga recall."
+            + concept_reason
+        )
         recall = f"Uji ulang satu pertanyaan tentang {latest['objective']} sebelum fokus baru."
     return {
         "roadmap_id": roadmap["id"],
@@ -137,6 +165,7 @@ def build_today_plan(roadmap_id: int | None = None) -> dict | None:
         "reason": reason,
         "recall": recall,
         "session_id": None,
+        "concept_id": int(concept["id"]) if concept else None,
     }
 
 

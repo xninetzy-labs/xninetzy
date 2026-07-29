@@ -24,7 +24,7 @@ code, tests, configuration, and documentation agree.
 | WA-Approval-01 | Admin buttons, media forwarding, LID normalization | Complete | 11 WA tests; 6 AI notification/media tests; TypeScript lint/build |
 | WA-Menu-01 | Admin startup menu with 15 buttons and fallback | Complete | 20 WA tests; lint/build; live 5-card/15-button delivery |
 | Runtime-01 | Fixed Playwright Docker layer and laptop boot restart | Complete | Docker images built; both services healthy; Docker enabled/active |
-| Academic-01b | Live schedule + private WhatsApp grade-token reader | Partial | 322 AI tests; real 10-course schedule; live KHS token pending |
+| Academic-01b | Typed Cyber Campus reads + private WhatsApp grade-token reader | Partial | 346 AI tests; live profile/status/10 KRS rows; offering model pending |
 | Runtime-02 | Cross-platform bridge Compose + bootstrap installers | Complete | Compose config; Bash syntax; Docker health; docs build |
 
 ## Batch P0-01 — API authentication and owner boundary
@@ -203,11 +203,20 @@ Completed scope: 2026-07-29
 - [x] Enforce the live portal order: open, wait, fill token, set semester, fetch.
 - [x] Confirm the dropdown remains at its default value until token submission.
 - [x] Support student-semester aliases from entry year without an LLM call.
+- [x] Normalize successful KHS reads into idempotent per-period local snapshots.
+- [x] Compare the two latest distinct snapshots without persisting verified tokens.
+- [x] Expose the same grade-change reader through WhatsApp, LangGraph, and MCP.
+- [x] Parse and expose minimal profile, academic-status history, and current KRS.
+- [x] Keep biodata outside the minimal allowlist out of tool responses and storage.
+- [x] Share the three readers through WhatsApp commands, LangGraph, and MCP.
 - [x] Verify a live Semester Genap 2025/2026 schedule with 10 entries.
-- [ ] Complete a live KHS read with a fresh owner token.
+- [x] Complete a live KHS read with a fresh owner token and required field order.
+- [ ] Add course-offering and quota models when the KRS period is active.
 
-Verification: 331 full AI tests, full Ruff, 26 WA tests, WA lint/build, and
-healthy real Compose services.
+Verification: 346 full AI tests, 29 focused academic/parity tests, full Ruff,
+Astro check/build with 21 pages, healthy real Compose services, and live
+read-only smoke checks for the minimal profile, one academic-status row, and 10
+current-KRS rows. Private field values were not emitted by the smoke check.
 
 ## Batch Runtime-02 — Cross-platform installation
 

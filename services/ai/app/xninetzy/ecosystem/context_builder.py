@@ -16,6 +16,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         "relevant_knowledge": [],
         "active_roadmaps": [],
         "learning_focus": None,
+        "learning_mastery": [],
         "habit_status": [],
         "workout_summary": None,
         "recent_events": [],
@@ -124,6 +125,17 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: learning focus fetch failed: %s", e)
 
     try:
+        from app.xninetzy.domains.it_learning.concept_graph import mastery_focus
+
+        context["learning_mastery"] = [
+            f"{item['title']} {float(item['mastery']):.0%} "
+            f"({item['evidence_count']} evidence)"
+            for item in mastery_focus(limit=3)
+        ]
+    except Exception as e:
+        logger.debug("Context: learning mastery fetch failed: %s", e)
+
+    try:
         from app.xninetzy.os.life.habit_manager import get_habit_today
 
         context["habit_status"] = [
@@ -201,6 +213,9 @@ def format_context_for_prompt(ctx: dict) -> str:
 
     if ctx.get("learning_focus"):
         parts.append("Adaptive learning focus: " + ctx["learning_focus"])
+
+    if ctx.get("learning_mastery"):
+        parts.append("Weakest learning concepts: " + " | ".join(ctx["learning_mastery"]))
 
     if ctx.get("habit_status"):
         parts.append("Today habits: " + " | ".join(ctx["habit_status"]))

@@ -327,6 +327,20 @@ Analyzer hanya memakai GET/HEAD, memblokir mutasi, dan tidak mengeksekusi
 JavaScript mentah dari LLM. Semua approval dikirim ke WhatsApp dengan tombol
 Approve/Reject dan fallback `/approve` atau `/reject`.
 
+Data akademik read-only memakai parser dan tool bersama:
+
+```text
+/cyber-profile   — nama, NIM, fakultas, dan program studi
+/status-akademik — riwayat status per semester
+/krs status      — mata kuliah, kelas, status, dan total SKS aktif
+/jadwal          — jadwal kuliah aktif
+```
+
+Tool MCP ekuivalennya adalah `portal_profile`, `portal_academic_status`,
+`portal_current_krs`, dan `portal_schedule`. Codex, Claude Code, OpenCode,
+LangGraph, dan WhatsApp menggunakan adapter yang sama. Pembacaan ini tidak
+menyimpan profil atau KRS ke SQLite dan tidak menjalankan mutasi portal.
+
 Token nilai Cyber Campus hanya diterima dari WhatsApp admin melalui challenge
 yang terikat owner dan berumur pendek. Token tidak melewati LLM, tidak disimpan,
 dan dikonsumsi setelah satu percobaan pembacaan nilai.
@@ -338,6 +352,13 @@ halaman yang sama, lalu reader memilih semester dan mengambil tabel nilai.
 Dropdown semester tidak boleh dipilih sebelum token terisi karena portal akan
 menolak token tersebut. Abaikan token yang terbit dari challenge lama dan selalu
 gunakan token yang muncul setelah prompt WhatsApp terbaru.
+
+Setelah tabel KHS berhasil dibaca, Xninetzy menyimpan snapshot nilai terstruktur
+ke SQLite lokal instalasi. Snapshot dengan isi identik tidak diduplikasi dan
+token tidak pernah masuk database. Gunakan `/nilai changes` atau `/nilai
+perubahan` untuk membandingkan dua snapshot berbeda terakhir pada periode yang
+sama. Tool MCP `portal_grade_changes` memberikan hasil yang sama kepada Codex,
+Claude Code, dan OpenCode.
 
 ### 7. Kirim pesan pertama
 

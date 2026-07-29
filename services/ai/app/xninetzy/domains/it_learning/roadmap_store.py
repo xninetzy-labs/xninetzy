@@ -6,6 +6,7 @@ from zoneinfo import ZoneInfo
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.db.sqlite import connect
+from app.xninetzy.domains.it_learning.concept_graph import seed_roadmap_concepts
 from app.xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
 
 
@@ -37,16 +38,21 @@ def save_roadmap_draft(
             ),
         )
         roadmap_id = int(cur.lastrowid)
+        milestone_rows: list[tuple[int, str]] = []
         for idx, milestone in enumerate(draft.milestones, 1):
-            conn.execute(
+            result = conn.execute(
                 "INSERT INTO learning_milestones (roadmap_id, title, position, status, created_at, updated_at) VALUES (?,?,?,?,?,?)",
                 (roadmap_id, milestone, idx, "draft", now, now),
             )
+            milestone_rows.append((int(result.lastrowid), milestone))
+        task_rows: list[tuple[int, str]] = []
         for idx, task in enumerate(draft.first_day_tasks, 1):
-            conn.execute(
+            result = conn.execute(
                 "INSERT INTO learning_tasks (roadmap_id, title, day_index, status, created_at, updated_at) VALUES (?,?,?,?,?,?)",
                 (roadmap_id, task, idx, "draft", now, now),
             )
+            task_rows.append((int(result.lastrowid), task))
+        seed_roadmap_concepts(conn, roadmap_id, milestone_rows, task_rows, now)
         for source in draft.source_refs:
             conn.execute(
                 """

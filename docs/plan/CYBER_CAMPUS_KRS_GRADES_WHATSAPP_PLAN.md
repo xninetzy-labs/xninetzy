@@ -13,6 +13,8 @@ Claude Code, and OpenCode through the central registry and `xninetzy` MCP.
 
 - WhatsApp `ADMIN_JID` is the only channel for CAPTCHA, grade-token intake,
   confirmation, approval, verification media, and operator action requests.
+- Local-owner MCP/CLI clients may additionally submit grade tokens via the
+  `portal_grade_token_submit` tool; CAPTCHA remains WhatsApp-only.
 - Grade tokens are accepted only by a deterministic WhatsApp command/reply flow,
   never passed to an LLM, and kept only in bounded volatile memory.
 - CAPTCHA and OTP remain manual human-in-the-loop challenges.

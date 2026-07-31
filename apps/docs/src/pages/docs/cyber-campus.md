@@ -163,6 +163,9 @@ Alternatif eksplisitnya adalah `/grade-token <challenge-id> <token>`.
 Command privat ini tidak masuk registry dan tidak diekspos ke Codex, Claude Code,
 OpenCode, atau LangGraph. MCP hanya dapat memulai `portal_grades`, sedangkan token
 tetap harus datang dari WhatsApp admin.
+Selain balasan WhatsApp admin, client MCP/CLI yang terautentikasi sebagai owner
+lokal dapat mengirim token lewat tool `portal_grade_token_submit`; token tidak
+pernah disimpan atau ditulis ke log.
 
 Browser KHS tetap hidup selama challenge agar pembukaan halaman kedua tidak
 mengganti token portal. Urutannya adalah: buka halaman, tunggu token, isi token,

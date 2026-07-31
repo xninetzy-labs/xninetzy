@@ -12,6 +12,8 @@ ADMIN_EVENTS = {
     "roadmap_draft_created",
     "roadmap_needs_approval",
     "knowledge_ingest_needs_approval",
+    "krs_watcher_change",
+    "krs_watcher_session_expired",
 }
 
 

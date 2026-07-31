@@ -68,13 +68,37 @@ class GradeTokenCoordinator:
                 raise GradeChallengeError("Challenge token nilai tidak ditemukan atau kedaluwarsa.")
             if challenge.owner_id != normalized_owner:
                 raise PermissionError("Challenge token nilai bukan milik sender ini.")
-            challenge.attempts += 1
-            if not re.fullmatch(r"\d{4,10}", token.strip()):
-                if challenge.attempts >= get_settings().CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS:
-                    self._challenges.pop(challenge_id, None)
-                raise GradeChallengeError("Format token nilai tidak valid.")
-            self._challenges.pop(challenge_id, None)
-            return token.strip(), challenge.academic_period
+            return self._consume_challenge(challenge, token)
+
+    def _consume_challenge(
+        self, challenge: GradeChallenge, token: str
+    ) -> tuple[str, str]:
+        challenge.attempts += 1
+        if not re.fullmatch(r"\d{4,10}", token.strip()):
+            if challenge.attempts >= get_settings().CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS:
+                self._challenges.pop(challenge.challenge_id, None)
+            raise GradeChallengeError("Format token nilai tidak valid.")
+        self._challenges.pop(challenge.challenge_id, None)
+        return token.strip(), challenge.academic_period
+
+    async def consume_owner_token(
+        self, owner_id: str, token: str
+    ) -> tuple[str, str, str]:
+        normalized_owner = normalize_whatsapp_jid(owner_id)
+        async with self._lock:
+            self._purge(datetime.now(UTC))
+            challenge = next(
+                (
+                    candidate
+                    for candidate in self._challenges.values()
+                    if candidate.owner_id == normalized_owner
+                ),
+                None,
+            )
+            if challenge is None:
+                raise GradeChallengeError("Challenge token nilai tidak ditemukan atau kedaluwarsa.")
+            clean_token, academic_period = self._consume_challenge(challenge, token)
+            return challenge.challenge_id, clean_token, academic_period
 
     async def cancel(self, challenge_id: str) -> None:
         async with self._lock:

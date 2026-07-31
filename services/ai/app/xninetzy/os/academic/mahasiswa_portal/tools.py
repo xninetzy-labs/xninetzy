@@ -17,6 +17,7 @@ from app.xninetzy.os.academic.mahasiswa_portal.grade_snapshots import (
     GRADE_SNAPSHOT_REPOSITORY,
     GradeSnapshotOutcome,
 )
+from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsWatcherStore
 from app.xninetzy.os.academic.mahasiswa_portal.reader import (
     ACADEMIC_PORTAL_READER,
     AcademicProfile,
@@ -389,19 +390,27 @@ async def portal_grades(
 
 
 async def submit_grade_token(
-    challenge_id: str,
-    token: str,
-    sender_id: str,
+    challenge_id: str = "",
+    token: str = "",
+    sender_id: str = "",
     sender_name: str | None = None,
 ) -> str:
     if not is_owner_admin(sender_id, sender_name):
         return "Token nilai hanya dapat dikirim oleh WhatsApp admin."
     try:
-        clean_token, academic_period = await GRADE_TOKEN_COORDINATOR.consume(
-            challenge_id,
-            _notification_jid(),
-            token,
-        )
+        if challenge_id:
+            clean_token, academic_period = await GRADE_TOKEN_COORDINATOR.consume(
+                challenge_id,
+                _notification_jid(),
+                token,
+            )
+        else:
+            challenge_id, clean_token, academic_period = (
+                await GRADE_TOKEN_COORDINATOR.consume_owner_token(
+                    _notification_jid(),
+                    token,
+                )
+            )
         result = await ACADEMIC_PORTAL_READER.read_grades(
             clean_token,
             academic_period,
@@ -416,6 +425,27 @@ async def submit_grade_token(
 
 
 @tool
+async def portal_grade_token_submit(
+    challenge_id: str = "",
+    token: str = "",
+    sender_id: str = "",
+    sender_name: str | None = None,
+) -> str:
+    """Kirim token KHS sekali pakai untuk challenge aktif yang sudah diverifikasi.
+
+    challenge_id opsional: jika kosong, challenge aktif milik owner lokal yang
+    dipakai. Token bersifat sekali pakai, tidak pernah disimpan, dan tidak
+    ditulis ke log. Hanya owner lokal terautentikasi yang dapat menggunakannya.
+    """
+    return await submit_grade_token(
+        challenge_id=challenge_id,
+        token=token,
+        sender_id=sender_id,
+        sender_name=sender_name,
+    )
+
+
+@tool
 def portal_krs_watcher_status() -> str:
     """Status watcher slot KRS yang hanya membaca dan mengirim notifikasi.
 
@@ -423,10 +453,42 @@ def portal_krs_watcher_status() -> str:
     WhatsApp. Tidak melakukan klik/submit otomatis pada form KRS; tindakan final
     tetap manual oleh owner instalasi lokal.
     """
+    state = KrsWatcherStore().get()
+    lines = [
+        "*Watcher Slot KRS*",
+        f"• Aktif: {'ya' if state['enabled'] else 'tidak'}",
+        f"• Interval: {int(state['interval_seconds'] or 0) // 60} menit",
+        f"• Mulai: {state['started_at'] or '-'}",
+        f"• Tick terakhir: {state['last_tick_at'] or '-'}",
+        f"• Status: {state['last_status']}",
+    ]
+    if state.get("last_announcement"):
+        start, _, end = str(state["last_announcement"]).partition("|")
+        lines.append(f"• Jadwal pengumuman: {start} s.d. {end}")
+    lines.append(f"• MK terambil: {state['last_mk_count']}")
+    if state.get("last_error"):
+        lines.append(f"• Error terakhir: {state['last_error']}")
+    lines.append("• Batas permanen: READ + NOTIFY saja, tidak pernah klik/submit.")
+    return "\n".join(lines)
+
+
+@tool
+def portal_krs_watcher_start(interval_minutes: int = 10) -> str:
+    """Aktifkan watcher slot KRS: polling READ-only + notifikasi WhatsApp saat jadwal berubah."""
+    if not 1 <= interval_minutes <= 1440:
+        return "Interval harus antara 1-1440 menit."
+    KrsWatcherStore().set_enabled(True, interval_minutes * 60)
     return (
-        "Watcher KRS belum diaktifkan sampai selector portal tervalidasi manual. "
-        "Batas permanen: READ + NOTIFY saja, tidak pernah klik/submit."
+        f"Watcher KRS aktif: polling tiap {interval_minutes} menit. "
+        "READ + NOTIFY saja; tidak pernah klik/submit."
     )
+
+
+@tool
+def portal_krs_watcher_stop() -> str:
+    """Nonaktifkan watcher slot KRS."""
+    KrsWatcherStore().set_enabled(False)
+    return "Watcher KRS dinonaktifkan."
 
 
 @tool

@@ -181,3 +181,135 @@ async def test_shared_academic_read_tools_format_typed_results(monkeypatch):
     assert "Program studi: Sistem Informasi" in profile
     assert "2025/2026 Genap: AKTIF — Registrasi" in status
     assert "Total SKS: 3" in current_krs
+
+
+@pytest.mark.asyncio
+async def test_grade_token_submit_mcp_denies_non_admin(monkeypatch):
+    consumed = False
+
+    async def fake_consume(challenge_id, owner_id, token):
+        nonlocal consumed
+        consumed = True
+        return token, "semester 1"
+
+    monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: False)
+    monkeypatch.setattr(portal_tools.GRADE_TOKEN_COORDINATOR, "consume", fake_consume)
+
+    result = await portal_tools.portal_grade_token_submit.ainvoke(
+        {
+            "challenge_id": "challenge",
+            "token": "12345",
+            "sender_id": "stranger@s.whatsapp.net",
+        }
+    )
+
+    assert result == "Token nilai hanya dapat dikirim oleh WhatsApp admin."
+    assert consumed is False
+
+
+@pytest.mark.asyncio
+async def test_grade_token_submit_mcp_owner_persists_snapshot(monkeypatch):
+    saved = []
+
+    async def fake_consume(challenge_id, owner_id, token):
+        return token, "semester 1"
+
+    async def fake_read_grades(token, academic_period, challenge_id):
+        return GradeResult(
+            period="2024/2025 - Ganjil",
+            entries=(
+                GradeEntry(
+                    values=(
+                        ("Kode MK", "SI101"),
+                        ("Mata Kuliah", "Dasar Sistem Informasi"),
+                        ("Nilai", "AB"),
+                    )
+                ),
+            ),
+        )
+
+    def fake_save(result):
+        saved.append(result)
+        return SimpleNamespace(snapshot_id=7, changes=(), created=True)
+
+    monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: True)
+    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@s.whatsapp.net")
+    monkeypatch.setattr(portal_tools.GRADE_TOKEN_COORDINATOR, "consume", fake_consume)
+    monkeypatch.setattr(portal_tools.ACADEMIC_PORTAL_READER, "read_grades", fake_read_grades)
+    monkeypatch.setattr(portal_tools.GRADE_SNAPSHOT_REPOSITORY, "save", fake_save)
+
+    result = await portal_tools.portal_grade_token_submit.ainvoke(
+        {
+            "challenge_id": "challenge",
+            "token": "12345",
+            "sender_id": "628123@s.whatsapp.net",
+        }
+    )
+
+    assert len(saved) == 1
+    assert "Snapshot lokal: #7" in result
+
+
+@pytest.mark.asyncio
+async def test_grade_token_submit_token_only_resolves_owner(monkeypatch):
+    consume_calls = []
+    read_challenge_ids = []
+
+    async def fake_consume_owner_token(owner_id, token):
+        consume_calls.append((owner_id, token))
+        return "challenge-resolved", token, "2024/2025 - Ganjil"
+
+    async def fake_read_grades(token, academic_period, challenge_id):
+        read_challenge_ids.append(challenge_id)
+        return GradeResult(
+            period="2024/2025 - Ganjil",
+            entries=(
+                GradeEntry(
+                    values=(
+                        ("Kode MK", "SI101"),
+                        ("Mata Kuliah", "Dasar SI"),
+                        ("Nilai", "A"),
+                    )
+                ),
+            ),
+        )
+
+    def fake_save(result):
+        return SimpleNamespace(snapshot_id=7, changes=(), created=True)
+
+    monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: True)
+    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@s.whatsapp.net")
+    monkeypatch.setattr(
+        portal_tools.GRADE_TOKEN_COORDINATOR,
+        "consume_owner_token",
+        fake_consume_owner_token,
+    )
+    monkeypatch.setattr(portal_tools.ACADEMIC_PORTAL_READER, "read_grades", fake_read_grades)
+    monkeypatch.setattr(portal_tools.GRADE_SNAPSHOT_REPOSITORY, "save", fake_save)
+
+    result = await portal_tools.submit_grade_token(
+        "", "12345", "628123@s.whatsapp.net"
+    )
+
+    assert read_challenge_ids == ["challenge-resolved"]
+    assert "Snapshot lokal: #7" in result
+    assert consume_calls == [("628123@s.whatsapp.net", "12345")]
+
+
+@pytest.mark.asyncio
+async def test_grade_token_submit_token_only_denies_non_admin(monkeypatch):
+    async def unexpected_consume_owner_token(owner_id, token):
+        raise AssertionError("consume_owner_token must not be called for non-admin")
+
+    monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: False)
+    monkeypatch.setattr(
+        portal_tools.GRADE_TOKEN_COORDINATOR,
+        "consume_owner_token",
+        unexpected_consume_owner_token,
+    )
+
+    result = await portal_tools.submit_grade_token(
+        "", "12345", "stranger@s.whatsapp.net"
+    )
+
+    assert result == "Token nilai hanya dapat dikirim oleh WhatsApp admin."

@@ -98,6 +98,103 @@ async def wa_send_text(jid: str, text: str) -> str:
 
 
 @tool
+async def wa_send_image(jid: str, source: str, caption: str = "") -> str:
+    """Kirim gambar ke JID WhatsApp dari URL atau base64.
+
+    Args:
+        jid: WhatsApp JID penerima (format: 628xxx@s.whatsapp.net atau xxx@g.us)
+        source: URL, file URL, atau base64 dari gambar
+        caption: Caption gambar (opsional)
+    """
+    try:
+        await call_wa_tool("send_image", {"jid": jid, "source": source, "caption": caption})
+        return f"✅ Pesan berhasil dikirim ke {jid}"
+    except WaToolError as e:
+        return _friendly_error(str(e))
+
+
+@tool
+async def wa_send_document(jid: str, source: str, filename: str, mimetype: str) -> str:
+    """Kirim dokumen ke JID WhatsApp dari URL atau base64.
+
+    Args:
+        jid: WhatsApp JID penerima (format: 628xxx@s.whatsapp.net atau xxx@g.us)
+        source: URL, file URL, atau base64 dari dokumen
+        filename: Nama file yang tampil di WhatsApp
+        mimetype: Tipe MIME dokumen (contoh: application/pdf)
+    """
+    try:
+        await call_wa_tool(
+            "send_document",
+            {"jid": jid, "source": source, "filename": filename, "mimetype": mimetype},
+        )
+        return f"✅ Pesan berhasil dikirim ke {jid}"
+    except WaToolError as e:
+        return _friendly_error(str(e))
+
+
+@tool
+async def wa_send_audio(jid: str, source: str) -> str:
+    """Kirim audio biasa ke JID WhatsApp dari URL atau base64.
+
+    Args:
+        jid: WhatsApp JID penerima (format: 628xxx@s.whatsapp.net atau xxx@g.us)
+        source: URL, file URL, atau base64 dari audio
+    """
+    try:
+        await call_wa_tool("send_audio", {"jid": jid, "source": source})
+        return f"✅ Pesan berhasil dikirim ke {jid}"
+    except WaToolError as e:
+        return _friendly_error(str(e))
+
+
+@tool
+async def wa_send_ptt(jid: str, source: str) -> str:
+    """Kirim voice note/push-to-talk ke JID WhatsApp dari URL atau base64.
+
+    Args:
+        jid: WhatsApp JID penerima (format: 628xxx@s.whatsapp.net atau xxx@g.us)
+        source: URL, file URL, atau base64 dari audio voice note
+    """
+    try:
+        await call_wa_tool("send_ptt", {"jid": jid, "source": source})
+        return f"✅ Pesan berhasil dikirim ke {jid}"
+    except WaToolError as e:
+        return _friendly_error(str(e))
+
+
+@tool
+async def wa_send_video(jid: str, source: str, caption: str = "") -> str:
+    """Kirim video ke JID WhatsApp dari URL atau base64.
+
+    Args:
+        jid: WhatsApp JID penerima (format: 628xxx@s.whatsapp.net atau xxx@g.us)
+        source: URL, file URL, atau base64 dari video
+        caption: Caption video (opsional)
+    """
+    try:
+        await call_wa_tool("send_video", {"jid": jid, "source": source, "caption": caption})
+        return f"✅ Pesan berhasil dikirim ke {jid}"
+    except WaToolError as e:
+        return _friendly_error(str(e))
+
+
+@tool
+async def wa_send_sticker(jid: str, source: str) -> str:
+    """Kirim stiker WebP ke JID WhatsApp dari URL atau base64.
+
+    Args:
+        jid: WhatsApp JID penerima (format: 628xxx@s.whatsapp.net atau xxx@g.us)
+        source: URL, file URL, atau base64 dari stiker WebP
+    """
+    try:
+        await call_wa_tool("send_sticker", {"jid": jid, "source": source})
+        return f"✅ Pesan berhasil dikirim ke {jid}"
+    except WaToolError as e:
+        return _friendly_error(str(e))
+
+
+@tool
 async def wa_send_admin_verification(approval_id: int, text: str) -> str:
     """Kirim approval owner-scoped ke admin WhatsApp dengan tombol dan fallback command."""
     try:

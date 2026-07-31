@@ -518,6 +518,23 @@ def run_migrations() -> None:
         )
         """,
         "CREATE INDEX IF NOT EXISTS idx_cyber_grade_snapshots_period ON cyber_grade_snapshots(owner_scope, period, id)",
+        """
+        CREATE TABLE IF NOT EXISTS krs_watcher_state (
+            owner_scope TEXT PRIMARY KEY,
+            enabled INTEGER NOT NULL DEFAULT 0,
+            interval_seconds INTEGER NOT NULL DEFAULT 600,
+            started_at TEXT,
+            last_tick_at TEXT,
+            last_fingerprint TEXT,
+            last_notified_fingerprint TEXT,
+            last_announcement TEXT,
+            last_mk_count INTEGER NOT NULL DEFAULT 0,
+            last_status TEXT NOT NULL DEFAULT 'idle',
+            last_error TEXT,
+            session_expired_notified INTEGER NOT NULL DEFAULT 0,
+            updated_at TEXT
+        )
+        """,
     ]
     with connect() as conn:
         for statement in statements:

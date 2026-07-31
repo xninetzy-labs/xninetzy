@@ -120,6 +120,8 @@ class Settings(BaseSettings):
     WA_MCP_BASE_URL: str = "http://127.0.0.1:8081"
     WA_MCP_API_KEY: str = ""
     WA_MEDIA_MAX_BYTES: int = 25 * 1024 * 1024
+    AUDIO_TRANSCRIPTION_ENABLED: bool = True
+    AUDIO_TRANSCRIPTION_MODEL: str = "whisper-1"
 
     # Durable single-owner OS schedules. Delivery jobs are at-most-once; an
     # ambiguous WA send is surfaced for manual inspection instead of blind retry.

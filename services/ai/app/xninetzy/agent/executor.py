@@ -102,6 +102,11 @@ async def agent_node(state: AgentState) -> dict:
                 f"Call media_read_image(chat_id='{state.get('chat_id', '')}', "
                 f"message_id='{msg_id}') before answering questions about text in the image."
             )
+        elif media_type == "audio":
+            instruction = (
+                f"Call media_read_audio(chat_id='{state.get('chat_id', '')}', "
+                f"message_id='{msg_id}') before answering questions about the audio."
+            )
         else:
             instruction = "Explain honestly that this media type is not supported yet."
         media_context = (
@@ -149,6 +154,7 @@ async def agent_node(state: AgentState) -> dict:
     except Exception:
         pass
 
+    quoted_text = metadata.get("quotedMessageText") or ""
     system_content = AGENT_PROMPT.format(
         bot_name=settings.BOT_NAME,
         bot_owner=settings.BOT_OWNER,
@@ -162,6 +168,7 @@ async def agent_node(state: AgentState) -> dict:
         quoted_participant=metadata.get("quotedParticipantJid")
         or metadata.get("participantJid")
         or "",
+        quoted_message_text=quoted_text,
         is_reply_to_bot=metadata.get("isReplyToBot", False),
         context_routing=context_routing,
         skills_context=skills_context,

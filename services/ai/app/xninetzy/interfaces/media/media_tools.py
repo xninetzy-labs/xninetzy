@@ -161,6 +161,34 @@ async def _read_image(chat_id: str, message_id: str) -> dict:
     return parsed
 
 
+async def _read_audio(chat_id: str, message_id: str) -> dict:
+    """Download an audio message and transcribe it to text."""
+    downloaded = await _download_media(chat_id, message_id)
+    from app.xninetzy.interfaces.media.audio_transcriber import transcribe_audio
+
+    parsed = await transcribe_audio(
+        downloaded["local_path"],
+        mime_type=downloaded.get("mime_type"),
+        filename=downloaded.get("filename"),
+    )
+    parsed["_meta"] = downloaded
+    if not parsed.get("error"):
+        try:
+            save_media_item(
+                chat_id=chat_id,
+                message_id=message_id,
+                sender_id=None,
+                media_type="audio",
+                mime_type=downloaded.get("mime_type"),
+                file_name=downloaded.get("filename"),
+                local_path=downloaded["local_path"],
+                extracted_text=parsed["text"][:20000],
+            )
+        except Exception as exc:  # pragma: no cover - persistence is best-effort
+            logger.warning("save_media_item failed: %s", exc)
+    return parsed
+
+
 async def build_media_prompt_context(
     chat_id: str, metadata: dict | None, max_chars: int = _PROMPT_MEDIA_CHARS
 ) -> str:
@@ -173,19 +201,20 @@ async def build_media_prompt_context(
     filename = media.get("filename") or media_type or "media"
     if not message_id:
         return "\n[Media Extraction Error]\nMedia tidak memiliki message_id.\n"
-    if media_type not in {"document", "image"}:
+    if media_type not in {"document", "image", "audio"}:
         return (
             "\n[Media Extraction]\n"
             f"Nama: {filename}\nTipe: {media_type or '-'}\n"
-            "Tipe media ini belum didukung. Audio dan video belum dapat dibaca.\n"
+            "Video belum didukung. Hanya document, image, dan audio yang dapat dibaca.\n"
         )
 
     try:
-        parsed = (
-            await _read_document(chat_id, message_id)
-            if media_type == "document"
-            else await _read_image(chat_id, message_id)
-        )
+        if media_type == "document":
+            parsed = await _read_document(chat_id, message_id)
+        elif media_type == "image":
+            parsed = await _read_image(chat_id, message_id)
+        else:
+            parsed = await _read_audio(chat_id, message_id)
     except WaToolError as exc:
         return f"\n[Media Extraction Error]\nNama: {filename}\nError: {exc}\n"
     if parsed.get("error"):
@@ -196,7 +225,11 @@ async def build_media_prompt_context(
     text = str(parsed.get("text") or "")
     preview = text[:max_chars]
     truncated = len(text) > max_chars
-    source = "document text" if media_type == "document" else "image OCR text"
+    source = {
+        "document": "document text",
+        "image": "image OCR text",
+        "audio": "audio transcription",
+    }.get(media_type, "extracted text")
     return (
         "\n[Media Extracted]\n"
         f"Nama: {filename}\nTipe sumber: {source}\n"
@@ -265,6 +298,33 @@ async def media_read_image(
 
 
 @tool
+async def media_read_audio(
+    chat_id: str, message_id: str, max_chars: int = _PREVIEW_CHARS
+) -> str:
+    """Baca transkripsi audio/voice note WhatsApp.
+
+    Panggil ini SEBELUM menjawab kalau user mengirim audio dan bertanya
+    tentang isinya. Gunakan chat_id dari konteks dan message_id dari media.
+
+    Args:
+        chat_id: Chat WhatsApp dari context.
+        message_id: ID pesan audio dari media context.
+        max_chars: Batas panjang teks yang dikembalikan.
+    """
+    try:
+        parsed = await _read_audio(chat_id, message_id)
+    except WaToolError as exc:
+        return f"⚠️ {exc}"
+    if parsed.get("error"):
+        return f"⚠️ {parsed['error']}"
+    name = parsed["_meta"].get("filename") or "audio"
+    text = parsed["text"]
+    preview = text[:max_chars]
+    suffix = "\n\n_[transkripsi dipotong]_" if len(text) > max_chars else ""
+    return f"*Transkripsi {name}* ({parsed['char_count']} char)\n\n{preview}{suffix}"
+
+
+@tool
 def media_info(metadata: dict | None = None) -> str:
     """Tampilkan info media pada pesan saat ini tanpa mengunduh isinya."""
     media = _effective_media(metadata)
@@ -290,24 +350,29 @@ async def analyze_media(chat_id: str = "system", metadata: dict | None = None) -
     message_id = media.get("messageId") or (metadata or {}).get("messageId")
     if not message_id:
         return "Media tidak punya message_id yang bisa dipakai untuk mengunduh."
-    if media_type not in {"document", "image"}:
+    if media_type not in {"document", "image", "audio"}:
         return (
-            "Fitur ini mendukung dokumen dan image OCR. "
+            "Fitur ini mendukung dokumen, image OCR, dan transkripsi audio. "
             f"Media `{media_type}` belum didukung."
         )
     try:
-        parsed = (
-            await _read_document(chat_id, message_id)
-            if media_type == "document"
-            else await _read_image(chat_id, message_id)
-        )
+        if media_type == "document":
+            parsed = await _read_document(chat_id, message_id)
+        elif media_type == "image":
+            parsed = await _read_image(chat_id, message_id)
+        else:
+            parsed = await _read_audio(chat_id, message_id)
     except WaToolError as exc:
         return f"⚠️ {exc}"
     if parsed.get("error"):
         return f"⚠️ {parsed['error']}"
     name = parsed["_meta"].get("filename") or media_type
     preview = parsed["text"][:1500]
-    label = "File Parsed" if media_type == "document" else "Image OCR"
+    label = {
+        "document": "File Parsed",
+        "image": "Image OCR",
+        "audio": "Audio Transcript",
+    }.get(media_type, "Media Parsed")
     return (
         f"*{label}*\n"
         f"Nama: {name}\n"

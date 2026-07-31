@@ -12,6 +12,7 @@ from app.xninetzy.db.sqlite import init_db
 from app.xninetzy.db.migrations import run_migrations
 from app.xninetzy.os.reminders.scheduler import reminder_loop
 from app.xninetzy.os.jobs.service import os_job_loop
+from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import krs_watcher_loop
 from app.xninetzy.os.web_analysis.background import web_analysis_loop
 
 configure_logging()
@@ -39,6 +40,7 @@ async def startup() -> None:
         logger.info("Replayed %d unconsumed ecosystem events", replayed)
     asyncio.create_task(reminder_loop())
     asyncio.create_task(os_job_loop())
+    asyncio.create_task(krs_watcher_loop())
     if settings.WEB_ANALYSIS_BACKGROUND_ENABLED:
         asyncio.create_task(web_analysis_loop())
     if (

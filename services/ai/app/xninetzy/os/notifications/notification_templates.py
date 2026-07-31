@@ -30,4 +30,16 @@ def format_admin_notification(event_type: str, payload: dict) -> str:
             "• buat banyak task\n"
             "• link ke Graph RAG"
         )
+    if event_type == "krs_watcher_change":
+        return (
+            "*KRS Watcher — Perubahan Terdeteksi*\n"
+            f"Jadwal: {payload.get('announcement') or 'belum ada pengumuman'}\n"
+            f"MK terambil: {payload.get('mk_count', 0)}\n"
+            f"Dalam jendela buka: {'ya' if payload.get('in_window') else 'tidak'}"
+        )
+    if event_type == "krs_watcher_session_expired":
+        return (
+            "*KRS Watcher — Sesi Kedaluwarsa*\n"
+            f"{payload.get('detail') or '-'}"
+        )
     return f"*Xninetzy Progress*\nEvent: {event_type}\nStatus: {payload.get('status') or '-'}"

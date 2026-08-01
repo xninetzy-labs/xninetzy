@@ -15,8 +15,8 @@ def test_it_learning_skill_tools_importable():
 def test_it_learning_skill_registered():
     skill = get_skill("it_learning")
     assert skill is not None
-    assert skill.name == "it_learning"
-    assert "it_learning" in [s.name for s in list_skills()]
+    assert skill.name == "it-learning"
+    assert "it-learning" in [s.name for s in list_skills()]
 
 
 def test_learning_alias_still_works():
@@ -27,4 +27,4 @@ def test_learning_alias_still_works():
 def test_friendly_aliases_resolve_to_it_learning():
     for alias in ("it", "programming", "coding"):
         skill = get_skill(alias)
-        assert skill is not None and skill.name == "it_learning"
+        assert skill is not None and skill.name == "it-learning"

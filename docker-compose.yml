@@ -7,6 +7,16 @@ services:
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     environment:
       WA_MCP_BASE_URL: http://wa-enggine:8081
+      DATA_DIR: /app/data
+      SQLITE_PATH: /app/data/xninetzy.sqlite3
+      BACKUP_DIR: /app/data/backups
+      VECTOR_DATA_DIR: /app/data/vector
+      GRAPH_VECTOR_DATA_DIR: /app/data/graph_vector
+      WEB_ANALYSIS_DATA_DIR: /app/data/web-analysis
+      HEBAT_DATA_DIR: /app/data/hebat
+      HEBAT_DOWNLOAD_DIR: /app/data/hebat/downloads
+      XNINETZY_SKILLS_DIR: /app/data/opencode-config/opencode/skills
+      MCP_RUNTIME_MODE: container
       OLLAMA_BASE_URL: ${OLLAMA_DOCKER_BASE_URL:-http://host.docker.internal:11434/v1}
       # CPU-only AI runtime — pins torch/sentence-transformers to CPU and caps
       # the thread pools. No GPU is ever requested (no runtime: nvidia / gpus).
@@ -19,6 +29,20 @@ services:
       MKL_NUM_THREADS: "${AI_CPU_THREADS:-4}"
       TORCH_NUM_THREADS: "${AI_CPU_THREADS:-4}"
       AI_CPU_THREADS: "${AI_CPU_THREADS:-4}"
+      CODING_AGENT_WORKSPACE: /app/xninetzy
+      CODING_AGENT_ALLOWED_ROOT: /app/xninetzy
+      CODING_AGENT_EXECUTION_MODE: host_bridge
+      CODING_AGENT_HOST_BRIDGE_URL: http://host.docker.internal:8765
+      CODING_AGENT_HOST_BRIDGE_TOKEN: ${CODING_AGENT_HOST_BRIDGE_TOKEN:-}
+      CHAT_FAILOVER_ENABLED: "true"
+      FLAZ_MODEL: deepseek-v4-pro
+      FLAZ_MODELS: deepseek-v4-pro
+      XDG_CONFIG_HOME: /app/data/opencode-config
+      CODEX_HOME: /app/data/codex-config
+      CLAUDE_CONFIG_DIR: /app/data/claude-config
+      CODING_AGENT_ENV_ALLOWLIST: "PATH,HOME,USER,LOGNAME,LANG,LC_ALL,TERM,TMPDIR,XDG_CONFIG_HOME,XDG_DATA_HOME,XDG_CACHE_HOME,SSL_CERT_FILE,SSL_CERT_DIR,CODEX_HOME,CLAUDE_CONFIG_DIR,OPENAI_API_KEY,ANTHROPIC_API_KEY,FLAZ_API_KEY,DATA_DIR,SQLITE_PATH,BACKUP_DIR,APP_TIMEZONE,OBSIDIAN_ENABLED,OBSIDIAN_VAULT_PATH,OBSIDIAN_ALLOW_WRITE,OBSIDIAN_ALLOW_DELETE,OBSIDIAN_BACKUP_BEFORE_WRITE,WA_MCP_BASE_URL,WA_MCP_API_KEY,WA_MEDIA_MAX_BYTES,MCP_RUNTIME_MODE,MCP_PRINCIPAL_ID,MCP_PRINCIPAL_NAME,MCP_DEFAULT_CHAT_ID,ADMIN_JID,ADMIN_NAMES,OWNER_ALLOWED_JIDS,HEBAT_USERNAME,HEBAT_PASSWORD,HEBAT_DATA_DIR,HEBAT_DOWNLOAD_DIR,WEB_ANALYSIS_ENCRYPTION_KEY,WEB_ANALYSIS_DATA_DIR,XNINETZY_SKILLS_DIR"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -26,6 +50,7 @@ services:
     volumes:
       - ./services/ai/data:/app/data
       - ${OBSIDIAN_VAULT_HOST_PATH:?Set OBSIDIAN_VAULT_HOST_PATH}:/app/obsidian-vault
+      - ./:/app/xninetzy
       - wa-media:/app/data/wa-media
     healthcheck:
       test: ["CMD", "uv", "run", "--no-dev", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]

@@ -15,7 +15,11 @@ async def web_search(query: str, limit: int = 5) -> list[dict]:
     if s.SERPER_API_KEY:
         return await _serper_search(query, s.SERPER_API_KEY, limit)
 
-    logger.info("No web search API key configured")
+    fallback = await _ddgs_search(query, limit)
+    if fallback:
+        return fallback
+
+    logger.info("No web search API key configured and DDGS returned nothing")
     return []
 
 
@@ -61,18 +65,45 @@ async def _serper_search(query: str, api_key: str, limit: int) -> list[dict]:
         return []
 
 
+async def _ddgs_search(query: str, limit: int) -> list[dict]:
+    import asyncio
+
+    def _run() -> list[dict]:
+        try:
+            from ddgs import DDGS
+        except ImportError:
+            logger.info("ddgs not installed; skipping free web fallback")
+            return []
+        try:
+            with DDGS() as ddgs:
+                hits = list(ddgs.text(query, max_results=limit))
+        except Exception as error:
+            logger.warning("DDGS search failed: %s", error)
+            return []
+        return [
+            {
+                "title": hit.get("title", "?"),
+                "url": hit.get("href", "") or hit.get("url", ""),
+                "snippet": (hit.get("body", "") or "")[:300],
+            }
+            for hit in hits[:limit]
+        ]
+
+    return await asyncio.to_thread(_run)
+
+
 async def read_url(url: str, max_chars: int = 3000) -> str:
     """Fetch and extract text from a URL."""
+    from bs4 import BeautifulSoup
+
+    from app.xninetzy.os.research.safe_fetch import safe_get
+
     try:
-        import httpx
-        from bs4 import BeautifulSoup
-        async with httpx.AsyncClient(timeout=20, follow_redirects=True) as client:
-            resp = await client.get(url, headers={"User-Agent": "Mozilla/5.0"})
-            resp.raise_for_status()
-            soup = BeautifulSoup(resp.text, "lxml")
-            for tag in soup(["script", "style", "nav", "footer", "header"]):
-                tag.decompose()
-            text = soup.get_text("\n", strip=True)
-            return text[:max_chars]
+        html = await safe_get(url)
+        soup = BeautifulSoup(html, "lxml")
+        for tag in soup(["script", "style", "nav", "footer", "header"]):
+            tag.decompose()
+        text = soup.get_text("\n", strip=True)
+        return text[:max_chars]
     except Exception as e:
         return f"Gagal membaca URL: {e}"

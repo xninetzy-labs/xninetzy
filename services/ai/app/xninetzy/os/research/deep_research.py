@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+from app.xninetzy.core.config import get_settings
 from app.xninetzy.os.notifications.admin_notifier import notify_admin
 from app.xninetzy.os.research.actions.base import ResearchActionInput
 from app.xninetzy.os.research.actions.registry import ResearchActionRegistry
+from app.xninetzy.os.research.citations import format_sources_block, validate_citations
+from app.xninetzy.os.research.guards import check_resource_guards, resource_guard_denied_message
 from app.xninetzy.os.research.permissions import can_run_deep_research, deep_research_denied_message
 from app.xninetzy.os.research.session import (
     add_sources,
@@ -13,6 +16,7 @@ from app.xninetzy.os.research.session import (
     set_plan,
     update_substep_status,
 )
+from app.xninetzy.os.research.sources import assign_sids
 from app.xninetzy.os.research.subplanner import ResearchSubPlan
 
 
@@ -24,7 +28,11 @@ MODE_LIMITS = {
 
 
 def _limits(mode: str) -> dict:
-    return MODE_LIMITS.get(mode, MODE_LIMITS["balanced"])
+    base = dict(MODE_LIMITS.get(mode, MODE_LIMITS["balanced"]))
+    settings = get_settings()
+    base["selected"] = min(base["selected"], settings.DEEP_RESEARCH_MAX_SOURCES)
+    base["query_limit"] = min(base["query_limit"], settings.DEEP_RESEARCH_MAX_QUERIES)
+    return base
 
 
 def rank_research_sources(topic: str, subplans: list[ResearchSubPlan], sources: list[dict], mode: str) -> list[dict]:
@@ -65,8 +73,10 @@ def generate_research_brief(topic: str, subplans: list[ResearchSubPlan], sources
         lines.append(f"• {subplan.expected_output}")
     lines.append("\n*5. Sumber Terpilih*")
     if web_sources:
-        for i, source in enumerate(web_sources[:8], 1):
-            lines.append(f"{i}. {source.get('title') or 'Untitled'}")
+        for source in web_sources[:8]:
+            sid = source.get("sid") or ""
+            prefix = f"[{sid}] " if sid else ""
+            lines.append(f"{prefix}{source.get('title') or 'Untitled'}")
             if source.get("url"):
                 lines.append(f"   {source['url']}")
             lines.append(f"   Kenapa penting: {source.get('why')}")
@@ -74,8 +84,10 @@ def generate_research_brief(topic: str, subplans: list[ResearchSubPlan], sources
         lines.append("Belum ada sumber web karena provider search belum aktif atau tidak mengembalikan hasil.")
     lines.append("\n*6. YouTube Learning Path*")
     if youtube_sources:
-        for i, source in enumerate(youtube_sources[:6], 1):
-            lines.append(f"{i}. {source.get('title') or 'Video'}")
+        for source in youtube_sources[:6]:
+            sid = source.get("sid") or ""
+            prefix = f"[{sid}] " if sid else ""
+            lines.append(f"{prefix}{source.get('title') or 'Video'}")
             lines.append(f"   Fokus: {source.get('description') or 'Belajar bertahap dari video ini.'}")
             if source.get("url"):
                 lines.append(f"   {source['url']}")
@@ -100,6 +112,9 @@ def generate_research_brief(topic: str, subplans: list[ResearchSubPlan], sources
     lines.append("• `buat roadmap`")
     lines.append("• `ingest ke knowledge`")
     lines.append("• `hubungkan ke graph`")
+    if sources:
+        lines.append("")
+        lines.append(format_sources_block(sources))
     return "\n".join(lines)
 
 
@@ -118,6 +133,10 @@ async def run_deep_research(
     allowed, reason = can_run_deep_research(sender_id, sender_name, chat_type, metadata)
     if not allowed:
         return deep_research_denied_message(reason)
+
+    guard_ok, guard_reason = check_resource_guards(chat_id)
+    if not guard_ok:
+        return resource_guard_denied_message(guard_reason)
 
     session_id = create_research_session(chat_id, topic, sender_id, sender_name, mode)
     await notify_admin(
@@ -200,11 +219,12 @@ async def run_deep_research(
 
         add_sources(session_id, all_sources)
         rank_step = add_substep(session_id, "source_ranking", "Ranking dan deduplikasi sumber")
-        ranked = rank_research_sources(topic, subplans, all_sources, mode)
+        ranked = assign_sids(rank_research_sources(topic, subplans, all_sources, mode))
         update_substep_status(session_id, rank_step, "done", {"selected": len(ranked)})
         brief_step = add_substep(session_id, "brief_writing", "Menulis research brief")
         brief = generate_research_brief(topic, subplans, ranked)
-        update_substep_status(session_id, brief_step, "done")
+        brief, removed = validate_citations(brief, ranked)
+        update_substep_status(session_id, brief_step, "done", {"citations_removed": len(removed)})
         done_step = add_substep(session_id, "done", "Riset selesai")
         update_substep_status(session_id, done_step, "done")
         finish_session(session_id, brief)

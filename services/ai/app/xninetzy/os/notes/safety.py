@@ -52,8 +52,14 @@ def resolve_vault_path(path: str | None, *, for_write: bool = False) -> Path:
     if resolved.name.lower() in BLOCKED_PARTS:
         raise ObsidianSafetyError("File diblokir")
 
+    allowed = WRITE_EXTENSIONS if for_write else READ_EXTENSIONS
+
+    if not for_write and resolved.suffix.lower() not in allowed and not resolved.is_file():
+        fallback = resolved.with_name(resolved.name + ".md")
+        if fallback.is_file():
+            return fallback
+
     if resolved.suffix:
-        allowed = WRITE_EXTENSIONS if for_write else READ_EXTENSIONS
         if resolved.suffix.lower() not in allowed:
             raise ObsidianSafetyError(f"Ekstensi {resolved.suffix} tidak diizinkan")
 

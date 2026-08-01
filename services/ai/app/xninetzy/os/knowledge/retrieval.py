@@ -7,8 +7,11 @@ from typing import Iterable
 from langchain_core.messages import HumanMessage, SystemMessage
 
 from app.xninetzy.core.config import get_settings
+from app.xninetzy.core.logging import logging
 from app.xninetzy.core.providers import LLMProfile
 from app.xninetzy.os.knowledge.vector_store import semantic_search
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -358,6 +361,16 @@ async def answer_from_knowledge(
 
     from app.xninetzy.core.llm import get_llm_pro
 
+    try:
+        model = get_llm_pro(profile)
+    except RuntimeError as exc:
+        logger.warning("Knowledge synthesis provider unavailable: %s", exc)
+        answer = (
+            f"Sintesis belum bisa jalan: {exc} Bukti terpilih tersedia di bawah "
+            "untuk diperiksa langsung."
+        )
+        return finalize_grounded_answer(answer, bundle)
+
     messages = [
         SystemMessage(
             content=(
@@ -372,11 +385,12 @@ async def answer_from_knowledge(
         ),
     ]
     try:
-        response = await get_llm_pro(profile).ainvoke(messages)
+        response = await model.ainvoke(messages)
         answer = _content_text(response.content)
     except Exception:
+        logger.exception("Knowledge synthesis call failed")
         answer = (
-            "Sintesis model sedang tidak tersedia. Berikut bukti terpilih yang dapat "
-            "diperiksa langsung."
+            "Sintesis model gagal sementara. Bukti terpilih tersedia di bawah "
+            "untuk diperiksa langsung."
         )
     return finalize_grounded_answer(answer, bundle)

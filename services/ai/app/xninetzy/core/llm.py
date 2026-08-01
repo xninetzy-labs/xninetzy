@@ -50,14 +50,21 @@ def _build_llm(profile: LLMProfile | None = None) -> BaseChatModel:
         "ollama": "ollama",
         "generic": s.GENERIC_OPENAI_API_KEY or "not-required",
     }
-    return ChatOpenAI(
-        api_key=api_keys[selected.provider],
-        base_url=info.base_url,
-        model=selected.model,
-        timeout=s.LLM_TIMEOUT_SECONDS,
-        max_retries=s.LLM_MAX_RETRIES,
-        temperature=0,
-    )
+    kwargs = {
+        "api_key": api_keys[selected.provider],
+        "base_url": info.base_url,
+        "model": selected.model,
+        "timeout": s.LLM_TIMEOUT_SECONDS,
+        "max_retries": s.LLM_MAX_RETRIES,
+        "temperature": 0,
+    }
+    if selected.provider == "flaz":
+        kwargs["extra_body"] = {
+            "thinking": {
+                "type": "enabled" if s.FLAZ_THINKING_ENABLED else "disabled"
+            }
+        }
+    return ChatOpenAI(**kwargs)
 
 
 def _build_flaz_llm() -> BaseChatModel:

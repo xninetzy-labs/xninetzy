@@ -11,7 +11,6 @@ from __future__ import annotations
 from app.xninetzy.os.knowledge.chunking import chunk_text
 from app.xninetzy.os.knowledge.extraction.schemas import (
     ContextualChunk,
-    DocBlock,
     StructuredDocument,
 )
 

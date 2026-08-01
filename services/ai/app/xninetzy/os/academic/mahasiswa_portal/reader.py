@@ -428,6 +428,46 @@ class AcademicPortalReader:
         context = await browser.new_context(storage_state=state)
         return playwright, browser, context
 
+    async def session_status(self) -> tuple[bool, str]:
+        try:
+            state = SessionManager().load_storage_state("mahasiswa")
+        except Exception as exc:
+            return False, type(exc).__name__
+        if not state:
+            return False, "missing"
+        playwright = browser = context = None
+        try:
+            from playwright.async_api import async_playwright
+
+            playwright = await async_playwright().start()
+            browser = await playwright.chromium.launch(
+                headless=self.settings.CYBER_CAMPUS_BROWSER_HEADLESS
+            )
+            context = await browser.new_context(storage_state=state)
+            page = await context.new_page()
+            target = urljoin(
+                self.settings.CYBER_CAMPUS_BASE_URL,
+                "/modul/mhs/akademik-status.php",
+            )
+            response = await page.goto(
+                target,
+                wait_until="domcontentloaded",
+                timeout=self.settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
+            )
+            html = await page.content()
+            if not response or response.status >= 400 or looks_like_login(html):
+                return False, "expired"
+            return True, "active"
+        except Exception as exc:
+            return False, type(exc).__name__
+        finally:
+            if context is not None:
+                await context.close()
+            if browser is not None:
+                await browser.close()
+            if playwright is not None:
+                await playwright.stop()
+
     async def read_schedule(self) -> ScheduleResult:
         playwright, browser, context = await self._browser()
         try:

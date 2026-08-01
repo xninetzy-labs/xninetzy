@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import asyncio
 import json
+import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
@@ -94,9 +95,20 @@ def _post_mcp_call(payload: dict) -> None:
         headers={"Content-Type": "application/json", **_auth_header()},
         method="POST",
     )
-    with urllib.request.urlopen(request, timeout=15) as response:
-        if response.status >= 400:
-            raise RuntimeError(f"WA MCP returned HTTP {response.status}")
+    try:
+        with urllib.request.urlopen(request, timeout=15) as response:
+            body = response.read().decode("utf-8")
+    except urllib.error.URLError as error:
+        raise RuntimeError(f"WA MCP tidak bisa dihubungi: {error}") from error
+
+    try:
+        data = json.loads(body)
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"WA MCP mengembalikan respons tidak valid: {error}") from error
+
+    if not data.get("success"):
+        message = (data.get("error") or {}).get("message") or "Tool WhatsApp gagal"
+        raise RuntimeError(message)
 
 
 def _auth_header() -> dict[str, str]:

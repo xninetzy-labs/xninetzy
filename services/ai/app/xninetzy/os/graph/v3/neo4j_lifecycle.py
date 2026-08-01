@@ -46,7 +46,7 @@ def is_host_runtime() -> bool:
 
 def _compose_root() -> Path:
     """Repository root holding docker-compose.yml (parent of ``services/ai``)."""
-    return mcp_runtime.ai_service_root().parents[1]
+    return mcp_runtime.repository_root(mcp_runtime.ai_service_root())
 
 
 def _bolt_endpoint(settings) -> tuple[str, int]:

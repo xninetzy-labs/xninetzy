@@ -31,6 +31,40 @@ ALIASES = {
     "obsidian": "obsidian-knowledge",
     "cyber": "cyber-campus",
 }
+SKILL_TOPIC_HINTS = {
+    "it-learning": {
+        "clustering",
+        "cluster",
+        "kmeans",
+        "dbscan",
+        "hierarchical",
+        "machine",
+        "learning",
+        "analytics",
+        "algorithm",
+        "roadmap",
+        "study",
+        "mastery",
+        "recall",
+    },
+    "research": {
+        "research",
+        "riset",
+        "source",
+        "literature",
+        "paper",
+        "youtube",
+        "citation",
+    },
+    "graph-rag": {
+        "graph",
+        "relationship",
+        "prerequisite",
+        "connection",
+        "neighborhood",
+    },
+}
+
 STOPWORDS = {
     "aku",
     "anda",
@@ -201,7 +235,8 @@ def rank_skills(request: str, limit: int = 3) -> list[SkillMatch]:
         description_terms = _terms(skill.description)
         matched_name = sorted(request_terms & name_terms)
         matched_description = sorted(request_terms & description_terms)
-        score = len(matched_name) * 4 + len(matched_description)
+        hint_terms = sorted(request_terms & SKILL_TOPIC_HINTS.get(skill.name, set()))
+        score = len(matched_name) * 4 + len(matched_description) + len(hint_terms) * 3
         if name_phrase and name_phrase in normalized:
             score += 8
         explicit_names = {f"${skill.name}", f"/skill {skill.name}"}
@@ -212,7 +247,7 @@ def rank_skills(request: str, limit: int = 3) -> list[SkillMatch]:
                 SkillMatch(
                     skill=skill,
                     score=score,
-                    matched_terms=list(dict.fromkeys(matched_name + matched_description)),
+                    matched_terms=list(dict.fromkeys(matched_name + matched_description + hint_terms)),
                 )
             )
     matches.sort(key=lambda item: (-item.score, item.skill.name))

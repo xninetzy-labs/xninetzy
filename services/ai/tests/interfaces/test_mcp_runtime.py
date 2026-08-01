@@ -16,6 +16,7 @@ def test_host_runtime_maps_container_paths_into_service_data(tmp_path: Path) -> 
         "DATA_DIR": "/app/data",
         "SQLITE_PATH": "/app/data/xninetzy.sqlite3",
         "VECTOR_DATA_DIR": "/app/data/vector",
+        "GRAPH_VECTOR_DATA_DIR": "/app/data/graph_vector",
         "WEB_ANALYSIS_DATA_DIR": "/app/data/web-analysis",
         "HEBAT_DATA_DIR": "/app/data/hebat",
         "HEBAT_DOWNLOAD_DIR": "/app/data/hebat/downloads",
@@ -31,6 +32,7 @@ def test_host_runtime_maps_container_paths_into_service_data(tmp_path: Path) -> 
     assert overrides["DATA_DIR"] == str(ai_root / "data")
     assert overrides["SQLITE_PATH"] == str(ai_root / "data/xninetzy.sqlite3")
     assert overrides["VECTOR_DATA_DIR"] == str(ai_root / "data/vector")
+    assert overrides["GRAPH_VECTOR_DATA_DIR"] == str(ai_root / "data/graph_vector")
     assert overrides["HEBAT_DOWNLOAD_DIR"] == str(ai_root / "data/hebat/downloads")
     assert environ["SQLITE_PATH"] == overrides["SQLITE_PATH"]
 

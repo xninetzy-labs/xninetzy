@@ -1,0 +1,27 @@
+TOOLS = [
+    "portal_info",
+    "portal_profile",
+    "portal_academic_status",
+    "portal_current_krs",
+    "portal_navigation",
+    "portal_krs_capabilities",
+    "portal_grade_changes",
+    "portal_grades",
+    "portal_grade_token_submit",
+    "portal_schedule",
+    "portal_krs_watcher_status",
+    "portal_krs_watcher_start",
+    "portal_krs_watcher_stop",
+    "portal_krs_war_status",
+    "portal_krs_war_arm",
+    "portal_krs_war_disarm",
+    "portal_krs_war_plan",
+    "portal_krs_war_dry_run",
+    "portal_login_start",
+    "portal_login_submit_captcha",
+    "portal_login_cancel",
+    "portal_session_status",
+    "portal_logout",
+]
+
+__all__ = ["TOOLS"]

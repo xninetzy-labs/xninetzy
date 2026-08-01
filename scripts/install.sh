@@ -60,6 +60,7 @@ printf '\n'
 ai_key="$(openssl rand -hex 32)"
 mcp_key="$(openssl rand -hex 32)"
 fernet_key="$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n')"
+bridge_token="$(openssl rand -hex 32)"
 
 set_env HOST_UID "$(id -u)"
 set_env HOST_GID "$(id -g)"
@@ -70,16 +71,26 @@ set_env AI_API_KEY "$ai_key"
 set_env MCP_API_KEY "$mcp_key"
 set_env WA_MCP_API_KEY "$mcp_key"
 set_env WEB_ANALYSIS_ENCRYPTION_KEY "$fernet_key"
+set_env CODING_AGENT_HOST_BRIDGE_TOKEN "$bridge_token"
+set_env CODING_AGENT_ENABLED true
+set_env CODING_AGENT_EXECUTION_MODE host_bridge
 set_env WA_LOGIN_MODE qr
 
 flaz_key=""
 ai_key=""
 mcp_key=""
 fernet_key=""
+bridge_token=""
 
 docker compose config -q
 docker compose up --build -d ai wa-enggine
 docker compose ps
+
+if command -v uv >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
+  bash scripts/install_host_agent_bridge.sh
+else
+  echo "Host bridge belum diaktifkan otomatis: install uv dan systemd user, lalu jalankan bash scripts/install_host_agent_bridge.sh."
+fi
 
 echo
 echo "Xninetzy terpasang di $INSTALL_DIR"

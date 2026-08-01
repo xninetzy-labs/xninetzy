@@ -14,4 +14,12 @@ TOOLS = [
     "obsidian_set_frontmatter",
     "obsidian_daily",
     "obsidian_save_note",
+    "knowledge_ingest_text",
+    "knowledge_ingest_file",
+    "knowledge_search",
+    "knowledge_answer",
+    "knowledge_list_sources",
+    "knowledge_rebuild_index",
 ]
+
+__all__ = ["TOOLS"]

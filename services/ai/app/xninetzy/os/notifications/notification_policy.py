@@ -14,6 +14,10 @@ ADMIN_EVENTS = {
     "knowledge_ingest_needs_approval",
     "krs_watcher_change",
     "krs_watcher_session_expired",
+    "krs_war_started",
+    "krs_war_taken",
+    "krs_war_error",
+    "krs_war_calibrated",
 }
 
 

@@ -273,7 +273,9 @@ systemctl is-active docker
 
 Service `ai` dan `wa-enggine` memakai `restart: unless-stopped`. Setelah
 container pernah dibuat dengan `docker compose up -d`, Docker akan menyalakannya
-kembali saat laptop boot. Jangan menjalankan `docker compose down` jika ingin
+kembali saat laptop boot. Host coding bridge diaktifkan oleh installer sebagai
+user service dan menggunakan `loginctl enable-linger` agar ikut hidup setelah
+reboot tanpa menunggu terminal manual. Jangan menjalankan `docker compose down` jika ingin
 startup otomatis tetap berlaku karena perintah itu menghapus container.
 
 ### 6. Verifikasi health
@@ -776,30 +778,55 @@ MCP_HOST_SQLITE_PATH=
 
 ## Coding Agent melalui WhatsApp
 
-Coding agent berbeda dari provider chat. Provider chat menjawab pesan; coding runtime menjalankan CLI lokal yang dapat membaca atau mengubah repository.
+Coding agent berbeda dari provider chat. Provider chat menjawab pesan; coding runtime menjalankan CLI host yang dapat membaca atau mengubah repository.
 
 Aktifkan hanya pada AI service yang berjalan di host dan memiliki binary serta session login CLI:
 
 ```env
 CODING_AGENT_ENABLED=true
-CODING_AGENT_DEFAULT=codex
+CODING_AGENT_DEFAULT=opencode
 CODING_AGENT_ALLOWED=internal,codex,claude-code,opencode
 CODING_AGENT_ADMIN_ONLY=true
-CODING_AGENT_WORKSPACE=/absolute/path/to/xninetzy
-CODING_AGENT_ALLOWED_ROOT=/absolute/path/to/xninetzy
+CODING_AGENT_EXECUTION_MODE=host_bridge
+CODING_AGENT_HOST_BRIDGE_URL=http://host.docker.internal:8765
+CODING_AGENT_HOST_BRIDGE_TOKEN=<random-secret>
+CODING_AGENT_HOST_WORKSPACE=/absolute/path/to/xninetzy
+CODING_AGENT_HOST_ALLOWED_ROOT=/absolute/path/to/xninetzy
 CODING_AGENT_TIMEOUT_SECONDS=600
 CODING_AGENT_SANDBOX=workspace-write
+```
+
+AI service tidak menjalankan binary coding di Docker. `/code` mengirim task
+melalui bridge terautentikasi ke laptop; bridge menjalankan CLI host, melakukan
+MCP preflight, membatasi workspace, lalu mengirim output kembali ke AI dan WA.
+Setiap runtime harus sudah login pada host dan konfigurasi MCP `xninetzy` harus
+tersedia di client tersebut.
+
+Linux:
+
+```bash
+bash scripts/install_host_agent_bridge.sh
+loginctl enable-linger "$USER"
+systemctl --user status xninetzy-host-agent-bridge
+curl -s http://127.0.0.1:8765/health
+```
+
+Mode sementara tanpa service manager:
+
+```bash
+bash scripts/run_host_agent_bridge.sh
 ```
 
 Gunakan dari WhatsApp:
 
 ```text
 /agent list
-/agent use codex
+/agent use opencode
 /code jalankan test terkait dan jelaskan kegagalannya
 ```
 
-Runtime tidak memakai shell interpolation, menerima environment allowlist minimal, dibatasi ke allowed root, memiliki timeout/output cap, dan mencatat audit run. Container standar tidak membawa binary atau login store Codex/Claude/OpenCode; host mode lebih mudah untuk fitur ini.
+Gunakan `/agent use codex` atau `/agent use claude-code` untuk mengganti runtime.
+Runtime tidak memakai shell interpolation, menerima environment allowlist minimal, dibatasi ke allowed root, memiliki timeout/output cap, dan mencatat audit run. Jika bridge mati atau MCP host tidak connected, request gagal tertutup dan tidak dijalankan secara degraded.
 
 ## HTTP API
 

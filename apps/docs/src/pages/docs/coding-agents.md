@@ -9,21 +9,25 @@ Coding runtime menjalankan CLI lokal terhadap repository. Fitur ini terpisah dar
 
 ## Persyaratan
 
-- Binary runtime terpasang pada host AI service.
+- Binary Codex, Claude Code, atau OpenCode terpasang pada host laptop.
 - CLI sudah login secara interaktif oleh pemilik.
+- Host bridge Xninetzy aktif sebagai user service.
 - Workspace dan allowed root menggunakan absolute path.
 - Admin WhatsApp memakai JID eksplisit.
-- AI service berjalan di host, bukan container standar tanpa binary/session.
+- Konfigurasi MCP global `xninetzy` tersedia untuk setiap CLI.
 
 ## Konfigurasi
 
 ```dotenv
 CODING_AGENT_ENABLED=true
-CODING_AGENT_DEFAULT=codex
+CODING_AGENT_DEFAULT=opencode
 CODING_AGENT_ALLOWED=internal,codex,claude-code,opencode
 CODING_AGENT_ADMIN_ONLY=true
-CODING_AGENT_WORKSPACE=/absolute/path/to/xninetzy
-CODING_AGENT_ALLOWED_ROOT=/absolute/path/to/xninetzy
+CODING_AGENT_EXECUTION_MODE=host_bridge
+CODING_AGENT_HOST_BRIDGE_URL=http://host.docker.internal:8765
+CODING_AGENT_HOST_BRIDGE_TOKEN=<random-secret>
+CODING_AGENT_HOST_WORKSPACE=/absolute/path/to/xninetzy
+CODING_AGENT_HOST_ALLOWED_ROOT=/absolute/path/to/xninetzy
 CODING_AGENT_TIMEOUT_SECONDS=600
 CODING_AGENT_MAX_OUTPUT_CHARS=30000
 CODING_AGENT_SANDBOX=workspace-write
@@ -96,15 +100,22 @@ Setelah diagnosis:
 
 Hindari prompt seperti “perbaiki semuanya” pada repository dengan data/runtime state yang belum dibackup.
 
-## Container limitation
+## Host bridge dan container
 
-Docker image AI standar tidak menyertakan:
+AI service Docker tidak menyertakan binary coding, login store, atau konfigurasi
+global host. Dalam mode `host_bridge`, AI mengirim task terautentikasi ke
+`127.0.0.1:8765` melalui `host.docker.internal`; bridge menjalankan CLI di host,
+melakukan MCP preflight, membatasi workspace, dan mengembalikan output ke
+WhatsApp. Install otomatis:
 
-- binary Codex/Claude/OpenCode;
-- login store personal;
-- konfigurasi global host.
+```bash
+bash scripts/install_host_agent_bridge.sh
+loginctl enable-linger "$USER"
+systemctl --user status xninetzy-host-agent-bridge
+```
 
-Pilihan paling sederhana adalah menjalankan AI service lokal pada host. Alternatif container membutuhkan image custom, volume login terarah, dan review security khusus.
+Jangan mengekspos port bridge ke jaringan publik dan jangan menaruh token bridge
+di prompt atau konfigurasi MCP client.
 
 ## Diagnosis
 

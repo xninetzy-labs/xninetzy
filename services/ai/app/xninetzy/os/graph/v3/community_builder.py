@@ -99,8 +99,6 @@ def _project_community(members: set[str], title_by_key: dict[str, str], run_mark
     Skips trivial communities (<2 members) — a lone node is not a cluster.
     """
     from app.xninetzy.os.graph.v3 import graph_service
-    from app.xninetzy.os.graph.v3.identity import node_key
-
     if len(members) < 2:
         return False
 

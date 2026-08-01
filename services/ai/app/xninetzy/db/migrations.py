@@ -32,6 +32,22 @@ def run_migrations() -> None:
         )
         """,
         """
+        CREATE TABLE IF NOT EXISTS research_sources (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            session_id INTEGER NOT NULL,
+            sid TEXT,
+            title TEXT,
+            url TEXT,
+            snippet TEXT,
+            source_type TEXT DEFAULT 'web',
+            evidence_level TEXT DEFAULT 'snippet',
+            authors TEXT,
+            year INTEGER,
+            doi TEXT,
+            created_at TEXT
+        )
+        """,
+        """
         CREATE TABLE IF NOT EXISTS learning_roadmaps (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             chat_id TEXT,
@@ -620,11 +636,53 @@ def run_migrations() -> None:
         )
         """,
         "CREATE INDEX IF NOT EXISTS idx_graph_audit_entity ON graph_audit(entity_type, entity_key, id)",
+        """
+        CREATE TABLE IF NOT EXISTS krs_war_state (
+            owner_scope TEXT PRIMARY KEY,
+            armed INTEGER NOT NULL DEFAULT 0,
+            plan_hash TEXT,
+            plan_json TEXT,
+            last_armed_at TEXT,
+            last_run_window TEXT,
+            last_run_at TEXT,
+            last_status TEXT NOT NULL DEFAULT 'idle',
+            last_summary TEXT,
+            updated_at TEXT
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS krs_war_actions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_scope TEXT NOT NULL,
+            window TEXT NOT NULL,
+            action TEXT NOT NULL,
+            course_code TEXT,
+            class_code TEXT,
+            detail TEXT,
+            created_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_krs_war_actions_scope_window ON krs_war_actions(owner_scope, window, course_code)",
+        """
+        CREATE TABLE IF NOT EXISTS krs_war_calibration (
+            owner_scope TEXT NOT NULL,
+            window TEXT NOT NULL,
+            targets_json TEXT NOT NULL DEFAULT '{}',
+            strategy TEXT NOT NULL DEFAULT 'none',
+            target_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'pending',
+            attempts INTEGER NOT NULL DEFAULT 0,
+            last_attempt_at TEXT,
+            updated_at TEXT NOT NULL,
+            PRIMARY KEY(owner_scope, window)
+        )
+        """,
     ]
     with connect() as conn:
         for statement in statements:
             conn.execute(statement)
         _migrate_reminders(conn)
+        _migrate_research_sessions(conn)
         _backfill_learning_concepts(conn)
 
 
@@ -666,6 +724,20 @@ def _migrate_reminders(conn) -> None:
     )
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_reminders_chat ON reminders(chat_id, status)"
+    )
+
+
+def _migrate_research_sessions(conn) -> None:
+    rows = conn.execute("PRAGMA table_info(research_sessions)").fetchall()
+    if not rows:
+        return
+    existing = {row["name"] for row in rows}
+    columns = {"citation_report": "TEXT"}
+    for name, ddl in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE research_sessions ADD COLUMN {name} {ddl}")
+    conn.execute(
+        "CREATE INDEX IF NOT EXISTS idx_research_sources_session ON research_sources(session_id)"
     )
 
 

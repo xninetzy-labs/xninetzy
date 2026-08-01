@@ -14,6 +14,7 @@ from app.xninetzy.tools.internal.obsidian import (
     obsidian_create_folder,
     obsidian_headings,
     obsidian_list,
+    obsidian_read,
     obsidian_set_frontmatter,
     obsidian_todos,
     obsidian_update_section,
@@ -78,3 +79,27 @@ def test_agent_tools_can_manage_safe_vault_operations(isolated_vault):
     assert "owner: Misbahul" in saved
     assert "tags: [ai, learning]" in saved
     assert "Active" in saved
+
+
+def test_obsidian_read_accepts_extensionless_and_dotted_paths(isolated_vault):
+    daily = isolated_vault / "Daily"
+    daily.mkdir()
+    (daily / "2026-07-28.md").write_text("# Log\nHari ini belajar N-BEATS.\n", encoding="utf-8")
+    projects = isolated_vault / "Projects"
+    projects.mkdir()
+    (projects / "Project.md").write_text("# Project\nStatus aktif.\n", encoding="utf-8")
+
+    dotted = obsidian_read.invoke({"path": "Daily/2026-07-28"})
+    assert "belajar N-BEATS" in dotted
+
+    bare = obsidian_read.invoke({"path": "Projects/Project"})
+    assert "Status aktif" in bare
+
+    explicit = obsidian_read.invoke({"path": "Projects/Project.md"})
+    assert "Status aktif" in explicit
+
+
+def test_obsidian_read_missing_note_stays_honest_miss(isolated_vault):
+    (isolated_vault / "Daily").mkdir()
+    result = obsidian_read.invoke({"path": "Daily/Nonexistent"})
+    assert "tidak ditemukan" in result

@@ -217,3 +217,50 @@ async def deep_research_topic(
         include_youtube=include_youtube,
         include_academic=include_academic or mode == "quality",
     )
+
+
+@tool
+async def deep_research_get(session_id: int, chat_id: str = "system") -> str:
+    """Ambil status dan hasil satu deep research session berdasarkan ID.
+
+    Args:
+        session_id: ID session deep research
+        chat_id: Chat pemilik session (diinjeksi server-side untuk MCP)
+    """
+    from app.xninetzy.os.research.session import get_research_session
+    row = get_research_session(int(session_id))
+    if not row or row.get("chat_id") != chat_id:
+        return f"Session #{session_id} tidak ditemukan untuk chat ini."
+    status = row.get("status") or "unknown"
+    topic = row.get("topic") or ""
+    lines = [f"*Deep Research #{session_id}* — `{status}`", f"Topik: {topic}"]
+    brief = row.get("brief")
+    if status == "done" and brief:
+        lines.append("")
+        lines.append(brief)
+    elif status == "failed":
+        lines.append("Riset gagal. Jalankan ulang dengan deep_research_topic.")
+    else:
+        lines.append("Riset masih berjalan. Cek lagi sebentar.")
+    return "\n".join(lines)
+
+
+@tool
+async def deep_research_list(limit: int = 5, chat_id: str = "system") -> str:
+    """Daftar deep research session terbaru untuk chat ini.
+
+    Args:
+        limit: Jumlah session (maks 50)
+        chat_id: Chat pemilik session (diinjeksi server-side untuk MCP)
+    """
+    from app.xninetzy.os.research.session import list_research_sessions
+    rows = list_research_sessions(chat_id, limit=int(limit))
+    if not rows:
+        return "Belum ada deep research session di chat ini."
+    lines = ["*Deep Research Sessions*"]
+    for row in rows:
+        lines.append(
+            f"#{row['id']} [{row.get('status')}] {row.get('topic') or 'Untitled'} "
+            f"({row.get('mode')})"
+        )
+    return "\n".join(lines)

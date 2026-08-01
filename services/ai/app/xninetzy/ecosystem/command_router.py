@@ -31,6 +31,7 @@ SLASH_COMMANDS: dict[str, str] = {
     "/portal-nav": "portal_navigation",
     "/krs-capabilities": "portal_krs_capabilities",
     "/krs-watcher": "portal_krs_watcher_status",
+    "/krs-war": "portal_krs_war_status",
     "/web-analysis": "web_analysis_status",
     "/media-info": "media_info",
     "/analyze-media": "analyze_media",
@@ -69,6 +70,7 @@ GRADE_CHANGES_PATTERN = re.compile(
     re.I,
 )
 KRS_STATUS_PATTERN = re.compile(r"^/krs\s+status$", re.I)
+KRS_WAR_PATTERN = re.compile(r"^/krs-war(?:\s+(status|arm|disarm|plan|dry-run))?$", re.I)
 CONCEPT_MAP_PATTERN = re.compile(r"^/concepts\s+(\d+)$", re.I)
 RECALL_ANSWER_PATTERN = re.compile(
     r"^/recall\s+answer\s+(\d+)\s+([1-5])\s+(.+)$", re.I | re.S
@@ -192,6 +194,18 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     m = CYBER_LOGIN_CANCEL_PATTERN.match(stripped)
     if m:
         return "portal_login_cancel", {"challenge_id": m.group(1)}
+
+    m = KRS_WAR_PATTERN.match(stripped)
+    if m:
+        sub = (m.group(1) or "status").lower()
+        tool_name = {
+            "arm": "portal_krs_war_arm",
+            "disarm": "portal_krs_war_disarm",
+            "plan": "portal_krs_war_plan",
+            "dry-run": "portal_krs_war_dry_run",
+            "status": "portal_krs_war_status",
+        }[sub]
+        return tool_name, {}
 
     # /helper <topic>
     m = HELPER_PATTERN.match(stripped)

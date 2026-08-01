@@ -12,6 +12,7 @@ _CONTAINER_PATHS = {
     "DATA_DIR": "data",
     "SQLITE_PATH": "data/xninetzy.sqlite3",
     "VECTOR_DATA_DIR": "data/vector",
+    "GRAPH_VECTOR_DATA_DIR": "data/graph_vector",
     "WEB_ANALYSIS_DATA_DIR": "data/web-analysis",
     "HEBAT_DATA_DIR": "data/hebat",
     "HEBAT_DOWNLOAD_DIR": "data/hebat/downloads",
@@ -25,10 +26,16 @@ def ai_service_root() -> Path:
     return Path(__file__).resolve().parents[3]
 
 
+def repository_root(service_root: Path) -> Path:
+    if len(service_root.parents) >= 2:
+        return service_root.parents[1]
+    return service_root
+
+
 def repository_env_path(ai_root: Path | None = None) -> Path:
     """Return the root .env path for a normal monorepo checkout."""
     root = (ai_root or ai_service_root()).resolve()
-    return root.parents[1] / ".env"
+    return repository_root(root) / ".env"
 
 
 def _read_env_file(path: Path) -> dict[str, str]:
@@ -65,7 +72,7 @@ def _is_container_path(value: str, app_root: Path) -> bool:
 def _resolve_host_path(value: str, ai_root: Path) -> Path:
     path = Path(value).expanduser()
     if not path.is_absolute():
-        path = ai_root.parents[1] / path
+        path = repository_root(ai_root) / path
     return path.resolve()
 
 
@@ -160,13 +167,16 @@ def configure_mcp_runtime_paths(
     configured_host_base = _effective_value(
         "MCP_HOST_DATA_DIR", target_env, file_values
     )
+    host_base_from_environment = bool(target_env.get("MCP_HOST_DATA_DIR", "").strip())
     host_base = (
         _resolve_host_path(configured_host_base, service_root)
         if configured_host_base
         else (service_root / "data").resolve()
     )
-    configured_sqlite = _effective_value(
-        "MCP_HOST_SQLITE_PATH", target_env, file_values
+    configured_sqlite = (
+        _effective_value("MCP_HOST_SQLITE_PATH", target_env, file_values)
+        if not host_base_from_environment
+        else target_env.get("MCP_HOST_SQLITE_PATH", "").strip()
     )
     sqlite_path = (
         _resolve_host_path(configured_sqlite, service_root)

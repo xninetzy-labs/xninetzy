@@ -9,6 +9,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from uuid import uuid4
 
+import httpx
 from langchain_core.messages import BaseMessage
 
 from app.xninetzy.core.coding_agents import (
@@ -55,9 +56,11 @@ READ_ONLY_MCP_TOOLS = (
     "portal_navigation",
     "portal_session_status",
     "portal_schedule",
-    "portal_read_profile",
-    "portal_read_academic_status",
-    "portal_read_current_krs",
+    "portal_profile",
+    "portal_academic_status",
+    "portal_current_krs",
+    "portal_grades",
+    "portal_grade_changes",
     "graph_search",
     "graph_get_context",
     "graph_explain_topic_map",
@@ -159,6 +162,20 @@ def build_failover_config(settings: Settings | None = None) -> dict:
     permissions.update(
         {f"xninetzy_{tool_name}": "allow" for tool_name in READ_ONLY_MCP_TOOLS}
     )
+    mcp_command = (
+        [
+            "uv",
+            "run",
+            "--no-dev",
+            "--directory",
+            "/app",
+            "python",
+            "-m",
+            "app.xninetzy.interfaces.mcp_server",
+        ]
+        if Path("/app").is_dir()
+        else [sys.executable, "-m", "app.xninetzy.interfaces.mcp_server"]
+    )
     config: dict = {
         "$schema": "https://opencode.ai/config.json",
         "share": "disabled",
@@ -175,11 +192,7 @@ def build_failover_config(settings: Settings | None = None) -> dict:
         "mcp": {
             "xninetzy": {
                 "type": "local",
-                "command": [
-                    sys.executable,
-                    "-m",
-                    "app.xninetzy.interfaces.mcp_server",
-                ],
+                "command": mcp_command,
                 "enabled": True,
                 "timeout": int(
                     current.CHAT_FAILOVER_MCP_PREFLIGHT_TIMEOUT_SECONDS * 1000
@@ -197,7 +210,16 @@ def build_failover_config(settings: Settings | None = None) -> dict:
                     "apiKey": "{env:FLAZ_API_KEY}",
                 },
                 "models": {
-                    current.FLAZ_MODEL: {"name": current.FLAZ_MODEL},
+                    current.FLAZ_MODEL: {
+                        "name": current.FLAZ_MODEL,
+                        "options": {
+                            "thinking": {
+                                "type": "enabled"
+                                if current.FLAZ_THINKING_ENABLED
+                                else "disabled"
+                            }
+                        },
+                    },
                 },
             }
         }
@@ -212,7 +234,7 @@ def build_failover_environment(settings: Settings | None = None) -> dict[str, st
         if os.environ.get(name)
     }
     skills_path = user_skill_dir(current)
-    config_home = skills_path.parent.parent.parent
+    config_home = skills_path.parent.parent
     config_home.mkdir(parents=True, exist_ok=True)
     environment["XDG_CONFIG_HOME"] = str(config_home)
     environment["XNINETZY_SKILLS_DIR"] = str(skills_path)
@@ -298,7 +320,7 @@ async def verify_failover_mcp(
     return (True, "") if ready else (False, "MCP xninetzy tidak connected.")
 
 
-async def run_chat_failover(
+async def _run_local_chat_failover(
     message: str,
     *,
     user_id: str,
@@ -360,3 +382,95 @@ async def run_chat_failover(
         status = "completed" if code == 0 and output else "failed"
         _record_finish(run_id, status, output, error)
         return ChatFailoverResult(status, output, error, run_id)
+
+
+async def _run_host_chat_failover(
+    message: str,
+    *,
+    user_id: str,
+    chat_id: str,
+    history: list[BaseMessage],
+    metadata: dict | None,
+    settings: Settings,
+) -> ChatFailoverResult:
+    url = settings.CODING_AGENT_HOST_BRIDGE_URL.strip().rstrip("/")
+    token = settings.CODING_AGENT_HOST_BRIDGE_TOKEN.strip()
+    if not url or not token:
+        return ChatFailoverResult(
+            "failed",
+            "",
+            "Host coding-agent bridge belum dikonfigurasi.",
+        )
+    payload = {
+        "message": message,
+        "user_id": user_id,
+        "chat_id": chat_id,
+        "history": [
+            {
+                "type": getattr(item, "type", "message"),
+                "content": str(item.content),
+            }
+            for item in history[-8:]
+        ],
+        "metadata": metadata or {},
+    }
+    try:
+        async with httpx.AsyncClient(
+            timeout=settings.CODING_AGENT_HOST_BRIDGE_TIMEOUT_SECONDS
+        ) as client:
+            response = await client.post(
+                f"{url}/v1/chat-failover",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+    except httpx.HTTPError as exc:
+        return ChatFailoverResult(
+            "failed",
+            "",
+            f"Host failover bridge tidak terhubung: {type(exc).__name__}",
+        )
+    try:
+        body = response.json()
+    except ValueError:
+        body = {}
+    if response.status_code >= 400:
+        return ChatFailoverResult(
+            "failed",
+            "",
+            str(body.get("detail") or "Host failover bridge menolak request."),
+        )
+    return ChatFailoverResult(
+        str(body.get("status") or "failed"),
+        str(body.get("output") or ""),
+        str(body.get("error") or ""),
+        str(body.get("run_id") or ""),
+    )
+
+
+async def run_chat_failover(
+    message: str,
+    *,
+    user_id: str,
+    chat_id: str,
+    history: list[BaseMessage],
+    metadata: dict | None = None,
+    settings: Settings | None = None,
+) -> ChatFailoverResult:
+    current = settings or get_settings()
+    if current.CODING_AGENT_EXECUTION_MODE.strip().lower() == "host_bridge":
+        return await _run_host_chat_failover(
+            message,
+            user_id=user_id,
+            chat_id=chat_id,
+            history=history,
+            metadata=metadata,
+            settings=current,
+        )
+    return await _run_local_chat_failover(
+        message,
+        user_id=user_id,
+        chat_id=chat_id,
+        history=history,
+        metadata=metadata,
+        settings=current,
+    )

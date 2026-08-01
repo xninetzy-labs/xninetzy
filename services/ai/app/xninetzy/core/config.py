@@ -29,6 +29,7 @@ class Settings(BaseSettings):
     FLAZ_MODELS: str = "deepseek-v4-pro"
     FLAZ_TIMEOUT_SECONDS: float = 120.0
     FLAZ_MAX_RETRIES: int = 2
+    FLAZ_THINKING_ENABLED: bool = False
     OPENAI_API_KEY: str = ""
     OPENAI_BASE_URL: str = "https://api.openai.com/v1"
     OPENAI_MODEL: str = ""
@@ -63,6 +64,12 @@ class Settings(BaseSettings):
     CODING_AGENT_REQUIRE_XNINETZY_MCP: bool = True
     CODING_AGENT_MCP_SERVER_NAME: str = "xninetzy"
     CODING_AGENT_MCP_PREFLIGHT_TIMEOUT_SECONDS: float = 15.0
+    CODING_AGENT_EXECUTION_MODE: str = "host_bridge"
+    CODING_AGENT_HOST_BRIDGE_URL: str = "http://host.docker.internal:8765"
+    CODING_AGENT_HOST_BRIDGE_TOKEN: str = ""
+    CODING_AGENT_HOST_BRIDGE_TIMEOUT_SECONDS: float = 660.0
+    CODING_AGENT_HOST_WORKSPACE: str = "."
+    CODING_AGENT_HOST_ALLOWED_ROOT: str = "."
     CODEX_BIN: str = "codex"
     CODEX_MODEL: str = ""
     CLAUDE_CODE_BIN: str = "claude"
@@ -178,7 +185,7 @@ class Settings(BaseSettings):
     CYBER_CAMPUS_BASE_URL: str = "https://mahasiswa.unair.ac.id"
     CYBER_CAMPUS_CREDENTIAL_SOURCE: str = "hebat"
     CYBER_CAMPUS_BROWSER_HEADLESS: bool = True
-    CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS: int = 180
+    CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS: int = 600
     CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS: int = 3
     CYBER_CAMPUS_LOGIN_TIMEOUT_MS: int = 30_000
     CYBER_CAMPUS_GRADE_TOKEN_TTL_SECONDS: int = 180
@@ -225,6 +232,12 @@ class Settings(BaseSettings):
     DEEP_RESEARCH_ADMIN_ONLY: bool = True
     DEEP_RESEARCH_ALLOW_GROUP_ADMINS: bool = True
     DEEP_RESEARCH_ALLOW_ADMIN_NAMES: bool = True
+
+    # Deep research resource guards (enforced regardless of admin gate)
+    DEEP_RESEARCH_MAX_CONCURRENT_PER_CHAT: int = 2
+    DEEP_RESEARCH_MAX_SOURCES: int = 40
+    DEEP_RESEARCH_MAX_QUERIES: int = 24
+    DEEP_RESEARCH_TIMEOUT_SECONDS: int = 180
 
     # Human-in-the-loop approvals
     HITL_ENABLED: bool = True

@@ -42,4 +42,34 @@ def format_admin_notification(event_type: str, payload: dict) -> str:
             "*KRS Watcher — Sesi Kedaluwarsa*\n"
             f"{payload.get('detail') or '-'}"
         )
+    if event_type == "krs_war_started":
+        return (
+            "*KRS War — Dimulai*\n"
+            f"Window: {payload.get('window') or '-'}\n"
+            f"MK dalam plan: {payload.get('courses') or payload.get('mk_count') or 0}\n"
+            f"Semester: {payload.get('semester') or '-'}"
+        )
+    if event_type == "krs_war_taken":
+        return (
+            "*KRS War — Selesai*\n"
+            f"Window: {payload.get('window') or '-'}\n"
+            f"Diambil: {payload.get('taken', 0)}\n"
+            f"Sudah terambil: {payload.get('already_taken', 0)}\n"
+            f"Dilewati: {payload.get('skipped', 0)}\n"
+            f"Ringkasan: {payload.get('summary') or '-'}"
+        )
+    if event_type == "krs_war_error":
+        return (
+            "*KRS War — Error*\n"
+            f"Window: {payload.get('window') or '-'}\n"
+            f"Detail: {payload.get('error') or payload.get('detail') or '-'}"
+        )
+    if event_type == "krs_war_calibrated":
+        return (
+            "*KRS War Kalibrasi*\n"
+            f"Window: {payload.get('window') or '-'}\n"
+            f"Strategi: {payload.get('strategy') or 'none'}\n"
+            f"Target ditemukan: {payload.get('target_count', 0)} MK\n"
+            f"Status: {payload.get('status') or '-'}"
+        )
     return f"*Xninetzy Progress*\nEvent: {event_type}\nStatus: {payload.get('status') or '-'}"

@@ -1,6 +1,6 @@
 # Xninetzy OS Unified Access and Grounding Plan
 
-Last updated: 2026-07-29
+Last updated: 2026-08-01
 
 This is the execution tracker for turning Xninetzy from a feature-rich assistant
 into one OS shared by WhatsApp, internal LangGraph, Codex, Claude Code, and
@@ -38,6 +38,10 @@ Raw search output is never considered a final answer.
 - [x] `knowledge_answer` performs synthesis and citation validation.
 - [x] LangGraph routes relevant knowledge requests through the grounded agent path.
 - [x] FAISS cold-start mapping and persisted map/vector invariant are repaired.
+- [x] Agent Skills are dynamically discovered and injected into LangGraph and
+  exposed through the same MCP tools for Codex, Claude Code, and OpenCode.
+- [x] WhatsApp coding-agent and chat-failover execution is routed through an
+  authenticated host bridge instead of running CLI binaries in Docker.
 
 ## P0 — Trust and reliability
 
@@ -105,6 +109,19 @@ Acceptance:
 - [ ] Add metrics for WA delivery, routing, retrieval, tools, reminders, and jobs.
 - [ ] Add CI for Python, WA engine, CLI, docs, secret scanning, and Compose config.
 - [ ] Run documented backup/restore and workflow-resume drills.
+
+## Runtime-03 — Host coding bridge and cross-client skills
+
+- [x] Force Docker MCP persistence paths to `/app/data` even when the shared
+  `.env` contains host paths.
+- [x] Add authenticated host bridge endpoints for `/code` and read-only chat
+  failover with bounded payloads and workspace guards.
+- [x] Add Linux systemd user installer so the bridge starts automatically.
+- [x] Remove coding CLI installation from the AI Docker image.
+- [x] Keep dynamic skills in the shared Agent Skills catalog and expose them
+  through the canonical MCP registry.
+- [x] Verify production MCP configuration for Codex, Claude Code, and OpenCode
+  on the target host without exposing credentials.
 
 ## Change log
 

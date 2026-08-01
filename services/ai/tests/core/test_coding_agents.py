@@ -5,6 +5,7 @@ from pathlib import Path
 import pytest
 
 from app.xninetzy.core.coding_agents import (
+    _host_workspace_request,
     build_command,
     build_mcp_preflight_command,
     build_os_aware_task,
@@ -126,3 +127,35 @@ def test_os_aware_task_requires_agents_md_mcp_and_grounded_answer(tmp_path) -> N
     assert "MCP server named `xninetzy`" in task
     assert "knowledge_answer" in task
     assert task.endswith("fix the test")
+
+
+def test_host_bridge_marks_external_runtimes_available_without_container_binaries(
+    monkeypatch, tmp_path
+) -> None:
+    settings = _settings(tmp_path).model_copy(
+        update={
+            "CODING_AGENT_EXECUTION_MODE": "host_bridge",
+            "CODING_AGENT_HOST_BRIDGE_URL": "http://127.0.0.1:8765",
+            "CODING_AGENT_HOST_BRIDGE_TOKEN": "bridge-token",
+        }
+    )
+    monkeypatch.setattr(
+        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: None
+    )
+
+    catalog = runtime_catalog(settings)
+
+    assert catalog["codex"].installed is True
+    assert catalog["claude-code"].installed is True
+    assert catalog["opencode"].installed is True
+
+
+def test_host_workspace_request_translates_container_root(tmp_path) -> None:
+    settings = _settings(tmp_path).model_copy(
+        update={"CODING_AGENT_ALLOWED_ROOT": str(tmp_path / "repo")}
+    )
+    (tmp_path / "repo" / "src").mkdir(parents=True)
+
+    assert _host_workspace_request(str(tmp_path / "repo" / "src"), settings) == "src"
+    with pytest.raises(ValueError, match="harus berada"):
+        _host_workspace_request(str(tmp_path / "outside"), settings)

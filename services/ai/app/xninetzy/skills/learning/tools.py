@@ -1,1 +1,3 @@
-TOOLS = ["learning_create_roadmap", "learning_generate_today_plan"]
+from app.xninetzy.skills.it_learning.tools import TOOLS
+
+__all__ = ["TOOLS"]

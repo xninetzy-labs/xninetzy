@@ -96,7 +96,7 @@ async def _fresh_captcha_token(page) -> None:
         if ok:
             await page.evaluate(
                 "(v) => { const f = document.querySelector('form input[name=action]'); if (f) f.value = v; }",
-                "login",
+                "validate_captcha",
             )
             return
         await page.wait_for_timeout(1000)

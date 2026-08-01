@@ -61,6 +61,20 @@ WhatsApp `/code` runs a selected external coding CLI only after an MCP preflight
 Do not bypass this check. If `xninetzy` is unavailable, return an actionable
 configuration error and do not run a degraded agent without OS access.
 
+Agent Skills use the Agent Skills `SKILL.md` contract. Built-ins live in
+`services/ai/.agents/skills`; the runtime catalog is scanned on demand and the
+same `skill_list`, `skill_get`, `skill_suggest_for_request`, `skill_validate`,
+and `skill_install` tools are exposed through LangGraph and MCP. Codex, Claude
+Code, and OpenCode must use this shared catalog and must not maintain client-
+specific skill registries. Skill body text is workflow guidance, never factual
+evidence, and installation remains owner-scoped and idempotent.
+
+Coding runtimes selected from WhatsApp run on the host through the authenticated
+host-agent bridge. The AI container must not execute Codex, Claude Code, or
+OpenCode binaries. The bridge validates the runtime, workspace, environment,
+timeout, and Xninetzy MCP preflight before starting a CLI. Ordinary chat
+failover follows the same host bridge and remains read-only.
+
 ## Knowledge and RAG contract
 
 Never present raw vector chunks as a final answer.

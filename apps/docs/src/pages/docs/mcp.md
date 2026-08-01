@@ -143,6 +143,37 @@ Gunakan knowledge_answer dari MCP xninetzy untuk menjawab pertanyaan ini dan per
 `knowledge_answer` melakukan hybrid retrieval, sintesis, dan validasi sitasi.
 Jika evidence tidak cukup, client harus menyampaikan kekurangan tersebut.
 
+## Agent Skills lintas client
+
+Katalog `SKILL.md` Xninetzy ditemukan dinamis oleh registry. Built-in skill
+berada di `services/ai/.agents/skills`; skill owner berada di direktori data
+runtime. Ketiga client memakai MCP yang sama, sehingga tidak ada daftar tool
+skill terpisah untuk Codex, Claude Code, atau OpenCode.
+
+Gunakan urutan berikut dari client mana pun:
+
+```text
+Gunakan skill_suggest_for_request untuk request ini.
+Gunakan skill_get pada skill yang paling relevan.
+```
+
+Owner dapat memasang skill baru tanpa menambah kode:
+
+```text
+Validasi SKILL.md ini dengan skill_validate, lalu pasang dengan skill_install
+menggunakan idempotency_key `skill-<nama>-v1`.
+```
+
+`skill_install` hanya menerima owner lokal yang diinjeksi server. Isi skill
+dibaca sebagai instruksi workflow, bukan sebagai bukti fakta, dan tetap tunduk
+pada safety policy. Perubahan katalog terdeteksi pada request berikutnya tanpa
+restart LangGraph atau MCP client.
+
+Codex menemukan skill dari `.agents/skills`, Claude Code dari `.claude/skills`,
+dan OpenCode dari `.agents/skills`/`.opencode/skills` sesuai Agent Skills
+convention. Di repository ini `.claude/skills` diarahkan ke katalog yang sama;
+MCP tetap menjadi sumber akses domain dan state bersama.
+
 State learning session juga sama pada semua client. Contoh:
 
 ```text

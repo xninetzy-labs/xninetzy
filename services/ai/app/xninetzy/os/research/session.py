@@ -60,6 +60,16 @@ def get_research_session(session_id: int) -> dict | None:
     return dict(row) if row else None
 
 
+def list_research_sessions(chat_id: str, limit: int = 10) -> list[dict]:
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT id, topic, mode, status, created_at, updated_at "
+            "FROM research_sessions WHERE chat_id=? ORDER BY id DESC LIMIT ?",
+            (chat_id, max(1, min(limit, 50))),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def add_substep(
     session_id: int,
     type: str,

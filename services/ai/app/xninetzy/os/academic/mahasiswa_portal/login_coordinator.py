@@ -294,7 +294,7 @@ class CampusLoginCoordinator:
     def _owned_challenge(self, challenge_id: str, owner_id: str) -> LoginChallenge:
         challenge = self._challenges.get(challenge_id)
         if not challenge:
-            raise CampusChallengeNotFound("Challenge login tidak ditemukan.")
+            raise CampusChallengeNotFound("Challenge login tidak ditemukan atau sudah kedaluwarsa. Jalankan /cyber-login untuk CAPTCHA baru.")
         if challenge.owner_id != owner_id:
             raise PermissionError("Challenge login bukan milik owner ini.")
         return challenge

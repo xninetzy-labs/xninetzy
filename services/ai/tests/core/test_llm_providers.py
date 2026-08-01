@@ -30,6 +30,17 @@ def test_openai_compatible_provider_can_be_selected(monkeypatch) -> None:
     assert llm.openai_api_base == "https://openrouter.ai/api/v1"
 
 
+def test_flaz_disables_thinking_by_default(monkeypatch) -> None:
+    monkeypatch.setenv("LLM_ENABLED_PROVIDERS", "flaz")
+    monkeypatch.setenv("FLAZ_API_KEY", "secret")
+    monkeypatch.setenv("FLAZ_THINKING_ENABLED", "false")
+    _clear_caches()
+
+    llm = get_llm_flash(resolve_profile("flaz", "deepseek-v4-pro"))
+
+    assert llm.extra_body == {"thinking": {"type": "disabled"}}
+
+
 def test_provider_rejects_models_outside_operator_allowlist(monkeypatch) -> None:
     monkeypatch.setenv("LLM_ENABLED_PROVIDERS", "flaz")
     monkeypatch.setenv("FLAZ_API_KEY", "secret")

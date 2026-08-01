@@ -59,6 +59,9 @@ $mcpKey = New-UrlSafeKey 48
 Set-EnvValue "MCP_API_KEY" $mcpKey
 Set-EnvValue "WA_MCP_API_KEY" $mcpKey
 Set-EnvValue "WEB_ANALYSIS_ENCRYPTION_KEY" (New-UrlSafeKey 32)
+Set-EnvValue "CODING_AGENT_HOST_BRIDGE_TOKEN" (New-UrlSafeKey 32)
+Set-EnvValue "CODING_AGENT_ENABLED" "true"
+Set-EnvValue "CODING_AGENT_EXECUTION_MODE" "host_bridge"
 Set-EnvValue "WA_LOGIN_MODE" "qr"
 
 $flazKey = $null
@@ -68,6 +71,8 @@ $secureFlaz.Dispose()
 docker compose config -q
 docker compose up --build -d ai wa-enggine
 docker compose ps
+
+Write-Host "Host coding-agent bridge: jalankan uv run --directory services/ai --no-dev python -m app.xninetzy.interfaces.host_agent_bridge pada startup Windows."
 
 Write-Host ""
 Write-Host "Xninetzy terpasang di $InstallDir"

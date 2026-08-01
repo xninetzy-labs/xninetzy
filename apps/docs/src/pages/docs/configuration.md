@@ -194,17 +194,44 @@ Mode `auto` meng-resolve layout repository standar. Isi override hanya jika data
 ## Coding runtime
 
 ```dotenv
-CODING_AGENT_ENABLED=false
-CODING_AGENT_DEFAULT=codex
+CODING_AGENT_ENABLED=true
+CODING_AGENT_DEFAULT=opencode
 CODING_AGENT_ALLOWED=internal,codex,claude-code,opencode
 CODING_AGENT_ADMIN_ONLY=true
-CODING_AGENT_WORKSPACE=/absolute/path/to/workspace
-CODING_AGENT_ALLOWED_ROOT=/absolute/path/to/workspace
+CODING_AGENT_EXECUTION_MODE=host_bridge
+CODING_AGENT_HOST_BRIDGE_URL=http://host.docker.internal:8765
+CODING_AGENT_HOST_BRIDGE_TOKEN=
+CODING_AGENT_HOST_WORKSPACE=/absolute/path/to/xninetzy
+CODING_AGENT_HOST_ALLOWED_ROOT=/absolute/path/to/xninetzy
 CODING_AGENT_TIMEOUT_SECONDS=600
 CODING_AGENT_SANDBOX=workspace-write
 ```
 
-Aktifkan hanya jika service berjalan pada host yang memiliki binary dan session login CLI.
+`/code` tidak menjalankan Codex, Claude Code, atau OpenCode di dalam container.
+AI service mengirim task terautentikasi ke host bridge, lalu bridge menjalankan
+CLI host pada workspace yang diizinkan dan mengembalikan output terbatas ke
+WhatsApp. Token bridge harus sama di `.env` host dan container, tetapi tidak
+pernah diteruskan ke subprocess coding.
+
+Linux dapat mengaktifkan bridge saat login dan setelah reboot:
+
+```bash
+bash scripts/install_host_agent_bridge.sh
+loginctl enable-linger "$USER"
+systemctl --user status xninetzy-host-agent-bridge
+curl -s http://127.0.0.1:8765/health
+```
+
+Untuk menjalankan sementara:
+
+```bash
+bash scripts/run_host_agent_bridge.sh
+```
+
+Bridge melakukan MCP preflight dari host. Jika konfigurasi `xninetzy` tidak
+tersedia pada CLI yang dipilih, task dihentikan dan tidak dijalankan tanpa OS
+access. Pilih runtime dari WhatsApp dengan `/agent use codex`,
+`/agent use claude-code`, atau `/agent use opencode`, lalu jalankan `/code ...`.
 
 ## Validasi
 

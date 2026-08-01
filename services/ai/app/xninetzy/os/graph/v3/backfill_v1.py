@@ -16,7 +16,6 @@ from __future__ import annotations
 
 import json
 
-from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
 from app.xninetzy.db.sqlite import connect, init_db
 

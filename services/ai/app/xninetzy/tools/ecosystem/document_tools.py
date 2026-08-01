@@ -79,7 +79,7 @@ def document_ingest(
          "strategy": result.get("strategy")},
     )
     lines = [
-        f"✅ Dokumen diingest!",
+        "✅ Dokumen diingest!",
         f"*{result['title']}*",
         f"Strategi: {result.get('strategy')}/{result.get('extractor')}",
         f"{result.get('pages', '?')} hal | {result['chunks']} chunk | "

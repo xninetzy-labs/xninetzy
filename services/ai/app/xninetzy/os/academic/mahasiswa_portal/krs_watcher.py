@@ -251,6 +251,24 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
         in_window = bool(
             signal.announcement and signal.announcement.contains(current)
         )
+        calibration = {"skipped": "no_announcement"}
+        war = {"skipped": "not_in_window"}
+        if signal.announcement is not None:
+            from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
+                auto_calibrate_if_needed,
+                run_krs_war_if_armed,
+            )
+
+            calibration_result = await auto_calibrate_if_needed(
+                announcement=signal.announcement, now=current
+            )
+            calibration = calibration_result.get("calibration", calibration)
+            if in_window:
+                war_result = await run_krs_war_if_armed(
+                    now=current,
+                    announcement=signal.announcement,
+                )
+                war = war_result.get("war", war)
         changed = signal.fingerprint != state["last_notified_fingerprint"]
         notified = None
         if changed:
@@ -278,6 +296,8 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
             "in_window": in_window,
             "announcement": announcement_text,
             "mk_count": signal.mk_count,
+            "war": war,
+            "calibration": calibration,
         }
     except AcademicPortalReadError as exc:
         message = str(exc)
@@ -296,7 +316,13 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
                 {"detail": message},
                 impact="high",
             )
-        return {"enabled": True, "error": message, "expired": expired}
+        return {
+            "enabled": True,
+            "error": message,
+            "expired": expired,
+            "war": {"skipped": "capture_failed"},
+            "calibration": {"skipped": "capture_failed"},
+        }
 
 
 def _next_interval(tick_result: dict, store: KrsWatcherStore | None = None) -> int:

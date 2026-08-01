@@ -1,6 +1,6 @@
 # Xninetzy OS Implementation Progress
 
-Last updated: 2026-07-29
+Last updated: 2026-08-01
 
 This log tracks implementation batches from
 `docs/plan/XNINETZY_OS_UNIFIED_ACCESS_PLAN.md`. A batch is complete only after
@@ -28,6 +28,7 @@ code, tests, configuration, and documentation agree.
 | Runtime-01 | Fixed Playwright Docker layer and laptop boot restart | Complete | Docker images built; both services healthy; Docker enabled/active |
 | Academic-01b | Typed Cyber Campus reads + private WhatsApp grade-token reader | Partial | 346 AI tests; live profile/status/10 KRS rows; offering model pending |
 | Runtime-02 | Cross-platform bridge Compose + bootstrap installers | Complete | Compose config; Bash syntax; Docker health; docs build |
+| Runtime-03 | Host coding bridge, Docker path isolation, and cross-client skills | Complete | Docker import; host bridge health/auth; Codex, Claude Code, and OpenCode MCP smoke; focused tests |
 
 ## Batch P0-01 — API authentication and owner boundary
 
@@ -277,6 +278,28 @@ Completed: 2026-07-29
 - [x] Document Docker Desktop startup behavior for macOS and Windows.
 - [x] Add portfolio and GitHub links to the docs landing page and footer.
 - [x] Redact libsignal session objects before third-party console output.
+
+## Batch Runtime-03 — Host coding bridge and shared Agent Skills
+
+Completed: 2026-08-01
+
+- [x] Override container persistence paths so MCP never attempts to create host
+  absolute paths inside `/app`.
+- [x] Verify `mcp_server` imports in Docker and OpenCode reports `xninetzy
+  connected`.
+- [x] Route `/code` from the AI container to the host bridge over an
+  authenticated loopback gateway.
+- [x] Add read-only host execution for ordinary chat failover.
+- [x] Add bounded host workspace translation and host CLI path detection.
+- [x] Add systemd user installer and verify the bridge is active after startup.
+- [x] Remove Codex, Claude Code, and OpenCode npm installation from the AI image.
+- [x] Synchronize compatibility `app/xninetzy/skills/*` metadata with the
+  canonical registry and Agent Skills catalog.
+- [x] Run AI lint and focused runtime/skill suites after final runtime changes.
+- [x] Verify Codex, Claude Code, and OpenCode global MCP configs on the target
+  host and record the result without exposing credentials.
+
+Current host smoke result: bridge `/health` reports Codex, Claude Code, and OpenCode available; unauthenticated `/v1/run` returns `401`; Docker MCP import prints `IMPORT_OK`; the final Docker image contains no coding CLI; host Codex, Claude Code, and OpenCode all report `xninetzy` connected.
 
 ## Batch WA-Approval-01 — Canonical WhatsApp verification
 

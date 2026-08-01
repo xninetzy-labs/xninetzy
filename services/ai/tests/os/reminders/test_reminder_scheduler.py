@@ -9,8 +9,13 @@ from app.xninetzy.core.config import get_settings
 from app.xninetzy.db.sqlite import init_db
 from app.xninetzy.db.migrations import run_migrations
 from app.xninetzy.os.reminders.reminder_store import ReminderStore
-from app.xninetzy.os.reminders.scheduler import format_reminder_message, run_scheduler_tick
+from app.xninetzy.os.reminders.scheduler import (
+    format_reminder_message,
+    run_scheduler_tick,
+    send_reminder,
+)
 from app.xninetzy.os.reminders.reminder_service import ReminderService
+from app.xninetzy.os.reminders import scheduler as scheduler_module
 
 
 NOW = datetime(2026, 6, 3, 9, 0, tzinfo=ZoneInfo("Asia/Jakarta"))
@@ -129,3 +134,62 @@ def test_wa_message_not_only_raw_task_text():
     message = format_reminder_message(reminder)
     assert message.strip() != "⏰ Reminder\n\ndocker logs"
     assert len(message.splitlines()) > 6
+
+
+class _FakeResponse:
+    def __init__(self, body: str, status: int = 200):
+        self._body = body
+        self.status = status
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
+
+    def read(self):
+        return self._body.encode("utf-8")
+
+
+def _patch_urlopen(monkeypatch, body: str, status: int = 200):
+    def fake_urlopen(request, timeout=None):
+        return _FakeResponse(body, status)
+
+    monkeypatch.setattr(scheduler_module.urllib.request, "urlopen", fake_urlopen)
+
+
+@pytest.mark.asyncio
+async def test_send_reminder_ok_on_success_true(monkeypatch):
+    _patch_urlopen(monkeypatch, '{"success": true, "result": {}}')
+    await send_reminder({"id": 1, "chat_id": "chat1", "title": "T", "remind_at": NOW.isoformat()})
+
+
+@pytest.mark.asyncio
+async def test_send_reminder_raises_on_success_false(monkeypatch):
+    _patch_urlopen(
+        monkeypatch,
+        '{"success": false, "error": {"message": "WA disconnected"}}',
+    )
+    with pytest.raises(RuntimeError, match="WA disconnected"):
+        await send_reminder(
+            {"id": 1, "chat_id": "chat1", "title": "T", "remind_at": NOW.isoformat()}
+        )
+
+
+@pytest.mark.asyncio
+async def test_scheduler_marks_failed_when_wa_reports_failure(monkeypatch):
+    store = ReminderStore()
+    reminder = _create_due(store)
+    _patch_urlopen(
+        monkeypatch,
+        '{"success": false, "error": {"message": "WA disconnected"}}',
+    )
+
+    stats = await run_scheduler_tick(now=NOW, store=store)
+
+    row = store.get_reminder(reminder["id"])
+    assert stats["failed"] == 1
+    assert stats["sent"] == 0
+    assert row["status"] == "failed"
+    assert row["status"] != "sent"
+    assert "WA disconnected" in row["last_error"]

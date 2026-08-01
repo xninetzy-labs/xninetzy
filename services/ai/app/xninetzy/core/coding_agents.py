@@ -1,13 +1,15 @@
 from __future__ import annotations
 
 import asyncio
-import os
 import json
+import os
 import shutil
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 from uuid import uuid4
+
+import httpx
 
 from app.xninetzy.core.config import Settings, get_settings
 from app.xninetzy.db.migrations import run_migrations
@@ -57,12 +59,22 @@ def subprocess_environment(settings: Settings | None = None) -> dict[str, str]:
     allowed = {
         name.strip() for name in s.CODING_AGENT_ENV_ALLOWLIST.split(",") if name.strip()
     }
-    return {name: value for name, value in os.environ.items() if name in allowed}
+    environment = {
+        name: value for name, value in os.environ.items() if name in allowed
+    }
+    environment.setdefault("PATH", os.environ.get("PATH") or "")
+    environment.setdefault("HOME", os.environ.get("HOME") or "")
+    return environment
 
 
 def runtime_catalog(settings: Settings | None = None) -> dict[str, CodingAgentInfo]:
     s = settings or get_settings()
     allowed = set(_csv(s.CODING_AGENT_ALLOWED))
+    host_bridge = s.CODING_AGENT_EXECUTION_MODE.strip().lower() == "host_bridge"
+    host_bridge_ready = host_bridge and bool(
+        s.CODING_AGENT_HOST_BRIDGE_URL.strip()
+        and s.CODING_AGENT_HOST_BRIDGE_TOKEN.strip()
+    )
     configured = {
         "internal": ("", ""),
         "codex": (s.CODEX_BIN, s.CODEX_MODEL),
@@ -74,7 +86,11 @@ def runtime_catalog(settings: Settings | None = None) -> dict[str, CodingAgentIn
             name=name,
             binary=binary,
             allowed=name in allowed,
-            installed=name == "internal" or bool(shutil.which(binary)),
+            installed=(
+                name == "internal"
+                or host_bridge_ready
+                or bool(shutil.which(binary))
+            ),
             model=model.strip(),
         )
         for name, (binary, model) in configured.items()
@@ -90,7 +106,7 @@ def validate_runtime(name: str, settings: Settings | None = None) -> CodingAgent
         raise ValueError(f"Coding agent '{normalized}' tidak diizinkan.")
     if not info.installed:
         raise ValueError(
-            f"Binary untuk '{normalized}' tidak ditemukan di PATH service AI."
+            f"Runtime '{normalized}' belum tersedia di host bridge atau PATH."
         )
     return info
 
@@ -116,9 +132,10 @@ def build_command(
 ) -> list[str]:
     s = settings or get_settings()
     info = validate_runtime(runtime, s)
+    binary = info.binary
     if runtime == "codex":
         command = [
-            info.binary,
+            binary,
             "exec",
             "--json",
             "--ephemeral",
@@ -135,7 +152,7 @@ def build_command(
         return command
     if runtime == "claude-code":
         command = [
-            info.binary,
+            binary,
             "-p",
             "--output-format",
             "json",
@@ -148,7 +165,7 @@ def build_command(
         command.append(task)
         return command
     if runtime == "opencode":
-        command = [info.binary, "run", "--format", "json", "--dir", str(workspace)]
+        command = [binary, "run", "--format", "json", "--dir", str(workspace)]
         if info.model:
             command.extend(["--model", info.model])
         command.append(task)
@@ -163,11 +180,12 @@ def build_mcp_preflight_command(
 ) -> list[str]:
     s = settings or get_settings()
     info = validate_runtime(runtime, s)
+    binary = info.binary
     server_name = s.CODING_AGENT_MCP_SERVER_NAME.strip() or "xninetzy"
     if runtime in {"codex", "claude-code"}:
-        return [info.binary, "mcp", "get", server_name]
+        return [binary, "mcp", "get", server_name]
     if runtime == "opencode":
-        return [info.binary, "mcp", "list"]
+        return [binary, "mcp", "list"]
     raise ValueError("Runtime internal tidak membutuhkan MCP preflight.")
 
 
@@ -289,7 +307,7 @@ def _record_finish(run_id: str, status: str, output: str, error: str) -> None:
         )
 
 
-async def run_coding_agent(
+async def _run_local_coding_agent(
     runtime: str,
     task: str,
     *,
@@ -346,3 +364,113 @@ async def run_coding_agent(
     status = "completed" if process.returncode == 0 else "failed"
     _record_finish(run_id, status, output, error)
     return CodingAgentResult(run_id, runtime, status, output, error)
+
+
+def _host_workspace_request(
+    workspace: str | None,
+    settings: Settings,
+) -> str:
+    container_root = Path(settings.CODING_AGENT_ALLOWED_ROOT).expanduser().resolve()
+    requested = Path(workspace or settings.CODING_AGENT_WORKSPACE).expanduser()
+    if requested.is_absolute():
+        resolved = requested.resolve()
+        if resolved != container_root and container_root not in resolved.parents:
+            raise ValueError(f"Workspace harus berada di dalam {container_root}")
+        return str(resolved.relative_to(container_root)) or "."
+    return str(requested)
+
+
+async def _run_host_bridge(
+    runtime: str,
+    task: str,
+    *,
+    user_id: str,
+    chat_id: str,
+    workspace: str | None,
+    settings: Settings,
+) -> CodingAgentResult:
+    url = settings.CODING_AGENT_HOST_BRIDGE_URL.strip().rstrip("/")
+    token = settings.CODING_AGENT_HOST_BRIDGE_TOKEN.strip()
+    if not url or not token:
+        raise ValueError(
+            "Host coding-agent bridge belum dikonfigurasi. Isi URL dan token bridge."
+        )
+    payload = {
+        "runtime": runtime,
+        "task": task.strip(),
+        "workspace": _host_workspace_request(workspace, settings),
+        "user_id": user_id,
+        "chat_id": chat_id,
+    }
+    try:
+        async with httpx.AsyncClient(
+            timeout=settings.CODING_AGENT_HOST_BRIDGE_TIMEOUT_SECONDS
+        ) as client:
+            response = await client.post(
+                f"{url}/v1/run",
+                headers={"Authorization": f"Bearer {token}"},
+                json=payload,
+            )
+    except httpx.HTTPError as exc:
+        return CodingAgentResult(
+            uuid4().hex,
+            runtime,
+            "failed",
+            "",
+            f"Host coding-agent bridge tidak terhubung: {type(exc).__name__}",
+        )
+    try:
+        body = response.json()
+    except ValueError:
+        body = {}
+    if response.status_code >= 400:
+        return CodingAgentResult(
+            str(body.get("run_id") or uuid4().hex),
+            runtime,
+            "failed",
+            "",
+            str(body.get("detail") or "Host bridge menolak request."),
+        )
+    return CodingAgentResult(
+        str(body.get("run_id") or uuid4().hex),
+        str(body.get("runtime") or runtime),
+        str(body.get("status") or "failed"),
+        str(body.get("output") or ""),
+        str(body.get("error") or ""),
+    )
+
+
+async def run_coding_agent(
+    runtime: str,
+    task: str,
+    *,
+    user_id: str,
+    chat_id: str,
+    workspace: str | None = None,
+    settings: Settings | None = None,
+) -> CodingAgentResult:
+    current = settings or get_settings()
+    if current.CODING_AGENT_EXECUTION_MODE.strip().lower() == "host_bridge":
+        if not current.CODING_AGENT_ENABLED:
+            raise ValueError(
+                "Coding-agent runtime belum diaktifkan (CODING_AGENT_ENABLED=false)."
+            )
+        if not task.strip():
+            raise ValueError("Task coding tidak boleh kosong.")
+        validate_runtime(runtime, current)
+        return await _run_host_bridge(
+            runtime,
+            task,
+            user_id=user_id,
+            chat_id=chat_id,
+            workspace=workspace,
+            settings=current,
+        )
+    return await _run_local_coding_agent(
+        runtime,
+        task,
+        user_id=user_id,
+        chat_id=chat_id,
+        workspace=workspace,
+        settings=current,
+    )

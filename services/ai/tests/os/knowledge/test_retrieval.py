@@ -88,6 +88,56 @@ async def test_answer_from_knowledge_synthesizes_and_validates_citations(monkeyp
     assert "Source" in result
 
 
+@pytest.mark.asyncio
+async def test_answer_from_knowledge_reports_provider_misconfig(monkeypatch):
+    from app.xninetzy.os.knowledge import retrieval
+
+    bundle = select_evidence(
+        "query",
+        [{"id": 10, "source_id": 1, "title": "Source", "text": "evidence"}],
+        limit=5,
+        min_evidence=1,
+    )
+
+    def raise_misconfig(profile=None):
+        raise RuntimeError("Provider 'flaz' belum siap: FLAZ_API_KEY.")
+
+    monkeypatch.setattr(retrieval, "retrieve_evidence", lambda query: bundle)
+    monkeypatch.setattr("app.xninetzy.core.llm.get_llm_pro", raise_misconfig)
+
+    result = await retrieval.answer_from_knowledge("query")
+
+    assert "FLAZ_API_KEY" in result
+    assert "gagal sementara" not in result
+    assert "Sumber:" in result
+
+
+@pytest.mark.asyncio
+async def test_answer_from_knowledge_reports_transient_failure(monkeypatch):
+    from app.xninetzy.os.knowledge import retrieval
+
+    bundle = select_evidence(
+        "query",
+        [{"id": 10, "source_id": 1, "title": "Source", "text": "evidence"}],
+        limit=5,
+        min_evidence=1,
+    )
+
+    class FailingLLM:
+        async def ainvoke(self, messages):
+            raise RuntimeError("upstream 503")
+
+    monkeypatch.setattr(retrieval, "retrieve_evidence", lambda query: bundle)
+    monkeypatch.setattr(
+        "app.xninetzy.core.llm.get_llm_pro", lambda profile=None: FailingLLM()
+    )
+
+    result = await retrieval.answer_from_knowledge("query")
+
+    assert "gagal sementara" in result
+    assert "Sumber:" in result
+
+
 # ─── relevance gating (phase 8 retrieval-quality fixes) ──────────────────────
 
 

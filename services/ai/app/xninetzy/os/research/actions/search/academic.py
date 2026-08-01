@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from app.xninetzy.os.research.academic_search import academic_search
 from app.xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
 
 
@@ -11,16 +12,6 @@ class AcademicSearchAction(ResearchAction):
 
     async def execute(self, input: ResearchActionInput) -> ResearchActionOutput:
         query = input.query or input.topic
-        return ResearchActionOutput(
-            type="academic_search",
-            data={
-                "sources": [
-                    {
-                        "title": f"Academic search placeholder: {query}",
-                        "url": "",
-                        "snippet": "Academic provider belum dikonfigurasi; gunakan mode ini sebagai slot integrasi berikutnya.",
-                        "source_type": "academic",
-                    }
-                ]
-            },
-        )
+        limit = int(input.config.get("limit") or 3)
+        sources = await academic_search(query, limit=limit)
+        return ResearchActionOutput(type="academic_search", data={"sources": sources})

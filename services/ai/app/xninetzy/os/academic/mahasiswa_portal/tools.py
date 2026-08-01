@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import base64
+from datetime import UTC, datetime
 
 from langchain_core.tools import tool
 
@@ -16,6 +17,13 @@ from app.xninetzy.os.academic.mahasiswa_portal.grade_token import (
 from app.xninetzy.os.academic.mahasiswa_portal.grade_snapshots import (
     GRADE_SNAPSHOT_REPOSITORY,
     GradeSnapshotOutcome,
+)
+from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
+    KrsPlan,
+    KrsWarStore,
+    krs_war_status_text,
+    load_krs_plan,
+    take_krs_plan,
 )
 from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsWatcherStore
 from app.xninetzy.os.academic.mahasiswa_portal.reader import (
@@ -157,13 +165,19 @@ async def portal_login_cancel(
 
 
 @tool
-def portal_session_status() -> str:
-    """Periksa keberadaan session Cyber Campus terenkripsi tanpa mengekspos cookie."""
+async def portal_session_status() -> str:
+    """Validasi session Cyber Campus ke portal tanpa mengekspos cookie."""
     try:
-        present = SessionManager().has_session("mahasiswa")
+        valid, state = await ACADEMIC_PORTAL_READER.session_status()
     except SessionEncryptionUnavailable as exc:
         return f"Session belum siap: {exc}"
-    return "Session Cyber Campus tersedia." if present else "Session Cyber Campus belum tersedia."
+    if valid:
+        return "Session Cyber Campus aktif dan dapat dipakai."
+    if state == "missing":
+        return "Session Cyber Campus belum tersedia."
+    if state == "expired":
+        return "Session Cyber Campus tersedia secara lokal, tetapi kedaluwarsa di portal. Jalankan /cyber-login."
+    return "Session Cyber Campus belum dapat divalidasi. Jalankan /cyber-login jika pembacaan portal gagal."
 
 
 @tool
@@ -489,6 +503,138 @@ def portal_krs_watcher_stop() -> str:
     """Nonaktifkan watcher slot KRS."""
     KrsWatcherStore().set_enabled(False)
     return "Watcher KRS dinonaktifkan."
+
+
+def _plan_summary(plan: KrsPlan) -> str:
+    total_sks = sum(
+        int(course.credits) for course in plan.courses if course.credits.isdigit()
+    )
+    return f"{len(plan.courses)} MK, {total_sks} SKS"
+
+
+@tool
+async def portal_krs_war_status(
+    chat_id: str = "system", sender_id: str | None = None
+) -> str:
+    """Status KRS War: armed, plan hash, dan riwayat run terakhir."""
+    try:
+        body = await krs_war_status_text()
+    except Exception as exc:
+        return f"Status KRS War belum dapat dibaca: {exc}"
+    return "\n".join(["*KRS War Mode*", body])
+
+
+@tool
+async def portal_krs_war_arm(
+    chat_id: str = "system", sender_id: str | None = None
+) -> str:
+    """Aktifkan KRS War: submit otomatis sesuai plan saat window KRS terbuka."""
+    if not is_owner_admin(sender_id or chat_id, None):
+        return "KRS War hanya dapat diaktifkan oleh admin."
+    try:
+        plan = await load_krs_plan()
+    except Exception as exc:
+        return f"Plan KRS belum dapat dimuat: {exc}"
+    if plan is None or not plan.courses:
+        return (
+            "Plan KRS tidak ditemukan atau kosong. KRS War tidak diaktifkan.\n"
+            "Periksa file KRS_Plan_Semester_5.md di vault Obsidian."
+        )
+    KrsWarStore().set_armed(True, plan)
+    return (
+        "*KRS War Aktif*\n"
+        f"• Plan: {plan.semester_label or plan.source_path} ({_plan_summary(plan)})\n"
+        "• Saat window KRS terbuka, MK dalam plan akan disubmit otomatis.\n"
+        "• Aksi ini bisa dibatalkan kapan saja: /krs-war disarm"
+    )
+
+
+@tool
+def portal_krs_war_disarm(
+    chat_id: str = "system", sender_id: str | None = None
+) -> str:
+    """Nonaktifkan KRS War: tidak ada submit otomatis lagi."""
+    if not is_owner_admin(sender_id or chat_id, None):
+        return "KRS War hanya dapat dinonaktifkan oleh admin."
+    KrsWarStore().set_armed(False)
+    return "KRS War dinonaktifkan. Tidak ada submit otomatis lagi."
+
+
+@tool
+async def portal_krs_war_plan(
+    chat_id: str = "system", sender_id: str | None = None
+) -> str:
+    """Tampilkan plan KRS War: kode, nama, SKS, kelas target, dan fallback."""
+    try:
+        plan = await load_krs_plan()
+    except Exception as exc:
+        return f"Plan KRS belum dapat dimuat: {exc}"
+    if plan is None or not plan.courses:
+        return (
+            "Plan KRS belum tersedia. Pastikan file KRS_Plan_Semester_5.md "
+            "ada di vault atau /krs-war arm sudah pernah dijalankan."
+        )
+    lines = [
+        "*KRS War Plan*",
+        f"• {plan.semester_label or '-'} ({plan.source_path})",
+    ]
+    for index, course in enumerate(plan.courses, start=1):
+        fallbacks = ", ".join(course.fallback_classes) or "-"
+        lines.append(
+            f"{index}. *{course.code}* {course.name} — {course.credits} SKS, "
+            f"target {course.target_class}, fallback {fallbacks}"
+        )
+    return "\n".join(lines)
+
+
+@tool
+async def portal_krs_war_dry_run(
+    chat_id: str = "system", sender_id: str | None = None
+) -> str:
+    """Jalankan simulasi KRS War tanpa submit: tampilkan apa yang akan terjadi."""
+    if not is_owner_admin(sender_id or chat_id, None):
+        return "Simulasi KRS War hanya dapat dijalankan oleh admin."
+    try:
+        plan = await load_krs_plan()
+    except Exception as exc:
+        return f"Plan KRS belum dapat dimuat: {exc}"
+    if plan is None or not plan.courses:
+        return (
+            "Plan KRS belum tersedia. Pastikan file KRS_Plan_Semester_5.md "
+            "ada di vault atau /krs-war arm sudah pernah dijalankan."
+        )
+    watcher_state = KrsWatcherStore().get()
+    raw = str(watcher_state.get("last_announcement") or "")
+    if "|" in raw:
+        start, _, end = raw.partition("|")
+        window = f"{start}|{end}" if end else f"{start}|{start}"
+    else:
+        today = datetime.now(UTC).date().isoformat()
+        window = f"{today}|{today}"
+    try:
+        result = await take_krs_plan(plan, window, dry_run=True)
+    except Exception as exc:
+        return f"Simulasi KRS War gagal: {exc}"
+    already = set(result.get("already_taken") or [])
+    skipped_map = {
+        item["code"]: item["reason"] for item in result.get("skipped") or []
+    }
+    lines = [
+        "*KRS War Dry Run*",
+        f"• Window: {window.replace('|', ' s.d. ')}",
+        f"• Total MK dalam plan: {len(plan.courses)}",
+    ]
+    for index, course in enumerate(plan.courses, start=1):
+        if course.code in already:
+            status = "sudah terambil"
+        elif course.code in skipped_map:
+            status = f"dilewati: {skipped_map[course.code]}"
+        else:
+            status = f"akan diambil → kelas {course.target_class}"
+        lines.append(f"{index}. {course.code} — {status}")
+    lines.append(f"• Ringkasan: {result.get('summary') or '-'}")
+    lines.append("• Tidak ada submit yang benar-benar dilakukan (dry run).")
+    return "\n".join(lines)
 
 
 @tool

@@ -1,5 +1,4 @@
 # syntax=docker/dockerfile:1.7
-FROM ghcr.io/anomalyco/opencode:1.18.9 AS opencode
 
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
@@ -22,8 +21,6 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     TORCH_NUM_THREADS=4
 
 WORKDIR /app
-
-COPY --from=opencode /usr/local/bin/opencode /usr/local/bin/opencode
 
 # System deps: Chromium for Playwright + PDF/OCR libs
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -48,6 +45,7 @@ RUN --mount=type=cache,target=/tmp/uv-cache \
     && mkdir -p /app/data/hebat/downloads /app/data/hebat/browser-profiles \
         /app/data/wa-media /app/data/backups \
         /app/data/opencode-config/opencode/skills \
+        /app/data/codex-config /app/data/claude-config \
         /tmp/xninetzy-home /tmp/uv-cache \
     && chmod -R a+rX /ms-playwright \
     && chmod -R a+rwX /app/data /tmp/xninetzy-home /tmp/uv-cache

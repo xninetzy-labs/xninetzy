@@ -52,6 +52,12 @@ def dispatch_recorded_event(event_id: int) -> None:
         consume_event(event_id)
     except Exception:
         logger.exception("Ecosystem reducer failed for event %s", event_id)
+    try:
+        from app.xninetzy.os.graph.v3.graph_populator import consume_event as graph_consume
+
+        graph_consume(event_id)
+    except Exception:
+        logger.exception("Graph populator failed for event %s", event_id)
 
 
 def record_event(

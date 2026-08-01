@@ -25,10 +25,15 @@ dependencies = [
     "pillow>=10.0",
     "pytesseract>=0.3.13",
     "pypdfium2>=4.30",
+    "pdfplumber>=0.11",
     "cryptography>=43.0",
     "langchain-anthropic>=1.5.2",
     "mcp>=1.28.1",
     "pyyaml>=6.0.3",
+    "sentence-transformers>=3.0",
+    "torch>=2.2",
+    "neo4j>=5.26",
+    "networkx>=3.3",
 ]
 
 [dependency-groups]
@@ -41,7 +46,22 @@ dev = [
 [tool.uv]
 package = false
 
+# CPU-only PyTorch. Pinning torch to the official CPU wheel index keeps the
+# resolver off the default PyPI torch build, which on linux drags in the entire
+# CUDA stack (triton + nvidia-* ≈ several GB). sentence-transformers inherits
+# this CPU torch instead of resolving its own CUDA one.
+[tool.uv.sources]
+torch = { index = "pytorch-cpu" }
+
+[[tool.uv.index]]
+name = "pytorch-cpu"
+url = "https://download.pytorch.org/whl/cpu"
+explicit = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 python_files = ["test_*.py"]
 addopts = "-ra"
+markers = [
+    "integration: heavier tests that may download models or hit the network",
+]

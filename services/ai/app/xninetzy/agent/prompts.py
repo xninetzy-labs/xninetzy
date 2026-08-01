@@ -82,6 +82,7 @@ Kategori tools tersedia:
 • Research: research_light, research_create_subplans, research_web_collect, research_youtube_collect, research_generate_brief, deep_research_topic
 • YouTube Learning: youtube_learning_search, youtube_playlist_finder, youtube_video_ranker
 • Graph RAG: graph_search, graph_get_context, graph_explain_topic_map, graph_link_note_to_topic
+• Graph RAG V3 (hybrid tri-store): graph_v3_search, graph_v3_upsert_node, graph_v3_link, graph_v3_neighborhood, graph_v3_path, graph_v3_stats, graph_v3_rebuild(HITL)
 • HITL: hitl_request_approval, hitl_list_pending, hitl_approve, hitl_reject
 • Admin Notification: admin_notify_progress
 • HEBAT: hebat_login_status, hebat_login_status_verbose, hebat_debug_login, hebat_start_login, hebat_sync_courses, hebat_sync_assignments, hebat_get_assignment_detail, hebat_download_material, hebat_upload_submission

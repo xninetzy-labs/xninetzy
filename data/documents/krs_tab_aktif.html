@@ -1,0 +1,186 @@
+<html><head><style>div[style*="display:none"],div[style*="display: none"],.tab,.tab_sel,.panel { display:block !important; visibility:visible !important; }#krs_ditampil,#krs_ditambah,#krs_dihapus,#krs_ditambah_lintas_rumpun { display:block !important; visibility:visible !important; }</style></head><body><div class="center_title_bar">KRS</div>
+<div id="alert" class="ui-widget" style="margin-left:0px;margin-top:10px">
+        <div class="ui-state-highlight ui-corner-all" style="padding: 5px;width:95%;"> 
+            <p><span class="ui-icon ui-icon-check" style="float: left; margin-right: .3em;margin-bottom:1em;"></span> 
+                Kepada Yth. Pengguna Web E-Learning: Mohon untuk memeriksa apakah mata kuliah yang Anda ambil semester ini (baik melalui KRS ataupun KPRS dan sudah disetujui dosen wali) sudah tersedia di Web E-Learning dengan cara login ke http://elearning.unair.ac.id (https://hebat.elearning.unair.ac.id) menggunakan akun cybercampus Anda. Jika tidak bisa login atau mata kuliah belum tersedia di Web E-Learning mohon untuk menghubungi helpdesk E-Learning yang tertera di web http://elearning.unair.ac.id atau melalui telegram Helpdesk E-Learning Universitas Airlangga.</p>
+        </div>
+    </div>
+
+
+<script>
+	var panels=new Array('panel1','panel2','panel3','panel4','panel5');
+	var tabs=new Array('tab1','tab2','tab3','tab4','tab5');
+
+	function displayPanel(nval)
+	{
+		for(i=0;i<panels.length;i++)
+		{
+			document.getElementById(panels[i]).style.display=(nval-1==i)?'block':'none';
+			document.getElementById(tabs[i]).className=(nval-1==i)?'tab_sel':'tab'
+		}
+	}
+</script>
+
+
+<br>
+<!--p align="center"><a class="ui-button ui-corner-all ui-state-default" style="padding:5px;cursor:pointer;" href="akademik-krs-2.php"><b>Perpanjangan KRS</b></a></p-->
+<div id="tabs">
+	<div id="tab1" class="tab_sel" style="display:block" align="center" onclick="javascript: displayPanel('1');">Penawaran MK</div>
+		<div id="tab4" class="tab" style="display:block" style="margin-left:1px; width:150px;" align="center" onclick="javascript: displayPanel('4');">MK Lintas Rumpun</div>
+		<div id="tab2" class="tab" style="display:block" style="margin-left:1px;" align="center" onclick="javascript: displayPanel('2');">MK Terambil</div>
+	<div id="tab3" class="tab" style="display:block" style="margin-left:1px;" align="center" onclick="javascript: displayPanel('3');">Cetak KRS</div>
+</div>
+             
+<div class="tab_bdr"></div>
+<div class="panel" style="display:block" id="panel1" style="display: block">
+<br>Jadwal KRS saudara di mulai tanggal  26-01-2026 - 04-02-2026 pada pukul 08.00 s.d 16.00 WIB. Terima kasih.<br><br>
+<div style="width: 98%;  border: 1px solid #4578a2;" id="krs_ditambah" style="display:block;width:98%;border:1px solid #4578a2;">
+	<!-- diambilkan dari tabel "kelas_mk", semester aktif-->
+</div>
+</div>
+
+
+
+
+<div class="panel" style="display:block" id="panel2" style="display:block">
+
+<div style="width: 98%;  border: 1px solid #4578a2;" id="krs_dihapus" style="display:block;width:98%;border:1px solid #4578a2;">
+	<!-- diambilkan dari tabel "pengambilan_mk", semua status -->
+</div>		
+</div>
+
+		
+		
+<div class="panel" style="display:block" id="panel3" style="display:block" onclick="tampildatatiga()">
+
+			<script type="text/javascript">
+				function tampildatatiga(){
+					$.ajax({
+						type:"POST",
+						url:"proses/_akademik-krs_dilihat.php",
+						data: "aksi=tampil",
+						success: function(data){
+							$("#krs_ditampil").html(data);
+						}
+					});
+				}
+				tampildatatiga();
+			</script>
+			
+<div style="width: 98%;  border: 1px solid #4578a2;" id="krs_ditampil" style="display:block;width:98%;border:1px solid #4578a2;">
+	<table>
+	<tbody><tr>
+		<th>No..</th>
+		<th>KODE MK</th>
+		<th>NAMA MATA KULIAH</th>
+		<th>SKS MATA KULIAH</th>
+		<th>KELAS</th>
+		<th>STATUS</th>
+	</tr>
+	
+			<tr>
+				<td>1</td>
+				<td>MNM203</td>
+				<td>Kepemimpinan dan Manajemen Organisasi</td>
+				<td>3</td>
+				<td>I2</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>2</td>
+				<td>SIC201</td>
+				<td>Pembelajaran Mesin</td>
+				<td>2</td>
+				<td>I2</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>3</td>
+				<td>SIC202</td>
+				<td>Pembelajaran Mesin (praktikum)</td>
+				<td>1</td>
+				<td>I4</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>4</td>
+				<td>SII301</td>
+				<td>Analisis Dan Perancangan Sistem Informasi</td>
+				<td>2</td>
+				<td>I2</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>5</td>
+				<td>SII316</td>
+				<td>Analisis dan Perancangan Sistem Informasi (Praktikum)</td>
+				<td>1</td>
+				<td>I3</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>6</td>
+				<td>SIJ202</td>
+				<td>Jaringan Komputer</td>
+				<td>3</td>
+				<td>I1</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>7</td>
+				<td>SIJ206</td>
+				<td>Jaringan Komputer (Praktikum)</td>
+				<td>1</td>
+				<td>I3</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>8</td>
+				<td>SIS202</td>
+				<td>Sistem Enterprise</td>
+				<td>2</td>
+				<td>I2</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>9</td>
+				<td>SIS304</td>
+				<td>Pemrograman Mobile</td>
+				<td>2</td>
+				<td>I1</td>
+				<td>Disetujui</td>
+			</tr>
+		
+			<tr>
+				<td>10</td>
+				<td>SIS305</td>
+				<td>Pemrograman Mobile (praktikum)</td>
+				<td>1</td>
+				<td>I4</td>
+				<td>Disetujui</td>
+			</tr>
+		
+	<tr>
+		<td colspan="6" align="center">
+			* Mata kuliah yang bisa di cetak hanya yang sudah di setujui oleh dosen wali<br>
+			<input type="button" name="cetak5" value="Cetak" onclick="window.open('proses/_akademik-krs_cetak.php','baru2');">
+		</td>
+	</tr>
+	</tbody></table>
+	</div>
+</div>
+
+<div class="panel" style="display:block" id="panel4" style="display:block">
+<br>Jadwal KRS saudara di mulai tanggal  26-01-2026 - 04-02-2026 pada pukul 08.00 s.d 16.00 WIB. Terima kasih.<br><br>
+<div style="width: 98%;  border: 1px solid #4578a2;" id="krs_ditambah_lintas_rumpun" style="display:block;width:98%;border:1px solid #4578a2;">
+	<!-- diambilkan dari tabel "pengambilan_mk", semua status -->
+</div>
+</div></body></html>

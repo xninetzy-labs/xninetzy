@@ -535,6 +535,91 @@ def run_migrations() -> None:
             updated_at TEXT
         )
         """,
+        # =====================================================================
+        # GraphRAG V3 — tri-store canonical layer.
+        # SQLite here is the SOURCE OF TRUTH. Neo4j + FAISS are rebuildable
+        # projections fed exclusively through graph_sync_outbox (never dual
+        # written from business logic). These V3 tables live alongside the
+        # legacy graph_nodes/graph_edges (V1) which stay untouched.
+        # =====================================================================
+        """
+        CREATE TABLE IF NOT EXISTS graph_nodes_v3 (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            canonical_key TEXT NOT NULL UNIQUE,
+            node_type TEXT NOT NULL,
+            title TEXT NOT NULL,
+            content TEXT,
+            properties_json TEXT NOT NULL DEFAULT '{}',
+            provenance_json TEXT NOT NULL DEFAULT '{}',
+            content_hash TEXT NOT NULL,
+            version INTEGER NOT NULL DEFAULT 1,
+            status TEXT NOT NULL DEFAULT 'active',
+            neo4j_synced_at TEXT,
+            faiss_synced_at TEXT,
+            faiss_row INTEGER,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_graph_nodes_v3_type ON graph_nodes_v3(node_type, status)",
+        "CREATE INDEX IF NOT EXISTS idx_graph_nodes_v3_faiss ON graph_nodes_v3(faiss_row)",
+        # Full-text search over node title+content for the SQLite retrieval leg.
+        "CREATE VIRTUAL TABLE IF NOT EXISTS graph_nodes_v3_fts USING fts5(node_key UNINDEXED, title, content)",
+        """
+        CREATE TABLE IF NOT EXISTS graph_edges_v3 (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            canonical_key TEXT NOT NULL UNIQUE,
+            source_key TEXT NOT NULL,
+            target_key TEXT NOT NULL,
+            edge_type TEXT NOT NULL,
+            weight REAL NOT NULL DEFAULT 1.0,
+            properties_json TEXT NOT NULL DEFAULT '{}',
+            provenance_json TEXT NOT NULL DEFAULT '{}',
+            content_hash TEXT NOT NULL,
+            version INTEGER NOT NULL DEFAULT 1,
+            status TEXT NOT NULL DEFAULT 'active',
+            neo4j_synced_at TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            UNIQUE(source_key, edge_type, target_key)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_graph_edges_v3_source ON graph_edges_v3(source_key, status)",
+        "CREATE INDEX IF NOT EXISTS idx_graph_edges_v3_target ON graph_edges_v3(target_key, status)",
+        # Durable outbox: the ONLY channel that mutates the Neo4j/FAISS
+        # projections. Written in the same transaction as the canonical row.
+        """
+        CREATE TABLE IF NOT EXISTS graph_sync_outbox (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity_type TEXT NOT NULL,
+            entity_key TEXT NOT NULL,
+            op TEXT NOT NULL,
+            payload_json TEXT NOT NULL,
+            dedupe_key TEXT,
+            status TEXT NOT NULL DEFAULT 'pending',
+            attempts INTEGER NOT NULL DEFAULT 0,
+            lease_until TEXT,
+            next_retry_at TEXT,
+            last_error TEXT,
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_graph_outbox_ready ON graph_sync_outbox(status, next_retry_at, id)",
+        # Append-only audit of every canonical write (provenance + reversibility).
+        """
+        CREATE TABLE IF NOT EXISTS graph_audit (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            entity_type TEXT NOT NULL,
+            entity_key TEXT NOT NULL,
+            op TEXT NOT NULL,
+            actor TEXT,
+            version INTEGER,
+            detail_json TEXT,
+            created_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_graph_audit_entity ON graph_audit(entity_type, entity_key, id)",
     ]
     with connect() as conn:
         for statement in statements:

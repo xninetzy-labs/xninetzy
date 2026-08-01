@@ -5,10 +5,14 @@ import json
 from datetime import datetime
 from pathlib import Path
 
+from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
 from app.xninetzy.db.sqlite import connect, init_db
 from app.xninetzy.os.knowledge.chunking import chunk_text
-from app.xninetzy.os.knowledge.vector_store import add_chunks_to_index
+from app.xninetzy.os.knowledge.vector_store import (
+    add_chunks_to_index,
+    add_structured_chunks_to_index,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -102,6 +106,89 @@ def ingest_text(
         "source_id": source_id,
         "title": title,
         "chunks": len(chunks),
+    }
+
+
+def ingest_document(
+    file_path: str,
+    title: str | None = None,
+    source_type: str = "document",
+    metadata: dict | None = None,
+    mime_type: str | None = None,
+) -> dict:
+    """Router-driven ingestion for any supported document.
+
+    Runs the extraction ecosystem (classify simple/complex, pick open-source
+    extractor, structure-aware chunk, optional map-reduce overview), stores a
+    ``DocumentManifest`` on the source and structural metadata on each chunk.
+    """
+    s = get_settings()
+    if not getattr(s, "DOC_EXTRACTION_ENABLED", True):
+        # Feature-flag off: fall back to the flat PDF/text path for PDFs.
+        return ingest_pdf(file_path, title=title, source_type=source_type, metadata=metadata)
+
+    path = Path(file_path)
+    if not path.exists():
+        return {"status": "error", "error": "File not found"}
+
+    sha = _sha256_file(path)
+    if source_exists_by_hash(sha):
+        return {"status": "already_exists", "title": title or path.name, "chunks": 0}
+
+    from app.xninetzy.os.knowledge.extraction import (
+        build_document_chunks,
+        build_overview,
+        extract_document,
+    )
+    from app.xninetzy.os.knowledge.extraction.schemas import DocumentManifest
+
+    try:
+        doc, plan = extract_document(file_path, mime_type=mime_type, filename=path.name)
+    except Exception as e:
+        logger.warning("Structured extraction failed for %s: %s — flat fallback", path.name, e)
+        return ingest_pdf(file_path, title=title, source_type=source_type, metadata=metadata)
+
+    chunks = build_document_chunks(doc, plan)
+    if not chunks:
+        return {"status": "empty", "title": title or path.stem, "chunks": 0}
+
+    overview = None
+    if plan.build_overview and getattr(s, "DOC_OVERVIEW_ENABLED", True):
+        overview = build_overview(doc)
+
+    manifest = DocumentManifest(
+        strategy=plan.strategy,
+        extractor=plan.extractor,
+        chunker=plan.chunker,
+        page_count=doc.page_count,
+        table_count=doc.table_count,
+        image_count=doc.image_count,
+        chunk_count=len(chunks),
+        overview=overview,
+    )
+
+    source_title = title or path.stem
+    source_meta = {**(metadata or {}), "manifest": manifest.to_dict(), "plan": plan.to_dict()}
+    source_id = create_source(
+        source_type, source_title, sha, local_path=str(path), metadata=source_meta
+    )
+    add_structured_chunks_to_index(source_id, chunks)
+
+    logger.info(
+        "Ingested document '%s' via %s/%s: %d chunks, source_id=%d",
+        source_title, plan.strategy, plan.extractor, len(chunks), source_id,
+    )
+    return {
+        "status": "ingested",
+        "source_id": source_id,
+        "title": source_title,
+        "chunks": len(chunks),
+        "strategy": plan.strategy,
+        "extractor": plan.extractor,
+        "pages": doc.page_count,
+        "tables": doc.table_count,
+        "images": doc.image_count,
+        "overview": overview.summary if overview else "",
     }
 
 

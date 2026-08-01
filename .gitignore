@@ -127,6 +127,13 @@ temp/
 services/ai/data/**
 !services/ai/data/README.md
 
+# Runtime output leaked into the repo when the service runs on the host
+# instead of inside the container (cwd-relative + unexpanded ~ paths).
+# Private per-install artifacts — never commit.
+/downloads/
+/generated_documents/
+/~/
+
 # =========================
 # Secrets / keys
 # =========================
@@ -135,3 +142,15 @@ services/ai/data/**
 *.crt
 *.p12
 *.pfx
+
+# Docker secrets — mounted credential files (e.g. Neo4j password). Never commit.
+.secrets/
+**/.secrets/
+
+# =========================
+# Scraping / debug scratch (root)
+# =========================
+/abstract.json
+/article.json
+/*-headers.txt
+/sciencedirect.html

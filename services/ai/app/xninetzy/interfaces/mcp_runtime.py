@@ -69,6 +69,61 @@ def _resolve_host_path(value: str, ai_root: Path) -> Path:
     return path.resolve()
 
 
+def _resolve_mode(
+    environ: Mapping[str, str],
+    env_file_values: Mapping[str, str],
+) -> str:
+    mode = (
+        _effective_value("MCP_RUNTIME_MODE", environ, env_file_values) or "auto"
+    ).lower()
+    if mode not in _VALID_MODES:
+        raise ValueError(
+            "MCP_RUNTIME_MODE harus salah satu dari: auto, host, container."
+        )
+    return mode
+
+
+def _compute_use_host(
+    mode: str, app_root: Path, force_host: bool | None = None
+) -> bool:
+    """Whether the runtime should use host-mapped paths/URIs.
+
+    ``host`` forces on, ``container`` forces off, and ``auto`` falls back to
+    host only when ``/app`` is unavailable or not writable (i.e. we are not
+    inside the AI container).
+    """
+    if mode == "container":
+        return False
+    if force_host is not None:
+        return force_host
+    return mode == "host" or (
+        mode == "auto" and (not app_root.is_dir() or not os.access(app_root, os.W_OK))
+    )
+
+
+def is_host_runtime(
+    *,
+    environ: Mapping[str, str] | None = None,
+    env_file_values: Mapping[str, str] | None = None,
+    ai_root: Path | None = None,
+    app_root: Path = Path("/app"),
+) -> bool:
+    """Public host-mode probe reusing the same rule as path resolution.
+
+    Consumers (e.g. Neo4j lifecycle) need to know whether they run on the host
+    — where the docker-DNS hostname ``neo4j`` cannot resolve — without touching
+    the path-override machinery.
+    """
+    service_root = (ai_root or ai_service_root()).resolve()
+    env = environ if environ is not None else os.environ
+    file_values = (
+        dict(env_file_values)
+        if env_file_values is not None
+        else _read_env_file(repository_env_path(service_root))
+    )
+    return _compute_use_host(_resolve_mode(env, file_values), app_root.resolve())
+
+
 def configure_mcp_runtime_paths(
     *,
     environ: MutableMapping[str, str] | None = None,
@@ -97,22 +152,8 @@ def configure_mcp_runtime_paths(
         else _read_env_file(repository_env_path(service_root))
     )
 
-    mode = (
-        _effective_value("MCP_RUNTIME_MODE", target_env, file_values) or "auto"
-    ).lower()
-    if mode not in _VALID_MODES:
-        raise ValueError(
-            "MCP_RUNTIME_MODE harus salah satu dari: auto, host, container."
-        )
-
-    use_host = force_host
-    if use_host is None:
-        use_host = mode == "host" or (
-            mode == "auto"
-            and (not app_root.is_dir() or not os.access(app_root, os.W_OK))
-        )
-    if mode == "container":
-        use_host = False
+    mode = _resolve_mode(target_env, file_values)
+    use_host = _compute_use_host(mode, app_root.resolve(), force_host=force_host)
     if not use_host:
         return {}
 

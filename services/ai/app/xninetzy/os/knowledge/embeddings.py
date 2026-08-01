@@ -9,6 +9,20 @@ _model = None
 _PROVIDER: str | None = None
 
 
+def _configure_cpu_threads(s) -> None:
+    """Cap the torch intra-op thread pool for a personal single-owner CPU load.
+
+    Idempotent and best-effort — a missing torch (numpy TF-IDF fallback path)
+    is not an error here.
+    """
+    try:
+        import torch
+
+        torch.set_num_threads(s.cpu_threads())
+    except Exception:  # pragma: no cover - torch optional / already configured
+        pass
+
+
 def _load_model():
     global _model, _PROVIDER
     if _model is not None:
@@ -17,10 +31,16 @@ def _load_model():
     s = get_settings()
     if s.EMBEDDING_PROVIDER == "sentence_transformers":
         try:
+            _configure_cpu_threads(s)
             from sentence_transformers import SentenceTransformer
-            _model = SentenceTransformer(s.EMBEDDING_MODEL)
+            # CPU-only runtime: pin the model to CPU explicitly so it never
+            # tries to move tensors onto CUDA even if a GPU build slipped in.
+            _model = SentenceTransformer(s.EMBEDDING_MODEL, device="cpu")
             _PROVIDER = "sentence_transformers"
-            logger.info("Embeddings: using sentence_transformers (%s)", s.EMBEDDING_MODEL)
+            logger.info(
+                "Embeddings: using sentence_transformers (%s) on CPU",
+                s.EMBEDDING_MODEL,
+            )
             return _model
         except ImportError:
             logger.warning("sentence_transformers not installed — falling back to numpy TF-IDF")
@@ -37,7 +57,14 @@ def embed_texts(texts: list[str]) -> "list[list[float]]":
     model = _load_model()
 
     if model is not None and _PROVIDER == "sentence_transformers":
-        vecs = model.encode(texts, normalize_embeddings=True, show_progress_bar=False)
+        s = get_settings()
+        vecs = model.encode(
+            texts,
+            batch_size=s.EMBEDDING_BATCH_SIZE,
+            device="cpu",
+            normalize_embeddings=s.EMBEDDING_NORMALIZE,
+            show_progress_bar=False,
+        )
         return [v.tolist() for v in vecs]
 
     # Numpy TF-IDF fallback
@@ -78,3 +105,31 @@ def embedding_dim() -> int:
     if model is not None and _PROVIDER == "sentence_transformers":
         return model.get_sentence_embedding_dimension()
     return 256
+
+
+def runtime_info() -> dict:
+    """Non-secret embedding runtime facts for the health endpoint.
+
+    Never loads the heavy model just to report — only reflects torch + config.
+    """
+    s = get_settings()
+    info: dict = {
+        "provider": _PROVIDER or s.EMBEDDING_PROVIDER,
+        "model": s.EMBEDDING_MODEL,
+        "device": s.EMBEDDING_DEVICE,
+        "backend": s.EMBEDDING_BACKEND,
+        "normalize": s.EMBEDDING_NORMALIZE,
+        "batch_size": s.EMBEDDING_BATCH_SIZE,
+    }
+    try:
+        import torch
+
+        info["torch_version"] = torch.__version__
+        info["torch_cuda_version"] = torch.version.cuda
+        info["cuda_available"] = torch.cuda.is_available()
+        info["threads"] = torch.get_num_threads()
+    except Exception:  # pragma: no cover - torch optional
+        info["torch_version"] = None
+        info["torch_cuda_version"] = None
+        info["cuda_available"] = False
+    return info

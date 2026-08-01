@@ -137,12 +137,82 @@ def add_chunks_to_index(source_id: int, chunks: list[str]) -> list[int]:
     return chunk_ids
 
 
+def add_structured_chunks_to_index(source_id: int, chunks: list) -> list[int]:
+    """Like ``add_chunks_to_index`` but persists real structural metadata.
+
+    ``chunks`` is a list of ``ContextualChunk`` (text + metadata). The metadata
+    (page, heading_path, kind, table/image refs) is stored in
+    ``knowledge_chunks.metadata_json`` alongside ``source_id`` so retrieval can
+    surface where a snippet came from. Retrieval selects ``kc.*`` so this flows
+    through automatically — no schema migration.
+    """
+    init_db()
+    if not chunks:
+        return []
+
+    idx = _load_or_create_index()
+    texts = [c.text for c in chunks]
+    embeddings = embed_texts(texts)
+    chunk_ids: list[int] = []
+    now = __import__("datetime").datetime.now().isoformat()
+    first_faiss_row = idx.ntotal if idx is not None else None
+
+    with connect() as conn:
+        for i, chunk in enumerate(chunks):
+            text = chunk.text
+            token_count = len(text.split())
+            faiss_row = first_faiss_row + i if first_faiss_row is not None else None
+            metadata = {"source_id": source_id, **(chunk.metadata or {})}
+
+            cur = conn.execute(
+                """
+                INSERT INTO knowledge_chunks
+                  (source_id, chunk_index, text, token_count, faiss_id, metadata_json, created_at)
+                VALUES (?,?,?,?,?,?,?)
+                """,
+                (
+                    source_id,
+                    i,
+                    text,
+                    token_count,
+                    faiss_row,
+                    json.dumps(metadata, ensure_ascii=False),
+                    now,
+                ),
+            )
+            chunk_id = cur.lastrowid
+            chunk_ids.append(chunk_id)
+
+            conn.execute(
+                "INSERT INTO knowledge_fts(chunk_id, text) VALUES (?,?)",
+                (chunk_id, text),
+            )
+
+    if idx is not None:
+        try:
+            import numpy as np
+
+            vecs = np.array(embeddings, dtype=np.float32)
+            idx.add(vecs)
+            _faiss_id_map.extend(chunk_ids)
+            _save_index()
+        except Exception as e:
+            logger.warning("FAISS add/save failed: %s — rebuilding index", e)
+            rebuild_index()
+
+    return chunk_ids
+
 def semantic_search(query: str, limit: int = 5) -> list[dict]:
     """Hybrid FAISS + FTS5 search fused with reciprocal-rank scoring."""
     idx = _load_or_create_index()
     candidate_limit = max(limit * 3, limit)
     if idx is not None and idx.ntotal > 0:
         semantic_results = _faiss_search(query, candidate_limit)
+        # _faiss_search stamps real cosine on genuine FAISS hits; rows that came
+        # from its FTS fallback stay unbacked (None) so the gate can't mistake a
+        # bm25 score for a cosine.
+        for r in semantic_results:
+            r.setdefault("semantic_score", None)
     else:
         semantic_results = []
     keyword_results = _fts_search(query, candidate_limit)
@@ -168,6 +238,10 @@ def _rrf_fuse_results(
     fused: dict[tuple[object, str], dict] = {}
     scores: dict[tuple[object, str], float] = {}
     channels: dict[tuple[object, str], set[str]] = {}
+    # Preserve the raw FAISS cosine per key. RRF is rank-only, so without this
+    # the true relevance signal is lost and a top-ranked lexical hit on a common
+    # word is indistinguishable from a genuinely on-topic chunk downstream.
+    semantic_scores: dict[tuple[object, str], float] = {}
     for channel, results in (
         ("semantic", semantic_results),
         ("keyword", keyword_results),
@@ -177,18 +251,29 @@ def _rrf_fuse_results(
             fused.setdefault(key, dict(result))
             scores[key] = scores.get(key, 0.0) + 1.0 / (60 + rank)
             channels.setdefault(key, set()).add(channel)
+            if channel == "semantic":
+                semantic_scores[key] = _safe_cosine(result.get("score"))
 
     ordered = sorted(fused, key=lambda key: scores[key], reverse=True)
     output: list[dict] = []
     for key in ordered[:limit]:
-        output.append(
-            {
-                **fused[key],
-                "score": scores[key],
-                "retrieval_channels": sorted(channels[key]),
-            }
-        )
+        entry = {
+            **fused[key],
+            "score": scores[key],
+            "retrieval_channels": sorted(channels[key]),
+        }
+        # Only chunks the semantic leg actually saw carry a cosine; lexical-only
+        # hits get None so the evidence gate can treat them as unbacked.
+        entry["semantic_score"] = semantic_scores.get(key)
+        output.append(entry)
     return output
+
+
+def _safe_cosine(value: object) -> float | None:
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return None
 
 
 def _deduplicate_results(results: list[dict], limit: int) -> list[dict]:
@@ -235,7 +320,9 @@ def _faiss_search(query: str, limit: int) -> list[dict]:
                     (chunk_id,),
                 ).fetchone()
                 if row:
-                    results.append({**dict(row), "score": float(score)})
+                    results.append(
+                        {**dict(row), "score": float(score), "semantic_score": float(score)}
+                    )
         return results
     except Exception as e:
         logger.warning("FAISS search error: %s — falling back to FTS5", e)

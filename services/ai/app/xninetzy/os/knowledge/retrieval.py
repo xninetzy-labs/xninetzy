@@ -21,6 +21,8 @@ class Evidence:
     uri: str
     text: str
     score: float
+    relevance: float | None = None  # raw cosine, None when semantically unbacked
+    is_reference: bool = False
 
 
 @dataclass(frozen=True)
@@ -43,6 +45,40 @@ def _safe_score(value: object) -> float:
         return 0.0
 
 
+def _relevance_of(candidate: dict) -> float | None:
+    """Raw semantic cosine for a candidate, or None if the semantic leg never
+    saw it (lexical-only hit). Never fall back to the RRF ``score`` — that is a
+    rank artifact, not a similarity."""
+    raw = candidate.get("semantic_score")
+    if raw is None:
+        return None
+    try:
+        return float(raw)
+    except (TypeError, ValueError):
+        return None
+
+
+# Bibliography / reference chunks are keyword-dense (author names, journals,
+# DOIs, years) so FTS ranks them high, but they carry little answerable content.
+_REFERENCE_MARKERS = re.compile(
+    r"(doi\.org|https?://|\bdoi:\s|\bissn\b|\bisbn\b|\bvol\.?\s*\d|\bpp\.?\s*\d"
+    r"|daftar pustaka|references?\b|bibliography|et al\.)",
+    re.IGNORECASE,
+)
+# "(2019)" / "(2021)." style citation years — several of these in one chunk is a
+# strong reference-list tell.
+_CITATION_YEAR = re.compile(r"\((?:19|20)\d{2}[a-z]?\)")
+
+
+def _is_reference_chunk(text: str) -> bool:
+    if not text:
+        return False
+    marker_hits = len(_REFERENCE_MARKERS.findall(text))
+    year_hits = len(_CITATION_YEAR.findall(text))
+    # Two independent tells, or a dense cluster of citation years.
+    return (marker_hits + year_hits) >= 3 or year_hits >= 2
+
+
 def select_evidence(
     query: str,
     candidates: Iterable[dict],
@@ -50,19 +86,49 @@ def select_evidence(
     limit: int,
     min_evidence: int,
 ) -> EvidenceBundle:
-    """Turn retrieval candidates into a bounded, deduplicated evidence bundle."""
+    """Turn retrieval candidates into a bounded, deduplicated evidence bundle.
+
+    Relevance-gated: a candidate must clear the cosine floor to count as
+    evidence, reference/bibliography chunks are penalised, and the bundle is
+    only ``sufficient`` when the surviving evidence is both relevant and
+    topically consistent — not merely present. Candidates that carry no
+    ``semantic_score`` (e.g. legacy callers, FTS-only degraded mode) bypass the
+    cosine gate so behaviour is unchanged when there is no semantic signal.
+    """
+    settings = get_settings()
+    min_relevance = settings.RAG_MIN_RELEVANCE
+    high_relevance = settings.RAG_HIGH_RELEVANCE
+    ref_penalty = settings.RAG_REFERENCE_PENALTY
+
     selected: list[Evidence] = []
     seen: set[tuple[object, str]] = set()
-    max_chars = max(500, get_settings().RAG_MAX_CONTEXT_CHARS)
+    max_chars = max(500, settings.RAG_MAX_CONTEXT_CHARS)
     used_chars = 0
 
-    for candidate in candidates:
+    # Is there any semantic signal at all? If not (FTS-only / legacy dicts) we
+    # must not gate on cosine, or we'd reject everything.
+    materialized = list(candidates)
+    semantic_active = any(c.get("semantic_score") is not None for c in materialized)
+
+    for candidate in materialized:
         text = _compact(candidate.get("text"))
         if not text:
             continue
         key = (candidate.get("source_id"), text.casefold())
         if key in seen:
             continue
+
+        relevance = _relevance_of(candidate)
+        # Cosine floor — only enforced when the semantic leg is live. A
+        # lexical-only hit (relevance is None) is dropped once we have real
+        # semantic backing available, which is what kills cross-document FTS
+        # pollution on common words.
+        if semantic_active:
+            if relevance is None:
+                continue
+            if relevance < min_relevance:
+                continue
+
         seen.add(key)
 
         remaining = max_chars - used_chars
@@ -72,6 +138,7 @@ def select_evidence(
         source_id = int(candidate.get("source_id") or 0)
         chunk_id_raw = candidate.get("id")
         chunk_id = int(chunk_id_raw) if chunk_id_raw is not None else None
+        is_ref = _is_reference_chunk(text)
         selected.append(
             Evidence(
                 citation=f"K{len(selected) + 1}",
@@ -82,36 +149,128 @@ def select_evidence(
                 uri=_compact(candidate.get("uri")),
                 text=snippet,
                 score=_safe_score(candidate.get("score")),
+                relevance=relevance,
+                is_reference=is_ref,
             )
         )
         used_chars += len(snippet)
         if len(selected) >= limit:
             break
 
-    enough = len(selected) >= max(1, min_evidence)
-    distinct_sources = len({item.source_id for item in selected})
-    confidence = (
-        "high" if enough and distinct_sources >= 2 else "medium" if enough else "low"
-    )
-    status = "sufficient" if enough else "insufficient"
-    note = (
-        "Bukti internal tersedia untuk sintesis."
-        if enough
-        else "Bukti internal belum cukup; jangan membuat klaim seolah berasal dari vault."
+    status, confidence, note = _grade_bundle(
+        selected,
+        min_evidence=min_evidence,
+        min_relevance=min_relevance,
+        high_relevance=high_relevance,
+        ref_penalty=ref_penalty,
+        topic_consistency_min=settings.RAG_TOPIC_CONSISTENCY_MIN,
+        semantic_active=semantic_active,
     )
     return EvidenceBundle(query, status, confidence, tuple(selected), note)
+
+
+def _grade_bundle(
+    selected: list[Evidence],
+    *,
+    min_evidence: int,
+    min_relevance: float,
+    high_relevance: float,
+    ref_penalty: float,
+    topic_consistency_min: float,
+    semantic_active: bool,
+) -> tuple[str, str, str]:
+    """Decide status/confidence from relevance, agreement and topic consistency
+    — never from raw count alone."""
+    _INSUFFICIENT_NOTE = (
+        "Bukti internal belum cukup; jangan membuat klaim seolah berasal dari vault."
+    )
+    if not selected:
+        return "insufficient", "low", _INSUFFICIENT_NOTE
+
+    # Content-bearing evidence = non-reference chunks. Reference/DOI chunks may
+    # ride along for citation but cannot, by themselves, make a bundle sufficient.
+    content = [e for e in selected if not e.is_reference]
+
+    if not semantic_active:
+        # No semantic signal to reason about (FTS-only / legacy): fall back to
+        # the original count-based grade so degraded mode still answers.
+        enough = len(selected) >= max(1, min_evidence)
+        distinct = len({e.source_id for e in selected})
+        confidence = "high" if enough and distinct >= 2 else "medium" if enough else "low"
+        status = "sufficient" if enough else "insufficient"
+        note = (
+            "Bukti internal tersedia untuk sintesis."
+            if enough
+            else _INSUFFICIENT_NOTE
+        )
+        return status, confidence, note
+
+    relevances = [e.relevance for e in content if e.relevance is not None]
+    if not relevances:
+        return "insufficient", "low", _INSUFFICIENT_NOTE
+
+    top_relevance = max(relevances)
+    strong = [r for r in relevances if r >= high_relevance]
+
+    # Topic consistency — share of content evidence coming from the single most
+    # represented source. A bundle stitched from several unrelated documents on
+    # a common word scores low here.
+    source_counts: dict[int, int] = {}
+    for e in content:
+        source_counts[e.source_id] = source_counts.get(e.source_id, 0) + 1
+    dominant = max(source_counts.values()) if source_counts else 0
+    consistency = dominant / len(content) if content else 0.0
+
+    enough = len(content) >= max(1, min_evidence)
+    # Sufficient requires genuine relevance, not just presence: at least one
+    # chunk at/above the floor and either a strong hit or topical agreement.
+    sufficient = (
+        enough
+        and top_relevance >= min_relevance
+        and (bool(strong) or consistency >= topic_consistency_min)
+    )
+    if not sufficient:
+        return "insufficient", "low", _INSUFFICIENT_NOTE
+
+    distinct_sources = len(source_counts)
+    if top_relevance >= high_relevance and consistency >= topic_consistency_min:
+        confidence = "high"
+    elif top_relevance >= high_relevance or (enough and distinct_sources >= 2):
+        confidence = "medium"
+    else:
+        confidence = "medium" if len(strong) >= 1 else "low"
+
+    note = "Bukti internal tersedia untuk sintesis."
+    if any(e.is_reference for e in selected) and content:
+        note += " (Chunk referensi diberi bobot lebih rendah.)"
+    return "sufficient", confidence, note
 
 
 def retrieve_evidence(query: str, limit: int | None = None) -> EvidenceBundle:
     settings = get_settings()
     top_k = max(1, limit or settings.RAG_TOP_K)
     candidates = semantic_search(query, limit=max(top_k * 2, top_k))
+    candidates = _apply_reference_penalty(candidates, settings.RAG_REFERENCE_PENALTY)
     return select_evidence(
         query,
         candidates,
         limit=top_k,
         min_evidence=settings.RAG_MIN_EVIDENCE,
     )
+
+
+def _apply_reference_penalty(candidates: list[dict], penalty: float) -> list[dict]:
+    """Down-weight reference/bibliography chunks and re-sort, so a keyword-dense
+    DOI list can no longer outrank the content chunk that actually answers the
+    query. Semantic cosine is left untouched — only the fused ordering shifts."""
+    adjusted: list[dict] = []
+    for c in candidates:
+        text = " ".join(str(c.get("text") or "").split())
+        if _is_reference_chunk(text):
+            c = {**c, "score": _safe_score(c.get("score")) * penalty, "is_reference": True}
+        adjusted.append(c)
+    adjusted.sort(key=lambda c: _safe_score(c.get("score")), reverse=True)
+    return adjusted
 
 
 def render_evidence_bundle(bundle: EvidenceBundle) -> str:

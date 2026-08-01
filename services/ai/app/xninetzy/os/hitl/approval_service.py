@@ -51,6 +51,15 @@ def _execute_approved_action(row: dict) -> str:
         if not activate_roadmap(roadmap_id):
             raise ValueError(f"Roadmap #{roadmap_id} tidak ditemukan.")
         return f" Roadmap #{roadmap_id} diaktifkan dan task belajar disiapkan."
+    if row.get("action_type") == "graph_rebuild":
+        from app.xninetzy.os.graph.v3 import graph_service
+
+        result = graph_service.rebuild_projection()
+        return (
+            f" Rebuild GraphRAG V3: neo4j_wiped={result['neo4j_wiped']}, "
+            f"faiss_rows={result['faiss_rows']}, "
+            f"outbox_enqueued={result['outbox_enqueued']}."
+        )
     return ""
 
 

@@ -133,6 +133,13 @@ from app.xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_list_sources,
     knowledge_rebuild_index,
 )
+from app.xninetzy.tools.ecosystem.document_tools import (
+    document_analyze,
+    document_ingest,
+    document_overview,
+    document_tables,
+    document_catalog,
+)
 from app.xninetzy.tools.ecosystem.research_tools import (
     web_search,
     youtube_search,
@@ -161,6 +168,12 @@ from app.xninetzy.tools.ecosystem.ai_runtime_tools import (
     coding_agent_use,
     coding_agent_run,
 )
+from app.xninetzy.tools.ecosystem.pixelrag_tools import (
+    pixelrag_capture,
+    pixelrag_health,
+    pixelrag_search_local,
+    pixelrag_search_public,
+)
 from app.xninetzy.skills.tools import (
     skill_get,
     skill_install,
@@ -183,6 +196,15 @@ from app.xninetzy.os.graph.graph_tools import (
     graph_link_note_to_topic,
     graph_link_research_to_roadmap,
     graph_search,
+)
+from app.xninetzy.os.graph.v3.graph_tools_v3 import (
+    graph_v3_link,
+    graph_v3_neighborhood,
+    graph_v3_path,
+    graph_v3_rebuild,
+    graph_v3_search,
+    graph_v3_stats,
+    graph_v3_upsert_node,
 )
 from app.xninetzy.domains.it_learning.roadmap_tools import (
     learning_attach_resource,
@@ -376,6 +398,12 @@ def get_all_tools() -> list[BaseTool]:
             knowledge_answer,
             knowledge_list_sources,
             knowledge_rebuild_index,
+            # Document extraction (router-based)
+            document_analyze,
+            document_ingest,
+            document_overview,
+            document_tables,
+            document_catalog,
             # Research
             web_search,
             youtube_search,
@@ -390,6 +418,11 @@ def get_all_tools() -> list[BaseTool]:
             youtube_learning_search,
             youtube_playlist_finder,
             youtube_video_ranker,
+            # PixelRAG (visual RAG)
+            pixelrag_capture,
+            pixelrag_search_public,
+            pixelrag_search_local,
+            pixelrag_health,
             # Skills
             skill_list,
             skill_get,
@@ -422,6 +455,14 @@ def get_all_tools() -> list[BaseTool]:
             graph_link_research_to_roadmap,
             graph_link_note_to_topic,
             graph_explain_topic_map,
+            # Graph RAG V3 (tri-store)
+            graph_v3_upsert_node,
+            graph_v3_link,
+            graph_v3_search,
+            graph_v3_neighborhood,
+            graph_v3_path,
+            graph_v3_stats,
+            graph_v3_rebuild,
             # HITL
             hitl_request_approval,
             hitl_list_pending,
@@ -523,6 +564,12 @@ def get_tool_groups() -> dict[str, list[str]]:
             "learning_list_study_sessions",
         ],
         "knowledge": ["knowledge_ingest_text", "knowledge_search", "knowledge_answer"],
+        "pixelrag": [
+            "pixelrag_capture",
+            "pixelrag_search_public",
+            "pixelrag_search_local",
+            "pixelrag_health",
+        ],
         "research": [
             "research_light",
             "deep_research_topic",

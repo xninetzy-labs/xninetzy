@@ -8,6 +8,17 @@ services:
     environment:
       WA_MCP_BASE_URL: http://wa-enggine:8081
       OLLAMA_BASE_URL: ${OLLAMA_DOCKER_BASE_URL:-http://host.docker.internal:11434/v1}
+      # CPU-only AI runtime — pins torch/sentence-transformers to CPU and caps
+      # the thread pools. No GPU is ever requested (no runtime: nvidia / gpus).
+      XNINETZY_DEVICE: cpu
+      EMBEDDING_DEVICE: cpu
+      CUDA_VISIBLE_DEVICES: ""
+      NVIDIA_VISIBLE_DEVICES: void
+      TOKENIZERS_PARALLELISM: "false"
+      OMP_NUM_THREADS: "${AI_CPU_THREADS:-4}"
+      MKL_NUM_THREADS: "${AI_CPU_THREADS:-4}"
+      TORCH_NUM_THREADS: "${AI_CPU_THREADS:-4}"
+      AI_CPU_THREADS: "${AI_CPU_THREADS:-4}"
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -74,6 +85,44 @@ services:
       XNINETZY_AI_URL: http://ai:8000
       XNINETZY_CLI_TIMEOUT_MS: "120000"
 
+  # GraphRAG V3 structural projection store. Rebuildable, NOT source-of-truth
+  # (SQLite is). Gated behind the `graph` profile so a default `docker compose
+  # up` never starts it and never requires the secret to exist. Enable with
+  # `docker compose --profile graph up` once GRAPHRAG_V3_ENABLED + NEO4J_ENABLED
+  # are set. Ports are bound to 127.0.0.1 only — never exposed to the network.
+  neo4j:
+    image: neo4j:5.26-community
+    profiles:
+      - graph
+    environment:
+      # Credential comes from a Docker secret file (format: neo4j/<password>),
+      # never from .env. See .secrets/neo4j_auth (gitignored).
+      NEO4J_AUTH_FILE: /run/secrets/neo4j_auth
+      NEO4J_server_memory_heap_initial__size: 512m
+      NEO4J_server_memory_heap_max__size: 1G
+      NEO4J_server_memory_pagecache_size: 512m
+    ports:
+      - "127.0.0.1:7474:7474"
+      - "127.0.0.1:7687:7687"
+    volumes:
+      - neo4j-data:/data
+      - neo4j-logs:/logs
+    secrets:
+      - neo4j_auth
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:7474 >/dev/null 2>&1 || exit 1"]
+      interval: 15s
+      timeout: 10s
+      retries: 10
+      start_period: 40s
+    restart: unless-stopped
+
+secrets:
+  neo4j_auth:
+    file: ./.secrets/neo4j_auth
+
 volumes:
   wa-media:
   wa-session:
+  neo4j-data:
+  neo4j-logs:

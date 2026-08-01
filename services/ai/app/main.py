@@ -31,6 +31,11 @@ if settings.AGENT_DEBUG_ENDPOINTS:
 
 @app.on_event("startup")
 async def startup() -> None:
+    from app.xninetzy.runtime.cpu_guard import validate_cpu_only_runtime
+
+    runtime_info = validate_cpu_only_runtime()
+    logger.info("CPU-only runtime validated: %s", runtime_info)
+
     init_db()
     run_migrations()
     from app.xninetzy.ecosystem.reducers import replay_unconsumed_events
@@ -43,6 +48,21 @@ async def startup() -> None:
     asyncio.create_task(krs_watcher_loop())
     if settings.WEB_ANALYSIS_BACKGROUND_ENABLED:
         asyncio.create_task(web_analysis_loop())
+    if settings.GRAPHRAG_V3_ENABLED:
+        from app.xninetzy.os.graph.v3.graph_populator import (
+            replay_unconsumed_events as replay_graph_events,
+        )
+
+        backfilled = replay_graph_events()
+        if backfilled:
+            logger.info("Graph populator backfilled %d events", backfilled)
+        from app.xninetzy.os.graph.v3.projection_worker import projection_worker_loop
+
+        asyncio.create_task(projection_worker_loop())
+        if settings.GRAPH_COMMUNITY_ENABLED:
+            from app.xninetzy.os.graph.v3.community_builder import community_loop
+
+            asyncio.create_task(community_loop())
     if (
         settings.HEBAT_AUTO_LOGIN
         and settings.HEBAT_USERNAME

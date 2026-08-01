@@ -248,16 +248,93 @@ class Settings(BaseSettings):
     VECTOR_DATA_DIR: str = "/app/data/vector"
     EMBEDDING_PROVIDER: str = "sentence_transformers"
     EMBEDDING_MODEL: str = "sentence-transformers/all-MiniLM-L6-v2"
+    # CPU-only AI runtime. Xninetzy runs all inference on CPU exclusively.
+    # These knobs pin Sentence Transformers / PyTorch to CPU and cap the thread
+    # pools for a personal single-owner workload. A GPU-enabled build is
+    # rejected at startup by app.xninetzy.runtime.cpu_guard.
+    XNINETZY_DEVICE: str = "cpu"
+    EMBEDDING_DEVICE: str = "cpu"
+    EMBEDDING_BACKEND: str = "torch"  # torch | onnx (onnx reserved, not yet wired)
+    EMBEDDING_NORMALIZE: bool = True
+    EMBEDDING_BATCH_SIZE: int = 16
+    AI_CPU_THREADS: int = 4
+
+    def cpu_threads(self) -> int:
+        """Thread cap for torch/OMP/MKL — at least 1."""
+        return max(1, int(self.AI_CPU_THREADS))
+
     RAG_TOP_K: int = 5
     RAG_AUTO_GROUND_ENABLED: bool = True
     RAG_MIN_EVIDENCE: int = 1
     RAG_MAX_CONTEXT_CHARS: int = 6_000
+    # Retrieval quality gates. Rank-only RRF happily returns off-topic lexical
+    # hits (common words, keyword-dense bibliographies) with a real fused score,
+    # so a bundle could be labelled sufficient/high for a query the vault does
+    # not actually cover. These knobs re-introduce a true relevance signal:
+    #   * cosine floor — a chunk must clear RAG_MIN_RELEVANCE semantic similarity
+    #     (0..1) to count as evidence at all.
+    #   * reference penalty — bibliography / DOI / "daftar pustaka" chunks are
+    #     keyword-dense but low-information; discount their score.
+    #   * topic consistency — sufficient requires the surviving evidence to agree
+    #     on a source, not just exist.
+    RAG_MIN_RELEVANCE: float = 0.28  # cosine floor for a chunk to be evidence
+    RAG_HIGH_RELEVANCE: float = 0.45  # cosine at/above this reads as strong
+    RAG_REFERENCE_PENALTY: float = 0.5  # multiplier applied to reference chunks
+    RAG_TOPIC_CONSISTENCY_MIN: float = 0.5  # min share of top source among evidence
+
+    # Router-based document extraction ecosystem. Classifies each document as
+    # simple vs complex and selects open-source extractors accordingly. No
+    # Docling, no vision LLM — images fall back to deterministic tesseract OCR.
+    DOC_EXTRACTION_ENABLED: bool = True
+    DOC_ROUTER_COMPLEX_PAGE_THRESHOLD: int = 8
+    DOC_ROUTER_MIN_TEXT_RATIO: int = 120  # chars/page below this ⇒ treat as scanned
+    DOC_ROUTER_SAMPLE_PAGES: int = 4  # pages probed for text-ratio / table sniff
+    DOC_TABLE_EXTRACTION_ENABLED: bool = True
+    DOC_IMAGE_OCR_ENABLED: bool = True
+    DOC_OVERVIEW_ENABLED: bool = True
+    DOC_OVERVIEW_BATCH_SIZE: int = 6
+    DOC_OVERVIEW_MAX_BATCHES: int = 8
+    DOC_MAX_PAGES: int = 200
 
     # Graph memory
     NEO4J_ENABLED: bool = False
     NEO4J_URI: str = "bolt://neo4j:7687"
     NEO4J_USERNAME: str = "neo4j"
     NEO4J_PASSWORD: str = "password"
+    NEO4J_DATABASE: str = "neo4j"
+    # Optional path to a Docker/mounted secret file containing the Neo4j
+    # password (one line). When set and readable it overrides NEO4J_PASSWORD so
+    # the credential never has to live in .env. Empty ⇒ use NEO4J_PASSWORD.
+    NEO4J_AUTH_FILE: str = ""
+    # Host MCP runs outside the compose network, so the docker-DNS NEO4J_URI
+    # (bolt://neo4j:7687) is unreachable. In host runtime we swap to the
+    # published loopback port instead. Auto-start boots the `graph` compose
+    # profile on first graph access and stops the container after it goes idle,
+    # so Neo4j only runs while graph tools are actually in use.
+    NEO4J_HOST_URI: str = "bolt://127.0.0.1:7687"
+    NEO4J_AUTOSTART_ENABLED: bool = True
+    NEO4J_AUTOSTART_COMPOSE_SERVICE: str = "neo4j"
+    NEO4J_AUTOSTART_PROFILE: str = "graph"
+    NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS: int = 60  # cold-start bolt-ready wait
+    NEO4J_AUTOSTART_IDLE_STOP_SECONDS: int = 300  # stop container after idle
+    NEO4J_AUTOSTART_STOP_ON_EXIT: bool = True  # stop when the MCP process exits
+
+    # GraphRAG V3 — tri-store (SQLite source-of-truth + Neo4j projection +
+    # FAISS semantic index) via outbox/projection-worker + hybrid RRF retriever.
+    # Fully gated: when disabled the V3 stores, worker, and tools stay dormant
+    # and the legacy V1 graph_store keeps working untouched.
+    GRAPHRAG_V3_ENABLED: bool = False
+    GRAPH_VECTOR_DATA_DIR: str = "/app/data/graph_vector"
+    GRAPH_SYNC_POLL_SECONDS: int = 15
+    GRAPH_SYNC_BATCH_SIZE: int = 32
+    GRAPH_SYNC_LEASE_SECONDS: int = 120
+    GRAPH_SYNC_MAX_ATTEMPTS: int = 6
+    GRAPH_SYNC_RETRY_BASE_SECONDS: int = 20
+    GRAPH_SYNC_STARTUP_DELAY_SECONDS: int = 8
+    GRAPH_RRF_K: int = 60
+    GRAPH_RETRIEVAL_TOP_K: int = 8
+    GRAPH_COMMUNITY_ENABLED: bool = False
+    GRAPH_COMMUNITY_INTERVAL_MINUTES: int = 360
 
     # External research
     WEB_SEARCH_PROVIDER: str = "tavily"

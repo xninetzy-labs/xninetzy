@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import re
 from contextlib import contextmanager
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -26,8 +27,12 @@ class AnalysisCacheManager:
         self.root = Path(root or settings.WEB_ANALYSIS_DATA_DIR) / "analyses"
 
     def site_dir(self, site_slug: str) -> Path:
-        site = get_site(site_slug)
-        path = self.root / site.slug
+        normalized = site_slug.strip().lower()
+        if re.fullmatch(r"public-[0-9a-f]{16}", normalized):
+            slug = normalized
+        else:
+            slug = get_site(site_slug).slug
+        path = self.root / slug
         path.mkdir(parents=True, exist_ok=True)
         return path
 

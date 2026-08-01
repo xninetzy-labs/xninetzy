@@ -5,6 +5,7 @@ import ipaddress
 import json
 import os
 import re
+import shlex
 import shutil
 from pathlib import Path
 from urllib.parse import urlparse
@@ -27,6 +28,7 @@ PIXELRAG_OUTPUT_ROOT = Path(
 
 REQUEST_TIMEOUT = 30.0
 CAPTURE_TIMEOUT = 600
+_LOCAL_PROCESS: asyncio.subprocess.Process | None = None
 
 
 def _is_private_host(host: str) -> bool:
@@ -160,6 +162,34 @@ async def pixelrag_search_public(query: str, n_docs: int = 5) -> str:
     except (httpx.HTTPError, ValueError, KeyError) as exc:
         return f"search publik gagal: {exc}"
 
+
+@tool
+async def pixelrag_local_start() -> str:
+    """Mulai server PixelRAG lokal dari command deployment tanpa shell."""
+    global _LOCAL_PROCESS
+    if os.getenv("PIXELRAG_LOCAL_SERVE_ENABLED", "false").casefold() != "true":
+        return "PixelRAG local serve belum diaktifkan."
+    if _LOCAL_PROCESS is not None and _LOCAL_PROCESS.returncode is None:
+        return "PixelRAG local serve sudah berjalan dari proses Xninetzy."
+    command = os.getenv("PIXELRAG_LOCAL_SERVE_COMMAND", "").strip()
+    if not command:
+        return (
+            "PIXELRAG_LOCAL_SERVE_COMMAND belum diisi. "
+            "Pasang paket pixelrag[serve], lalu set command serve eksplisit."
+        )
+    parts = shlex.split(command)
+    if not parts or not shutil.which(parts[0]):
+        return f"Executable PixelRAG tidak ditemukan: {parts[0] if parts else '-'}"
+    try:
+        _LOCAL_PROCESS = await asyncio.create_subprocess_exec(
+            *parts,
+            stdout=asyncio.subprocess.DEVNULL,
+            stderr=asyncio.subprocess.DEVNULL,
+            start_new_session=True,
+        )
+    except (OSError, ValueError) as exc:
+        return f"PixelRAG local serve gagal dimulai: {type(exc).__name__}"
+    return f"PixelRAG local serve dimulai (pid={_LOCAL_PROCESS.pid})."
 
 @tool
 async def pixelrag_search_local(query: str, n_docs: int = 5) -> str:

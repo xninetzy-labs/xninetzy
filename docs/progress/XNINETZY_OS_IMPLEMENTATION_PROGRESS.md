@@ -402,3 +402,14 @@ Completed: 2026-07-29
 ### Host MCP bootstrap update — 2026-08-01
 
 The FastAPI entry point now invokes the shared MCP runtime path resolver before settings are evaluated. Mixed host imports of app.main and the stdio MCP server therefore use services/ai/data instead of attempting to create /app/data; the mixed import smoke test reports IMPORT_OK.
+
+## Adaptive Web Intelligence — 2026-08-01
+
+Implemented across the shared registry, LangGraph, MCP, and WhatsApp command path:
+
+- Phase 0: one bounded web_discover workflow can combine public discovery, GraphRAG V3 page/link projection, optional Knowledge ingestion, and optional PixelRAG capture.
+- Phase 1: HTTPS public URLs resolve to deterministic public-hash site definitions while HEBAT and Cybercampus presets remain available.
+- Phase 2: bounded BFS discovery follows same-host links only, uses GET/HEAD-only routing, denies mutation/sensitive URLs, stops on human verification, and persists replayable discovery JSON.
+- Phase 3: adaptive evidence routing is exposed through web_discover; visual capture and knowledge ingestion are explicit flags, and the local PixelRAG health state remains observable without silently installing a server package.
+
+Verification: 33 focused web-analysis/inbox tests and Ruff pass. The full AI run reached 528 passed; the remaining CPU-only failures are caused by the current host virtualenv containing CUDA distributions (triton/nvidia-*), not by web discovery.

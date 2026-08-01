@@ -70,6 +70,7 @@ from app.xninetzy.os.academic.hebat.tools import (
     hebat_prepare_submission_from_whatsapp_file,
     hebat_upload_submission,
     hebat_cancel_submission,
+    hebat_remove_submission,
     hebat_academic_digest,
     hebat_debug_login,
     hebat_login_status_verbose,
@@ -108,6 +109,7 @@ from app.xninetzy.os.inbox.tools import os_capture, os_inbox, os_today, os_triag
 from app.xninetzy.tools.ecosystem.web_analysis_tools import (
     web_analysis_refresh,
     web_analysis_status,
+    web_discover,
 )
 from app.xninetzy.tools.ecosystem.goal_tools import (
     goal_create,
@@ -178,6 +180,7 @@ from app.xninetzy.tools.ecosystem.ai_runtime_tools import (
 from app.xninetzy.tools.ecosystem.pixelrag_tools import (
     pixelrag_capture,
     pixelrag_health,
+    pixelrag_local_start,
     pixelrag_search_local,
     pixelrag_search_public,
 )
@@ -343,12 +346,14 @@ def get_all_tools() -> list[BaseTool]:
             hebat_prepare_submission_from_whatsapp_file,
             hebat_upload_submission,
             hebat_cancel_submission,
+            hebat_remove_submission,
             hebat_academic_digest,
             hebat_debug_login,
             hebat_login_status_verbose,
             # Local-owner academic portal / structural web analysis
             web_analysis_status,
             web_analysis_refresh,
+            web_discover,
             portal_info,
             portal_profile,
             portal_academic_status,
@@ -437,6 +442,7 @@ def get_all_tools() -> list[BaseTool]:
             pixelrag_search_public,
             pixelrag_search_local,
             pixelrag_health,
+            pixelrag_local_start,
             # Skills
             skill_list,
             skill_get,
@@ -583,7 +589,9 @@ def get_tool_groups() -> dict[str, list[str]]:
             "pixelrag_search_public",
             "pixelrag_search_local",
             "pixelrag_health",
+            "pixelrag_local_start",
         ],
+        "web_intelligence": ["web_analysis_status", "web_analysis_refresh", "web_discover"],
         "research": [
             "research_light",
             "deep_research_topic",
@@ -615,6 +623,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "hebat_get_assignment_detail",
             "web_analysis_status",
             "web_analysis_refresh",
+            "web_discover",
             "portal_info",
             "portal_navigation",
             "portal_krs_capabilities",

@@ -106,7 +106,8 @@ def test_triage_to_task_is_atomic_and_replay_safe(monkeypatch, tmp_path):
         ).fetchone()
         assert event is not None
         assert conn.execute(
-            "SELECT COUNT(*) FROM ecosystem_event_consumptions WHERE event_id=?",
+            "SELECT COUNT(*) FROM ecosystem_event_consumptions "
+            "WHERE event_id=? AND reducer='closed_loop_v1'",
             (event["id"],),
         ).fetchone()[0] == 1
 

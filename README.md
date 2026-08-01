@@ -1141,3 +1141,16 @@ adalah closed-loop event reducers, scheduled backup/drill, CI, observability,
 durable workflow workers, dan hardening network.
 
 Kontribusi sebaiknya menyertakan test, tidak menambahkan credential atau runtime data, mempertahankan guard aksi sensitif, dan memperbarui dokumentasi ketika command/config berubah.
+
+### Adaptive public web discovery
+
+Use the shared tool from WhatsApp, LangGraph, MCP, Codex, Claude Code, or OpenCode:
+
+/web-discover 2 https://example.com/learning
+
+The workflow is read-only and same-host bounded. To persist page evidence, call
+web_discover with ingest_to_knowledge=true; to request visual tiles, add
+capture_visual=true. Both actions are opt-in. Set
+WEB_ANALYSIS_DISCOVERY_MAX_DEPTH, WEB_ANALYSIS_MAX_PAGES, and
+WEB_ANALYSIS_MAX_VISUAL_CAPTURES in .env to control cost. A local PixelRAG
+server is optional; pixelrag_health reports whether PIXELRAG_LOCAL_API is reachable.

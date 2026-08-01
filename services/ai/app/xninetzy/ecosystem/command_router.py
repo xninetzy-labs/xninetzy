@@ -33,6 +33,7 @@ SLASH_COMMANDS: dict[str, str] = {
     "/krs-watcher": "portal_krs_watcher_status",
     "/krs-war": "portal_krs_war_status",
     "/web-analysis": "web_analysis_status",
+    "/web-discover": "web_discover",
     "/media-info": "media_info",
     "/analyze-media": "analyze_media",
     "/rule": "rule_list",
@@ -91,6 +92,7 @@ DEEP_RESEARCH_PATTERN = re.compile(
 )
 WEB_ANALYSIS_PATTERN = re.compile(r"^/web-analysis\s+(hebat|mahasiswa)$", re.I)
 WEB_REFRESH_PATTERN = re.compile(r"^/web-refresh\s+(hebat|mahasiswa)$", re.I)
+WEB_DISCOVER_PATTERN = re.compile(r"^/web-discover(?:\s+(\d+))?\s+(https://\S+)$", re.I)
 
 RULE_ADD_PATTERN = re.compile(r"^/rule\s+add\s+(.+)$", re.I | re.S)
 RULE_OFF_PATTERN = re.compile(r"^/rule\s+off\s+(\d+)$", re.I)
@@ -252,6 +254,12 @@ def parse_command(message: str) -> tuple[str | None, dict]:
         return "web_analysis_refresh", {
             "site_slug": site_slug,
             "authenticated": site_slug == "mahasiswa",
+        }
+    m = WEB_DISCOVER_PATTERN.match(stripped)
+    if m:
+        return "web_discover", {
+            "source_url": m.group(2),
+            "depth": int(m.group(1) or "1"),
         }
 
     # /rule subcommands

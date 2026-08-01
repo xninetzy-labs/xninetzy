@@ -188,3 +188,11 @@ Acceptance:
 
 Historical grade hash reuse, profile/status parser hardening, adaptive KRS watcher polling, and V1→V3 graph backfill are implemented and tested.
 - [x] Bootstrap host path overrides before FastAPI settings are imported, so host-side MCP and mixed entry-point imports share the project data root.
+
+### Adaptive Web Intelligence
+
+- [x] Resolve arbitrary public HTTPS seeds into deterministic, cacheable site definitions.
+- [x] Discover same-host pages with bounded BFS and mutation/human-verification guards.
+- [x] Project web pages and links into canonical GraphRAG V3.
+- [x] Make Knowledge ingestion and PixelRAG capture explicit opt-in evidence actions.
+- [ ] Install and supervise the optional PixelRAG local server package in deployment images.

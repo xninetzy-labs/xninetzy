@@ -44,3 +44,42 @@ async def web_analysis_refresh(site_slug: str = "hebat", authenticated: bool = F
         f"• Halaman: {result.pages_analyzed}\n"
         f"• Pesan: {result.message}"
     )
+
+
+@tool
+async def web_discover(
+    source_url: str,
+    depth: int = 1,
+    max_pages: int = 10,
+    ingest_to_knowledge: bool = False,
+    capture_visual: bool = False,
+) -> str:
+    """Jelajahi URL HTTPS publik secara bounded dan simpan evidence terpilih.
+
+    Discovery hanya memakai GET/HEAD, memblokir mutation, berhenti saat human
+    verification terdeteksi, dan menjaga host tetap sama dengan URL awal.
+    Knowledge ingestion dan capture visual harus diminta eksplisit.
+    """
+    from app.xninetzy.os.web_analysis.discovery import WebDiscoveryService
+
+    result = await WebDiscoveryService().discover(
+        source_url,
+        depth=depth,
+        max_pages=max_pages,
+        ingest_to_knowledge=ingest_to_knowledge,
+        capture_visual=capture_visual,
+    )
+    lines = [
+        "*Web Discovery*",
+        f"• Status: {result.status}",
+        f"• Source: {result.source_url}",
+        f"• Halaman: {len(result.pages)} | Link: {result.links}",
+        f"• Graph: {result.graph_nodes} node / {result.graph_edges} edge",
+        f"• Knowledge baru: {result.knowledge_sources}",
+        f"• Human verification: {'ya' if result.human_verification else 'tidak'}",
+    ]
+    if result.captures:
+        lines.append(f"• PixelRAG capture: {len(result.captures)}")
+    if result.errors:
+        lines.append(f"• Error aman: {', '.join(result.errors[:3])}")
+    return "\n".join(lines)

@@ -80,6 +80,7 @@ Kategori tools tersedia:
 • Skills: skill_list, skill_get, skill_suggest_for_request, skill_validate, skill_install
 • Learning Roadmap: learning_create_roadmap, learning_list_roadmaps, learning_generate_today_plan, learning_start_study_session, learning_complete_study_session, learning_get_study_progress, learning_review_week
 • Research: research_light, research_create_subplans, research_web_collect, research_youtube_collect, research_generate_brief, deep_research_topic
+• Web Intelligence: web_analysis_status, web_analysis_refresh, web_discover, pixelrag_local_start (bounded public HTTPS discovery; opt-in knowledge/PixelRAG evidence)
 • YouTube Learning: youtube_learning_search, youtube_playlist_finder, youtube_video_ranker
 • Graph RAG: graph_search, graph_get_context, graph_explain_topic_map, graph_link_note_to_topic
 • Graph RAG V3 (hybrid tri-store): graph_v3_search, graph_v3_upsert_node, graph_v3_link, graph_v3_neighborhood, graph_v3_path, graph_v3_stats, graph_v3_rebuild(HITL)

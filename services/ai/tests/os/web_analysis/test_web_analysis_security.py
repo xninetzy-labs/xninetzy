@@ -5,6 +5,8 @@ from app.xninetzy.os.web_analysis.security import (
     is_safe_request_method,
     sanitize_endpoint,
 )
+import pytest
+
 from app.xninetzy.os.web_analysis.sites import get_site, is_allowed_url
 
 
@@ -45,3 +47,21 @@ def test_allowlist_and_mutating_paths_are_enforced():
     assert AnalyzerService._safe_to_visit(site, "https://mahasiswa.unair.ac.id/jadwal") is True
     assert AnalyzerService._safe_to_visit(site, "https://mahasiswa.unair.ac.id/logout") is False
     assert AnalyzerService._safe_to_visit(site, "https://mahasiswa.unair.ac.id/krs?editsubmission=1") is False
+
+
+def test_dynamic_public_site_registry_reuses_host_guard(monkeypatch):
+    monkeypatch.setattr(
+        "app.xninetzy.os.web_analysis.sites.socket.getaddrinfo",
+        lambda host, port: [(None, None, None, None, ("93.184.216.34", 0))],
+    )
+    site = get_site("https://example.com/learning/start")
+    assert site.dynamic is True
+    assert site.slug.startswith("public-")
+    assert site.public_paths == ("/learning/start",)
+    assert is_allowed_url(site, "https://example.com/learning/next") is True
+    assert is_allowed_url(site, "https://other.example/learning/next") is False
+
+
+def test_dynamic_registry_rejects_private_sources(monkeypatch):
+    with pytest.raises(ValueError, match="publik"):
+        get_site("https://127.0.0.1/private")

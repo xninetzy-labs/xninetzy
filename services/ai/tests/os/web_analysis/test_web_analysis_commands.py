@@ -35,6 +35,10 @@ def test_local_portal_slash_commands():
         "web_analysis_refresh",
         {"site_slug": "hebat", "authenticated": False},
     )
+    assert parse_command("/web-discover 2 https://example.com/learning") == (
+        "web_discover",
+        {"source_url": "https://example.com/learning", "depth": 2},
+    )
     assert parse_command("/web-refresh mahasiswa") == (
         "web_analysis_refresh",
         {"site_slug": "mahasiswa", "authenticated": True},
@@ -45,6 +49,7 @@ def test_new_tools_registered():
     names = get_tool_names()
     assert "web_analysis_status" in names
     assert "web_analysis_refresh" in names
+    assert "web_discover" in names
     assert "portal_info" in names
     assert "portal_navigation" in names
     assert "portal_krs_capabilities" in names

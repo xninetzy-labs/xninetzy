@@ -55,6 +55,22 @@ PROFILE_HTML = """
 """
 
 
+PROFILE_FORM_HTML = """
+<div class="form-group"><label for="student_name">Nama Mahasiswa</label><input id="student_name" value="Mahasiswa Form"></div>
+<div class="form-group"><label for="student_id">Nomor Induk Mahasiswa</label><input id="student_id" value="987654321"></div>
+<div class="form-group"><label for="faculty">Fakultas / Sekolah</label><input id="faculty" value="Fakultas Baru"></div>
+<div class="form-group"><label for="program">Program Studi / Prodi</label><input id="program" value="Sistem Informasi"></div>
+"""
+
+
+ACADEMIC_STATUS_MULTI_TABLE_HTML = """
+<table><tr><th>Semester</th><th>Status</th><th>No SK</th><th>Tanggal SK</th><th>Keterangan</th></tr>
+<tr><td>2024/2025 Ganjil</td><td>AKTIF</td><td>-</td><td>-</td><td>Registrasi</td></tr></table>
+<table><tr><th>Periode</th><th>Status Akademik</th><th>Nomor SK</th><th>Tgl SK</th><th>Catatan</th></tr>
+<tr><td>2024/2025 Genap</td><td>AKTIF</td><td>SK-2</td><td>2025-01-01</td><td>Registrasi ulang</td></tr></table>
+"""
+
+
 ACADEMIC_STATUS_HTML = """
 <table>
   <tr><th>Semester</th><th>Status</th><th>No. SK.</th><th>Tgl SK.</th><th>Keterangan</th></tr>
@@ -245,3 +261,20 @@ async def test_read_grades_reuses_prepared_page_and_posts_selected_period():
     assert "fetch(" in calls[2][0]
     assert "$(" not in GRADE_FETCH_SCRIPT
     assert reader._prepared_grade_requests == {}
+
+def test_parse_academic_profile_supports_label_for_fields():
+    result = parse_academic_profile_html(PROFILE_FORM_HTML)
+
+    assert result.name == "Mahasiswa Form"
+    assert result.student_id == "987654321"
+    assert result.faculty == "Fakultas Baru"
+    assert result.study_program == "Sistem Informasi"
+
+
+def test_parse_academic_status_aggregates_repeated_tables():
+    entries = parse_academic_status_html(ACADEMIC_STATUS_MULTI_TABLE_HTML)
+
+    assert [entry.semester for entry in entries] == [
+        "2024/2025 Ganjil",
+        "2024/2025 Genap",
+    ]

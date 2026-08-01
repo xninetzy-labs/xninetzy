@@ -82,7 +82,8 @@ class CampusLoginCoordinator:
         raise CampusLoginError("Gambar CAPTCHA tidak ditemukan secara unik.")
 
     async def _fill_credentials(self, page: Any) -> None:
-        source = get_settings().CYBER_CAMPUS_CREDENTIAL_SOURCE
+        settings = get_settings()
+        source = settings.CYBER_CAMPUS_CREDENTIAL_SOURCE or settings.ACADEMIC_CREDENTIAL_SOURCE
         credentials = resolve_campus_credentials(source)
         username = await self._first_visible(
             page,

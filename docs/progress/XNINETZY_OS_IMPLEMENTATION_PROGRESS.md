@@ -29,6 +29,10 @@ code, tests, configuration, and documentation agree.
 | Academic-01b | Typed Cyber Campus reads + private WhatsApp grade-token reader | Partial | 346 AI tests; live profile/status/10 KRS rows; offering model pending |
 | Runtime-02 | Cross-platform bridge Compose + bootstrap installers | Complete | Compose config; Bash syntax; Docker health; docs build |
 | Runtime-03 | Host coding bridge, Docker path isolation, and cross-client skills | Complete | Docker import; host bridge health/auth; Codex, Claude Code, and OpenCode MCP smoke; focused tests |
+| Academic-01c | Shared academic credentials, live session validation, and QA CAPTCHA handling | Complete | 20 focused login tests; Ruff; live QA rejection classified for human verification |
+| Reliability-01 | Graph path mapping, Flaz thinking guard, skill ranking, and inbox triage | Complete | 27 focused tests; GraphRAG host smoke; provider error diagnosis |
+| Academic-01d | QA standard-browser login and HEBAT Moodle upload smoke | Complete | QA headed login live; HEBAT overdue assignment verified `Submitted for grading`; uploader selector fix |
+| Academic-01e | Academic parser hardening, grade snapshot idempotency, and KRS watcher timing | Complete | 31 focused academic tests; Ruff; hash regression X→Y→X; adaptive watcher intervals |
 
 ## Batch P0-01 — API authentication and owner boundary
 
@@ -206,6 +210,58 @@ Completed: 2026-07-29
 This removes runtime files from the current repository tree. Existing public Git
 history must still be sanitized separately; history rewrite is intentionally not
 automated because it affects every collaborator.
+
+## Batch Academic-01d — QA login and HEBAT upload reliability
+
+Completed: 2026-08-01
+
+- [x] Wait for the QA page’s own reCAPTCHA callback instead of injecting a
+  token or changing form fields.
+- [x] Add a configurable settle delay before normal QA login submit.
+- [x] Remove automation-stealth flags and custom user-agent overrides that made
+  the portal reject its own token.
+- [x] Default QA to standard headed Chrome for the portal’s anti-bot policy.
+- [x] Select Moodle’s visible Add control, set the hidden file input, click
+  `Upload this file`, save, and reopen the assignment for verification.
+- [x] Execute an approved smoke upload to the oldest selected overdue assignment
+  using a clearly labelled non-graded test PDF.
+
+Verification: standard headed Chrome reached the QA menu; the smoke artifact
+`Xninetzy_upload_smoke_test.pdf` is visible on HEBAT assignment `36248` with
+status `Submitted for grading`, 152 days late.
+
+## Batch Academic-01e — Academic parser and snapshot reliability
+
+Completed: 2026-08-01
+
+- [x] Parse Cyber Campus profile values from table rows, label-for controls, and named form fields.
+- [x] Aggregate academic-status rows across repeated tables and tolerate header aliases.
+- [x] Deduplicate grade snapshots by owner, period, and content hash across the full history.
+- [x] Add regression coverage for a historical hash returning after an intervening change.
+- [x] Add KRS watcher intervals in seconds with 30-second pre-window and 10-second in-window polling.
+- [x] Backfill legacy Graph V1 rows into GraphRAG V3 canonical SQLite/outbox on startup and route legacy search to V3 when enabled.
+
+Verification: 31 focused academic tests and Ruff passed.
+
+## Batch Academic-01c — Shared academic login contract
+
+Completed: 2026-08-01
+
+- [x] Resolve HEBAT, QA, Cyber Campus, and mahasiswa aliases from the same
+  deployment-scoped HEBAT account.
+- [x] Enforce the shared account in HEBAT credential login and relogin paths.
+- [x] Use the shared resolver for HEBAT startup, diagnostics, QA login, and
+  Cyber Campus credential filling.
+- [x] Add explicit `ACADEMIC_CREDENTIAL_SOURCE` and `QA_CREDENTIAL_SOURCE`
+  defaults to `.env.example`.
+- [x] Validate Cyber Campus storage state against a live authenticated route.
+- [x] Stop QA retry loops when reCAPTCHA is rejected and return a human
+  verification requirement.
+
+Verification: 20 focused academic login tests and Ruff passed. The QA portal
+rejected a headless reCAPTCHA token during live diagnosis; this is now surfaced
+as a manual browser verification requirement rather than treated as a credential
+failure.
 
 ## Batch Academic-01a — Cyber Campus login foundation
 

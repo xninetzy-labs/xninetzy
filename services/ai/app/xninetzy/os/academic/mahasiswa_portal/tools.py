@@ -5,6 +5,7 @@ from datetime import UTC, datetime
 
 from langchain_core.tools import tool
 
+from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.identity import normalize_whatsapp_jid
 from app.xninetzy.interfaces.whatsapp.client import WaToolError, call_wa_tool
 from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
@@ -487,13 +488,25 @@ def portal_krs_watcher_status() -> str:
 
 
 @tool
-def portal_krs_watcher_start(interval_minutes: int = 10) -> str:
-    """Aktifkan watcher slot KRS: polling READ-only + notifikasi WhatsApp saat jadwal berubah."""
-    if not 1 <= interval_minutes <= 1440:
-        return "Interval harus antara 1-1440 menit."
-    KrsWatcherStore().set_enabled(True, interval_minutes * 60)
+def portal_krs_watcher_start(
+    interval_minutes: int | None = None,
+    interval_seconds: int | None = None,
+) -> str:
+    """Aktifkan watcher slot KRS dengan polling READ-only dan notifikasi WhatsApp."""
+    if interval_seconds is not None and interval_minutes is not None:
+        return "Pilih interval_minutes atau interval_seconds, bukan keduanya."
+    if interval_seconds is None:
+        interval_seconds = (
+            interval_minutes * 60
+            if interval_minutes is not None
+            else get_settings().KRS_WATCHER_DEFAULT_INTERVAL_SECONDS
+        )
+    if not 5 <= interval_seconds <= 3600:
+        return "Interval harus antara 5-3600 detik."
+    KrsWatcherStore().set_enabled(True, interval_seconds)
     return (
-        f"Watcher KRS aktif: polling tiap {interval_minutes} menit. "
+        f"Watcher KRS aktif: polling tiap {interval_seconds} detik. "
+        "Interval menjadi lebih rapat saat pengumuman/window terdeteksi. "
         "READ + NOTIFY saja; tidak pernah klik/submit."
     )
 

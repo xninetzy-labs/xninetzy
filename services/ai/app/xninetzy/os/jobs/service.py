@@ -86,6 +86,38 @@ def due_job_specs(now: datetime, settings: Settings | None = None) -> list[JobSp
                 True,
             )
         )
+    if active.PRAYER_REMINDER_ENABLED:
+        seen_labels: set[str] = set()
+        for entry in active.PRAYER_REMINDER_SCHEDULE.split(","):
+            label, separator, time_part = entry.strip().partition(":")
+            hour_text, time_separator, minute_text = time_part.partition(":")
+            label = label.strip().casefold()
+            if (
+                not separator
+                or not time_separator
+                or not label
+                or label in seen_labels
+                or not hour_text.isdigit()
+                or not minute_text.isdigit()
+            ):
+                continue
+            hour = int(hour_text)
+            minute = int(minute_text)
+            if not 0 <= hour <= 23 or not 0 <= minute <= 59:
+                continue
+            scheduled = local.replace(
+                hour=hour, minute=minute, second=0, microsecond=0
+            )
+            if local >= scheduled:
+                seen_labels.add(label)
+                specs.append(
+                    JobSpec(
+                        f"prayer_reminder:{date_key}:{label}",
+                        "prayer_reminder",
+                        scheduled.isoformat(),
+                        True,
+                    )
+                )
     if active.HEBAT_PERIODIC_SYNC_ENABLED:
         interval = max(1, active.HEBAT_SYNC_INTERVAL_MINUTES)
         bucket = int(local.timestamp()) // (interval * 60)
@@ -145,7 +177,7 @@ async def run_os_job_tick(
                 jobs.mark_succeeded(claimed["id"], result, current)
                 stats["succeeded"] += 1
                 continue
-            message = build_scheduled_message(spec.job_type, target, current)
+            message = build_scheduled_message(spec.job_type, target, current, spec.key)
             if not jobs.start_delivery(claimed["id"], message, current):
                 stats["skipped"] += 1
                 continue
@@ -197,7 +229,18 @@ async def os_job_loop() -> None:
         await asyncio.sleep(max(5, settings.OS_SCHEDULER_POLL_SECONDS))
 
 
-def build_scheduled_message(job_type: str, chat_id: str, now: datetime) -> str:
+def build_scheduled_message(
+    job_type: str,
+    chat_id: str,
+    now: datetime,
+    job_key: str | None = None,
+) -> str:
+    if job_type == "prayer_reminder":
+        label = (job_key or "sholat").split(":")[-1].capitalize()
+        return (
+            f"🕌 *Waktunya Sholat {label}* ({now:%H:%M} WIB)\n"
+            "Jangan tinggalkan sholat — keluarga menunggumu."
+        )
     if job_type == "morning_briefing":
         return build_morning_briefing(chat_id, now)
     if job_type == "evening_checkin":

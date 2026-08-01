@@ -135,6 +135,10 @@ def _text(value: Any) -> str:
     return re.sub(r"\s+", " ", str(value or "")).strip()
 
 
+def _normalize_label(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", " ", value.casefold()).strip()
+
+
 def _table_rows(html: str) -> list[tuple[list[str], list[list[str]]]]:
     soup = BeautifulSoup(html or "", "lxml")
     tables: list[tuple[list[str], list[list[str]]]] = []
@@ -153,6 +157,13 @@ def _table_rows(html: str) -> list[tuple[list[str], list[list[str]]]]:
 
 
 def _cell_value(cell: Any) -> str:
+    if getattr(cell, "name", None) == "input":
+        return _text(cell.get("value"))
+    if getattr(cell, "name", None) == "textarea":
+        return _text(cell.get_text(" "))
+    if getattr(cell, "name", None) == "select":
+        selected = cell.select_one("option[selected]") or cell.select_one("option")
+        return _text(selected.get_text(" ") if selected else "")
     selected = cell.select_one("select option[selected]") or cell.select_one(
         "select option"
     )
@@ -170,10 +181,17 @@ def _cell_value(cell: Any) -> str:
 def parse_academic_profile_html(html: str) -> AcademicProfile:
     aliases = {
         "nama": "name",
+        "nama mahasiswa": "name",
+        "student name": "name",
         "nim": "student_id",
+        "nomor induk mahasiswa": "student_id",
+        "student id": "student_id",
         "fakultas": "faculty",
+        "fakultas sekolah": "faculty",
         "program studi": "study_program",
         "prodi": "study_program",
+        "program studi prodi": "study_program",
+        "study program": "study_program",
     }
     values = {name: "" for name in aliases.values()}
     soup = BeautifulSoup(html or "", "lxml")
@@ -181,7 +199,7 @@ def parse_academic_profile_html(html: str) -> AcademicProfile:
         cells = row.select(":scope > th, :scope > td")
         if len(cells) < 2:
             continue
-        label = _text(cells[0].get_text(" ")).casefold().rstrip(":")
+        label = _normalize_label(_text(cells[0].get_text(" ")))
         target = aliases.get(label)
         if not target:
             continue
@@ -190,22 +208,77 @@ def parse_academic_profile_html(html: str) -> AcademicProfile:
             if value:
                 values[target] = value
                 break
+    for label_tag in soup.select("label"):
+        label = _normalize_label(_text(label_tag.get_text(" ")))
+        target = aliases.get(label)
+        if not target:
+            continue
+        field_id = _text(label_tag.get("for"))
+        field = soup.find(id=field_id) if field_id else None
+        if field is not None:
+            value = _cell_value(field)
+            if value:
+                values[target] = value
+    for field in soup.select("input[name], select[name], textarea[name]"):
+        field_name = _normalize_label(_text(field.get("name")))
+        target = aliases.get(field_name)
+        if not target or values[target]:
+            continue
+        value = _cell_value(field)
+        if value:
+            values[target] = value
     if not values["name"] or not values["student_id"]:
         raise AcademicPortalReadError("Profil akademik tidak ditemukan dalam struktur portal.")
     return AcademicProfile(**values)
 
 
 def parse_academic_status_html(html: str) -> tuple[AcademicStatusEntry, ...]:
-    expected = ("semester", "status", "no. sk.", "tgl sk.", "keterangan")
+    header_aliases = {
+        "semester": {"semester", "periode", "tahun akademik"},
+        "status": {"status", "status akademik"},
+        "decree_number": {"no sk", "nomor sk", "sk"},
+        "decree_date": {"tgl sk", "tanggal sk", "tanggal surat keputusan"},
+        "description": {"keterangan", "catatan", "deskripsi"},
+    }
+    entries: list[AcademicStatusEntry] = []
+    seen: set[tuple[str, ...]] = set()
     for headers, rows in _table_rows(html):
-        normalized = tuple(value.casefold() for value in headers[:5])
-        if normalized != expected:
+        normalized = [_normalize_label(value) for value in headers]
+        indices: dict[str, int] = {}
+        for index, value in enumerate(normalized):
+            for key, aliases in header_aliases.items():
+                if value in aliases and key not in indices:
+                    indices[key] = index
+        if "semester" not in indices or "status" not in indices:
             continue
-        return tuple(
-            AcademicStatusEntry(*((row + [""] * 5)[:5]))
-            for row in rows
-            if len(row) >= 2
-        )
+        for row in rows:
+            if len(row) <= max(indices.values()):
+                continue
+            values = {
+                key: _text(row[index])
+                for key, index in indices.items()
+            }
+            if not values["semester"] and not values["status"]:
+                continue
+            entry = AcademicStatusEntry(
+                semester=values.get("semester", ""),
+                status=values.get("status", ""),
+                decree_number=values.get("decree_number", "-"),
+                decree_date=values.get("decree_date", "-"),
+                description=values.get("description", "-"),
+            )
+            key = (
+                entry.semester,
+                entry.status,
+                entry.decree_number,
+                entry.decree_date,
+                entry.description,
+            )
+            if key not in seen:
+                seen.add(key)
+                entries.append(entry)
+    if entries:
+        return tuple(entries)
     raise AcademicPortalReadError("Tabel status akademik tidak ditemukan.")
 
 
@@ -412,7 +485,15 @@ class AcademicPortalReader:
         configured = self.settings.CYBER_CAMPUS_ENTRY_YEAR
         if 2000 <= configured <= 2100:
             return configured
-        match = re.fullmatch(r"\d{3}(\d{2})\d+", self.settings.HEBAT_USERNAME)
+        try:
+            from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+                resolve_campus_credentials,
+            )
+
+            username = resolve_campus_credentials("cyber").username
+        except Exception:
+            username = ""
+        match = re.fullmatch(r"\d{3}(\d{2})\d+", username)
         return 2000 + int(match.group(1)) if match else 0
 
     async def _browser(self):

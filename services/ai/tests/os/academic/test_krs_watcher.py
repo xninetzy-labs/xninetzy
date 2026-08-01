@@ -76,7 +76,8 @@ def test_store_enabled_roundtrip(store):
 def test_next_interval_logic(store):
     store.set_enabled(True, 1200)
     assert _next_interval({"enabled": False}, store) == 600
-    assert _next_interval({"enabled": True, "in_window": True}, store) == 60
+    assert _next_interval({"enabled": True, "in_window": True}, store) == 10
+    assert _next_interval({"enabled": True, "near_window": True}, store) == 30
     assert _next_interval({"enabled": True, "in_window": False}, store) == 1200
     store.set_enabled(False)
 

@@ -177,6 +177,25 @@ class GradeSnapshotRepository:
         content_hash = _content_hash(result.period, records)
         captured_at = datetime.now(UTC).isoformat()
         with connect() as conn:
+            existing = conn.execute(
+                """
+                SELECT id, captured_at
+                FROM cyber_grade_snapshots
+                WHERE owner_scope = ? AND period = ? AND content_hash = ?
+                ORDER BY id DESC
+                LIMIT 1
+                """,
+                (self.owner_scope, result.period, content_hash),
+            ).fetchone()
+            if existing:
+                return GradeSnapshotOutcome(
+                    snapshot_id=int(existing["id"]),
+                    created=False,
+                    period=result.period,
+                    captured_at=str(existing["captured_at"]),
+                    records=records,
+                    changes=(),
+                )
             latest = conn.execute(
                 """
                 SELECT id, content_hash, captured_at
@@ -187,15 +206,6 @@ class GradeSnapshotRepository:
                 """,
                 (self.owner_scope, result.period),
             ).fetchone()
-            if latest and latest["content_hash"] == content_hash:
-                return GradeSnapshotOutcome(
-                    snapshot_id=int(latest["id"]),
-                    created=False,
-                    period=result.period,
-                    captured_at=str(latest["captured_at"]),
-                    records=records,
-                    changes=(),
-                )
             previous = self._records(conn, int(latest["id"])) if latest else ()
             cursor = conn.execute(
                 """

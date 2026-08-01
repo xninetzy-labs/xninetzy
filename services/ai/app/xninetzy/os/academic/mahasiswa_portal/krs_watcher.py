@@ -5,7 +5,7 @@ import hashlib
 import json
 import re
 from dataclasses import dataclass
-from datetime import UTC, datetime
+from datetime import UTC, datetime, timedelta
 from urllib.parse import urljoin
 
 from app.xninetzy.core.config import get_settings
@@ -87,6 +87,10 @@ class KrsWatcherStore:
         self.owner_scope = owner_scope
 
     def get(self) -> dict:
+        default_interval = max(
+            5,
+            int(get_settings().KRS_WATCHER_DEFAULT_INTERVAL_SECONDS),
+        )
         with connect() as conn:
             row = conn.execute(
                 "SELECT * FROM krs_watcher_state WHERE owner_scope = ?",
@@ -95,7 +99,7 @@ class KrsWatcherStore:
         if row is None:
             return {
                 "enabled": 0,
-                "interval_seconds": DEFAULT_INTERVAL_SECONDS,
+                "interval_seconds": default_interval,
                 "started_at": None,
                 "last_tick_at": None,
                 "last_fingerprint": None,
@@ -109,6 +113,7 @@ class KrsWatcherStore:
         return dict(row)
 
     def set_enabled(self, enabled: bool, interval_seconds: int = DEFAULT_INTERVAL_SECONDS) -> None:
+        interval_seconds = max(5, min(int(interval_seconds), 3600))
         now = datetime.now(UTC).isoformat()
         with connect() as conn:
             conn.execute(
@@ -118,7 +123,7 @@ class KrsWatcherStore:
                     last_status, session_expired_notified, updated_at
                 ) VALUES(?,0,?,NULL,'idle',0,?)
                 """,
-                (self.owner_scope, DEFAULT_INTERVAL_SECONDS, now),
+                (self.owner_scope, interval_seconds, now),
             )
             if enabled:
                 conn.execute(
@@ -251,6 +256,14 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
         in_window = bool(
             signal.announcement and signal.announcement.contains(current)
         )
+        near_window = bool(
+            signal.announcement
+            and current.date()
+            >= datetime.fromisoformat(signal.announcement.period_start).date()
+            - timedelta(days=1)
+            and current.date()
+            <= datetime.fromisoformat(signal.announcement.period_end).date()
+        )
         calibration = {"skipped": "no_announcement"}
         war = {"skipped": "not_in_window"}
         if signal.announcement is not None:
@@ -294,6 +307,7 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
             "enabled": True,
             "changed": changed,
             "in_window": in_window,
+            "near_window": near_window,
             "announcement": announcement_text,
             "mk_count": signal.mk_count,
             "war": war,
@@ -326,12 +340,21 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
 
 
 def _next_interval(tick_result: dict, store: KrsWatcherStore | None = None) -> int:
+    settings = get_settings()
     if not tick_result.get("enabled"):
-        return DEFAULT_INTERVAL_SECONDS
+        return max(5, int(settings.KRS_WATCHER_DEFAULT_INTERVAL_SECONDS))
     if tick_result.get("in_window"):
-        return WINDOW_INTERVAL_SECONDS
+        return max(5, int(settings.KRS_WATCHER_WINDOW_INTERVAL_SECONDS))
+    if tick_result.get("near_window"):
+        return max(5, int(settings.KRS_WATCHER_ANNOUNCEMENT_INTERVAL_SECONDS))
     current = (store or KrsWatcherStore()).get()
-    return int(current.get("interval_seconds") or DEFAULT_INTERVAL_SECONDS)
+    return max(
+        5,
+        min(
+            int(current.get("interval_seconds") or settings.KRS_WATCHER_DEFAULT_INTERVAL_SECONDS),
+            3600,
+        ),
+    )
 
 
 async def krs_watcher_loop() -> None:

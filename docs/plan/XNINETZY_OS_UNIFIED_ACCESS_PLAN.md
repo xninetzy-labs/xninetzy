@@ -42,6 +42,13 @@ Raw search output is never considered a final answer.
   exposed through the same MCP tools for Codex, Claude Code, and OpenCode.
 - [x] WhatsApp coding-agent and chat-failover execution is routed through an
   authenticated host bridge instead of running CLI binaries in Docker.
+- [x] HEBAT, QA, and Cyber Campus login adapters resolve one shared deployment
+  account and fail closed when credentials are missing.
+- [x] QA waits for the portal-owned reCAPTCHA callback and settle window, then
+  submits normal login without a manual token; Cyber Campus session state is
+  checked live before reads.
+- [x] HEBAT Moodle upload uses the visible file-manager Add control and
+  `Upload this file` dialog before saving and verifying the submission.
 
 ## P0 — Trust and reliability
 
@@ -125,6 +132,28 @@ Acceptance:
 
 ## Change log
 
+### 2026-08-01
+
+- Reproduced the QA reCAPTCHA rejection in headless/stealth Chrome and verified
+  that standard headed Chrome accepts the portal-owned token.
+- Removed QA stealth overrides and manual token generation; added a configurable
+  settle window (`QA_RECAPTCHA_SETTLE_MS`) and headed-browser default.
+- Repaired Moodle upload selectors for the visible file-manager Add link and
+  `Upload this file` dialog, then verified the overdue Week 1b smoke artifact
+  appears as `Submitted for grading`.
+- Reproduced and fixed the GraphRAG host-path permission error by mapping its
+  vector directory through the MCP runtime path contract.
+- Corrected QA reCAPTCHA form action handling and classified rejected automated
+  tokens as an explicit human-verification state.
+- Centralized HEBAT credentials for HEBAT, QA, and Cyber Campus aliases, with
+  startup, relogin, diagnostics, and portal entry-year parsing using the same
+  resolver.
+- Made Cyber Campus session status perform a live authenticated route check so a
+  stale storage file is not reported as an active session.
+- Disabled Flaz thinking mode by default to avoid provider reasoning-content
+  replay failures during tool calls.
+- Improved skill ranking for common IT-learning requests such as clustering.
+
 ### 2026-07-29
 
 - Added installation-global entity links shared by WA, MCP, and LangGraph.
@@ -154,3 +183,7 @@ Acceptance:
 - Protected AI routes with fail-closed bearer auth and explicit owner scope.
 - Added durable WA processing claims, per-chat ordering, and prepared replies.
 - Added checksum-verified SQLite/FAISS backup and explicit restore tooling.
+
+### Academic reliability update — 2026-08-01
+
+Historical grade hash reuse, profile/status parser hardening, adaptive KRS watcher polling, and V1→V3 graph backfill are implemented and tested.

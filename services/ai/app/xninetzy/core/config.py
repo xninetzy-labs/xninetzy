@@ -145,6 +145,8 @@ class Settings(BaseSettings):
     WEEKLY_REVIEW_ENABLED: bool = True
     WEEKLY_REVIEW_WEEKDAY: int = 6
     WEEKLY_REVIEW_HOUR: int = 20
+    PRAYER_REMINDER_ENABLED: bool = True
+    PRAYER_REMINDER_SCHEDULE: str = "subuh:04:30,dzuhur:11:45,ashar:15:00,maghrib:17:30,isya:18:40"
     HEBAT_PERIODIC_SYNC_ENABLED: bool = False
 
     # Standard stdio MCP can run either inside the AI container or directly on
@@ -181,6 +183,7 @@ class Settings(BaseSettings):
     WEB_ANALYSIS_BACKGROUND_INTERVAL_MINUTES: int = 360
     WEB_ANALYSIS_BACKGROUND_SITES: str = "hebat,mahasiswa"
     WEB_ANALYSIS_BACKGROUND_AUTHENTICATED: bool = False
+    ACADEMIC_CREDENTIAL_SOURCE: str = "hebat"
     CYBER_CAMPUS_ENABLED: bool = False
     CYBER_CAMPUS_BASE_URL: str = "https://mahasiswa.unair.ac.id"
     CYBER_CAMPUS_CREDENTIAL_SOURCE: str = "hebat"
@@ -191,6 +194,9 @@ class Settings(BaseSettings):
     CYBER_CAMPUS_GRADE_TOKEN_TTL_SECONDS: int = 180
     CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS: int = 3
     CYBER_CAMPUS_ENTRY_YEAR: int = 0
+    KRS_WATCHER_DEFAULT_INTERVAL_SECONDS: int = 600
+    KRS_WATCHER_ANNOUNCEMENT_INTERVAL_SECONDS: int = 30
+    KRS_WATCHER_WINDOW_INTERVAL_SECONDS: int = 10
 
     # HEBAT / Moodle integration
     HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"
@@ -207,6 +213,9 @@ class Settings(BaseSettings):
     HEBAT_RATE_LIMIT_SECONDS: float = 2.0
     HEBAT_USERNAME: str = ""
     HEBAT_PASSWORD: str = ""
+    QA_CREDENTIAL_SOURCE: str = "hebat"
+    QA_BROWSER_HEADLESS: bool = False
+    QA_RECAPTCHA_SETTLE_MS: int = 3000
     HEBAT_NOTIFY_CHAT_ID: str = ""
     HEBAT_AUTO_LOGIN: bool = False
     # Max automatic re-logins per request when a stale cookie redirects to /login.

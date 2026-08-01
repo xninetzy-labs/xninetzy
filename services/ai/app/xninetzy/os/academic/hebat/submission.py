@@ -49,6 +49,18 @@ async def upload_submission_via_playwright(
     update_submission_status(token, UploadStatus.UPLOADING)
     audit_log(chat_id, "upload_start", "started", target_type="submission", target_id=token)
 
+    def failed_result(message: str) -> dict:
+        update_submission_status(token, UploadStatus.FAILED, error=message)
+        audit_log(
+            chat_id,
+            "upload_failed",
+            "failed",
+            target_type="submission",
+            target_id=token,
+            detail={"error": message},
+        )
+        return {"status": "failed", "error": message, "verification_text": None}
+
     async with async_playwright() as pw:
         browser = await pw.chromium.launch(headless=True)
         try:
@@ -59,60 +71,100 @@ async def upload_submission_via_playwright(
             await page.goto(assignment_url, wait_until="domcontentloaded", timeout=30_000)
             await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
 
-            # Click Add/Edit submission
-            add_btn = await page.query_selector("button:has-text('Add submission'), button:has-text('Edit submission')")
-            if not add_btn:
-                form = await page.query_selector("form[action*='mod/assign']")
-                if form:
-                    await form.evaluate("el => el.submit()")
-                else:
-                    return {"status": "failed", "error": "Tombol Add submission tidak ditemukan", "verification_text": None}
-            else:
-                await add_btn.click()
+            add_selector = (
+                "button:has-text('Add submission'), "
+                "button:has-text('Edit submission')"
+            )
+            try:
+                add_btn = await page.wait_for_selector(
+                    add_selector,
+                    state="visible",
+                    timeout=30_000,
+                )
+                await add_btn.click(timeout=15_000)
+            except Exception:
+                try:
+                    form = await page.wait_for_selector(
+                        "form[action*='mod/assign']",
+                        state="visible",
+                        timeout=5_000,
+                    )
+                except Exception:
+                    return failed_result("Tombol Add submission tidak ditemukan")
+                await form.evaluate("el => el.submit()")
 
             await page.wait_for_load_state("domcontentloaded", timeout=20_000)
+            await page.locator(".filemanager").last.wait_for(
+                state="visible",
+                timeout=30_000,
+            )
             await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
 
-            # Try to upload via file chooser
-            upload_success = False
-            try:
-                async with page.expect_file_chooser(timeout=5_000) as fc_info:
-                    upload_trigger = await page.query_selector(
-                        "a.fp-btn-add, button.fp-btn-add, input[type='file'], .yui3-moodledialog-hd a"
+            file_manager = page.locator(".filemanager:visible").last
+            file_input = file_manager.locator("input[type='file']").last
+            if await file_input.count() == 0:
+                add_links = file_manager.locator(
+                    ".fp-btn-add a[title='Add...']:visible"
+                )
+                try:
+                    await add_links.first.wait_for(
+                        state="visible",
+                        timeout=30_000,
                     )
-                    if upload_trigger:
-                        await upload_trigger.click()
-                    else:
-                        # Try clicking any "Upload" or "Add" link in the filemanager
-                        await page.click(".fp-btn-add, .yui3-button:has-text('Upload')", timeout=3_000)
+                except Exception:
+                    return failed_result(
+                        "File manager sudah berisi file atau kontrol Add belum tersedia; "
+                        "upload pengganti memerlukan penghapusan/approval eksplisit."
+                    )
+                await add_links.first.click(timeout=15_000)
+                dialog_file_input = page.locator(
+                    ".moodle-dialogue-base[aria-hidden='false'] "
+                    "input[type='file']"
+                ).last
+                await dialog_file_input.wait_for(
+                    state="attached",
+                    timeout=15_000,
+                )
+                file_input = dialog_file_input
 
-                file_chooser = await fc_info.value
-                await file_chooser.set_files(local_file_path)
-                upload_success = True
-                await asyncio.sleep(1)
+            if await file_input.count() != 1:
+                return failed_result("Tidak bisa menemukan file upload widget")
 
-            except Exception as e:
-                logger.warning("File chooser approach failed: %s — trying direct input", e)
-
-            # Fallback: find hidden file input and set directly
-            if not upload_success:
-                file_input = await page.query_selector("input[type='file']")
-                if file_input:
-                    await file_input.set_input_files(local_file_path)
-                    upload_success = True
-                    await asyncio.sleep(1)
-
-            if not upload_success:
-                return {"status": "failed", "error": "Tidak bisa menemukan file upload widget", "verification_text": None}
-
-            # Submit the form (Save changes)
-            save_btn = await page.query_selector(
-                "input[type='submit'][value*='Save'], button:has-text('Save changes')"
+            await file_input.set_input_files(local_file_path)
+            await page.wait_for_timeout(500)
+            upload_dialog = page.locator(
+                ".moodle-dialogue-base[aria-hidden='false']"
+            ).last
+            upload_button = upload_dialog.get_by_role(
+                "button", name="Upload this file", exact=True
             )
-            if save_btn:
-                await save_btn.click()
-            else:
-                await page.evaluate("document.querySelector('form').submit()")
+            if await upload_button.count() != 1:
+                return failed_result("Dialog Upload this file tidak ditemukan")
+            await upload_button.wait_for(state="visible", timeout=15_000)
+            await upload_button.click(force=True, timeout=15_000)
+            try:
+                await upload_dialog.wait_for(state="hidden", timeout=15_000)
+            except Exception:
+                await page.wait_for_timeout(1000)
+
+            save_selector = (
+                "input[type='submit'][value*='Save'], "
+                "button:has-text('Save changes')"
+            )
+            try:
+                save_btn = await page.wait_for_selector(
+                    save_selector,
+                    state="visible",
+                    timeout=30_000,
+                )
+                await save_btn.click(timeout=15_000)
+            except Exception:
+                form = await page.wait_for_selector(
+                    "form[action*='mod/assign']",
+                    state="visible",
+                    timeout=5_000,
+                )
+                await form.evaluate("el => el.submit()")
 
             await page.wait_for_load_state("domcontentloaded", timeout=30_000)
             await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)

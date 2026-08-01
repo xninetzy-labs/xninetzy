@@ -293,6 +293,22 @@ Respons AI yang diharapkan:
 
 Health WA juga menampilkan `socket_ready` dan status koneksi WhatsApp.
 
+### Akun akademik bersama
+
+HEBAT/Moodle, QA UNAIR, dan Cyber Campus selalu memulai login dari satu sumber
+kredensial deployment: `HEBAT_USERNAME` dan `HEBAT_PASSWORD`. Alias sumber
+`hebat`, `qa`, `cyber`, dan `mahasiswa` hanya memilih adapter portal; semuanya
+membaca akun yang sama dan tidak pernah menerima password dari prompt, tool schema,
+WhatsApp, atau database. Jika kredensial belum lengkap, ketiga adapter berhenti
+sebelum membuka sesi. Session lama juga divalidasi ke portal sebelum dianggap aktif.
+
+QA memakai reCAPTCHA v3 halaman resmi. Xninetzy menunggu callback halaman dan
+memberi jeda settle sebelum submit login; tidak ada command atau token CAPTCHA
+yang perlu dikirim owner. QA dijalankan dengan Chrome standar headed karena portal
+menolak token dari headless/stealth browser. Jika host tidak memiliki display,
+login QA berhenti dengan status yang dapat ditindaklanjuti. CAPTCHA Cyber Campus
+berbeda: tetap dikirim ke WhatsApp admin untuk jawaban manual.
+
 ### Login Cyber Campus dengan CAPTCHA manual
 
 Cyber Campus memakai credential HEBAT dari `.env`; credential tidak masuk
@@ -488,6 +504,10 @@ Simpan credential hanya di `.env` lokal:
 ```env
 HEBAT_USERNAME=
 HEBAT_PASSWORD=
+ACADEMIC_CREDENTIAL_SOURCE=hebat
+QA_CREDENTIAL_SOURCE=hebat
+QA_BROWSER_HEADLESS=false
+QA_RECAPTCHA_SETTLE_MS=3000
 HEBAT_BASE_URL=https://hebat.elearning.unair.ac.id
 HEBAT_LOGIN_URL=https://hebat.elearning.unair.ac.id/login/index.php
 HEBAT_BROWSER_HEADLESS=true

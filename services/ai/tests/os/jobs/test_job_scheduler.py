@@ -10,7 +10,9 @@ from app.xninetzy.db.migrations import run_migrations
 from app.xninetzy.db.sqlite import connect, init_db
 from app.xninetzy.ecosystem.event_bus import record_event
 from app.xninetzy.os.jobs.service import (
+    build_scheduled_message,
     build_weekly_review,
+    due_job_specs,
     get_data_freshness,
     run_os_job_tick,
 )
@@ -28,6 +30,7 @@ def isolated_scheduler(monkeypatch, tmp_path):
     monkeypatch.setenv("MORNING_BRIEFING_ENABLED", "false")
     monkeypatch.setenv("EVENING_CHECKIN_ENABLED", "false")
     monkeypatch.setenv("WEEKLY_REVIEW_ENABLED", "false")
+    monkeypatch.setenv("PRAYER_REMINDER_ENABLED", "false")
     monkeypatch.setenv("HEBAT_PERIODIC_SYNC_ENABLED", "false")
     monkeypatch.setenv("HEBAT_SYNC_INTERVAL_MINUTES", "60")
     get_settings.cache_clear()
@@ -202,3 +205,54 @@ def test_freshness_and_weekly_review_use_persisted_events():
     assert freshness["hebat"]["age_minutes"] == 180
     assert "Task selesai: *1*" in review
     assert "Habit dicatat: *1*" in review
+
+
+def test_prayer_specs_include_only_elapsed_labels(monkeypatch):
+    monkeypatch.setenv("PRAYER_REMINDER_ENABLED", "true")
+    monkeypatch.setenv(
+        "PRAYER_REMINDER_SCHEDULE",
+        "subuh:04:30,dzuhur:11:45,ashar:15:00,maghrib:17:30,isya:18:40",
+    )
+    get_settings.cache_clear()
+
+    midday = due_job_specs(
+        datetime(2026, 7, 29, 12, 0, tzinfo=ZoneInfo("Asia/Jakarta"))
+    )
+    evening = due_job_specs(
+        datetime(2026, 7, 29, 20, 0, tzinfo=ZoneInfo("Asia/Jakarta"))
+    )
+
+    midday_labels = [spec.key.rsplit(":", 1)[-1] for spec in midday]
+    evening_labels = [spec.key.rsplit(":", 1)[-1] for spec in evening]
+    assert midday_labels == ["subuh", "dzuhur"]
+    assert evening_labels == ["subuh", "dzuhur", "ashar", "maghrib", "isya"]
+    assert "Sholat Isya" in build_scheduled_message(
+        "prayer_reminder",
+        "owner",
+        datetime(2026, 7, 29, 18, 40, tzinfo=ZoneInfo("Asia/Jakarta")),
+        "prayer_reminder:2026-07-29:isya",
+    )
+
+
+@pytest.mark.asyncio
+async def test_prayer_delivery_is_idempotent(monkeypatch):
+    monkeypatch.setenv("PRAYER_REMINDER_ENABLED", "true")
+    monkeypatch.setenv("PRAYER_REMINDER_SCHEDULE", "subuh:04:30,dzuhur:11:45")
+    get_settings.cache_clear()
+    sent: list[tuple[str, str]] = []
+
+    async def sender(jid: str, message: str) -> None:
+        sent.append((jid, message))
+
+    first = await run_os_job_tick(
+        now=datetime(2026, 7, 29, 12, 0, tzinfo=ZoneInfo("Asia/Jakarta")),
+        sender=sender,
+    )
+    second = await run_os_job_tick(
+        now=datetime(2026, 7, 29, 12, 1, tzinfo=ZoneInfo("Asia/Jakarta")),
+        sender=sender,
+    )
+
+    assert first["delivered"] == 2
+    assert second["delivered"] == 0
+    assert len(sent) == 2

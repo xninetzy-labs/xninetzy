@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import base64
 
+from app.xninetzy.core.config import get_settings
 from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     resolve_campus_credentials,
 )
@@ -16,19 +17,16 @@ QA_DASHBOARD_URL = (
 )
 
 BROWSER_ARGS = [
-    "--disable-blink-features=AutomationControlled",
     "--no-sandbox",
     "--disable-dev-shm-usage",
-    "--disable-infobars",
 ]
-
-USER_AGENT = (
-    "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 "
-    "(KHTML, like Gecko) Chrome/126.0.0.0 Safari/537.36"
-)
 
 
 class QaPortalError(RuntimeError):
+    pass
+
+
+class QaHumanVerificationRequired(QaPortalError):
     pass
 
 
@@ -37,17 +35,21 @@ def score_to_value(score: int) -> str:
 
 
 async def _launch(playwright):
-    browser = await playwright.chromium.launch(
-        channel="chrome", headless=True, args=BROWSER_ARGS
-    )
+    try:
+        browser = await playwright.chromium.launch(
+            channel="chrome",
+            headless=get_settings().QA_BROWSER_HEADLESS,
+            args=BROWSER_ARGS,
+        )
+    except Exception as exc:
+        raise QaPortalError(
+            "QA membutuhkan Google Chrome standar; "
+            "gunakan display host dan QA_BROWSER_HEADLESS=false."
+        ) from exc
     context = await browser.new_context(
         viewport={"width": 1366, "height": 900},
         locale="id-ID",
         timezone_id="Asia/Jakarta",
-        user_agent=USER_AGENT,
-    )
-    await context.add_init_script(
-        "Object.defineProperty(navigator, 'webdriver', {get: () => undefined});"
     )
     page = await context.new_page()
     page.on("dialog", lambda dialog: asyncio.ensure_future(dialog.accept()))
@@ -72,38 +74,62 @@ async def _fill_login_fields(page, creds) -> None:
 
 
 async def _fresh_captcha_token(page) -> None:
-    for _ in range(10):
+    settle_ms = max(0, get_settings().QA_RECAPTCHA_SETTLE_MS)
+    for _ in range(20):
         try:
-            ok = await page.evaluate(
-                """async (sitekey) => {
-                    if (typeof grecaptcha === 'undefined' || !grecaptcha.execute) {
-                        return false;
-                    }
-                    const token = await grecaptcha.execute(sitekey, {
-                        action: 'validate_captcha',
-                    });
-                    const el = document.getElementById('g-recaptcha-response');
-                    if (el && token) {
-                        el.value = token;
-                        return true;
-                    }
-                    return false;
-                }""",
-                QA_RECAPTCHA_SITEKEY,
+            state = await page.evaluate(
+                """() => {
+                    const token = document.querySelector(
+                        'input[name=' + JSON.stringify('g-recaptcha-response') + '], textarea[name=' + JSON.stringify('g-recaptcha-response') + ']'
+                    );
+                    const action = document.querySelector('input[name=action]');
+                    return {
+                        tokenLength: token?.value?.trim()?.length || 0,
+                        action: action?.value || '',
+                    };
+                }"""
             )
         except Exception:
-            ok = False
-        if ok:
-            await page.evaluate(
-                "(v) => { const f = document.querySelector('form input[name=action]'); if (f) f.value = v; }",
-                "validate_captcha",
-            )
-            return
+            state = {}
+        if not isinstance(state, dict):
+            state = {}
+        if (
+            state.get("tokenLength", 0) >= 100
+            and state.get("action") == "validate_captcha"
+        ):
+            if settle_ms:
+                await page.wait_for_timeout(settle_ms)
+            try:
+                stable = await page.evaluate(
+                    """() => {
+                        const token = document.querySelector(
+                            'input[name=' + JSON.stringify('g-recaptcha-response') + '], textarea[name=' + JSON.stringify('g-recaptcha-response') + ']'
+                        );
+                        const action = document.querySelector('input[name=action]');
+                        return {
+                            tokenLength: token?.value?.trim()?.length || 0,
+                            action: action?.value || '',
+                        };
+                    }"""
+                )
+            except Exception:
+                stable = {}
+            if not isinstance(stable, dict):
+                stable = {}
+            if (
+                stable.get("tokenLength", 0) >= 100
+                and stable.get("action") == "validate_captcha"
+            ):
+                return
         await page.wait_for_timeout(1000)
+    raise QaHumanVerificationRequired(
+        "reCAPTCHA QA belum menghasilkan token stabil; "
+        "login QA memerlukan verifikasi manusia di browser."
+    )
 
 
 async def login(page) -> None:
-    creds = resolve_campus_credentials("hebat")
+    creds = resolve_campus_credentials(get_settings().QA_CREDENTIAL_SOURCE)
     await _goto_retry(page, QA_LOGIN_URL)
     await page.wait_for_selector("input[name='userid']", timeout=20000)
     for _ in range(6):
@@ -113,6 +139,12 @@ async def login(page) -> None:
         await page.wait_for_timeout(6500)
         if "/qa/gate/menu" in page.url:
             return
+        body_text = (await page.locator("body").inner_text()).casefold()
+        if "captcha tidak valid" in body_text or "recaptcha" in body_text:
+            raise QaHumanVerificationRequired(
+                "Portal QA menolak token reCAPTCHA otomatis; "
+                "login QA memerlukan verifikasi manusia di browser."
+            )
         await page.wait_for_selector("input[name='userid']", timeout=20000)
     raise QaPortalError("Login QA gagal: tidak sampai ke halaman menu.")
 
@@ -288,6 +320,12 @@ async def fill_all_questionnaires(score: int = 10) -> dict:
                 browser, context, page = await _launch(playwright)
                 await login(page)
                 break
+            except QaHumanVerificationRequired:
+                if context:
+                    await context.close()
+                if browser:
+                    await browser.close()
+                raise
             except QaPortalError:
                 if context:
                     await context.close()

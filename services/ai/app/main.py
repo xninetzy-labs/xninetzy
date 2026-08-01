@@ -49,10 +49,22 @@ async def startup() -> None:
     if settings.WEB_ANALYSIS_BACKGROUND_ENABLED:
         asyncio.create_task(web_analysis_loop())
     if settings.GRAPHRAG_V3_ENABLED:
+        from app.xninetzy.os.graph.v3.backfill_v1 import backfill_legacy_graph
         from app.xninetzy.os.graph.v3.graph_populator import (
             replay_unconsumed_events as replay_graph_events,
         )
 
+        try:
+            legacy = backfill_legacy_graph()
+        except Exception:
+            logger.exception("Graph V1 to V3 backfill failed")
+        else:
+            if legacy["nodes"] or legacy["edges"]:
+                logger.info(
+                    "Graph V1 to V3 backfilled %d nodes and %d edges",
+                    legacy["nodes"],
+                    legacy["edges"],
+                )
         backfilled = replay_graph_events()
         if backfilled:
             logger.info("Graph populator backfilled %d events", backfilled)

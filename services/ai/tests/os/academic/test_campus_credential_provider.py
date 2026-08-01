@@ -1,3 +1,4 @@
+import pytest
 from pydantic import SecretStr
 
 from app.xninetzy.core.config import Settings
@@ -27,3 +28,14 @@ def test_campus_credentials_fail_closed_when_missing():
         assert "belum dikonfigurasi" in str(exc)
     else:
         raise AssertionError("Missing credentials should fail closed")
+
+
+@pytest.mark.parametrize("source", ["qa", "cyber", "cybercampus", "mahasiswa", "campus"])
+def test_academic_adapters_share_hebat_account(source):
+    settings = Settings(HEBAT_USERNAME="student", HEBAT_PASSWORD="private-value")
+
+    credentials = resolve_campus_credentials(source, settings)
+
+    assert credentials.source == "hebat"
+    assert credentials.username == "student"
+    assert credentials.password.get_secret_value() == "private-value"

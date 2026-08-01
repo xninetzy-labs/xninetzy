@@ -89,3 +89,15 @@ def test_snapshot_periods_are_compared_independently(monkeypatch, tmp_path):
     assert latest is not None
     assert latest.period == "2024/2025 - Genap"
     assert latest.changes == ()
+
+def test_snapshot_save_reuses_historical_hash_without_unique_conflict(monkeypatch, tmp_path):
+    repository = _prepare(monkeypatch, tmp_path)
+
+    first = repository.save(_result("X"))
+    repository.save(_result("Y"))
+    replayed = repository.save(_result("X"))
+
+    assert first.created is True
+    assert replayed.created is False
+    assert replayed.snapshot_id == first.snapshot_id
+    assert replayed.changes == ()

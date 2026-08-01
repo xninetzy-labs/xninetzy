@@ -64,6 +64,14 @@ def list_pending() -> list[dict]:
 
 def _execute_approved_action(row: dict) -> str:
     payload = json.loads(row.get("payload_json") or "{}")
+    if row.get("action_type") == "obsidian_organize_apply":
+        from app.xninetzy.os.notes.organization_service import ObsidianOrganizationService
+
+        result = ObsidianOrganizationService().apply(payload.get("plan") or {})
+        return (
+            f" Foldering Obsidian diterapkan: {len(result['applied'])} note dipindahkan, "
+            f"{len(result['skipped'])} dilewati, {result['links_updated']} file link diperbarui."
+        )
     if row.get("action_type") == "activate_learning_roadmap":
         from app.xninetzy.domains.it_learning.roadmap_store import activate_roadmap
 

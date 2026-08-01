@@ -33,15 +33,17 @@ def goal_create(title: str, description: str = "", domain: str = "personal",
 
     try:
         from app.xninetzy.os.notes.vault_service import ObsidianVaultService
+        from app.xninetzy.os.notes.folder_policy import canonical_path
+        path = canonical_path("goal", title=title, domain=domain)
         note = (
-            f"---\ntype: goal\ndomain: {domain}\nstatus: active\n"
+            f"---\nschema_version: 1\ntype: goal\ntitle: \"{title}\"\ncanonical_path: {path}\ndomain: {domain}\nstatus: active\n"
             f"horizon: {horizon}\npriority: {priority}\ndue: {due_date or ''}\n"
             f"created: {g['created_at']}\ntags: [goal, {domain}]\n---\n\n"
             f"# {title}\n\n## Why\n{description}\n\n## Target Metric\n\n"
             "## Current Progress\n\n## Milestones\n\n## Related Tasks\n\n"
             "## Daily Logs\n\n## AI Review\n"
         )
-        path = f"Goals/{domain}/{title.replace('/', '-')[:50]}.md"
+        path = canonical_path("goal", title=title, domain=domain)
         ObsidianVaultService().create_note(path, note, overwrite=False)
     except Exception:
         pass
@@ -99,9 +101,10 @@ def goal_update_progress(goal_id: int, log_text: str, delta: float = 0,
     try:
         from app.xninetzy.os.notes.vault_service import ObsidianVaultService
         from app.xninetzy.tools.internal.datetime_info import get_now_info
+        from app.xninetzy.os.notes.folder_policy import canonical_path
         now = get_now_info()
         ObsidianVaultService().append_note(
-            f"Daily/{now['date']}.md",
+            canonical_path("daily", date_value=now["date"], title="daily"),
             f"**Goal Progress** [{g['title']}]: {log_text}",
         )
     except Exception:

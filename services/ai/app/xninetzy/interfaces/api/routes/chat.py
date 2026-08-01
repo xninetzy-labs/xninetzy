@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import time
+
 from fastapi import APIRouter, Depends
 from langchain_core.messages import AIMessage, HumanMessage
 
@@ -77,6 +79,82 @@ async def _invoke_tool_directly(
         return f"Error menjalankan command: {e}"
 
 
+def _lightning_episode_start(request: ChatRequest) -> tuple[str | None, float]:
+    started = time.perf_counter()
+    if not get_settings().LIGHTNING_ENABLED:
+        return None, started
+    try:
+        from app.xninetzy.os.lightning.rl import start_episode
+
+        episode = start_episode(
+            owner_scope=request.sender_id or request.chat_id,
+            interface=str((request.metadata or {}).get("source", "api")),
+            chat_id=request.chat_id,
+            message_id=(request.metadata or {}).get("messageId"),
+            task_type="chat",
+            context={
+                "domain": "chat",
+                "intent": "request",
+                "modality": "text",
+                "risk_class": "read",
+            },
+            state={"message_length": len(request.message or "")},
+            idempotency_key=(request.metadata or {}).get("messageId"),
+        )
+        return episode["episode_id"], started
+    except Exception:
+        return None, started
+
+
+def _lightning_episode_finish(
+    episode_id: str | None,
+    request: ChatRequest,
+    *,
+    route: str,
+    status: str,
+    response: str,
+    started: float,
+    error_type: str | None = None,
+) -> None:
+    if not episode_id:
+        return
+    try:
+        from app.xninetzy.os.lightning.rl import (
+            finish_episode,
+            record_action,
+            record_outcome,
+        )
+
+        owner_scope = request.sender_id or request.chat_id
+        record_action(
+            episode_id=episode_id,
+            owner_scope=owner_scope,
+            action_type="route",
+            action_name=route or "unknown",
+            output_data={"response_length": len(response or "")},
+            status="ok" if status in {"ok", "completed"} else "error",
+            error_type=error_type,
+            latency_ms=(time.perf_counter() - started) * 1000,
+        )
+        record_outcome(
+            episode_id=episode_id,
+            owner_scope=owner_scope,
+            success=status in {"ok", "completed", "failover"},
+            outcome_code=route or status,
+            latency_ms=(time.perf_counter() - started) * 1000,
+        )
+    except Exception:
+        try:
+            finish_episode(
+                episode_id=episode_id,
+                owner_scope=request.sender_id or request.chat_id,
+                status="failed",
+                outcome_code=error_type or "lightning_recording_error",
+            )
+        except Exception:
+            pass
+
+
 async def _maybe_run_workflow(request: ChatRequest) -> str | None:
     """Run the multi-action workflow engine for compound requests, else None.
 
@@ -115,15 +193,34 @@ async def chat(request: ChatRequest) -> ChatResponse:
     if not owner.allowed:
         return ChatResponse(reply=owner_denied_message(owner.reason))
 
+    episode_id, episode_started = _lightning_episode_start(request)
+
     # 1. Check for slash command (deterministic routing, skip LangGraph)
     tool_name, kwargs = parse_command(request.message)
     if tool_name:
         reply = await _invoke_tool_directly(tool_name, kwargs, request)
+        _lightning_episode_finish(
+            episode_id,
+            request,
+            route=tool_name,
+            status="completed" if not reply.startswith("Error") else "failed",
+            response=reply,
+            started=episode_started,
+            error_type="direct_tool_error" if reply.startswith("Error") else None,
+        )
         return ChatResponse(reply=reply)
 
     # 1b. Multi-action workflow (compound request → staged execution + WA progress)
     workflow_reply = await _maybe_run_workflow(request)
     if workflow_reply is not None:
+        _lightning_episode_finish(
+            episode_id,
+            request,
+            route="workflow",
+            status="completed",
+            response=workflow_reply,
+            started=episode_started,
+        )
         return ChatResponse(reply=workflow_reply)
 
     # 2. Normal LangGraph flow
@@ -160,6 +257,15 @@ async def chat(request: ChatRequest) -> ChatResponse:
             error_type=type(exc).__name__,
             error_message=str(exc)[:500],
         )
+        _lightning_episode_finish(
+            episode_id,
+            request,
+            route="langgraph",
+            status="failed",
+            response="",
+            started=episode_started,
+            error_type=type(exc).__name__,
+        )
         settings = get_settings()
         from_whatsapp = bool((request.metadata or {}).get("messageId"))
         should_failover = settings.CHAT_FAILOVER_ENABLED and (
@@ -191,24 +297,49 @@ async def chat(request: ChatRequest) -> ChatResponse:
                     status="failover",
                     error_type=type(exc).__name__,
                 )
+                _lightning_episode_finish(
+                    episode_id,
+                    request,
+                    route="opencode_failover",
+                    status="failover",
+                    response=reply,
+                    started=episode_started,
+                    error_type=type(exc).__name__,
+                )
                 return ChatResponse(reply=reply)
             logger.error(
                 "OpenCode chat failover failed: status=%s error=%s",
                 fallback.status,
                 fallback.error,
             )
-        return ChatResponse(
-            reply=(
-                "Maaf, agent utama sedang tidak tersedia dan failover aman belum "
-                "berhasil. Coba ulangi sebentar lagi atau gunakan slash command."
-            )
+        error_reply = (
+            "Maaf, agent utama sedang tidak tersedia dan failover aman belum "
+            "berhasil. Coba ulangi sebentar lagi atau gunakan slash command."
         )
+        _lightning_episode_finish(
+            episode_id,
+            request,
+            route="langgraph",
+            status="failed",
+            response=error_reply,
+            started=episode_started,
+            error_type=type(exc).__name__,
+        )
+        return ChatResponse(reply=error_reply)
 
     new_messages = result["messages"][len(history) :]
     if new_messages:
         store.save_messages(request.chat_id, new_messages)
 
     _log_trace(request, result, new_messages, status="ok")
+    _lightning_episode_finish(
+        episode_id,
+        request,
+        route=result.get("route") or "langgraph",
+        status="completed",
+        response=result.get("response", ""),
+        started=episode_started,
+    )
 
     return ChatResponse(reply=result["response"])
 

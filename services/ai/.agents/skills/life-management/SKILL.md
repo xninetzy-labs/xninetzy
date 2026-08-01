@@ -1,21 +1,29 @@
 ---
 name: life-management
 description: Manage the owner's goals, tasks, reminders, habits, workouts, money logs, daily check-ins, and weekly reviews. Use for planning today, capturing commitments, completing tasks, scheduling reminders, tracking routines, and reviewing whether daily actions advance active goals.
+metadata:
+  triggers: "goal task reminder habit workout money checkin review today commitment routine progress"
+  lifecycle: "state-intent-smallest-action-execute-event-review"
+  version: "1.1"
 ---
 
 # Life OS management
 
-Inspect current state before creating another commitment.
+Use persisted state rather than assumptions. Every mutation must be attributable to the owner and safe to replay.
 
-1. Use `os_today` or the relevant list tool to identify active attention.
-2. Connect a new task to an existing goal when the relationship is explicit.
-3. Capture ambiguous input in the OS inbox rather than guessing its final type.
-4. Keep tasks concrete, bounded, and observable.
-5. Create reminders from an explicit action and time.
-6. Log habits, workouts, or transactions only from facts provided by the owner.
+## Workflow
+
+1. Inspect `os_today`, active goals, due reminders, and the relevant list tool before creating a commitment.
+2. Classify the request as goal, task, reminder, habit, workout, money, check-in, review, or inbox capture.
+3. Connect a task to an existing goal only when the relationship is explicit.
+4. Keep the next action concrete, bounded, observable, and time-aware.
+5. Create reminders from an explicit action and unambiguous time; ask when the time is ambiguous or already elapsed.
+6. Log habits, workouts, and transactions only from facts supplied by the owner.
 7. Mark completion through the canonical tool so reducers and progress events run.
-8. Use daily and weekly reviews to compare intent, action, evidence, and obstacles.
+8. Use daily/weekly review to compare intent, action, evidence, obstacles, and the next adaptation.
 
-Do not fabricate completion, amounts, exercise volume, or habit performance. Do not create duplicate tasks when replaying a request.
+Do not fabricate completion, amounts, exercise volume, habit performance, or dates. Do not duplicate tasks or reminders when replaying a request. Use inbox capture when the desired commitment is still unclear.
 
-Return the current state change, its connection to a goal, and the next review point.
+## Completion contract
+
+Return the state inspected, exact state change, connection to a goal, idempotency or approval status, and next review point.

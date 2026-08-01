@@ -511,6 +511,109 @@ def run_migrations() -> None:
         """,
         "CREATE INDEX IF NOT EXISTS idx_coding_agent_runs_user ON coding_agent_runs(user_id, created_at)",
         """
+        CREATE TABLE IF NOT EXISTS agent_episodes (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            episode_id TEXT NOT NULL UNIQUE,
+            owner_scope TEXT NOT NULL,
+            interface TEXT NOT NULL DEFAULT 'internal',
+            chat_id TEXT,
+            message_id TEXT,
+            trace_id TEXT,
+            context_key TEXT NOT NULL,
+            strategy_id TEXT NOT NULL,
+            task_type TEXT,
+            provider TEXT,
+            model TEXT,
+            skill_ids_json TEXT NOT NULL DEFAULT '[]',
+            state_json TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'active',
+            outcome_code TEXT,
+            started_at TEXT NOT NULL,
+            completed_at TEXT,
+            latency_ms REAL,
+            reward REAL,
+            reward_breakdown_json TEXT NOT NULL DEFAULT '{}',
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            idempotency_key TEXT
+        )
+        """,
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_episodes_idempotency ON agent_episodes(owner_scope, idempotency_key) WHERE idempotency_key IS NOT NULL",
+        "CREATE INDEX IF NOT EXISTS idx_agent_episodes_owner_time ON agent_episodes(owner_scope, started_at)",
+        "CREATE INDEX IF NOT EXISTS idx_agent_episodes_context_strategy ON agent_episodes(owner_scope, context_key, strategy_id)",
+        """
+        CREATE TABLE IF NOT EXISTS agent_episode_actions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            action_id TEXT NOT NULL UNIQUE,
+            episode_id TEXT NOT NULL,
+            ordinal INTEGER NOT NULL,
+            action_type TEXT NOT NULL,
+            action_name TEXT NOT NULL,
+            input_json TEXT NOT NULL DEFAULT '{}',
+            output_json TEXT NOT NULL DEFAULT '{}',
+            status TEXT NOT NULL DEFAULT 'ok',
+            error_type TEXT,
+            latency_ms REAL,
+            idempotency_key TEXT,
+            created_at TEXT NOT NULL,
+            UNIQUE(episode_id, ordinal),
+            FOREIGN KEY(episode_id) REFERENCES agent_episodes(episode_id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_agent_episode_actions_episode ON agent_episode_actions(episode_id, ordinal)",
+        """
+        CREATE TABLE IF NOT EXISTS agent_reward_events (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            event_id TEXT NOT NULL UNIQUE,
+            episode_id TEXT NOT NULL,
+            owner_scope TEXT NOT NULL,
+            source TEXT NOT NULL,
+            value REAL NOT NULL,
+            evidence_json TEXT NOT NULL DEFAULT '{}',
+            idempotency_key TEXT,
+            created_at TEXT NOT NULL,
+            UNIQUE(owner_scope, idempotency_key),
+            FOREIGN KEY(episode_id) REFERENCES agent_episodes(episode_id) ON DELETE CASCADE
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_agent_reward_events_episode ON agent_reward_events(episode_id, created_at)",
+        """
+        CREATE TABLE IF NOT EXISTS agent_strategy_stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            owner_scope TEXT NOT NULL,
+            context_key TEXT NOT NULL,
+            strategy_id TEXT NOT NULL,
+            sample_count INTEGER NOT NULL DEFAULT 0,
+            reward_sum REAL NOT NULL DEFAULT 0,
+            reward_sum_squares REAL NOT NULL DEFAULT 0,
+            success_count INTEGER NOT NULL DEFAULT 0,
+            grounded_count INTEGER NOT NULL DEFAULT 0,
+            error_count INTEGER NOT NULL DEFAULT 0,
+            latency_sum_ms REAL NOT NULL DEFAULT 0,
+            updated_at TEXT NOT NULL,
+            UNIQUE(owner_scope, context_key, strategy_id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_agent_strategy_stats_rank ON agent_strategy_stats(owner_scope, context_key, reward_sum)",
+        """
+        CREATE TABLE IF NOT EXISTS agent_evaluations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            evaluation_id TEXT NOT NULL UNIQUE,
+            owner_scope TEXT NOT NULL,
+            context_key TEXT,
+            baseline_strategy_id TEXT NOT NULL,
+            candidate_strategy_id TEXT NOT NULL,
+            window_start TEXT NOT NULL,
+            window_end TEXT NOT NULL,
+            baseline_metrics_json TEXT NOT NULL DEFAULT '{}',
+            candidate_metrics_json TEXT NOT NULL DEFAULT '{}',
+            sample_count INTEGER NOT NULL DEFAULT 0,
+            status TEXT NOT NULL DEFAULT 'pending',
+            rollback_recommended INTEGER NOT NULL DEFAULT 0,
+            created_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_agent_evaluations_owner_time ON agent_evaluations(owner_scope, created_at)",
+        """
         CREATE TABLE IF NOT EXISTS cyber_grade_snapshots (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             owner_scope TEXT NOT NULL,
@@ -685,6 +788,7 @@ def run_migrations() -> None:
         _migrate_research_sessions(conn)
         _migrate_approval_requests(conn)
         _backfill_learning_concepts(conn)
+        _migrate_lightning(conn)
 
 
 def _migrate_reminders(conn) -> None:
@@ -783,3 +887,42 @@ def _backfill_learning_concepts(conn) -> None:
             [(int(row["id"]), row["title"]) for row in tasks],
             roadmap["created_at"] or "1970-01-01T00:00:00+00:00",
         )
+
+
+def _migrate_lightning(conn) -> None:
+    action_rows = conn.execute("PRAGMA table_info(agent_episode_actions)").fetchall()
+    action_columns = {row["name"] for row in action_rows}
+    if "idempotency_key" not in action_columns:
+        conn.execute("ALTER TABLE agent_episode_actions ADD COLUMN idempotency_key TEXT")
+    conn.execute("CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_episode_actions_idempotency ON agent_episode_actions(episode_id, idempotency_key) WHERE idempotency_key IS NOT NULL")
+    feedback_rows = conn.execute("PRAGMA table_info(agent_feedback)").fetchall()
+    feedback_columns = {row["name"] for row in feedback_rows}
+    for name, ddl in {
+        "episode_id": "TEXT",
+        "idempotency_key": "TEXT",
+        "source_interface": "TEXT DEFAULT 'internal'",
+        "attribution_confidence": "TEXT DEFAULT 'explicit'",
+    }.items():
+        if name not in feedback_columns:
+            conn.execute(f"ALTER TABLE agent_feedback ADD COLUMN {name} {ddl}")
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_agent_feedback_idempotency ON agent_feedback(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL"
+    )
+    proposal_rows = conn.execute("PRAGMA table_info(improvement_proposals)").fetchall()
+    proposal_columns = {row["name"] for row in proposal_rows}
+    for name, ddl in {
+        "confidence": "REAL DEFAULT 0",
+        "risk_score": "REAL DEFAULT 0",
+        "evidence_json": "TEXT DEFAULT '{}'",
+        "baseline_metrics_json": "TEXT DEFAULT '{}'",
+        "candidate_metrics_json": "TEXT DEFAULT '{}'",
+        "rollout_state": "TEXT DEFAULT 'pending'",
+        "rollback_json": "TEXT DEFAULT '{}'",
+        "expires_at": "TEXT",
+        "idempotency_key": "TEXT",
+    }.items():
+        if name not in proposal_columns:
+            conn.execute(f"ALTER TABLE improvement_proposals ADD COLUMN {name} {ddl}")
+    conn.execute(
+        "CREATE UNIQUE INDEX IF NOT EXISTS idx_improvement_proposals_idempotency ON improvement_proposals(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL"
+    )

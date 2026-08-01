@@ -4,6 +4,7 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 
 from app.xninetzy.core.config import get_settings
+from app.xninetzy.os.notes.folder_policy import canonical_path
 
 
 class TemplateService:
@@ -11,9 +12,12 @@ class TemplateService:
         now = _now()
         day = date_text or now.strftime("%Y-%m-%d")
         return (
-            f"Daily/{day}.md",
+            canonical_path('daily', date_value=day, title="daily"),
             f"""---
+schema_version: 1
 type: daily
+title: "Daily Note - {day}"
+canonical_path: {canonical_path('daily', date_value=day, title="daily")}
 date: {day}
 created: {now.isoformat()}
 tags: [daily, xninetzy]
@@ -39,11 +43,13 @@ tags: [daily, xninetzy]
 
     def learning_note(self, topic: str, summary: str = "", explanation: str = "") -> tuple[str, str]:
         now = _now()
-        slug = _slug(topic)
         return (
-            f"Learning/{slug}.md",
+            canonical_path('learning_note', title=topic),
             f"""---
-type: learning
+schema_version: 1
+type: learning_note
+title: "{topic}"
+canonical_path: {canonical_path('learning_note', title=topic)}
 topic: "{topic}"
 created: {now.isoformat()}
 tags: [learning]
@@ -71,9 +77,12 @@ tags: [learning]
         now = _now()
         folder = _slug(project_name)
         return (
-            f"Projects/{folder}/README.md",
+            canonical_path('project', title=project_name, project=folder),
             f"""---
+schema_version: 1
 type: project
+title: "{project_name}"
+canonical_path: {canonical_path('project', title=project_name, project=folder)}
 project: "{project_name}"
 status: active
 created: {now.isoformat()}
@@ -111,9 +120,12 @@ tags: [project]
     def task_note(self, task_name: str, goal: str = "", priority: str = "medium", deadline: str | None = None) -> tuple[str, str]:
         now = _now()
         return (
-            f"Tasks/{_slug(task_name)}.md",
+            canonical_path('task', title=task_name),
             f"""---
+schema_version: 1
 type: task
+title: "{task_name}"
+canonical_path: {canonical_path('task', title=task_name)}
 status: active
 created: {now.isoformat()}
 tags: [task]

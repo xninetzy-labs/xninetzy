@@ -86,6 +86,23 @@ def due_job_specs(now: datetime, settings: Settings | None = None) -> list[JobSp
                 True,
             )
         )
+    if active.LIGHTNING_ENABLED and active.LIGHTNING_REVIEW_ENABLED:
+        review_hour = min(23, max(0, active.LIGHTNING_REVIEW_HOUR))
+        interval_hours = min(24, max(1, active.LIGHTNING_REVIEW_INTERVAL_HOURS))
+        review_start = local.replace(
+            hour=review_hour, minute=0, second=0, microsecond=0
+        )
+        if local >= review_start:
+            bucket = int((local - review_start).total_seconds() // (interval_hours * 3600))
+            scheduled = review_start + timedelta(hours=bucket * interval_hours)
+            specs.append(
+                JobSpec(
+                    f"lightning_review:{scheduled.date().isoformat()}:{scheduled:%H%M}",
+                    "lightning_review",
+                    scheduled.isoformat(),
+                    True,
+                )
+            )
     if active.PRAYER_REMINDER_ENABLED:
         seen_labels: set[str] = set()
         for entry in active.PRAYER_REMINDER_SCHEDULE.split(","):
@@ -235,6 +252,8 @@ def build_scheduled_message(
     now: datetime,
     job_key: str | None = None,
 ) -> str:
+    if job_type == "lightning_review":
+        return build_lightning_review(chat_id, now)
     if job_type == "prayer_reminder":
         label = (job_key or "sholat").split(":")[-1].capitalize()
         return (
@@ -270,6 +289,19 @@ def get_data_freshness(now: datetime | None = None) -> dict:
         "hebat": _freshness_item(hebat, current, threshold),
         "knowledge": _freshness_item(knowledge, current, 24 * 60),
     }
+
+
+def build_lightning_review(chat_id: str, now: datetime) -> str:
+    from app.xninetzy.os.lightning.rl import reward_summary
+    from app.xninetzy.os.lightning.service import review_recent
+
+    summary = reward_summary(owner_scope=chat_id, window_days=1)
+    review = review_recent(chat_id)
+    return (
+        f"⚡ *Lightning Review — {now:%d %B %Y}*\n"
+        f"Episodes: {summary['episodes']} · Reward: {summary['reward_mean']:.2f} · "
+        f"Success: {summary['success_rate']:.0%}\n\n{review}"
+    )
 
 
 def build_morning_briefing(chat_id: str, now: datetime) -> str:

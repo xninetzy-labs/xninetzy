@@ -385,15 +385,17 @@ async def hebat_download_material(
     if save_to_obsidian and preview:
         try:
             from app.xninetzy.os.notes.vault_service import ObsidianVaultService
+            from app.xninetzy.os.notes.folder_policy import canonical_path
 
             note_content = (
+                f"---\nschema_version: 1\ntype: hebat_material\ntitle: \"{title}\"\ncanonical_path: {canonical_path('hebat_material', title=title, course=str(course_id))}\ncourse_id: {course_id}\nsource: HEBAT\n---\n\n"
                 f"# {title}\n\n"
                 f"*Sumber:* HEBAT Course ID `{course_id}`\n"
                 f"*File:* `{result['filename']}`\n"
                 f"*Halaman:* {pages}\n\n"
                 f"---\n\n## Isi / Ringkasan\n\n{preview}"
             )
-            obs_path = f"HEBAT/{course_id}/{safe_title}.md"
+            obs_path = canonical_path('hebat_material', title=title, course=str(course_id))
             ObsidianVaultService().create_note(obs_path, note_content, overwrite=True)
             obsidian_path = obs_path
         except Exception as e:

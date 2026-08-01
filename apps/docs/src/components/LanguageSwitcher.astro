@@ -1,0 +1,35 @@
+---
+const selected = Astro.url.searchParams.get('lang') === 'id' ? 'id' : 'en';
+---
+
+<label class="language-switcher" aria-label="Documentation language">
+  <span>Language</span>
+  <select id="docs-language" data-initial-language={selected}>
+    <option value="en">English</option>
+    <option value="id">Indonesia</option>
+  </select>
+</label>
+
+<script>
+  const selector = document.querySelector<HTMLSelectElement>('#docs-language');
+  const initial = selector?.dataset.initialLanguage ?? localStorage.getItem('xninetzy-docs-language') ?? 'en';
+
+  function applyLanguage(language: string) {
+    const locale = language === 'id' ? 'id' : 'en';
+    document.documentElement.lang = locale;
+    document.documentElement.dataset.docsLanguage = locale;
+    document.querySelectorAll<HTMLElement>('[data-locale]').forEach((element) => {
+      element.hidden = element.dataset.locale !== locale;
+    });
+    document.querySelectorAll<HTMLElement>('[data-i18n-en][data-i18n-id]').forEach((element) => {
+      element.textContent = locale === 'id' ? element.dataset.i18nId ?? '' : element.dataset.i18nEn ?? '';
+    });
+    localStorage.setItem('xninetzy-docs-language', locale);
+  }
+
+  if (selector) {
+    selector.value = initial;
+    applyLanguage(initial);
+    selector.addEventListener('change', () => applyLanguage(selector.value));
+  }
+</script>

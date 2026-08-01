@@ -1,31 +1,31 @@
 ---
 name: it-learning
-description: Build and run evidence-backed IT learning plans for programming, backend, databases, Docker, system design, AI agents, RAG, data analytics, and machine learning. Use for roadmaps, study sessions, concept prerequisites, active recall, practice projects, progress reviews, and adapting what to learn next.
+description: Build and run evidence-backed IT learning plans for programming, backend, databases, Docker, system design, AI agents, RAG, data analytics, and machine learning. Use for roadmaps, prerequisite concepts, study sessions, active recall, practice projects, mastery evidence, progress reviews, and adaptive next-focus decisions.
+metadata:
+  triggers: "learning roadmap concept prerequisite study session practice project mastery recall machine learning data analytics"
+  lifecycle: "target-practice-evidence-mastery-adapt"
+  version: "1.1"
 ---
 
 # IT Learning OS
 
-Start from the learner's target, current level, available duration, internal sources, and deadlines.
+Model progress as `roadmap -> concept -> session/task -> evidence -> mastery -> next focus`. Do not infer mastery from time spent or a confident answer.
 
-1. Search internal material before claiming that a roadmap is source-backed.
-2. Create or read a roadmap with measurable outcomes, milestones, tasks, resources, and review checkpoints.
-3. Inspect the concept graph and prerequisites before selecting the next topic.
-4. Prefer `learning_generate_today_plan` over a static study template when roadmap state exists.
-5. Start actual work with `learning_start_study_session`.
-6. Complete a session with duration, energy, mastery, reflection, and evidence.
-7. Use active recall before rereading when a recall card is due.
-8. Review weak concepts, recall lapses, and progress before adapting the plan.
+## Workflow
 
-Use `knowledge_answer` for explanations grounded in the owner's material. Label external research separately.
+1. Clarify target outcome, current level, deadline, available time, and preferred artifact.
+2. Search internal material before calling a plan source-backed; label external research separately.
+3. Read or create a roadmap with measurable milestones, bounded tasks, resources, and review checkpoints.
+4. Inspect prerequisites and concept state before selecting the next focus.
+5. Prefer `learning_generate_today_plan` when roadmap state exists.
+6. Start real work with `learning_start_study_session` and connect it to the roadmap.
+7. Produce a small artifact, test, explanation, or recall attempt as evidence.
+8. Complete with duration, energy, mastery estimate, reflection, and evidence using `learning_complete_study_session`.
+9. Use due recall before rereading; keep confidence separate from correctness.
+10. Review weak concepts, failed recall, and obstacles before adapting the plan.
 
-Connect project learning to a small implementation artifact. Break projects into architecture, modules, data flow, tests, and incremental milestones.
+Connect projects to architecture, modules, data flow, tests, and incremental milestones. A concept with unmet prerequisites must not become the adaptive next focus. Do not create a large task set, activate a broad roadmap, or complete graded work without the required approval.
 
-Do not create a large task set or activate a broad roadmap without approval. Do not complete graded work on the learner's behalf.
+## Completion contract
 
-Return:
-
-- target and current stage;
-- evidence or source status;
-- today's bounded learning action;
-- success criterion;
-- review or recall checkpoint.
+Return target and stage, evidence/source status, one bounded next action, success criterion, and the next review or recall checkpoint. If evidence is missing, say so explicitly.

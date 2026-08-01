@@ -322,9 +322,10 @@ def daily_checkin(
     # Auto-append ke daily note
     try:
         from app.xninetzy.os.notes.vault_service import ObsidianVaultService
+        from app.xninetzy.os.notes.folder_policy import canonical_path
 
         ObsidianVaultService().append_note(
-            f"Daily/{result['date']}.md",
+            canonical_path("daily", date_value=result["date"], title="daily"),
             f"**Check-in** Mood:{mood}/5 Energi:{energy}/5 Fokus:{focus}/5\n{summary}",
         )
     except Exception:

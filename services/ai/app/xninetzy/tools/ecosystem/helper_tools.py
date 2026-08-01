@@ -34,7 +34,7 @@ def helper_generate_obsidian_docs() -> str:
             "---\ntype: helper\ntags: [helper, xninetzy]\n---\n\n"
             + FULL_OVERVIEW.replace("*", "**").replace("_", "")
         )
-        vault.create_note("Helper/README.md", readme, overwrite=True)
+        vault.create_note("System/Help/README.md", readme, overwrite=True)
 
         commands_lines = ["# Xninetzy Commands\n"]
         for key, cat in CATEGORIES.items():
@@ -42,8 +42,8 @@ def helper_generate_obsidian_docs() -> str:
             for ex in cat["examples"]:
                 commands_lines.append(f"- `{ex}`")
             commands_lines.append("")
-        vault.create_note("Helper/Commands.md", "\n".join(commands_lines), overwrite=True)
+        vault.create_note("System/Help/Commands.md", "\n".join(commands_lines), overwrite=True)
 
-        return "✅ Dokumentasi dibuat:\n- `Helper/README.md`\n- `Helper/Commands.md`"
+        return "✅ Dokumentasi dibuat:\n- `System/Help/README.md`\n- `System/Help/Commands.md`"
     except Exception as e:
         return f"Gagal membuat dokumentasi Obsidian: {e}"

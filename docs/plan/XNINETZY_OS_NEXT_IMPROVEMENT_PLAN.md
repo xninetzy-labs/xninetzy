@@ -193,3 +193,68 @@ Known environment-only caveat: the host virtualenv may contain forbidden NVIDIA
 packages from outside this repository. The CPU guard tests should run in the
 clean container image; a host venv with CUDA packages is a failed deployment
 condition, not a code-path fallback.
+
+## Milestone 7 - Lightning contextual reinforcement
+
+Outcome: Xninetzy learns from outcomes without online model-weight training.
+
+Implemented foundation:
+- owner-scoped episode/action/reward/evaluation tables;
+- deterministic reward aggregation and redaction;
+- contextual-bandit strategy ranking;
+- API, MCP, direct command, and host-runtime trace coverage;
+- proposal confidence/risk metadata and regression thresholds;
+- daily replay-safe review job.
+
+Default policy remains proposal plus owner approval. Code-fix proposals produce
+diagnosis, diff, and test evidence only; they never commit or push.
+
+Configuration:
+
+~~~env
+LIGHTNING_ENABLED=true
+LIGHTNING_REVIEW_ENABLED=false
+LIGHTNING_REVIEW_HOUR=2
+LIGHTNING_REVIEW_INTERVAL_HOURS=24
+LIGHTNING_AUTO_APPLY=false
+LIGHTNING_CODE_FIX_ENABLED=false
+LIGHTNING_PROVIDER_OPTIMIZATION_ENABLED=true
+LIGHTNING_EXPLORATION_RATE=0.10
+LIGHTNING_MIN_SAMPLES_PER_STRATEGY=20
+LIGHTNING_EVALUATION_WINDOW_DAYS=7
+LIGHTNING_RETENTION_DAYS=90
+LIGHTNING_MAX_EVENT_CHARS=4000
+~~~
+
+Acceptance:
+- duplicate episode, action, feedback, and reward events are idempotent;
+- reward is bounded and attribution is explicit where possible;
+- owner scope is isolated across all reports;
+- strategy ranking persists and uses deterministic tie-breaking;
+- regression can recommend rollback;
+- all side effects still pass action policy/HITL.
+
+## Milestone 8 - Shared Agent Skills
+
+Implemented repository skills:
+- Xninetzy domain skills remain canonical;
+- 12 open-source skills are installed under services/ai/.agents/skills;
+- registry matching hints cover learning, documents, browsers, audio, coding,
+  CI, and security;
+- all skills are available through LangGraph and MCP without client registries;
+- metadata-first progressive disclosure prevents full-body context injection;
+- trust level, SHA-256, line count, resources, and quality warnings are exposed;
+- bounded resource listing/reading and owner-scoped resource-aware install are available;
+- catalog healthcheck reports invalid skills and external/provenance warnings;
+- eight built-in skills use inspect-plan-act-verify-adapt contracts.
+
+Quality gates:
+
+- user skills are not auto-injected by default;
+- resources are path-confined, size-bounded, UTF-8 validated, and symlink-safe;
+- skill text never becomes evidence, policy, authorization, or approval;
+- every side effect remains in the canonical domain tool and action policy;
+- skill changes are evaluated through trigger, procedure, and boundary cases.
+
+See [Shared Agent Skills](/docs/skills/), [Lightning Reinforcement Learning](/docs/lightning/),
+and [Skill Agentic Best Practices](../research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md).

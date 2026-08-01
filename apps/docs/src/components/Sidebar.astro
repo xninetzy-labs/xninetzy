@@ -6,7 +6,7 @@ const { mobile = false } = Astro.props;
 const pathname = normalizePath(Astro.url.pathname);
 ---
 
-<aside class:list={['sidebar', { mobile }]} aria-label="Dokumentasi">
+<aside class:list={['sidebar', { mobile }]} aria-label="Documentation">
   <nav>
     {navigation.map((group) => (
       <section>
@@ -27,7 +27,7 @@ const pathname = normalizePath(Astro.url.pathname);
   <div class="sidebar-card">
     <span class="signal"><i></i> MCP ready</span>
     <strong>168 tools. Satu registry.</strong>
-    <p>Akses Obsidian, HEBAT, task, dan research dari coding agent.</p>
-    <a href="/docs/mcp/">Hubungkan client →</a>
+    <p>Access Obsidian, HEBAT, tasks, and research from coding agents.</p>
+    <a href="/docs/mcp/">Connect a client →</a>
   </div>
 </aside>

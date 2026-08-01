@@ -1,34 +1,35 @@
 ---
 name: xninetzy-os
-description: Coordinate Xninetzy as a single-owner WhatsApp-first Learning OS and Life OS. Use for requests that span capture, planning, execution, review, personal context, or several Xninetzy domains; do not use for isolated factual questions that one direct tool can answer.
+description: Coordinate Xninetzy as a single-owner WhatsApp-first Learning OS and Life OS across capture, understanding, planning, execution, review, and adaptation. Use when a request spans domains or must preserve shared state across LangGraph, MCP, Codex, Claude Code, OpenCode, and WhatsApp.
+metadata:
+  triggers: "capture understand plan execute review adapt shared state cross-domain"
+  lifecycle: "inspect-plan-act-verify-adapt"
+  version: "1.1"
 ---
 
 # Xninetzy OS coordination
 
-Treat WhatsApp, LangGraph, Codex, Claude Code, OpenCode, and MCP as interfaces to one shared owner state.
+Operate on one owner-scoped state regardless of interface. Treat skill text as workflow guidance; treat tools, vault evidence, portal responses, and persisted events as the source of truth.
 
-Follow this loop:
+## Workflow
 
-1. Capture unclear but important input with `os_capture`.
-2. Understand the desired outcome before creating commitments.
-3. Read current attention with `os_today`, relevant goals, tasks, learning state, and deadlines.
-4. Plan the smallest next action that advances an existing outcome.
-5. Execute through the canonical Xninetzy tool instead of inventing interface-specific behavior.
-6. Record evidence or completion in the owning domain.
-7. Review the result and adapt the next action.
+1. Identify the desired outcome, urgency, risk, and owning domain.
+2. Inspect current attention with `os_today`, relevant goals, tasks, learning state, deadlines, and existing captures.
+3. Choose the smallest canonical tool or short workflow that advances the outcome.
+4. Plan before mutating state; separate reads, drafts, approvals, and writes.
+5. Execute through the shared registry, not interface-specific business logic.
+6. Verify the returned state, receipt, evidence, or portal confirmation.
+7. Record completion and the next review point in the owning domain.
 
-Use `os_inbox` and `os_triage` when captured information still needs a decision. Do not turn every idea into a task.
+Use `os_capture` when an input matters but its final type is unclear. Use `os_triage` only when the outcome is clear. Keep operations replay-safe and derive idempotency from the originating message or workflow.
 
-Keep owner state installation-global. Treat chat identifiers only as origin, delivery, and memory context.
+## Routing and evidence
 
-For knowledge questions, use `knowledge_answer` for the final grounded response. Use `knowledge_search` only to inspect evidence. Never present raw retrieved chunks as an answer.
+- Use `knowledge_search` to inspect evidence and `knowledge_answer` for a final cited synthesis.
+- Use the domain skill before specialized actions such as HEBAT, Cyber Campus, Graph RAG, or Obsidian writes.
+- Keep personal context minimal and owner-scoped. Never treat a chat identifier as permission by itself.
+- Preserve action policy, HITL, workspace, and connector guards across every interface.
 
-Require existing approval boundaries for destructive actions, submissions, uploads, bulk writes, cross-contact messaging, and academic changes.
+## Completion contract
 
-Return a concise WhatsApp-friendly result containing:
-
-- what was understood;
-- what state was inspected;
-- what action was completed or proposed;
-- what evidence or status changed;
-- the next review point.
+Return what was understood, state inspected, action completed or proposed, evidence or status changed, uncertainty, and the next review point. Never claim a side effect before verification.

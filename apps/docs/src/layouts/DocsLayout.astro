@@ -15,7 +15,7 @@ type Props = {
 const { frontmatter } = Astro.props;
 const section = frontmatter.section ?? navigation.find((group) =>
   group.items.some((item) => item.href === Astro.url.pathname)
-)?.title ?? 'Dokumentasi';
+)?.title ?? 'Documentation';
 const { previous, next } = pageNeighbors(Astro.url.pathname);
 ---
 
@@ -34,21 +34,21 @@ const { previous, next } = pageNeighbors(Astro.url.pathname);
       <article class="prose">
         <slot />
       </article>
-      <nav class="page-neighbors" aria-label="Halaman sebelumnya dan berikutnya">
+      <nav class="page-neighbors" aria-label="Previous and next pages">
         {previous ? (
           <a class="previous" href={previous.href}>
-            <small>← Sebelumnya</small><strong>{previous.title}</strong>
+            <small>← Previous</small><strong>{previous.title}</strong>
           </a>
         ) : <span />}
         {next && (
           <a class="next" href={next.href}>
-            <small>Berikutnya →</small><strong>{next.title}</strong>
+            <small>Next →</small><strong>{next.title}</strong>
           </a>
         )}
       </nav>
       <div class="edit-note">
         <Icon name="code" />
-        <span>Dokumentasi berada di <code>apps/docs/src/pages/docs</code> dan dapat diedit sebagai Markdown.</span>
+        <span>Documentation lives in <code>apps/docs/src/pages/docs</code> and can be edited as Markdown.</span>
       </div>
     </main>
   </div>

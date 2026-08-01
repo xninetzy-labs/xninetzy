@@ -63,6 +63,13 @@ OBSIDIAN_VAULT_PATH=/app/obsidian-vault
 OBSIDIAN_ALLOW_WRITE=true
 OBSIDIAN_ALLOW_DELETE=false
 OBSIDIAN_BACKUP_BEFORE_WRITE=true
+OBSIDIAN_FOLDERING_ENABLED=true
+OBSIDIAN_CANONICAL_SCHEMA_VERSION=1
+OBSIDIAN_ORGANIZE_MODE=hybrid
+OBSIDIAN_REQUIRE_ORGANIZE_APPROVAL=true
+OBSIDIAN_AUTO_REFRESH_MOC=true
+OBSIDIAN_PERSIST_ACADEMIC_SENSITIVE=false
+OBSIDIAN_LEGACY_PATH_COMPATIBILITY=true
 ```
 
 `OBSIDIAN_VAULT_HOST_PATH` dipakai Docker host. `OBSIDIAN_VAULT_PATH` adalah mount path di container.
@@ -241,3 +248,5 @@ cd services/ai && uv run python -c "from app.xninetzy.core.config import get_set
 ```
 
 Jangan mencetak object settings lengkap karena dapat memuat secret.
+
+The vault folder policy is shared by all interfaces. Use the Obsidian organization preview before applying a legacy migration.

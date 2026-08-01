@@ -12,42 +12,44 @@ export type NavGroup = {
 
 export const navigation: NavGroup[] = [
   {
-    title: 'Mulai',
+    title: 'Start',
     items: [
-      { title: 'Pengenalan', description: 'Konsep dan kemampuan Xninetzy.', href: '/docs/introduction/' },
-      { title: 'Quick start', description: 'Jalankan stack pertama kali.', href: '/docs/getting-started/' },
-      { title: 'Konfigurasi', description: 'Environment dan persistence.', href: '/docs/configuration/' },
-      { title: 'Arsitektur', description: 'Service, alur data, dan batas sistem.', href: '/docs/architecture/' }
+      { title: 'Introduction', description: 'Xninetzy concepts and capabilities.', href: '/docs/introduction/' },
+      { title: 'Quick start', description: 'Run the stack for the first time.', href: '/docs/getting-started/' },
+      { title: 'Configuration', description: 'Environment and persistence.', href: '/docs/configuration/' },
+      { title: 'Architecture', description: 'Services, data flow, and system boundaries.', href: '/docs/architecture/' }
     ]
   },
   {
-    title: 'Integrasi',
+    title: 'Integrations',
     items: [
-      { title: 'WhatsApp', description: 'Chat, group, media, dan command.', href: '/docs/whatsapp/' },
-      { title: 'Obsidian', description: 'Vault, note, knowledge, dan guard.', href: '/docs/obsidian/' },
-      { title: 'HEBAT / Moodle', description: 'Course, activity, file, dan tugas.', href: '/docs/hebat/' },
-      { title: 'OS kernel', description: 'Capture, triage, dan attention queue.', href: '/docs/os-kernel/' },
-      { title: 'Learning roadmap', description: 'Planner adaptif dan source linkage.', href: '/docs/learning-roadmaps/' }
+      { title: 'WhatsApp', description: 'Chat, groups, media, and commands.', href: '/docs/whatsapp/' },
+      { title: 'Obsidian', description: 'Vault, notes, knowledge, and filesystem guards.', href: '/docs/obsidian/' },
+      { title: 'HEBAT / Moodle', description: 'Courses, activities, files, and assignments.', href: '/docs/hebat/' },
+      { title: 'OS kernel', description: 'Capture, triage, and the attention queue.', href: '/docs/os-kernel/' },
+      { title: 'Learning roadmap', description: 'Adaptive planning and source linkage.', href: '/docs/learning-roadmaps/' }
     ]
   },
   {
     title: 'AI & developer tools',
     items: [
-      { title: 'Provider LLM', description: 'Flaz dan provider lain.', href: '/docs/providers/' },
-      { title: 'MCP global', description: 'Codex, Claude, dan OpenCode.', href: '/docs/mcp/' },
-      { title: 'Coding agents', description: 'Jalankan runtime coding dari WA.', href: '/docs/coding-agents/' }
+      { title: 'LLM providers', description: 'Flaz and other providers.', href: '/docs/providers/' },
+      { title: 'Global MCP', description: 'Codex, Claude, and OpenCode.', href: '/docs/mcp/' },
+      { title: 'Coding agents', description: 'Run coding runtimes from WhatsApp.', href: '/docs/coding-agents/' },
+      { title: 'Lightning agent', description: 'Rewards, strategy ranking, and regression.', href: '/docs/lightning/' },
+      { title: 'Shared skills', description: 'Built-in and open-source skills shared across interfaces.', href: '/docs/skills/' }
     ]
   },
   {
-    title: 'Operasional',
+    title: 'Operations',
     items: [
-      { title: 'HTTP API', description: 'Endpoint AI dan WA engine.', href: '/docs/api/' },
-      { title: 'Testing', description: 'Test suite dan quality gates.', href: '/docs/testing/' },
-      { title: 'Automation', description: 'Briefing, review, job lease, dan freshness.', href: '/docs/automation/' },
-      { title: 'Local data', description: 'SQLite privat per instalasi.', href: '/docs/local-data/' },
-      { title: 'Backup & restore', description: 'Snapshot, verifikasi, retensi, dan recovery.', href: '/docs/backup-restore/' },
-      { title: 'Keamanan', description: 'Hardening dan threat boundaries.', href: '/docs/security/' },
-      { title: 'Troubleshooting', description: 'Diagnosis masalah umum.', href: '/docs/troubleshooting/' }
+      { title: 'HTTP API', description: 'AI and WhatsApp engine endpoints.', href: '/docs/api/' },
+      { title: 'Testing', description: 'Test suites and quality gates.', href: '/docs/testing/' },
+      { title: 'Automation', description: 'Briefings, reviews, job leases, and freshness.', href: '/docs/automation/' },
+      { title: 'Local data', description: 'Private per-installation SQLite data.', href: '/docs/local-data/' },
+      { title: 'Backup & restore', description: 'Snapshots, verification, retention, and recovery.', href: '/docs/backup-restore/' },
+      { title: 'Security', description: 'Hardening and threat boundaries.', href: '/docs/security/' },
+      { title: 'Troubleshooting', description: 'Diagnose common problems.', href: '/docs/troubleshooting/' }
     ]
   }
 ];

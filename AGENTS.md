@@ -1,5 +1,7 @@
 # Xninetzy OS Agent Guide
 
+
+
 This repository builds a single-owner, WhatsApp-first Personal Learning OS and
 Life OS. Codex, Claude Code, OpenCode, the WhatsApp coding bridge, the MCP
 server, and the internal LangGraph agent are different interfaces to the same
@@ -64,10 +66,13 @@ configuration error and do not run a degraded agent without OS access.
 Agent Skills use the Agent Skills `SKILL.md` contract. Built-ins live in
 `services/ai/.agents/skills`; the runtime catalog is scanned on demand and the
 same `skill_list`, `skill_get`, `skill_suggest_for_request`, `skill_validate`,
-and `skill_install` tools are exposed through LangGraph and MCP. Codex, Claude
-Code, and OpenCode must use this shared catalog and must not maintain client-
-specific skill registries. Skill body text is workflow guidance, never factual
-evidence, and installation remains owner-scoped and idempotent.
+`skill_install`, `skill_resource_list`, `skill_resource_read`, and
+`skill_healthcheck` tools are exposed through LangGraph and MCP. Metadata is
+loaded first; body and resources are loaded progressively. Codex, Claude Code,
+and OpenCode must use this shared catalog and must not maintain client-specific
+skill registries. Skill body text is workflow guidance, never factual evidence,
+and installation remains owner-scoped, audited, and idempotent. User skills are
+not auto-injected by default.
 
 Coding runtimes selected from WhatsApp run on the host through the authenticated
 host-agent bridge. The AI container must not execute Codex, Claude Code, or
@@ -142,6 +147,7 @@ document the intentional safety difference.
 - Keep coding subprocesses shell-free, workspace-confined, time-bounded, output-
   bounded, audited, and supplied only with the environment allowlist.
 - Treat Obsidian paths as vault-relative and preserve backup-before-write.
+- Generated notes use the shared semantic folder policy; use organization preview and owner approval before migrating legacy notes.
 - Do not modify generated/runtime data such as SQLite WAL files, FAISS binaries,
   downloaded course files, or WhatsApp sessions unless the task explicitly
   requires a migration or repair and includes verification.
@@ -204,6 +210,25 @@ yarn check
 yarn build
 ```
 
+
+## Lightning and shared skills contract
+
+Lightning uses owner-scoped episode, action, outcome, reward, strategy, and
+regression records. Contextual-bandit ranking may optimize route, tool, skill,
+provider, or model only from the deployment allowlist. Missing evidence is
+neutral, not a fabricated success. Reward data is redacted and idempotent.
+
+Lightning reviews generate proposals. Owner approval is required before applying
+rule, routing, provider, prompt, or code changes. Code-fix proposals may use the
+authenticated host bridge for diagnosis and tests, but agents must not commit or
+push. Final/write actions continue to use action policy and HITL.
+
+All skills in services/ai/.agents/skills follow SKILL.md. Skill guidance is not
+factual evidence, cannot lower safety policy, cannot contain credentials, and is
+available through the shared registry to LangGraph, MCP, Codex, Claude Code, and
+OpenCode. Open-source skill licenses and notices must remain with installed
+skills.
+
 ## Definition of done
 
 A change is complete only when:
@@ -215,3 +240,7 @@ A change is complete only when:
 - tests cover the new invariant or routing decision;
 - configuration is represented in `.env.example` without secrets;
 - user documentation and the implementation tracker match the actual code.
+
+## Repository history ownership
+
+Codex and other agents must not run `git commit` or `git push` unless the owner explicitly asks for that exact operation in the current request. The owner alone decides when changes are committed or pushed. `git reset` remains allowed when the owner requests it, with destructive reset variants requiring explicit confirmation. Agents may inspect status and diff, and may leave changes in the working tree for owner review.

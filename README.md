@@ -19,6 +19,8 @@ internet sebelum membaca bagian [Keamanan](#keamanan).
 ## Daftar Isi
 
 - [Kemampuan utama](#kemampuan-utama)
+- [Lightning reinforcement loop](#lightning-reinforcement-loop)
+- [Shared Agent Skills](#shared-agent-skills)
 - [Arsitektur](#arsitektur)
 - [Struktur repository](#struktur-repository)
 - [Quick start dengan Docker](#quick-start-dengan-docker)
@@ -49,8 +51,37 @@ internet sebelum membaca bagian [Keamanan](#keamanan).
 | Life OS | Goal, task, reminder, habit, workout, money, check-in, dan daily review |
 | Research | Light research, deep research bertingkat, academic/YouTube source, research brief, dan notification policy |
 | Personalization | Chat memory, semantic memory, rules, style profile, feedback, dan Lightning improvement proposals |
+| Lightning | Episode/action/outcome tracing, deterministic rewards, contextual strategy ranking, regression checks, dan approval-gated improvements |
+| Shared skills | Katalog Agent Skills yang sama untuk LangGraph, MCP, Codex, Claude Code, dan OpenCode dengan progressive disclosure, resource loading, healthcheck, dan owner-scoped install |
 | MCP | Seluruh registry tool Xninetzy melalui MCP stdio; aksi WhatsApp melalui HTTP MCP-style server |
 | Coding runtime | Codex CLI, Claude Code, atau OpenCode yang dibatasi admin, workspace, timeout, environment, dan audit log |
+
+## Lightning Reinforcement Loop
+
+Lightning mengubah hasil interaksi menjadi loop perbaikan yang dapat diaudit:
+`episode -> action -> outcome -> reward -> strategy ranking -> evaluation`.
+Reward dihitung deterministik dari keberhasilan tugas, feedback owner, groundedness,
+keandalan tool, dan latency; tidak ada training GPU atau pengubahan bobot model.
+
+Semua episode memiliki owner scope, context key, idempotency key, redaksi secret,
+dan atribusi interface. Strategi baru hanya dapat dipakai setelah proposal melewati
+approval dan regression check. Ringkasan serta ranking tersedia melalui
+`/agent-reward`, `/agent-ranking`, dan tool MCP `lightning_*`. Daily review bersifat
+opt-in melalui `LIGHTNING_REVIEW_ENABLED=true`. Lihat
+[Lightning Agent](apps/docs/src/pages/docs/lightning.md).
+
+## Shared Agent Skills
+
+Skill dibaca dari katalog `services/ai/.agents/skills` yang dipakai bersama oleh
+LangGraph, MCP, Codex, Claude Code, dan OpenCode. Katalog bawaan Xninetzy mencakup
+learning, HEBAT, Cyber Campus, Obsidian, research, graph RAG, dan life management;
+skill open-source tambahan mencakup goal planning, PDF, Jupyter, Playwright,
+screenshot, transkripsi, CLI, CI, dan security.
+
+Gunakan `skill_list`, `skill_get`, `skill_suggest_for_request`, `skill_validate`,
+dan `skill_install` untuk menemukan atau memasang skill tanpa membuat registry
+client-specific. Isi skill adalah panduan workflow, bukan bukti fakta; jawaban tetap
+melewati kontrak grounded retrieval. Lihat [Shared Skills](apps/docs/src/pages/docs/skills.md).
 
 ## Arsitektur
 
@@ -1132,6 +1163,9 @@ Catatan penting:
 | [Web Analysis Plan](docs/plan/PLANNING_WEB_ANALYSIS_AGENT.md) | Desain authenticated local web analysis |
 | [Canonical Xninetzy OS improvement plan](docs/plan/XNINETZY_OS_NEXT_IMPROVEMENT_PLAN.md) | Action policy, adaptive learning, retrieval evaluation, academic workflow, dan provider CPU-only |
 | [Action policy dan provider CPU](apps/docs/src/pages/docs/action-policy.md) | Mode auto/approval/manual, final hard gate, dan provider optional |
+| [Lightning Agent](apps/docs/src/pages/docs/lightning.md) | Episode, reward, strategy ranking, regression, privacy, dan konfigurasi |
+| [Shared Agent Skills](apps/docs/src/pages/docs/skills.md) | Katalog skill bawaan dan open-source lintas semua interface |
+| [Skill Agentic Best Practices](docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md) | Riset Anthropic, Codex, LangGraph, progressive disclosure, trust, dan evaluasi skill |
 
 ## Status Project
 

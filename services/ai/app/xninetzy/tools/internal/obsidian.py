@@ -175,13 +175,13 @@ def obsidian_daily() -> str:
 
 
 @tool
-def obsidian_save_note(title: str, content: str, folder: str = "Notes") -> str:
+def obsidian_save_note(title: str, content: str, folder: str = "Knowledge/Notes") -> str:
     """Simpan catatan dengan judul tertentu ke folder Obsidian.
 
     Args:
         title: Judul catatan (dipakai sebagai nama file)
         content: Isi catatan dalam markdown
-        folder: Folder tujuan di vault (default: "Notes")
+        folder: Folder tujuan di vault (default: "Knowledge/Notes")
     """
     safe_title = title.replace("/", "-").replace("\\", "-").strip()
     path = f"{folder}/{safe_title}.md"

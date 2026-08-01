@@ -443,3 +443,52 @@ suite and container verification remain the final gate for this batch.
 Next P2/P3 work: deadline-aware learning priority, durable external-action
 ledger, metrics, supervised PixelRAG local service, and final-submit adapters
 with snapshot revalidation.
+
+## Batch P2-06 — Lightning contextual reinforcement and shared skills — 2026-08-02
+
+- [x] Add owner-scoped episode, action, reward, strategy, and evaluation persistence.
+- [x] Add deterministic reward aggregation with redaction and idempotency.
+- [x] Add contextual-bandit strategy ranking with cold-start exploration.
+- [x] Link API chat, MCP tool calls, direct commands, and failover to episodes.
+- [x] Add regression checks, proposal confidence/risk metadata, and expiry-aware approval.
+- [x] Add daily idempotent Lightning review job and owner reward/ranking commands.
+- [x] Install and validate 12 open-source skills for goal setting, notebooks, PDFs,
+  browser workflows, screenshots, transcription, CLI development, CI, and security.
+- [x] Publish Lightning and shared skills documentation.
+
+Focused verification:
+- 9 Lightning tests passed.
+- Disposable migration and episode/ranking smoke checks passed.
+- Skill catalog validation found 20 valid skills.
+
+
+## Batch P2-07 — Skill agentic lifecycle hardening — 2026-08-02
+
+- [x] Research primary Anthropic, Codex/Agent Skills, LangChain, and LangGraph guidance.
+- [x] Audit skill discovery, ranking, prompt injection, installation, resources, and MCP parity.
+- [x] Add trust/provenance, SHA-256, confidence, quality warnings, line count, and resource inventory.
+- [x] Replace automatic full-body injection with metadata-first progressive disclosure.
+- [x] Add bounded `skill_resource_list` and `skill_resource_read` tools.
+- [x] Add owner-scoped resource-aware installation with idempotent manifests and safe path checks.
+- [x] Add `skill_healthcheck` and `/skills-health`.
+- [x] Rewrite all eight built-in Xninetzy skills with inspect-plan-act-verify-adapt contracts.
+- [x] Document research, trust model, resource lifecycle, and evaluation gates.
+
+Verification:
+- 8 focused skill tests passed, including resource installation and traversal rejection.
+- 16 focused skill/command/MCP tests passed.
+- 20 skills valid; 0 invalid; 3 expected warnings on external open-source skill content.
+- Skill MCP registry count increased from 229 to 232.
+- Astro check/build passed with 24 pages.
+
+## Obsidian-01 — Canonical foldering and bilingual documentation
+
+Status: Complete
+
+- [x] Add canonical semantic folder policy for Learning OS, Life OS, Academic, Research, Knowledge, Projects, Inbox, System, and Archive.
+- [x] Route templates, goals, daily reviews, HEBAT material, helper docs, and KRS operational logs through canonical paths.
+- [x] Add dry-run inventory, source-hash migration, backup, wikilink update, MOC refresh, and vault verification.
+- [x] Expose folder management through the central tool registry with HITL for moves.
+- [x] Add metadata schema, configuration, focused tests, and English/Indonesia Astro documentation switcher.
+- [x] Document shared skill installation and validation.
+- [x] Verify focused AI tests, Ruff, Astro check, and Astro build.

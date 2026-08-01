@@ -41,7 +41,11 @@ def resolve_vault_path(path: str | None, *, for_write: bool = False) -> Path:
         raise ObsidianSafetyError("Path traversal tidak diizinkan")
 
     lowered_parts = {part.lower() for part in candidate_raw.parts}
-    if lowered_parts & BLOCKED_PARTS:
+    blocked_parts = lowered_parts & BLOCKED_PARTS
+    if blocked_parts and not (
+        blocked_parts == {"sessions"}
+        and tuple(part.lower() for part in candidate_raw.parts[:2]) == ("learning", "sessions")
+    ):
         raise ObsidianSafetyError("Path mengandung nama yang diblokir")
 
     root = vault_path()
@@ -49,7 +53,10 @@ def resolve_vault_path(path: str | None, *, for_write: bool = False) -> Path:
     if root != resolved and root not in resolved.parents:
         raise ObsidianSafetyError("Path harus berada di dalam vault Obsidian")
 
-    if resolved.name.lower() in BLOCKED_PARTS:
+    if resolved.name.lower() in BLOCKED_PARTS and not (
+        resolved.name.lower() == "sessions"
+        and tuple(part.lower() for part in candidate_raw.parts[:2]) == ("learning", "sessions")
+    ):
         raise ObsidianSafetyError("File diblokir")
 
     allowed = WRITE_EXTENSIONS if for_write else READ_EXTENSIONS

@@ -30,7 +30,7 @@ logger = logging.getLogger(__name__)
 
 OWNER_SCOPE = "local-owner"
 KRS_PLAN_PATH = "Akademik/KRS_Plan_Semester_5.md"
-KRS_WAR_LOG_PATH = "Akademik/KRS_War_Log.md"
+KRS_WAR_LOG_PATH = "System/Logs/krs-war.md"
 _CODE_RE = re.compile(r"^[A-Z]{2,4}\d{2,3}$")
 _CLASS_RE = re.compile(r"^I\d$")
 _SEMESTER_HEADING_RE = re.compile(r"^#\s+KRS Plan Semester\s+(\d+)", re.IGNORECASE)

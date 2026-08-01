@@ -1,23 +1,25 @@
 ---
 import Brand from './Brand.astro';
 import Icon from './Icon.astro';
+import LanguageSwitcher from './LanguageSwitcher.astro';
 import { flatNavigation } from '../data/navigation';
 ---
 
 <header class="site-header">
   <div class="header-inner">
-    <button class="icon-button mobile-only" id="menu-open" aria-label="Buka navigasi" aria-controls="mobile-navigation">
+    <button class="icon-button mobile-only" id="menu-open" aria-label="Open navigation" aria-controls="mobile-navigation">
       <Icon name="menu" />
     </button>
     <Brand />
     <div class="header-actions">
-      <button class="search-trigger" id="search-open" aria-label="Cari dokumentasi">
+      <button class="search-trigger" id="search-open" aria-label="Search documentation">
         <Icon name="search" />
-        <span>Cari dokumentasi</span>
+        <span>Search docs</span>
         <kbd>Ctrl K</kbd>
       </button>
       <a class="header-link" href="/docs/mcp/">MCP</a>
-      <a class="header-cta" href="/docs/getting-started/">Mulai <Icon name="arrow" /></a>
+      <LanguageSwitcher />
+      <a class="header-cta" href="/docs/getting-started/">Get started <Icon name="arrow" /></a>
     </div>
   </div>
 </header>
@@ -27,9 +29,9 @@ import { flatNavigation } from '../data/navigation';
     <div class="search-field">
       <Icon name="search" />
       <input id="search-input" type="search" placeholder="Cari provider, WhatsApp, Obsidian…" autocomplete="off" />
-      <button id="search-close" class="icon-button" aria-label="Tutup pencarian"><Icon name="x" /></button>
+      <button id="search-close" class="icon-button" aria-label="Close search"><Icon name="x" /></button>
     </div>
-    <p id="search-title" class="search-hint">Navigasi cepat</p>
+    <p id="search-title" class="search-hint">Quick navigation</p>
     <div id="search-results" class="search-results">
       {flatNavigation.map((item) => (
         <a href={item.href} data-search={`${item.eyebrow} ${item.title} ${item.description}`.toLowerCase()}>
@@ -38,7 +40,7 @@ import { flatNavigation } from '../data/navigation';
         </a>
       ))}
     </div>
-    <p id="search-empty" class="search-empty" hidden>Tidak ada halaman yang cocok.</p>
+    <p id="search-empty" class="search-empty" hidden>No matching pages.</p>
   </div>
 </dialog>
 

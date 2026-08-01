@@ -17,6 +17,7 @@ def test_mcp_server_exposes_all_registered_xninetzy_tools():
     assert "deep_research_topic" in names
     assert "hebat_sync_courses" in names
     assert "hebat_list_courses" in names
+    assert "hebat_remove_submission" in names
     assert "portal_schedule" in names
     assert "portal_grade_changes" in names
     assert "portal_profile" in names

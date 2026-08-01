@@ -195,3 +195,111 @@ async def upload_submission_via_playwright(
             return {"status": "failed", "error": str(e), "verification_text": None}
         finally:
             await browser.close()
+
+
+async def remove_submission_via_playwright(
+    chat_id: str,
+    assignment_url: str,
+    token: str,
+) -> dict:
+    """
+    Remove an existing Moodle assignment submission using Playwright.
+    Flow: click "Remove submission" -> confirm page -> click "Continue".
+    Returns {status, verification_text, error}.
+    """
+    if not _PLAYWRIGHT_AVAILABLE:
+        return {"status": "failed", "error": "Playwright tidak tersedia", "verification_text": None}
+
+    s = get_settings()
+    from app.xninetzy.os.academic.hebat.browser_session import _storage_state_path
+
+    storage_path = _storage_state_path(chat_id)
+    if not storage_path.exists():
+        return {"status": "failed", "error": "Session tidak ditemukan — login dulu", "verification_text": None}
+
+    update_submission_status(token, UploadStatus.UPLOADING)
+    audit_log(chat_id, "remove_start", "started", target_type="submission", target_id=token)
+
+    def failed_result(message: str) -> dict:
+        update_submission_status(token, UploadStatus.FAILED, error=message)
+        audit_log(
+            chat_id,
+            "remove_failed",
+            "failed",
+            target_type="submission",
+            target_id=token,
+            detail={"error": message},
+        )
+        return {"status": "failed", "error": message, "verification_text": None}
+
+    async with async_playwright() as pw:
+        browser = await pw.chromium.launch(headless=True)
+        try:
+            ctx = await browser.new_context(storage_state=str(storage_path))
+            page = await ctx.new_page()
+
+            await page.goto(assignment_url, wait_until="domcontentloaded", timeout=30_000)
+            await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
+
+            remove_selector = "button:has-text('Remove submission')"
+            try:
+                remove_btn = await page.wait_for_selector(
+                    remove_selector, state="visible", timeout=30_000
+                )
+                await remove_btn.click(timeout=15_000)
+            except Exception:
+                return failed_result(
+                    "Tombol Remove submission tidak ditemukan — mungkin belum ada submission."
+                )
+
+            await page.wait_for_load_state("domcontentloaded", timeout=20_000)
+            await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
+
+            confirm_selector = (
+                "button:has-text('Continue'), "
+                "button:has-text('Yes'), "
+                "input[type='submit'][value*='Continue'], "
+                "input[type='submit'][value*='Yes'], "
+                "form[action*='removesubmission'] button[type='submit']"
+            )
+            try:
+                confirm_btn = await page.wait_for_selector(
+                    confirm_selector, state="visible", timeout=20_000
+                )
+                await confirm_btn.click(timeout=15_000)
+            except Exception:
+                form = await page.wait_for_selector(
+                    "form[action*='removesubmission']", state="visible", timeout=5_000
+                )
+                await form.evaluate("el => el.submit()")
+
+            await page.wait_for_load_state("domcontentloaded", timeout=30_000)
+            await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
+
+            await page.goto(assignment_url, wait_until="domcontentloaded", timeout=20_000)
+            await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
+            html_after = await page.content()
+            parsed = parse_assignment_page(html_after)
+
+            status_now = (parsed.get("submission_status") or "").lower()
+            removed = "no submissions" in status_now or not parsed.get("submission_status")
+
+            verification = f"Submission status: {parsed.get('submission_status', 'No submissions have been made yet')}"
+            if removed:
+                update_submission_status(token, UploadStatus.REMOVED, verification_text=verification)
+                audit_log(chat_id, "remove_complete", "success",
+                          target_type="submission", target_id=token,
+                          detail={"submission_status": parsed.get("submission_status")})
+                return {"status": "removed", "verification_text": verification, "error": None}
+
+            return failed_result("Status submission tidak berubah setelah konfirmasi penghapusan")
+
+        except Exception as e:
+            logger.error("Remove failed for token=%s: %s", token, e)
+            update_submission_status(token, UploadStatus.FAILED, error=str(e))
+            audit_log(chat_id, "remove_failed", "failed",
+                      target_type="submission", target_id=token,
+                      detail={"error": str(e)})
+            return {"status": "failed", "error": str(e), "verification_text": None}
+        finally:
+            await browser.close()

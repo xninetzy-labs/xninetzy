@@ -11,6 +11,7 @@ TOOLS = [
     "hebat_prepare_submission_from_whatsapp_file",
     "hebat_upload_submission",
     "hebat_cancel_submission",
+    "hebat_remove_submission",
     "hebat_academic_digest",
     "hebat_debug_login",
     "hebat_login_status_verbose",

@@ -17,6 +17,7 @@ class UploadStatus(str, Enum):
     UPLOADED = "uploaded"
     FAILED = "failed"
     CANCELLED = "cancelled"
+    REMOVED = "removed"
 
 
 class ActivityType(str, Enum):

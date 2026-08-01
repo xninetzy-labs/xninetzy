@@ -45,6 +45,7 @@ from app.xninetzy.os.academic.hebat.storage import (
 )
 from app.xninetzy.os.academic.hebat.submission import (
     generate_token,
+    remove_submission_via_playwright,
     upload_submission_via_playwright,
 )
 from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
@@ -791,6 +792,88 @@ def hebat_cancel_submission(chat_id: str, confirmation_token: str) -> str:
     update_submission_status(confirmation_token, UploadStatus.CANCELLED)
     return (
         f"✅ Upload dibatalkan. Token `{confirmation_token}` tidak bisa dipakai lagi."
+    )
+
+
+# ─── 12b. Remove Submission ───────────────────────────────────────────────────
+
+
+@tool
+async def hebat_remove_submission(chat_id: str, assignment_id_or_url: str, confirm: bool = False) -> str:
+    """Hapus submission tugas HEBAT yang sudah dikirim (destruktif).
+
+    Tanpa confirm=True hanya menampilkan status saat ini (dry-run) tanpa
+    menghapus apa pun. Aksi eksekusi butuh confirm=true.
+
+    Args:
+        chat_id: WhatsApp chat ID (dari context)
+        assignment_id_or_url: cmid assignment atau URL lengkap
+        confirm: True untuk mengeksekusi penghapusan (default False = dry-run)
+    """
+    s = get_settings()
+
+    if assignment_id_or_url.startswith("http"):
+        url = assignment_id_or_url
+        m = re.search(r"id=(\d+)", url)
+        cmid = m.group(1) if m else "0"
+    else:
+        cmid = assignment_id_or_url
+        url = f"{s.HEBAT_BASE_URL}/mod/assign/view.php?id={cmid}"
+
+    err = _ensure_session_or_msg(chat_id)
+    if err:
+        return err
+
+    detail = await fetch_assignment_detail(chat_id, cmid)
+    if not detail:
+        return "Tidak bisa mengambil detail tugas."
+
+    status_now = (detail.get("submission_status") or "").lower()
+    if "no submissions" in status_now or not detail.get("submission_status"):
+        return "Tugas ini belum memiliki submission — tidak ada yang dihapus."
+
+    if not confirm:
+        return (
+            f"⚠️ *Siap hapus submission* (dry-run, belum dieksekusi):\n\n"
+            f"*Tugas:* {detail.get('title', '?')}\n"
+            f"*Status saat ini:* {detail.get('submission_status', '?')}\n"
+            f"*Last modified:* {detail.get('last_modified', '?')}\n\n"
+            "Untuk mengeksekusi, ulangi dengan `confirm=true`."
+        )
+
+    all_assigns = list_assignments()
+    assign = next(
+        (a for a in all_assigns if str(a.get("cmid", "")) == str(cmid)), None
+    )
+
+    token = generate_token()
+    create_submission(
+        assignment_id=assign["activity_id"] if assign else 0,
+        source_chat_id=chat_id,
+        source_message_id=None,
+        local_file_path="",
+        uploaded_filename=f"remove:{cmid}",
+        confirmation_token=token,
+    )
+
+    result = await remove_submission_via_playwright(
+        chat_id=chat_id,
+        assignment_url=url,
+        token=token,
+    )
+
+    if result["status"] == "removed":
+        return (
+            f"✅ *Submission berhasil dihapus dari HEBAT!*\n\n"
+            f"*Tugas:* {detail.get('title', '?')}\n\n"
+            f"{result.get('verification_text', '')}\n\n"
+            "⚠️ Tetap cek manual di browser untuk memastikan."
+        )
+
+    return (
+        f"❌ Penghapusan gagal.\n"
+        f"Error: {result.get('error', 'Unknown error')}\n\n"
+        "Coba lagi atau hapus manual di browser."
     )
 
 

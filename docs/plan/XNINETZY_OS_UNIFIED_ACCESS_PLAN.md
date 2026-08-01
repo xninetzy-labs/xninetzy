@@ -187,3 +187,4 @@ Acceptance:
 ### Academic reliability update — 2026-08-01
 
 Historical grade hash reuse, profile/status parser hardening, adaptive KRS watcher polling, and V1→V3 graph backfill are implemented and tested.
+- [x] Bootstrap host path overrides before FastAPI settings are imported, so host-side MCP and mixed entry-point imports share the project data root.

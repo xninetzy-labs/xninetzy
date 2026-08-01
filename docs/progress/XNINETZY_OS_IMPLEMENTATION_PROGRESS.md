@@ -398,3 +398,7 @@ Completed: 2026-07-29
 - [x] Run AI and WA engine healthy with authenticated internal API calls.
 - [x] Keep both services on `restart: unless-stopped`.
 - [x] Enable and verify the Docker systemd service on the current laptop.
+
+### Host MCP bootstrap update — 2026-08-01
+
+The FastAPI entry point now invokes the shared MCP runtime path resolver before settings are evaluated. Mixed host imports of app.main and the stdio MCP server therefore use services/ai/data instead of attempting to create /app/data; the mixed import smoke test reports IMPORT_OK.

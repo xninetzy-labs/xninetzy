@@ -1,5 +1,8 @@
 import asyncio
 
+from app.xninetzy.interfaces.mcp_runtime import (
+    configure_mcp_runtime_paths as _configure_mcp_runtime_paths,
+)
 from fastapi import FastAPI
 
 from app.xninetzy.interfaces.api.routes.chat import router as chat_router
@@ -14,6 +17,8 @@ from app.xninetzy.os.reminders.scheduler import reminder_loop
 from app.xninetzy.os.jobs.service import os_job_loop
 from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import krs_watcher_loop
 from app.xninetzy.os.web_analysis.background import web_analysis_loop
+
+_configure_mcp_runtime_paths()
 
 configure_logging()
 logger = logging.getLogger(__name__)

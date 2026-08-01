@@ -15,12 +15,25 @@ class CampusCredentials(BaseModel):
     source: str
 
 
+_SHARED_CREDENTIAL_SOURCES = {
+    "hebat",
+    "qa",
+    "cyber",
+    "cybercampus",
+    "mahasiswa",
+    "campus",
+}
+
+
 def resolve_campus_credentials(
     source: str = "hebat", settings: Settings | None = None
 ) -> CampusCredentials:
-    normalized = source.strip().lower()
-    if normalized != "hebat":
-        raise CampusCredentialError(f"Credential source tidak didukung: {source}")
+    normalized = source.strip().lower().replace("-", "_")
+    if normalized not in _SHARED_CREDENTIAL_SOURCES:
+        raise CampusCredentialError(
+            f"Credential source tidak didukung: {source}. "
+            "Gunakan akun bersama HEBAT untuk HEBAT, QA, dan Cyber Campus."
+        )
     current = settings or get_settings()
     username = current.HEBAT_USERNAME.strip()
     password = current.HEBAT_PASSWORD

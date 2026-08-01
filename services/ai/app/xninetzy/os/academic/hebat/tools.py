@@ -47,6 +47,10 @@ from app.xninetzy.os.academic.hebat.submission import (
     generate_token,
     upload_submission_via_playwright,
 )
+from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+    CampusCredentialError,
+    resolve_campus_credentials,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -117,9 +121,14 @@ async def hebat_login_status_verbose(chat_id: str) -> str:
 @tool
 async def hebat_debug_login(chat_id: str = "system") -> str:
     """Debug login HEBAT secara aman tanpa menampilkan password/cookie/token."""
-    s = get_settings()
+    try:
+        credentials = resolve_campus_credentials("hebat")
+    except CampusCredentialError as exc:
+        return f"HEBAT Debug Login gagal: {exc}"
     result = await debug_login_with_credentials(
-        chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD
+        chat_id,
+        credentials.username,
+        credentials.password.get_secret_value(),
     )
     lines = ["*HEBAT Debug Login*"]
     lines.append(
@@ -175,21 +184,22 @@ async def hebat_start_login(chat_id: str) -> str:
     Args:
         chat_id: WhatsApp chat ID (dari context)
     """
-    s = get_settings()
-    if not s.HEBAT_USERNAME:
-        return (
-            "⚠️ Username HEBAT belum dikonfigurasi di server.\n"
-            "Minta admin set HEBAT_USERNAME dan HEBAT_PASSWORD di .env"
-        )
+    try:
+        credentials = resolve_campus_credentials("hebat")
+    except CampusCredentialError as exc:
+        return f"⚠️ Login HEBAT belum dapat dimulai: {exc}"
 
-    # Try credentials login
-    success = await login_with_credentials(chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD)
+    success = await login_with_credentials(
+        chat_id,
+        credentials.username,
+        credentials.password.get_secret_value(),
+    )
     if success:
         session = get_session(chat_id)
         name = session.get("profile_name") if session else None
         return (
             f"✅ Login HEBAT berhasil!\n"
-            f"Profil: *{name or s.HEBAT_USERNAME}*\n\n"
+            f"Profil: *{name or credentials.username}*\n\n"
             "Ketik 'cek course hebat' untuk melihat daftar mata kuliah."
         )
     return (

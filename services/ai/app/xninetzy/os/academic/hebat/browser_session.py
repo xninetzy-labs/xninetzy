@@ -8,6 +8,10 @@ from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.logging import logging
 from app.xninetzy.os.academic.hebat.parsers import is_logged_out, looks_like_login_page, parse_login_page
 from app.xninetzy.os.academic.hebat.storage import audit_log, mark_session_checked, upsert_session
+from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+    CampusCredentialError,
+    resolve_campus_credentials,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -45,8 +49,13 @@ async def login_with_credentials(
     if not _PLAYWRIGHT_AVAILABLE:
         logger.error("Playwright not installed — cannot login")
         return False
-    if not username or not password:
-        logger.error("HEBAT credentials missing — set HEBAT_USERNAME and HEBAT_PASSWORD")
+    try:
+        shared = resolve_campus_credentials("hebat")
+    except CampusCredentialError as exc:
+        logger.error("HEBAT credentials unavailable: %s", exc)
+        return False
+    if username != shared.username or password != shared.password.get_secret_value():
+        logger.error("HEBAT login rejected credentials outside shared campus account")
         return False
 
     s = get_settings()
@@ -128,6 +137,13 @@ async def ensure_hebat_session(
     from app.xninetzy.os.academic.hebat.moodle_client import fetch_courses
     from app.xninetzy.os.academic.hebat.storage import get_session
 
+    try:
+        shared = resolve_campus_credentials("hebat")
+    except CampusCredentialError as exc:
+        logger.error("HEBAT session check unavailable: %s", exc)
+        return False, None, 0
+    username = shared.username
+    password = shared.password.get_secret_value()
     last_profile: str | None = None
     delay = 5
     for attempt in range(1, attempts + 1):
@@ -249,17 +265,19 @@ async def relogin_hebat(chat_id: str) -> bool:
     rewrites ``storage_state.json`` on success. Emits structured events so the
     relogin path is observable in logs.
     """
-    s = get_settings()
-    if not s.HEBAT_USERNAME or not s.HEBAT_PASSWORD:
-        logger.error(
-            "hebat_relogin_failed chat_id=%s reason=missing_credentials "
-            "(set HEBAT_USERNAME / HEBAT_PASSWORD or use SSO login)",
-            chat_id,
-        )
+    try:
+        credentials = resolve_campus_credentials("hebat")
+    except CampusCredentialError as exc:
+        logger.error("hebat_relogin_failed chat_id=%s reason=%s", chat_id, exc)
         return False
 
     logger.info("hebat_relogin_started chat_id=%s", chat_id)
-    ok = await login_with_credentials(chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD, force=True)
+    ok = await login_with_credentials(
+        chat_id,
+        credentials.username,
+        credentials.password.get_secret_value(),
+        force=True,
+    )
     if ok:
         logger.info("hebat_relogin_success chat_id=%s", chat_id)
     else:

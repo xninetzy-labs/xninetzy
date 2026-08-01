@@ -63,16 +63,18 @@ async def startup() -> None:
             from app.xninetzy.os.graph.v3.community_builder import community_loop
 
             asyncio.create_task(community_loop())
-    if (
-        settings.HEBAT_AUTO_LOGIN
-        and settings.HEBAT_USERNAME
-        and settings.HEBAT_PASSWORD
-    ):
-        asyncio.create_task(_hebat_startup_task())
-    elif settings.HEBAT_AUTO_LOGIN:
-        logger.warning(
-            "HEBAT auto-login enabled but HEBAT_USERNAME/HEBAT_PASSWORD missing in env"
+    if settings.HEBAT_AUTO_LOGIN:
+        from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+            CampusCredentialError,
+            resolve_campus_credentials,
         )
+
+        try:
+            resolve_campus_credentials("hebat")
+        except CampusCredentialError as exc:
+            logger.warning("HEBAT auto-login skipped: %s", exc)
+        else:
+            asyncio.create_task(_hebat_startup_task())
 
 
 def _hebat_session_chat_id(s) -> str | None:
@@ -89,6 +91,16 @@ async def _hebat_startup_task() -> None:
     """Auto-login to HEBAT on startup (credentials from env), verify, then notify admin."""
     await asyncio.sleep(5)  # let the service finish booting
     s = get_settings()
+    from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+        CampusCredentialError,
+        resolve_campus_credentials,
+    )
+
+    try:
+        credentials = resolve_campus_credentials("hebat")
+    except CampusCredentialError as exc:
+        logger.warning("HEBAT auto-login skipped: %s", exc)
+        return
     chat_id = _hebat_session_chat_id(s)
     if not chat_id:
         logger.warning(
@@ -102,7 +114,9 @@ async def _hebat_startup_task() -> None:
 
         logger.info("HEBAT auto-login starting (chat_id=%s)", chat_id)
         ok, profile, courses = await ensure_hebat_session(
-            chat_id, s.HEBAT_USERNAME, s.HEBAT_PASSWORD
+            chat_id,
+            credentials.username,
+            credentials.password.get_secret_value(),
         )
         if not ok:
             logger.error("HEBAT auto-login failed after retries")
@@ -122,7 +136,7 @@ async def _hebat_startup_task() -> None:
             await _notify_wa(
                 notify_id,
                 f"🤖 *Xninetzy AI Online*\n\n"
-                f"Sesi HEBAT aktif sebagai *{profile or s.HEBAT_USERNAME}* ({courses} course)\n\n"
+                f"Sesi HEBAT aktif sebagai *{profile or credentials.username}* ({courses} course)\n\n"
                 f"{digest}",
             )
 

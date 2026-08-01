@@ -570,6 +570,7 @@ def get_tool_groups() -> dict[str, list[str]]:
     return {
         "core": ["calculate", "calculate_percentage", "datetime_now"],
         "os_kernel": ["os_capture", "os_inbox", "os_triage", "os_today", "os_job_status"],
+        "policy": ["action_policy_evaluate"],
         "ai_runtime": [
             "ai_provider_list",
             "ai_provider_status",
@@ -589,7 +590,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "learning_complete_study_session",
             "learning_list_study_sessions",
         ],
-        "knowledge": ["knowledge_ingest_text", "knowledge_search", "knowledge_answer"],
+        "knowledge": ["knowledge_ingest_text", "knowledge_search", "knowledge_answer", "knowledge_evaluate_retrieval"],
         "pixelrag": [
             "pixelrag_capture",
             "pixelrag_search_public",

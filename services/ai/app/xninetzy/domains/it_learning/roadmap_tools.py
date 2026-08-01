@@ -112,10 +112,13 @@ def learning_update_progress(roadmap_id: int, progress_note: str) -> str:
 
 @tool
 def learning_generate_today_plan(
-    chat_id: str = "system", roadmap_id: int | None = None
+    chat_id: str = "system",
+    roadmap_id: int | None = None,
+    available_minutes: int | None = None,
+    energy: int | None = None,
 ) -> str:
     """Buat rencana belajar adaptif dari roadmap, sesi, mastery, dan energi terakhir."""
-    plan = build_today_plan(roadmap_id)
+    plan = build_today_plan(roadmap_id, available_minutes=available_minutes, energy=energy)
     if not plan:
         return "Belum ada roadmap aktif. Buat dan aktifkan roadmap terlebih dahulu."
     session_line = f"\nSesi aktif: `{plan['session_id']}`" if plan["session_id"] else ""

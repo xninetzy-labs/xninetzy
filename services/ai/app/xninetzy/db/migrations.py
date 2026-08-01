@@ -683,6 +683,7 @@ def run_migrations() -> None:
             conn.execute(statement)
         _migrate_reminders(conn)
         _migrate_research_sessions(conn)
+        _migrate_approval_requests(conn)
         _backfill_learning_concepts(conn)
 
 
@@ -740,6 +741,17 @@ def _migrate_research_sessions(conn) -> None:
         "CREATE INDEX IF NOT EXISTS idx_research_sources_session ON research_sources(session_id)"
     )
 
+
+def _migrate_approval_requests(conn) -> None:
+    rows = conn.execute("PRAGMA table_info(approval_requests)").fetchall()
+    if not rows:
+        return
+    existing = {row["name"] for row in rows}
+    columns = {"expires_at": "TEXT", "action_hash": "TEXT", "execution_at": "TEXT", "execution_result": "TEXT"}
+    for name, ddl in columns.items():
+        if name not in existing:
+            conn.execute(f"ALTER TABLE approval_requests ADD COLUMN {name} {ddl}")
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_approval_status_created ON approval_requests(status, created_at)")
 
 def _backfill_learning_concepts(conn) -> None:
     from app.xninetzy.domains.it_learning.concept_graph import seed_roadmap_concepts

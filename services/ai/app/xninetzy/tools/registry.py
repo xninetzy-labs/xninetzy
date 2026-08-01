@@ -105,6 +105,7 @@ from app.xninetzy.os.academic.qa_portal.tools import (
     qa_list_kuesioner,
 )
 from app.xninetzy.os.jobs.tools import os_job_status
+from app.xninetzy.os.policy.tools import action_policy_evaluate
 from app.xninetzy.os.inbox.tools import os_capture, os_inbox, os_today, os_triage
 from app.xninetzy.tools.ecosystem.web_analysis_tools import (
     web_analysis_refresh,
@@ -141,6 +142,7 @@ from app.xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_list_sources,
     knowledge_rebuild_index,
 )
+from app.xninetzy.tools.ecosystem.knowledge_eval_tools import knowledge_evaluate_retrieval
 from app.xninetzy.tools.ecosystem.document_tools import (
     document_analyze,
     document_ingest,
@@ -406,6 +408,7 @@ def get_all_tools() -> list[BaseTool]:
             daily_review_generate,
             life_dashboard,
             os_job_status,
+            action_policy_evaluate,
             os_capture,
             os_inbox,
             os_triage,
@@ -417,6 +420,7 @@ def get_all_tools() -> list[BaseTool]:
             knowledge_answer,
             knowledge_list_sources,
             knowledge_rebuild_index,
+            knowledge_evaluate_retrieval,
             # Document extraction (router-based)
             document_analyze,
             document_ingest,

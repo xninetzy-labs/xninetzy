@@ -70,6 +70,8 @@ def get_roadmap_progress(roadmap_id: int) -> dict | None:
 def build_today_plan(
     roadmap_id: int | None = None,
     now: datetime | None = None,
+    available_minutes: int | None = None,
+    energy: int | None = None,
 ) -> dict | None:
     timezone = ZoneInfo(get_settings().APP_TIMEZONE)
     current = now or datetime.now(timezone)
@@ -87,12 +89,15 @@ def build_today_plan(
             """
         ).fetchone()
         if active:
+            planned_minutes = int(active["planned_minutes"] or 25)
+            if available_minutes is not None:
+                planned_minutes = min(planned_minutes, max(5, available_minutes))
             return {
                 "roadmap_id": active["roadmap_id"],
                 "roadmap_title": active["roadmap_title"],
                 "mode": "resume",
                 "focus": active["objective"],
-                "minutes": active["planned_minutes"],
+                "minutes": planned_minutes,
                 "reason": f"Sesi #{active['id']} masih aktif.",
                 "recall": "Lanjutkan dari titik terakhir dan catat evidence saat selesai.",
                 "session_id": active["id"],
@@ -117,12 +122,15 @@ def build_today_plan(
             recall_params,
         ).fetchone()
         if due_recall:
+            recall_minutes = 10
+            if available_minutes is not None:
+                recall_minutes = min(recall_minutes, max(5, available_minutes))
             return {
                 "roadmap_id": due_recall["roadmap_id"],
                 "roadmap_title": due_recall["roadmap_title"],
                 "mode": "recall",
                 "focus": due_recall["question"],
-                "minutes": 10,
+                "minutes": recall_minutes,
                 "reason": (
                     f"Recall card #{due_recall['id']} jatuh tempo sejak "
                     f"{due_recall['due_at']}."
@@ -180,12 +188,17 @@ def build_today_plan(
         else ""
     )
     if not latest:
+        start_minutes = 25
+        if energy is not None and energy <= 2:
+            start_minutes = 15
+        if available_minutes is not None:
+            start_minutes = min(start_minutes, max(5, available_minutes))
         return {
             "roadmap_id": roadmap["id"],
             "roadmap_title": roadmap["title"],
             "mode": "start",
             "focus": focus,
-            "minutes": 25,
+            "minutes": start_minutes,
             "reason": "Belum ada sesi aktual untuk roadmap ini." + concept_reason,
             "recall": "Tulis apa yang sudah diketahui sebelum membuka materi.",
             "session_id": None,
@@ -193,8 +206,10 @@ def build_today_plan(
             "recall_card_id": None,
         }
     mastery = float(latest["mastery_after"] or 0)
-    energy = latest["energy_after"] or latest["energy_before"] or 3
-    minutes = 15 if energy <= 2 else 35 if energy >= 4 else 25
+    effective_energy = energy or latest["energy_after"] or latest["energy_before"] or 3
+    minutes = 15 if effective_energy <= 2 else 35 if effective_energy >= 4 else 25
+    if available_minutes is not None:
+        minutes = min(minutes, max(5, available_minutes))
     if mastery < 0.6:
         mode = "reinforce"
         focus = latest["objective"]

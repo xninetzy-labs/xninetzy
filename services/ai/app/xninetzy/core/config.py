@@ -259,6 +259,11 @@ class Settings(BaseSettings):
     HITL_REQUIRE_FOR_BULK_TASK_CREATE: bool = True
     HITL_REQUIRE_FOR_OBSIDIAN_WRITE: bool = False
     HITL_REQUIRE_FOR_GRAPH_RAG_WRITE: bool = True
+    ACTION_POLICY_DEFAULT_MODE: str = "approval"
+    ACTION_POLICY_OVERRIDES: str = ""
+    ACTION_POLICY_TTL_SECONDS: int = 300
+    ACTION_POLICY_MAX_WRITES_PER_RUN: int = 30
+    ACTION_POLICY_KILL_SWITCH: bool = False
 
     def hebat_reminder_hours(self) -> list[int]:
         return [

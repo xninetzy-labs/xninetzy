@@ -40,6 +40,7 @@ from app.xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
 )
 from app.xninetzy.os.notifications.admin_notifier import admin_jid
 from app.xninetzy.os.research.permissions import is_owner_admin
+from app.xninetzy.os.policy.action_policy import evaluate_action
 from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
 from app.xninetzy.os.web_analysis.session_manager import (
     SessionEncryptionUnavailable,
@@ -544,6 +545,9 @@ async def portal_krs_war_arm(
     """Aktifkan KRS War: submit otomatis sesuai plan saat window KRS terbuka."""
     if not is_owner_admin(sender_id or chat_id, None):
         return "KRS War hanya dapat diaktifkan oleh admin."
+    policy = evaluate_action("portal_krs_war_arm")
+    if not policy.allowed:
+        return f"KRS War ditahan policy: {policy.reason}"
     try:
         plan = await load_krs_plan()
     except Exception as exc:

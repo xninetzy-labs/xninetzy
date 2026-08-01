@@ -6,6 +6,8 @@ This is the execution tracker for turning Xninetzy from a feature-rich assistant
 into one OS shared by WhatsApp, internal LangGraph, Codex, Claude Code, and
 OpenCode.
 
+Canonical next-step plan: `docs/plan/XNINETZY_OS_NEXT_IMPROVEMENT_PLAN.md`. This file supersedes checklist ambiguity while this document remains the shared-access architecture reference.
+
 The Cyber Campus KRS, grades, and WhatsApp verification extension is tracked in
 `docs/plan/CYBER_CAMPUS_KRS_GRADES_WHATSAPP_PLAN.md`. Portal writes remain
 disabled until its read-only and approval-hardening gates are implemented.

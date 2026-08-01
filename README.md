@@ -1130,6 +1130,8 @@ Catatan penting:
 | [Deep Research Workflow](services/ai/docs/DEEP_RESEARCH_WORKFLOW.md) | Tahapan deep research |
 | [Graph RAG MVP](services/ai/docs/GRAPH_RAG_MVP.md) | Model graph dan integrasi knowledge |
 | [Web Analysis Plan](docs/plan/PLANNING_WEB_ANALYSIS_AGENT.md) | Desain authenticated local web analysis |
+| [Canonical Xninetzy OS improvement plan](docs/plan/XNINETZY_OS_NEXT_IMPROVEMENT_PLAN.md) | Action policy, adaptive learning, retrieval evaluation, academic workflow, dan provider CPU-only |
+| [Action policy dan provider CPU](apps/docs/src/pages/docs/action-policy.md) | Mode auto/approval/manual, final hard gate, dan provider optional |
 
 ## Status Project
 

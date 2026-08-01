@@ -4,6 +4,7 @@ from langchain_core.tools import tool
 
 from app.xninetzy.os.hitl.approval_service import get_approval_status, list_pending, request_approval, set_approval_status
 from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
+from app.xninetzy.os.policy.action_policy import evaluate_action
 
 
 @tool
@@ -16,6 +17,9 @@ async def hitl_request_approval(
     payload: dict | None = None,
 ) -> str:
     """Buat approval request untuk aksi berdampak besar."""
+    decision = evaluate_action(action_type, payload)
+    if not decision.allowed:
+        return f"Aksi `{action_type}` harus dilakukan manual oleh owner: {decision.reason}"
     approval_id = request_approval(chat_id, sender_id, action_type, title, summary, payload)
     delivered = await notify_admin_approval(
         approval_id,
@@ -31,6 +35,7 @@ async def hitl_request_approval(
     return (
         f"*Approval Required #{approval_id}*\n\n"
         f"*Tipe:* {action_type}\n"
+        f"*Policy:* {decision.mode.value} ({decision.risk.value})\n\n"
         f"*Judul:* {title}\n\n"
         f"{summary}\n\n"
         f"{delivery}\n\n"

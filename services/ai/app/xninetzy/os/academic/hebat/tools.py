@@ -52,6 +52,7 @@ from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     CampusCredentialError,
     resolve_campus_credentials,
 )
+from app.xninetzy.os.policy.action_policy import evaluate_action
 
 logger = logging.getLogger(__name__)
 
@@ -727,6 +728,9 @@ async def hebat_upload_submission(chat_id: str, confirmation_token: str) -> str:
         confirmation_token: Token konfirmasi dari hebat_prepare_submission_from_whatsapp_file
     """
     s = get_settings()
+    policy = evaluate_action("hebat_upload_submission", {"confirmation_token": confirmation_token})
+    if not policy.allowed:
+        return f"Upload ditahan policy: {policy.reason}"
     sub = get_submission_by_token(confirmation_token)
     if not sub:
         return f"Token `{confirmation_token}` tidak valid atau sudah digunakan."

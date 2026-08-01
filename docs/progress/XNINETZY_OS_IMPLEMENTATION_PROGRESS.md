@@ -412,7 +412,7 @@ Implemented across the shared registry, LangGraph, MCP, and WhatsApp command pat
 - Phase 2: bounded BFS discovery follows same-host links only, uses GET/HEAD-only routing, denies mutation/sensitive URLs, stops on human verification, and persists replayable discovery JSON.
 - Phase 3: adaptive evidence routing is exposed through web_discover; visual capture and knowledge ingestion are explicit flags, and the local PixelRAG health state remains observable without silently installing a server package.
 
-Verification: 33 focused web-analysis/inbox tests and Ruff pass. The full AI run reached 528 passed; the remaining CPU-only failures are caused by the current host virtualenv containing CUDA distributions (triton/nvidia-*), not by web discovery.
+Verification: 33 focused web-analysis/inbox tests and Ruff passed. A subsequent clean CPU-only environment run passed the full AI suite; the earlier host-venv CUDA failure was environment contamination, not a web-analysis failure.
 ## Batch Academic-01f — Complete institutional web page coverage — 2026-08-01
 - [x] Add read-only route catalogs for HEBAT, Cyber Campus, and QA.
 - [x] Seed authenticated crawls from every catalog path and discover GET-only form destinations.
@@ -420,3 +420,26 @@ Verification: 33 focused web-analysis/inbox tests and Ruff pass. The full AI run
 - [x] Keep mutation, sensitive-query, CAPTCHA, and credential boundaries unchanged.
 - [x] Add focused route, alias, command, and registry tests.
 Verification: 23 focused web-analysis tests passed; Ruff passed. Authenticated route discovery remains bounded by `WEB_ANALYSIS_PORTAL_MAX_PAGES` (default 48), and dynamic course/questionnaire pages are crawled only after an owner session is available.
+
+
+## Batch P2-05  -  Risk policy, adaptive controls, and retrieval evaluation
+
+Started: 2026-08-02
+
+- [x] Add shared action policy with auto, approval, and manual modes.
+- [x] Keep final academic/submission actions behind a hard approval floor.
+- [x] Add kill switch, owner-configured overrides, TTL, and action hashes.
+- [x] Make approval execution idempotent and reject expired requests.
+- [x] Expose policy evaluation through the canonical registry and MCP.
+- [x] Allow daily learning plans to accept available minutes and energy.
+- [x] Add deterministic retrieval evaluation for source recall, term support,
+  sufficiency, and citation identifiers.
+- [x] Apply policy checks to HEBAT upload and KRS War arming.
+- [x] Document CPU-only operation and optional paid provider integrations.
+
+Verification: focused policy, retrieval, HITL, and learning tests pass. Full
+suite and container verification remain the final gate for this batch.
+
+Next P2/P3 work: deadline-aware learning priority, durable external-action
+ledger, metrics, supervised PixelRAG local service, and final-submit adapters
+with snapshot revalidation.

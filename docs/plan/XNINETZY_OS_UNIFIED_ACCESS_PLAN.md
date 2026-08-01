@@ -196,3 +196,7 @@ Historical grade hash reuse, profile/status parser hardening, adaptive KRS watch
 - [x] Project web pages and links into canonical GraphRAG V3.
 - [x] Make Knowledge ingestion and PixelRAG capture explicit opt-in evidence actions.
 - [ ] Install and supervise the optional PixelRAG local server package in deployment images.
+- [x] Add complete safe route catalogs for HEBAT Moodle, Cyber Campus Mahasiswa, and QA UNAIR.
+- [x] Seed authenticated structural crawls from every catalog route and discover GET-only same-host destinations.
+- [x] Expose QA aliases, `/web-pages`, and portal-specific bounded page limits through the shared registry.
+- [ ] Add portal-specific visual/runtime manifests after an owner-approved authenticated session is available.

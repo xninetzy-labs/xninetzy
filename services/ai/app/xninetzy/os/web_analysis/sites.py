@@ -39,19 +39,64 @@ SITES: dict[str, SiteDefinition] = {
         name="HEBAT (Moodle UNAIR)",
         base_url="https://hebat.elearning.unair.ac.id",
         public_paths=("/hebat-v2/",),
-        authenticated_paths=("/my/courses.php", "/grade/report/overview/index.php"),
+        authenticated_paths=(
+            "/hebat-v2/",
+            "/my/",
+            "/my/index.php",
+            "/my/courses.php",
+            "/course/index.php",
+            "/course/search.php",
+            "/calendar/view.php",
+            "/grade/report/overview/index.php",
+            "/grade/report/user/index.php",
+            "/user/profile.php",
+            "/message/index.php",
+            "/mod/assign/index.php",
+            "/mod/resource/index.php",
+            "/mod/forum/index.php",
+            "/mod/quiz/index.php",
+        ),
         login_path="/login/index.php",
+        protection_flags=(
+            "Moodle activity pages are read-only for structure analysis; assignment upload and submission are excluded.",
+        ),
     ),
     "mahasiswa": SiteDefinition(
         slug="mahasiswa",
         name="Cybercampus Mahasiswa UNAIR",
         base_url="https://mahasiswa.unair.ac.id",
         public_paths=("/",),
-        authenticated_paths=("/",),
+        authenticated_paths=(
+            "/",
+            "/modul/mhs/akademik-status.php",
+            "/modul/mhs/akademik-jadwal.php",
+            "/modul/mhs/akademik-khs.php",
+            "/modul/mhs/akademik-krs.php",
+            "/modul/mhs/akademik-transkrip.php",
+            "/modul/mhs/akademik-kprs.php",
+            "/modul/mhs/biodata-data.php",
+            "/modul/mhs/pengumuman.php",
+            "/modul/mhs/kalender-akademik.php",
+        ),
         login_path="/",
         protection_flags=(
             "Submit KRS adalah aksi kompetitif dan dilindungi human verification. "
-            "Sistem hanya boleh membaca status slot dan mengirim notifikasi; klik/submit tetap manual.",
+            "Sistem hanya menganalisis halaman GET; klik, pilihan kelas, dan submit tetap manual.",
+        ),
+    ),
+    "qa": SiteDefinition(
+        slug="qa",
+        name="QA UNAIR",
+        base_url="https://qa.unair.ac.id",
+        public_paths=("/qa/gate/login",),
+        authenticated_paths=(
+            "/qa/gate/menu",
+            "/qa/kuesioner/set_responden_as/TTAwMS9NYWhhc2lzd2EgUzEvMzMvUzEgLSBTaXN0ZW0gSW5mb3JtYXNp",
+        ),
+        login_path="/qa/gate/login",
+        protection_flags=(
+            "QA login menggunakan portal-owned reCAPTCHA; session harus ditangkap lewat browser headed oleh owner.",
+            "Pengisian atau penyimpanan kuesioner bukan bagian dari structural web analysis.",
         ),
     ),
 }
@@ -61,6 +106,8 @@ ALIASES = {
     "mahasiswa.unair.ac.id": "mahasiswa",
     "portal": "mahasiswa",
     "cybercampus": "mahasiswa",
+    "qa.unair.ac.id": "qa",
+    "quality-assurance": "qa",
 }
 
 

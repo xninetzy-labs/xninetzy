@@ -231,3 +231,6 @@ uv run python scripts/configure_internal_auth.py --enable-cyber-campus
 Script memvalidasi credential HEBAT serta `ADMIN_JID`, membuat Fernet key jika
 belum ada, mengaktifkan authenticated crawl GET/HEAD-only, dan tidak mencetak
 secret.
+## Structural page catalog
+The same web-analysis service now includes three institutional presets: `hebat`, `mahasiswa`, and `qa`. Use `/web-pages <site>` to inspect safe seed routes, then `/web-refresh <site>` after the corresponding encrypted owner session is available. The refresh seeds all catalog routes and follows discovered GET-only same-host links within `WEB_ANALYSIS_PORTAL_MAX_PAGES`.
+QA remains protected by the portal-owned reCAPTCHA flow. Structural analysis never solves CAPTCHA, submits forms, or stores token values.

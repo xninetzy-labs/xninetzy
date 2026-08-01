@@ -1154,3 +1154,14 @@ capture_visual=true. Both actions are opt-in. Set
 WEB_ANALYSIS_DISCOVERY_MAX_DEPTH, WEB_ANALYSIS_MAX_PAGES, and
 WEB_ANALYSIS_MAX_VISUAL_CAPTURES in .env to control cost. A local PixelRAG
 server is optional; pixelrag_health reports whether PIXELRAG_LOCAL_API is reachable.
+### Structural analysis HEBAT, Cyber Campus, dan QA
+The shared web-analysis catalog covers all known safe seed routes for HEBAT Moodle, Cyber Campus Mahasiswa, and QA UNAIR. It follows discovered same-host GET links until the configured portal limit; dynamic course and questionnaire links are learned from the authenticated session.
+```text
+ /web-pages hebat
+ /web-pages mahasiswa
+ /web-pages qa
+ /web-refresh hebat
+ /web-refresh mahasiswa
+ /web-refresh qa
+```
+Authenticated refresh requires WEB_ANALYSIS_AUTHENTICATED_CRAWL_ENABLED=true and an encrypted manual session captured with the local web-analysis CLI. Configure WEB_ANALYSIS_PORTAL_MAX_PAGES to raise the bounded page budget. CAPTCHA, POST forms, submit/upload/delete/logout routes, credentials, and token query values are never executed or persisted.

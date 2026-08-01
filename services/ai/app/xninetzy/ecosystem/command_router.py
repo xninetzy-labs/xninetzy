@@ -90,8 +90,9 @@ RESEARCH_PATTERN = re.compile(r"^/research\s+(.+)$", re.I | re.S)
 DEEP_RESEARCH_PATTERN = re.compile(
     r"^/deep-research(?:\s+(speed|balanced|quality))?\s+(.+)$", re.I | re.S
 )
-WEB_ANALYSIS_PATTERN = re.compile(r"^/web-analysis\s+(hebat|mahasiswa)$", re.I)
-WEB_REFRESH_PATTERN = re.compile(r"^/web-refresh\s+(hebat|mahasiswa)$", re.I)
+WEB_ANALYSIS_PATTERN = re.compile(r"^/web-analysis\s+(hebat|mahasiswa|qa)$", re.I)
+WEB_REFRESH_PATTERN = re.compile(r"^/web-refresh\s+(hebat|mahasiswa|qa)$", re.I)
+WEB_CATALOG_PATTERN = re.compile(r"^/web-pages\s+(hebat|mahasiswa|qa)$", re.I)
 WEB_DISCOVER_PATTERN = re.compile(r"^/web-discover(?:\s+(\d+))?\s+(https://\S+)$", re.I)
 
 RULE_ADD_PATTERN = re.compile(r"^/rule\s+add\s+(.+)$", re.I | re.S)
@@ -253,8 +254,11 @@ def parse_command(message: str) -> tuple[str | None, dict]:
         site_slug = m.group(1).lower()
         return "web_analysis_refresh", {
             "site_slug": site_slug,
-            "authenticated": site_slug == "mahasiswa",
+            "authenticated": site_slug in {"hebat", "mahasiswa", "qa"},
         }
+    m = WEB_CATALOG_PATTERN.match(stripped)
+    if m:
+        return "web_analysis_catalog", {"site_slug": m.group(1).lower()}
     m = WEB_DISCOVER_PATTERN.match(stripped)
     if m:
         return "web_discover", {

@@ -30,6 +30,7 @@ _DENIED_PATH_MARKERS = (
     "/remove",
     "/submit",
     "/action/",
+    "/proses/",
     "editsubmission",
     "sesskey=",
 )
@@ -141,17 +142,20 @@ class AnalyzerService:
 
         settings = get_settings()
         auth_status = "authenticated" if storage_state else "public"
-        if storage_state:
-            queue = [landing_url] if landing_url else []
-            login_url = self._canonical_url(site.absolute_url(site.login_path))
-            for path in site.authenticated_paths:
-                target = self._canonical_url(site.absolute_url(path))
-                if target != login_url and target not in queue:
-                    queue.append(target)
-            if not queue:
-                queue.append(site.absolute_url(site.authenticated_paths[0]))
-        else:
-            queue = [site.absolute_url(path) for path in site.public_paths]
+        page_limit = (
+            settings.WEB_ANALYSIS_PORTAL_MAX_PAGES
+            if site.slug in {"hebat", "mahasiswa", "qa"}
+            else settings.WEB_ANALYSIS_MAX_PAGES
+        )
+        seed_paths = site.authenticated_paths if storage_state else site.public_paths
+        queue = []
+        if storage_state and landing_url:
+            queue.append(self._canonical_url(landing_url))
+        login_url = self._canonical_url(site.absolute_url(site.login_path))
+        for path in seed_paths:
+            target = self._canonical_url(site.absolute_url(path))
+            if target != login_url and target not in queue:
+                queue.append(target)
         visited: set[str] = set()
         modules: dict[tuple[str, str], ModuleRecord] = {}
         endpoints: dict[tuple[str, str, tuple[str, ...]], EndpointRecord] = {}
@@ -193,7 +197,7 @@ class AnalyzerService:
 
                 page.on("response", capture_response)
 
-                while queue and len(visited) < settings.WEB_ANALYSIS_MAX_PAGES:
+                while queue and len(visited) < page_limit:
                     target = self._canonical_url(queue.pop(0))
                     if target in visited or not self._safe_to_visit(site, target):
                         continue
@@ -284,12 +288,13 @@ class AnalyzerService:
         for frame in page.frames:
             try:
                 items = await frame.eval_on_selector_all(
-                    "a[href]",
+                    "a[href], form[action]",
                     """
                     elements => elements.map(element => ({
-                      href: element.href,
-                      text: (element.textContent || '').trim().slice(0, 200)
-                    })).filter(item => item.href)
+                      href: element.href || element.action,
+                      text: (element.textContent || element.getAttribute("aria-label") || "").trim().slice(0, 200),
+                      method: (element.method || "GET").toUpperCase()
+                    })).filter(item => item.href && item.method === "GET")
                     """,
                 )
             except Exception:

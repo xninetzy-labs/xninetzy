@@ -4,6 +4,7 @@ from langchain_core.tools import tool
 
 from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
 from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
+from app.xninetzy.os.web_analysis.sites import get_site
 
 
 @tool
@@ -25,11 +26,27 @@ def web_analysis_status(site_slug: str = "hebat") -> str:
 
 
 @tool
+def web_analysis_catalog(site_slug: str = "hebat") -> str:
+    """Tampilkan seluruh seed route read-only yang akan dianalisis per portal."""
+    site = get_site(site_slug)
+    lines = [
+        f"*Web Analysis Catalog: {site.name}*",
+        f"• Host: `{site.hostname}`",
+        "• Public routes:",
+    ]
+    lines.extend(f"  - `{path}`" for path in site.public_paths)
+    lines.append("• Authenticated routes:")
+    lines.extend(f"  - `{path}`" for path in site.authenticated_paths)
+    lines.append("• Policy: GET/HEAD-only; mutation and human verification tetap diblokir.")
+    return "\n".join(lines)
+
+
+@tool
 async def web_analysis_refresh(site_slug: str = "hebat", authenticated: bool = False) -> str:
     """Refresh cache struktur situs allowlisted secara GET/HEAD-only.
 
     Args:
-        site_slug: hebat atau mahasiswa
+        site_slug: hebat, mahasiswa, atau qa
         authenticated: gunakan session manual local-owner; default false
     """
     result = await AnalyzerService().analyze_site(

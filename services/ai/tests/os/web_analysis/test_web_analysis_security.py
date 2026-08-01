@@ -65,3 +65,15 @@ def test_dynamic_public_site_registry_reuses_host_guard(monkeypatch):
 def test_dynamic_registry_rejects_private_sources(monkeypatch):
     with pytest.raises(ValueError, match="publik"):
         get_site("https://127.0.0.1/private")
+
+
+def test_institutional_catalogs_cover_all_known_read_routes():
+    expected = {"hebat": 10, "mahasiswa": 8, "qa": 2}
+    for slug, minimum in expected.items():
+        site = get_site(slug)
+        assert len(site.authenticated_paths) >= minimum
+        assert all(AnalyzerService._safe_to_visit(site, site.absolute_url(path)) for path in site.authenticated_paths)
+    assert get_site("qa.unair.ac.id").slug == "qa"
+def test_portal_process_routes_are_blocked():
+    site = get_site("mahasiswa")
+    assert AnalyzerService._safe_to_visit(site, "https://mahasiswa.unair.ac.id/proses/_akademik-krs_dilihat.php") is False

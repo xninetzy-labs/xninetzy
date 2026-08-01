@@ -15,18 +15,18 @@ def build_parser() -> argparse.ArgumentParser:
     subparsers = parser.add_subparsers(dest="command", required=True)
 
     analyze = subparsers.add_parser("analyze", help="Analyze allowlisted site structure")
-    analyze.add_argument("--site", required=True, choices=("hebat", "mahasiswa"))
+    analyze.add_argument("--site", required=True, choices=("hebat", "mahasiswa", "qa"))
     analyze.add_argument("--authenticated", action="store_true", help="Use the local owner's encrypted session")
     analyze.add_argument("--profile", help="Override the configured local profile ID")
     analyze.add_argument("--force", action="store_true")
 
     login = subparsers.add_parser("login", help="Capture a manual headed-browser session")
-    login.add_argument("--site", required=True, choices=("hebat", "mahasiswa"))
+    login.add_argument("--site", required=True, choices=("hebat", "mahasiswa", "qa"))
     login.add_argument("--profile", help="Override the configured local profile ID")
     login.add_argument("--credential-source", choices=("hebat",))
 
     status = subparsers.add_parser("status", help="Show cache/session presence without secrets")
-    status.add_argument("--site", required=True, choices=("hebat", "mahasiswa"))
+    status.add_argument("--site", required=True, choices=("hebat", "mahasiswa", "qa"))
     status.add_argument("--profile", help="Override the configured local profile ID")
     return parser
 

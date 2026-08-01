@@ -33,7 +33,7 @@ def test_local_portal_slash_commands():
     )
     assert parse_command("/web-refresh hebat") == (
         "web_analysis_refresh",
-        {"site_slug": "hebat", "authenticated": False},
+        {"site_slug": "hebat", "authenticated": True},
     )
     assert parse_command("/web-discover 2 https://example.com/learning") == (
         "web_discover",
@@ -49,6 +49,7 @@ def test_new_tools_registered():
     names = get_tool_names()
     assert "web_analysis_status" in names
     assert "web_analysis_refresh" in names
+    assert "web_analysis_catalog" in names
     assert "web_discover" in names
     assert "portal_info" in names
     assert "portal_navigation" in names
@@ -102,3 +103,7 @@ def test_academic_links_are_prioritized_for_bounded_crawl():
         "https://mahasiswa.unair.ac.id/krs",
         "https://mahasiswa.unair.ac.id/nilai",
     ]
+
+
+def test_web_catalog_command():
+    assert parse_command("/web-pages qa") == ("web_analysis_catalog", {"site_slug": "qa"})

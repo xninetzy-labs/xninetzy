@@ -413,3 +413,10 @@ Implemented across the shared registry, LangGraph, MCP, and WhatsApp command pat
 - Phase 3: adaptive evidence routing is exposed through web_discover; visual capture and knowledge ingestion are explicit flags, and the local PixelRAG health state remains observable without silently installing a server package.
 
 Verification: 33 focused web-analysis/inbox tests and Ruff pass. The full AI run reached 528 passed; the remaining CPU-only failures are caused by the current host virtualenv containing CUDA distributions (triton/nvidia-*), not by web discovery.
+## Batch Academic-01f — Complete institutional web page coverage — 2026-08-01
+- [x] Add read-only route catalogs for HEBAT, Cyber Campus, and QA.
+- [x] Seed authenticated crawls from every catalog path and discover GET-only form destinations.
+- [x] Register QA in site aliases, CLI, background configuration, LangGraph, MCP, and WhatsApp routing.
+- [x] Keep mutation, sensitive-query, CAPTCHA, and credential boundaries unchanged.
+- [x] Add focused route, alias, command, and registry tests.
+Verification: 23 focused web-analysis tests passed; Ruff passed. Authenticated route discovery remains bounded by `WEB_ANALYSIS_PORTAL_MAX_PAGES` (default 48), and dynamic course/questionnaire pages are crawled only after an owner session is available.

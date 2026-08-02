@@ -564,13 +564,20 @@ Status: In progress
 
 
 ## CLI Thinking UI and safe streamed activity - 2026-08-02
+Regression repair:
+
+- [x] Remove the fixed-height hidden-overflow conversation layout that caused Yoga shrink, border overlap, and corrupted text.
+- [x] Keep completed messages in an append-only Ink Static transcript and only render the active response dynamically.
+- [x] Bound streaming preview by visual lines and bound expanded activity to the four latest events.
+- [x] Normalize short batched terminal input so commands are not misclassified as pasted documents.
+- [x] Format slash command catalogs as readable output instead of Python enum repr.
 
 - [x] Replace message-list timer updates with isolated 100ms spinner and 200ms Thinking-panel clock widgets.
 - [x] Enforce one active request, AbortController, stream listener, and buffered 50ms delta flush per CLI chat turn.
 - [x] Ignore stale stream events and retain a completed, collapsible safe activity summary.
 - [x] Replace fabricated SSE stages with sanitized routing, workflow, ReAct, tool, and deep-research events.
 - [x] Keep hidden chain-of-thought, credentials, raw prompts, and tool arguments out of stream payloads.
-- [x] Use static cosmic decoration and fixed status height to avoid timer-driven terminal flicker.
+- [x] Use an append-only Ink Static transcript, bounded active-response preview, and bounded activity detail to prevent terminal-height overflow and full-screen clears.
 - [x] Remove character-level message backgrounds; keep white message text on the stable launch background with electric-blue borders.
 
 Focused verification: 22 focused tests and 661 full AI tests passed; full AI Ruff passed; CLI TypeScript typecheck and build passed; Astro check and 70-page build passed.

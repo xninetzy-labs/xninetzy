@@ -51,6 +51,23 @@ async def _prepare_media_metadata(request: ChatRequest) -> dict:
     return metadata
 
 
+def _format_direct_tool_result(tool_name: str, result: object) -> str:
+    if tool_name == "tool_catalog" and isinstance(result, list):
+        lines = [f"Xninetzy tool catalog · {len(result)} tools"]
+        for item in result:
+            if not isinstance(item, dict):
+                continue
+            name = str(item.get("name") or "unknown")
+            pack = str(getattr(item.get("feature_pack"), "value", item.get("feature_pack") or "core"))
+            risk = str(getattr(item.get("risk"), "value", item.get("risk") or "read"))
+            description = str(item.get("description") or "").strip()
+            lines.append(f"- {name} · {pack} · {risk}\n  {description}")
+        return "\n".join(lines)
+    if isinstance(result, str):
+        return result
+    return json.dumps(result, ensure_ascii=False, default=str, indent=2)
+
+
 async def _invoke_tool_directly(
     tool_name: str, kwargs: dict, request: ChatRequest
 ) -> str:
@@ -86,7 +103,7 @@ async def _invoke_tool_directly(
         )
         async with asyncio.timeout(timeout_seconds):
             result = await tool.ainvoke(kwargs)
-        return str(result)
+        return _format_direct_tool_result(tool_name, result)
     except Exception as e:
         return f"Error menjalankan command: {e}"
 

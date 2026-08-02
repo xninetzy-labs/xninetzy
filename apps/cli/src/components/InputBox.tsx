@@ -20,11 +20,8 @@ const PASTE_MIN_CHARS = 64;
 
 function isLargePaste(input: string): boolean {
   if (input.length <= 1) return false;
-  return (
-    input.includes('\n') ||
-    input.includes('\r') ||
-    input.length >= PASTE_MIN_CHARS
-  );
+  const lines = input.replace(/\r\n?/g, "\n").split("\n").filter(Boolean);
+  return lines.length > 1 || input.length >= PASTE_MIN_CHARS;
 }
 
 /**
@@ -52,6 +49,8 @@ function InputBoxComponent({
   }, [draft]);
 
   useInput((input, key) => {
+    if (key.tab || key.escape) return;
+
     if (key.return) {
       onSubmit();
       return;
@@ -94,8 +93,10 @@ function InputBoxComponent({
       return;
     }
 
-    onDraftChange(draft.slice(0, cursor) + input + draft.slice(cursor));
-    setCursor((c) => c + input.length);
+    const printable = input.replace(/[\r\n]/g, "");
+    if (!printable) return;
+    onDraftChange(draft.slice(0, cursor) + printable + draft.slice(cursor));
+    setCursor((c) => c + printable.length);
   });
 
   const hasContent = draft.length > 0 || attachments.length > 0;

@@ -52,3 +52,20 @@ async def test_chat_stream_emits_heartbeat_during_silent_work(monkeypatch):
     payload = "".join([chunk async for chunk in response.body_iterator])
 
     assert "event: heartbeat" in payload
+
+
+def test_direct_tool_catalog_formatter_hides_python_enum_repr():
+    result = chat_route._format_direct_tool_result(
+        "tool_catalog",
+        [
+            {
+                "name": "web_search",
+                "feature_pack": "research",
+                "risk": "read",
+                "description": "Search trusted web sources.",
+            }
+        ],
+    )
+
+    assert "web_search · research · read" in result
+    assert "<FeaturePack" not in result

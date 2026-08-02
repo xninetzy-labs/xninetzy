@@ -89,6 +89,8 @@ function ThinkingPanelView({ run, expanded }: ThinkingPanelProps) {
   const toolCount = run?.activity.filter((activity) => activity.kind === "tool").length ?? 0;
   const agentCount = run?.activity.filter((activity) => activity.kind === "agent").length ?? 0;
   const sourceCount = run?.activity.filter((activity) => activity.kind === "source").length ?? 0;
+  const visibleActivities = run?.activity.slice(-4) ?? [];
+  const hiddenActivityCount = Math.max(0, activityCount - visibleActivities.length);
 
   return (
     <Box width="100%" flexDirection="column" paddingX={1} minHeight={expanded ? 7 : 4}>
@@ -107,14 +109,19 @@ function ThinkingPanelView({ run, expanded }: ThinkingPanelProps) {
       </Box>
       {expanded && run && (
         <Box marginTop={1} paddingX={1} flexDirection="column" borderStyle="single" borderColor={colors.borderDim}>
-          {run.activity.length === 0 ? (
+          {visibleActivities.length === 0 ? (
             <Text color={colors.muted}>No backend activity has been reported yet.</Text>
           ) : (
-            run.activity.map((activity) => (
+            <>
+              {hiddenActivityCount > 0 && (
+                <Text color={colors.muted}>… {hiddenActivityCount} earlier activities hidden</Text>
+              )}
+              {visibleActivities.map((activity) => (
               <Text key={activity.id} color={activity.status === 'failed' ? colors.red : colors.textSecondary}>
                 {activity.status === 'active' ? '\u2839' : activity.status === 'completed' ? '\u2713' : '\u00d7'} [{activity.kind.toUpperCase()}] {activity.label}{activity.detail ? ` · ${activity.detail}` : ''}
               </Text>
-            ))
+              ))}
+            </>
           )}
         </Box>
       )}

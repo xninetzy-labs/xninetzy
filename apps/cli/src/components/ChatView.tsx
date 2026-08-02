@@ -7,7 +7,22 @@ import { colors } from '../theme/colors.js';
 type ChatViewProps = {
   messages: ChatMessage[];
   width: number;
+  maxContentLines?: number;
 };
+
+function boundedContent(content: string, maxContentLines?: number, lineWidth = 72): string {
+  if (!maxContentLines) return content;
+  const visualLines = content.split("\n").flatMap((line) => {
+    if (!line) return [""];
+    const chunks: string[] = [];
+    for (let offset = 0; offset < line.length; offset += lineWidth) {
+      chunks.push(line.slice(offset, offset + lineWidth));
+    }
+    return chunks;
+  });
+  if (visualLines.length <= maxContentLines) return content;
+  return ["… streaming preview", ...visualLines.slice(-maxContentLines)].join("\n");
+}
 
 /** Inline markdown: **bold**, `code`, *italic* / _italic_. */
 function InlineMarkdown({ text }: { text: string }) {
@@ -169,7 +184,7 @@ function AttachmentChips({ attachments }: { attachments: string[] }) {
   );
 }
 
-function ChatViewComponent({ messages, width }: ChatViewProps) {
+function ChatViewComponent({ messages, width, maxContentLines }: ChatViewProps) {
   const visibleMessages = messages
     .filter((message) => message.role !== 'system')
     .slice(-10);
@@ -214,7 +229,7 @@ function ChatViewComponent({ messages, width }: ChatViewProps) {
                 borderColor={colors.border}
               >
                 {hasAttachments && <AttachmentChips attachments={message.attachments!} />}
-                {message.content.length > 0 && <MessageBody content={message.content} />}
+                {message.content.length > 0 && <MessageBody content={boundedContent(message.content, maxContentLines, Math.max(20, bubbleWidth - 4))} />}
               </Box>
             </Box>
           </Box>

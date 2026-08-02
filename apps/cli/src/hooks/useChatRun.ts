@@ -76,7 +76,12 @@ export function useChatRun() {
     });
   }, []);
 
+  const reset = useCallback(() => {
+    currentId.current = null;
+    setRun(null);
+  }, []);
+
   const isCurrent = useCallback((id: string) => currentId.current === id, []);
 
-  return { run, start, addActivity, setPhase, finish, isCurrent };
+  return { run, start, addActivity, setPhase, finish, isCurrent, reset };
 }

@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { Box, Text, useApp, useInput } from 'ink';
+import { Box, Static, Text, useApp, useInput, useStdout } from 'ink';
 import { useStdoutDimensions } from './hooks/useStdoutDimensions.js';
-import { FullScreenShell } from './components/FullScreenShell.js';
 import { SpaceBackdrop } from './components/SpaceBackdrop.js';
 import { Header } from './components/Header.js';
 import { ChatView } from './components/ChatView.js';
@@ -30,18 +29,24 @@ function phaseForEvent(label: string): "planning" | "thinking" | "tool-running" 
   return "thinking";
 }
 
+type TranscriptItem =
+  | { id: "header"; kind: "header" }
+  | { id: string; kind: "message"; message: ChatMessage };
+
 export function App() {
   const { exit } = useApp();
+  const { stdout } = useStdout();
   const [columns, rows] = useStdoutDimensions();
   const [draft, setDraft] = useState('');
   const [attachments, setAttachments] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
   const [activityExpanded, setActivityExpanded] = useState(false);
+  const [transcriptEpoch, setTranscriptEpoch] = useState(0);
   const [messages, setMessages] = useState<ChatMessage[]>([
     createMessage('system', `Halo, aku Xninetzy AI - siap membantu belajar, bekerja, dan mengelola OS-mu.\nBackend: ${cliConfig.aiUrl}`)
   ]);
-  const { run, start, addActivity, setPhase, finish, isCurrent } = useChatRun();
+  const { run, start, addActivity, setPhase, finish, isCurrent, reset } = useChatRun();
   const controllerRef = useRef<AbortController | null>(null);
   const deltaBufferRef = useRef('');
   const deltaTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -49,7 +54,16 @@ export function App() {
   const submitRef = useRef<() => Promise<void>>(async () => undefined);
   const hasUserMessages = messages.some((message) => message.role === 'user');
   const contentWidth = Math.max(40, columns - 4);
-  const compactHeader = rows < 32 || hasUserMessages;
+  const activeMessageId = isSending ? assistantIdRef.current : null;
+  const activeMessage = activeMessageId
+    ? messages.find((message) => message.id === activeMessageId)
+    : undefined;
+  const transcriptItems: TranscriptItem[] = [
+    { id: "header", kind: "header" },
+    ...messages
+      .filter((message) => message.role !== "system" && message.id !== activeMessageId)
+      .map((message) => ({ id: message.id, kind: "message" as const, message })),
+  ];
 
   const appendAssistant = useCallback((content: string) => {
     setMessages((current) => [...current, createMessage('assistant', content)]);
@@ -83,7 +97,11 @@ export function App() {
     setAttachments([]);
 
     if (trimmed.toLowerCase() === '/clear' && pasted.length === 0) {
-      setMessages([createMessage('system', `Halo, aku Xninetzy AI - siap membantu belajar, bekerja, dan mengelola OS-mu.\nBackend: ${cliConfig.aiUrl}`)]);
+      stdout.write("\x1b[2J\x1b[3J\x1b[H\x1b[48;2;17;16;27m\x1b[37m");
+      setTranscriptEpoch((current) => current + 1);
+      setMessages([createMessage("system", "Halo, aku Xninetzy AI - siap membantu belajar, bekerja, dan mengelola OS-mu.\nBackend: " + cliConfig.aiUrl)]);
+      assistantIdRef.current = null;
+      reset();
       setLastError(null);
       return;
     }
@@ -149,7 +167,7 @@ export function App() {
         if (isCurrent(requestId)) {
           setLastError(message);
           addActivity(requestId, 'request', 'Request failed', 'failed', message);
-          appendAssistant(`AI request gagal: ${message}`);
+          if (!assistantIdRef.current) appendAssistant(`AI request gagal: `);
           finish(requestId, terminalPhase, message);
         }
       }
@@ -161,7 +179,7 @@ export function App() {
       if (controllerRef.current === controller) controllerRef.current = null;
       setIsSending(false);
     }
-  }, [addActivity, appendAssistant, attachments, draft, finish, flushDelta, isCurrent, isSending, setPhase, start]);
+  }, [addActivity, appendAssistant, attachments, draft, finish, flushDelta, isCurrent, isSending, reset, setPhase, start, stdout]);
 
   submitRef.current = handleSubmit;
 
@@ -199,35 +217,60 @@ export function App() {
       setActivityExpanded((value) => !value);
       return;
     }
-    if (key.tab) {
+    if (key.tab && !isSending) {
       appendAssistant('Gunakan /commands untuk melihat command Xninetzy, atau /tools untuk katalog tool MCP.');
       return;
     }
-    if (key.ctrl && inputChar === 'p') appendAssistant('Konfigurasi host: xninetzy config list|get|set|unset|validate.');
+    if (key.ctrl && inputChar === 'p' && !isSending) appendAssistant('Konfigurasi host: xninetzy config list|get|set|unset|validate.');
   });
 
   return (
-    <FullScreenShell columns={columns} rows={rows}>
-      <Box width="100%" height="100%" flexDirection="column">
-        <Box height={compactHeader ? 1 : 3} />
-        <SpaceBackdrop compact={compactHeader} />
-        <Box height={compactHeader ? 0 : 1} />
-        <Header columns={columns} compact={compactHeader} />
-        <Box height={1} />
-        <Box flexGrow={1} flexDirection="column" justifyContent="flex-end" overflowY="hidden">
-          <ChatView messages={messages} width={contentWidth} />
+    <Box width={columns} flexDirection="column">
+      <Static key={transcriptEpoch} items={transcriptItems}>
+        {(item) =>
+          item.kind === "header" ? (
+            <Box key={item.id} width={contentWidth} flexDirection="column">
+              <SpaceBackdrop compact={rows < 32} />
+              <Header columns={columns} compact={rows < 32} />
+              <Box height={1} />
+            </Box>
+          ) : (
+            <ChatView key={item.id} messages={[item.message]} width={contentWidth} />
+          )
+        }
+      </Static>
+      {!hasUserMessages && !activeMessage && (
+        <Box width={contentWidth} paddingX={1}>
+          <Text color={colors.dim}>Live AI session ready. Ketik pesan untuk mulai.</Text>
         </Box>
-        <Box height={1} />
-        <Box flexDirection="column">
-          <ThinkingPanel run={run} expanded={activityExpanded} />
-          <InputBox draft={draft} attachments={attachments} onDraftChange={setDraft} onPaste={handlePaste} onRemoveLastAttachment={handleRemoveLastAttachment} onSubmit={handleInputSubmit} width={contentWidth} />
-          <Box height={1} />
-          <StatusBar width={contentWidth} aiUrl={cliConfig.aiUrl} isSending={isSending} lastError={lastError} />
-          <Box height={1} />
-          <Box width={contentWidth} paddingX={2}><Text color={colors.white}>drifting through your second brain space</Text></Box>
-          <Box height={1} />
-        </Box>
+      )}
+      {activeMessage && (
+        <ChatView
+          messages={[activeMessage]}
+          width={contentWidth}
+          maxContentLines={activityExpanded ? 2 : 6}
+        />
+      )}
+      <ThinkingPanel run={run} expanded={activityExpanded} />
+      <InputBox
+        draft={draft}
+        attachments={attachments}
+        onDraftChange={setDraft}
+        onPaste={handlePaste}
+        onRemoveLastAttachment={handleRemoveLastAttachment}
+        onSubmit={handleInputSubmit}
+        width={contentWidth}
+      />
+      <Box height={1} />
+      <StatusBar
+        width={contentWidth}
+        aiUrl={cliConfig.aiUrl}
+        isSending={isSending}
+        lastError={lastError}
+      />
+      <Box width={contentWidth} paddingX={2}>
+        <Text color={colors.white}>drifting through your second brain space</Text>
       </Box>
-    </FullScreenShell>
+    </Box>
   );
 }

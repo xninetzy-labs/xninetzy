@@ -240,3 +240,36 @@ def test_mcp_preflight_uses_shared_runtime_command(onboarding_config, monkeypatc
     result = onboarding_cli._mcp_preflight_check(onboarding_config)
 
     assert result.status == "pass"
+
+
+def test_mcp_preflight_timeout_has_recovery_guidance(onboarding_config, monkeypatch):
+    onboarding_config.env_path.write_text(
+        "\n".join(
+            [
+                "CODING_AGENT_ENABLED=true",
+                "CODING_AGENT_DEFAULT=opencode",
+                "CODING_AGENT_ALLOWED=opencode",
+                "OPENCODE_BIN=opencode",
+            ]
+        )
+        + "\n",
+        encoding="utf-8",
+    )
+    monkeypatch.setattr(
+        onboarding_cli,
+        "build_mcp_preflight_command",
+        lambda runtime, settings: ["opencode", "mcp", "list"],
+    )
+    monkeypatch.setattr(onboarding_cli, "subprocess_environment", lambda settings: {})
+    monkeypatch.setattr(
+        onboarding_cli.subprocess,
+        "run",
+        lambda *args, **kwargs: (_ for _ in ()).throw(
+            subprocess.TimeoutExpired("opencode", 15)
+        ),
+    )
+
+    result = onboarding_cli._mcp_preflight_check(onboarding_config)
+
+    assert result.status == "fail"
+    assert "CODING_AGENT_MCP_PREFLIGHT_TIMEOUT_SECONDS" in result.message

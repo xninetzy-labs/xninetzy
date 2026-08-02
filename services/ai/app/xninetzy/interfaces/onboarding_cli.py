@@ -245,11 +245,24 @@ def _mcp_preflight_check(config: EnvConfiguration) -> DoctorCheck:
             timeout=settings.CODING_AGENT_MCP_PREFLIGHT_TIMEOUT_SECONDS,
             env=subprocess_environment(settings),
         )
-    except (OSError, subprocess.TimeoutExpired):
+    except subprocess.TimeoutExpired:
         return DoctorCheck(
             name="xninetzy-mcp",
             status="fail",
-            message="MCP preflight could not start or timed out.",
+            message=(
+                "MCP preflight timed out. Check the global Xninetzy MCP "
+                "configuration, then retry or increase "
+                "CODING_AGENT_MCP_PREFLIGHT_TIMEOUT_SECONDS."
+            ),
+        )
+    except OSError:
+        return DoctorCheck(
+            name="xninetzy-mcp",
+            status="fail",
+            message=(
+                "MCP preflight could not start. Check the selected coding "
+                "runtime binary and its global MCP configuration."
+            ),
         )
     server_name = settings.CODING_AGENT_MCP_SERVER_NAME.strip().casefold() or "xninetzy"
     output = f"{result.stdout}\n{result.stderr}".casefold()

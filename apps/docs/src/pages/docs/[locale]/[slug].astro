@@ -1,0 +1,54 @@
+---
+import DocsLayout from '../../../layouts/DocsLayout.astro';
+
+type MarkdownModule = {
+  default: unknown;
+  frontmatter: {
+    title: string;
+    description: string;
+    section?: string;
+  };
+};
+
+const pages = import.meta.glob('../*.md', { eager: true }) as Record<
+  string,
+  MarkdownModule
+>;
+
+export function getStaticPaths() {
+  const pages = import.meta.glob('../*.md', { eager: true }) as Record<
+    string,
+    MarkdownModule
+  >;
+  return Object.entries(pages).flatMap(([path, entry]) => {
+    const slug = path.split('/').pop()?.replace(/\.md$/, '');
+
+    if (!slug) return [];
+
+    return ['en', 'id'].map((locale) => ({
+      params: { locale, slug },
+      props: { entry, locale, slug }
+    }));
+  });
+}
+
+const { entry, locale } = Astro.props as {
+  entry: MarkdownModule;
+  locale: 'en' | 'id';
+  slug: string;
+};
+const Content = entry.default as typeof DocsLayout;
+const translationStatus = locale === 'id'
+  ? 'Reviewed interface translation. The technical body is still being translated page by page.'
+  : undefined;
+---
+
+<DocsLayout frontmatter={entry.frontmatter}>
+  {translationStatus && (
+    <aside class="language-note">
+      <strong>Translation status:</strong> {translationStatus}
+    </aside>
+  )}
+  <Content />
+</DocsLayout>
+

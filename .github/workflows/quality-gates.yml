@@ -1,0 +1,70 @@
+name: quality-gates
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  ai:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/ai
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.11'
+      - run: uv sync --no-dev
+      - run: uv run ruff check app tests
+      - run: uv run pytest
+
+  documentation:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/docs
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: apps/docs/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - run: yarn check
+      - run: yarn build
+
+  wa-engine:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/wa-enggine
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: yarn
+          cache-dependency-path: services/wa-enggine/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - run: yarn lint
+      - run: yarn test
+      - run: yarn build
+
+  cli:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/cli
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: yarn
+          cache-dependency-path: apps/cli/yarn.lock
+      - run: yarn install --frozen-lockfile
+      - run: yarn check
+      - run: yarn build

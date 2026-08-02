@@ -134,6 +134,8 @@ services/ai/data/**
 /generated_documents/
 /~/
 
+/docs/
+
 # =========================
 # Secrets / keys
 # =========================

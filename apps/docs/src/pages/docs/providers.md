@@ -1,15 +1,17 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Provider LLM
-description: Gunakan Flaz sebagai default atau pilih OpenAI, Anthropic, OpenRouter, Ollama, dan endpoint OpenAI-compatible.
+title: LLM providers
+description: Use Flaz by default or select OpenAI, Anthropic, OpenRouter, Ollama, and OpenAI-compatible endpoints.
 section: AI & developer tools
 ---
 
-Provider chat dipisahkan dari agent. Xninetzy memilih provider/model dari registry, lalu membuat LangChain chat model yang dipakai LangGraph dan tool-calling flow.
+Chat providers are separate from the agent. Xninetzy selects a provider and
+model from the registry, then creates the LangChain chat model used by
+LangGraph and tool-calling flows.
 
-## Flaz sebagai default
+## Flaz as the default
 
-Flaz memakai `ChatOpenAI` dari `langchain-openai` dengan custom base URL:
+Flaz uses `ChatOpenAI` from `langchain-openai` with a custom base URL:
 
 ```dotenv
 LLM_DEFAULT_PROVIDER=flaz
@@ -20,14 +22,14 @@ FLAZ_MODEL=deepseek-v4-pro
 FLAZ_MODELS=deepseek-v4-pro
 ```
 
-Masukkan key tanpa echo:
+Enter the key without terminal echo:
 
 ```bash
 cd services/ai
 uv run python scripts/configure_flaz.py
 ```
 
-## Mengaktifkan beberapa provider
+## Enable multiple providers
 
 ```dotenv
 LLM_ENABLED_PROVIDERS=flaz,openai,anthropic,openrouter,ollama,generic
@@ -54,15 +56,15 @@ GENERIC_OPENAI_MODEL=model-name
 GENERIC_OPENAI_MODELS=model-name
 ```
 
-Provider dianggap ready ketika:
+A provider is ready when:
 
-1. namanya masuk `LLM_ENABLED_PROVIDERS`;
-2. default model terisi;
-3. model berada pada `*_MODELS`;
-4. base URL tersedia jika dibutuhkan;
-5. credential wajib tersedia.
+1. its name is in `LLM_ENABLED_PROVIDERS`;
+2. its default model is configured;
+3. the model is in its `*_MODELS` allowlist;
+4. a base URL is configured when required;
+5. required credentials are present.
 
-## Memilih provider dari WhatsApp
+## Select a provider from WhatsApp
 
 ```text
 /llm
@@ -70,11 +72,12 @@ Provider dianggap ready ketika:
 /llm use flaz deepseek-v4-pro
 ```
 
-Pilihan disimpan per user di SQLite. API key tidak disimpan sebagai preference dan tidak ditampilkan command.
+The selection is stored per owner in SQLite. API keys are never stored as a
+preference or displayed by commands.
 
-## OpenAI-compatible provider
+## Generic OpenAI-compatible provider
 
-Gunakan `generic` jika vendor mengikuti API chat completions OpenAI:
+Use `generic` when a vendor implements the OpenAI chat-completions API:
 
 ```dotenv
 LLM_ENABLED_PROVIDERS=generic
@@ -85,9 +88,10 @@ GENERIC_OPENAI_MODEL=model-name
 GENERIC_OPENAI_MODELS=model-name,model-name-fast
 ```
 
-Kompatibel secara endpoint belum tentu kompatibel secara tool calling. Uji model dengan chat biasa dan request yang memanggil tool.
+Endpoint compatibility does not guarantee tool-calling compatibility. Test the
+model with ordinary chat and with a request that invokes a tool.
 
-## Ollama lokal
+## Local Ollama
 
 ```dotenv
 LLM_ENABLED_PROVIDERS=ollama
@@ -97,26 +101,25 @@ OLLAMA_MODEL=your-tool-capable-model
 OLLAMA_MODELS=your-tool-capable-model
 ```
 
-Pastikan konteks, structured output, dan tool calling model cukup untuk workflow yang dipakai.
+Verify that the model's context window, structured output, and tool calling are
+sufficient for the intended workflow.
 
-## Provider chat vs coding runtime
+## Chat provider versus coding runtime
 
-Keduanya berbeda:
-
-| Lapisan | Contoh | Tugas |
+| Layer | Examples | Responsibility |
 |---|---|---|
-| Provider chat | Flaz, OpenAI, Anthropic | menjawab pesan dan memilih tool |
-| Coding runtime | Codex, Claude Code, OpenCode | menjalankan CLI pada repository |
+| Chat provider | Flaz, OpenAI, Anthropic | Answer messages and select tools |
+| Coding runtime | Codex, Claude Code, OpenCode | Run a CLI inside a repository |
 
-Mengganti `/llm use` tidak otomatis mengganti `/agent use`.
+Changing `/llm use` does not change `/agent use`.
 
 ## Diagnosis
 
-Jika model tidak dapat dihubungi:
+If the model cannot be reached:
 
-1. jalankan `/llm list`;
-2. periksa enabled providers dan allowlist model;
-3. periksa base URL tanpa mencetak key;
-4. pastikan service sudah restart setelah `.env` berubah;
-5. uji health endpoint provider dari host yang sama;
-6. periksa log untuk status HTTP, bukan request header.
+1. run `/llm list`;
+2. inspect enabled providers and model allowlists;
+3. verify the base URL without printing the key;
+4. restart the service after changing `.env`;
+5. test the provider health endpoint from the same host;
+6. inspect HTTP status codes in logs, not request headers.

@@ -3,7 +3,6 @@ import BaseLayout from './BaseLayout.astro';
 import Sidebar from '../components/Sidebar.astro';
 import Icon from '../components/Icon.astro';
 import { navigation, pageNeighbors } from '../data/navigation';
-import { pageLocales } from '../data/pageLocales';
 
 type Props = {
   frontmatter: {
@@ -18,32 +17,21 @@ const section = frontmatter.section ?? navigation.find((group) =>
   group.items.some((item) => item.href === Astro.url.pathname)
 )?.title ?? 'Documentation';
 const { previous, next } = pageNeighbors(Astro.url.pathname);
-const locales = pageLocales[Astro.url.pathname];
-const titleEn = locales?.en.title ?? frontmatter.title;
-const titleId = locales?.id.title ?? frontmatter.title;
-const descriptionEn = locales?.en.description ?? frontmatter.description;
-const descriptionId = locales?.id.description ?? frontmatter.description;
-const sectionEn = locales?.en.section ?? section;
-const sectionId = locales?.id.section ?? section;
 ---
 
-<BaseLayout title={titleEn} description={descriptionEn} descriptionId={descriptionId}>
+<BaseLayout title={frontmatter.title} description={frontmatter.description}>
   <div class="docs-shell">
     <Sidebar />
     <main class="docs-main" id="main-content">
       <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a href="/">Docs</a><span>/</span><span data-i18n-en={sectionEn} data-i18n-id={sectionId}>{sectionEn}</span>
+        <a href="/">Docs</a><span>/</span><span>{section}</span>
       </nav>
       <header class="docs-heading">
-        <div class="eyebrow"><span></span><span data-i18n-en={sectionEn} data-i18n-id={sectionId}>{sectionEn}</span></div>
-        <h1 data-docs-title data-i18n-en={titleEn} data-i18n-id={titleId}>{titleEn}</h1>
-        <p data-i18n-en={descriptionEn} data-i18n-id={descriptionId}>{descriptionEn}</p>
+        <div class="eyebrow"><span></span><span>{section}</span></div>
+        <h1>{frontmatter.title}</h1>
+        <p>{frontmatter.description}</p>
       </header>
       <article class="prose" data-docs-article>
-        <div class="language-note" data-locale-note>
-          <span data-locale="en">Detailed text is shown in its source language unless this page provides a localized block.</span>
-          <span data-locale="id" hidden>Detail ditampilkan dalam bahasa sumber kecuali halaman ini menyediakan blok terjemahan.</span>
-        </div>
         <slot />
       </article>
       <nav class="page-neighbors" aria-label="Previous and next pages">

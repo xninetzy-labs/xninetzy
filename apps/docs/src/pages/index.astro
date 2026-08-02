@@ -4,10 +4,10 @@ import Icon from '../components/Icon.astro';
 import { navigation } from '../data/navigation';
 
 const capabilities = [
-  { number: '01', title: 'Closed-loop OS', text: 'Capture, triage, focus, execute, dan review memakai state yang sama di setiap interface.' },
-  { number: '02', title: 'Knowledge connected', text: 'Obsidian, FAISS, Graph RAG, HEBAT, serta personal memory berbagi satu tool registry.' },
-  { number: '03', title: 'Model freedom', text: 'Flaz sebagai default, dengan OpenAI, Anthropic, OpenRouter, Ollama, dan endpoint compatible.' },
-  { number: '04', title: 'Agent interoperable', text: 'Codex, Claude Code, dan OpenCode mengakses kemampuan yang sama melalui MCP global.' }
+  { number: '01', title: 'Closed-loop OS', text: 'Capture, triage, focus, execute, and review through shared state across every interface.' },
+  { number: '02', title: 'Knowledge connected', text: 'Obsidian, FAISS, Graph RAG, HEBAT, and personal memory share one tool registry.' },
+  { number: '03', title: 'Model freedom', text: 'Flaz by default, with OpenAI, Anthropic, OpenRouter, Ollama, and compatible endpoints.' },
+  { number: '04', title: 'Agent interoperable', text: 'Codex, Claude Code, and OpenCode access the same capabilities through global MCP.' }
 ];
 ---
 
@@ -18,10 +18,10 @@ const capabilities = [
       <div class="hero-content">
         <p class="signal"><span></span> PERSONAL LEARNING OS / ONLINE</p>
         <h1>Your knowledge.<br /><em>In one orbit.</em></h1>
-        <p class="lead">Xninetzy menghubungkan WhatsApp, Obsidian, pembelajaran kampus, dan coding agents ke satu OS yang mengubah capture menjadi fokus dan tindakan terukur.</p>
+        <p class="lead">Xninetzy connects WhatsApp, Obsidian, academic learning, and coding agents to one OS that turns captured input into focus and measurable action.</p>
         <div class="hero-actions">
-          <a class="primary" href="/docs/getting-started/">Mulai instalasi <Icon name="arrow" /></a>
-          <a class="secondary" href="/docs/introduction/"><Icon name="book" /> Baca konsep</a>
+          <a class="primary" href="/docs/getting-started/">Start installation <Icon name="arrow" /></a>
+          <a class="secondary" href="/docs/introduction/"><Icon name="book" /> Read the concepts</a>
         </div>
         <div class="status-line">
           <span><i></i> Local-first</span>
@@ -29,7 +29,7 @@ const capabilities = [
           <span>6 LLM providers</span>
         </div>
       </div>
-      <div class="orbit-visual" aria-label="Diagram orbit Xninetzy">
+      <div class="orbit-visual" aria-label="Xninetzy orbit diagram">
         <div class="core"><span>X</span><small>XNINETZY</small></div>
         <div class="orbit orbit-a"><span class="node node-wa">WA</span></div>
         <div class="orbit orbit-b"><span class="node node-obs">OBS</span></div>
@@ -38,7 +38,7 @@ const capabilities = [
       </div>
     </section>
 
-    <section class="capability-strip" aria-label="Kemampuan utama">
+    <section class="capability-strip" aria-label="Core capabilities">
       {capabilities.map((item) => (
         <article><span>{item.number}</span><h2>{item.title}</h2><p>{item.text}</p></article>
       ))}
@@ -48,8 +48,8 @@ const capabilities = [
       <div class="section-copy">
         <p class="kicker">ONE SYSTEM / CLEAR BOUNDARIES</p>
         <h2>From message<br />to meaningful action.</h2>
-        <p>Pesan dirutekan ke OS Inbox, jawaban, workflow, atau tool. Attention queue memilih fokus dari state nyata; aksi sensitif tetap berhenti di approval boundary.</p>
-        <a href="/docs/architecture/">Pelajari arsitektur <Icon name="arrow" /></a>
+        <p>Messages are routed to the OS Inbox, an answer, a workflow, or a tool. The attention queue selects focus from real state, while sensitive actions stop at the approval boundary.</p>
+        <a href="/docs/architecture/">Explore the architecture <Icon name="arrow" /></a>
       </div>
       <div class="flow-card">
         <div class="flow-node active"><small>INTERFACE</small><strong>WhatsApp / CLI</strong></div>
@@ -66,7 +66,7 @@ const capabilities = [
     <section class="section docs-index">
       <header>
         <div><p class="kicker">DOCUMENTATION MAP</p><h2>Pick your trajectory.</h2></div>
-        <p>Mulai dari instalasi, lalu buka integrasi atau area operasional yang sedang kamu kerjakan.</p>
+        <p>Start with installation, then open the integration or operations area you are working on.</p>
       </header>
       <div class="doc-groups">
         {navigation.map((group, groupIndex) => (
@@ -88,9 +88,9 @@ const capabilities = [
     <section class="final-cta">
       <p class="kicker">EVENT HORIZON</p>
       <h2>Ready to connect<br />your second brain?</h2>
-      <p>Siapkan environment, pilih provider, lalu hubungkan WhatsApp dan vault pertamamu.</p>
-      <a href="/docs/getting-started/">Buka quick start <Icon name="arrow" /></a>
-      <p class="creator-links">Dibuat oleh <a href="https://misbahul-muttaqin.vercel.app/" target="_blank" rel="noreferrer">Misbahul Muttaqin</a> · <a href="https://github.com/misbahul45" target="_blank" rel="noreferrer">GitHub</a></p>
+      <p>Configure the environment, choose a provider, then connect WhatsApp and your first vault.</p>
+      <a href="/docs/getting-started/">Open quick start <Icon name="arrow" /></a>
+      <p class="creator-links">Created by <a href="https://misbahul-muttaqin.vercel.app/" target="_blank" rel="noreferrer">Misbahul Muttaqin</a> · <a href="https://github.com/misbahul45" target="_blank" rel="noreferrer">GitHub</a></p>
     </section>
   </main>
 </BaseLayout>

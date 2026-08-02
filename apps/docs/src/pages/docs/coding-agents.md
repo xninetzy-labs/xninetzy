@@ -1,22 +1,23 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Coding agents dari WhatsApp
-description: Konfigurasikan Codex, Claude Code, atau OpenCode sebagai runtime coding dengan workspace, timeout, dan audit boundary.
+title: Coding agents from WhatsApp
+description: Configure Codex, Claude Code, or OpenCode with workspace, timeout, MCP, and audit boundaries.
 section: AI & developer tools
 ---
 
-Coding runtime menjalankan CLI lokal terhadap repository. Fitur ini terpisah dari provider LLM chat dan memiliki risiko lebih tinggi karena dapat membaca atau mengubah file.
+Coding runtimes execute a local CLI against a repository. They are separate from
+chat LLM providers and have higher risk because they can read or modify files.
 
-## Persyaratan
+## Requirements
 
-- Binary Codex, Claude Code, atau OpenCode terpasang pada host laptop.
-- CLI sudah login secara interaktif oleh pemilik.
-- Host bridge Xninetzy aktif sebagai user service.
-- Workspace dan allowed root menggunakan absolute path.
-- Admin WhatsApp memakai JID eksplisit.
-- Konfigurasi MCP global `xninetzy` tersedia untuk setiap CLI.
+- Codex, Claude Code, or OpenCode is installed on the laptop host.
+- The owner has completed interactive CLI login.
+- The Xninetzy host bridge runs as a user service.
+- Workspace and allowed-root values are absolute paths.
+- The WhatsApp administrator has an explicit JID.
+- A global `xninetzy` MCP configuration is available to each CLI.
 
-## Konfigurasi
+## Configuration
 
 ```dotenv
 CODING_AGENT_ENABLED=true
@@ -36,77 +37,75 @@ CODING_AGENT_MCP_SERVER_NAME=xninetzy
 CODING_AGENT_MCP_PREFLIGHT_TIMEOUT_SECONDS=15
 ```
 
-Jangan memakai `/`, home directory, atau directory luas sebagai allowed root.
+Never use `/`, a home directory, or another broad directory as the allowed
+root.
 
-## Penggunaan
+## Usage
 
 ```text
 /agent list
 /agent use codex
-/code jalankan test terkait reminder dan jelaskan kegagalannya
+/code run the reminder tests and explain any failures
 ```
 
-Pilih runtime lain:
+Select another runtime with `/agent use claude-code` or
+`/agent use opencode`. The runtime preference is stored per owner, and only
+allowlisted runtimes can be selected.
+
+## Execution guards
+
+The runtime wrapper:
+
+- never builds commands through shell interpolation;
+- confines the working directory to the allowed root;
+- passes a minimal environment allowlist;
+- bounds duration and output size;
+- writes an audit record;
+- rejects non-administrators when `CODING_AGENT_ADMIN_ONLY=true`;
+- verifies the `xninetzy` MCP server before execution;
+- injects the `AGENTS.md` contract, shared OS access, and grounded-knowledge rules.
+
+The effective sandbox also depends on the selected CLI. Do not assume every
+runtime has identical sandbox semantics.
+
+## Relationship with MCP
+
+Integration works in both directions:
+
+1. A coding client uses Xninetzy MCP for Obsidian, HEBAT, tasks, and other tools.
+2. WhatsApp asks Xninetzy to run a coding client inside an allowed workspace.
+
+When invoked from WhatsApp, preflight must find the CLI's global or user-scoped
+MCP configuration. Xninetzy fails closed when MCP is unavailable so the coding
+agent cannot return an answer that lacks owner vault, HEBAT, task, or knowledge
+context.
+
+## Safe workflow
+
+Start with a narrow, verifiable request:
 
 ```text
-/agent use claude-code
-/agent use opencode
+/code diagnose why test_reminder_parser fails; do not modify files
 ```
 
-Preference runtime disimpan per user. Hanya runtime yang masuk allowlist dapat dipilih.
-
-## Guard eksekusi
-
-Runtime wrapper:
-
-- tidak membangun command melalui shell interpolation;
-- membatasi current working directory pada allowed root;
-- meneruskan environment minimal;
-- membatasi durasi serta panjang output;
-- menyimpan audit run;
-- menolak non-admin ketika `CODING_AGENT_ADMIN_ONLY=true`.
-- memverifikasi MCP `xninetzy` sebelum menjalankan task;
-- menyisipkan kontrak `AGENTS.md`, akses OS bersama, dan grounded knowledge ke prompt task.
-
-Sandbox akhir juga bergantung pada kemampuan CLI yang dipilih. Jangan menganggap semua runtime memiliki semantic sandbox identik.
-
-## Hubungan dengan MCP
-
-Ada dua arah integrasi:
-
-1. Coding client memakai Xninetzy MCP untuk Obsidian, HEBAT, task, dan tools lain.
-2. WhatsApp meminta Xninetzy menjalankan coding client pada workspace.
-
-Keduanya dapat aktif bersamaan, tetapi tidak berarti satu client otomatis mewarisi login client lain.
-
-Saat runtime dipanggil dari WhatsApp, preflight harus menemukan konfigurasi MCP
-global/user milik CLI tersebut. Xninetzy sengaja gagal tertutup apabila MCP tidak
-tersedia agar coding agent tidak memberikan hasil yang kehilangan context vault,
-HEBAT, task, atau knowledge pemilik.
-
-## Workflow yang aman
-
-Gunakan task sempit dan dapat diverifikasi:
+After reviewing the diagnosis:
 
 ```text
-/code diagnosis kenapa test test_reminder_parser gagal; jangan ubah file
+/code implement the reviewed fix, run the related tests, and summarize changed files
 ```
 
-Setelah diagnosis:
+Avoid broad prompts such as “fix everything” when repository runtime state has
+not been backed up.
 
-```text
-/code implementasikan perbaikan yang sudah dianalisis, jalankan test terkait, lalu rangkum file yang berubah
-```
+## Host bridge and containers
 
-Hindari prompt seperti “perbaiki semuanya” pada repository dengan data/runtime state yang belum dibackup.
+The AI container does not include coding binaries, host login stores, or global
+host configuration. In `host_bridge` mode, the AI service sends an
+authenticated task to `127.0.0.1:8765` through `host.docker.internal`. The
+bridge performs MCP preflight, confines the workspace, runs the host CLI, and
+returns bounded output to WhatsApp.
 
-## Host bridge dan container
-
-AI service Docker tidak menyertakan binary coding, login store, atau konfigurasi
-global host. Dalam mode `host_bridge`, AI mengirim task terautentikasi ke
-`127.0.0.1:8765` melalui `host.docker.internal`; bridge menjalankan CLI di host,
-melakukan MCP preflight, membatasi workspace, dan mengembalikan output ke
-WhatsApp. Install otomatis:
+Install the bridge on Linux:
 
 ```bash
 bash scripts/install_host_agent_bridge.sh
@@ -114,8 +113,8 @@ loginctl enable-linger "$USER"
 systemctl --user status xninetzy-host-agent-bridge
 ```
 
-Jangan mengekspos port bridge ke jaringan publik dan jangan menaruh token bridge
-di prompt atau konfigurasi MCP client.
+Never expose the bridge port to a public network or place its token in prompts
+or MCP client configuration.
 
 ## Diagnosis
 
@@ -125,4 +124,6 @@ which claude
 which opencode
 ```
 
-Periksa log audit tanpa mencetak credential. Error umum berasal dari binary tidak ditemukan, login kedaluwarsa, workspace di luar allowed root, timeout, atau CLI meminta input interaktif.
+Inspect audit logs without printing credentials. Common failures are missing
+binaries, expired login, a workspace outside the allowed root, timeout, or a CLI
+waiting for interactive input.

@@ -1,13 +1,13 @@
 # Xninetzy Documentation
 
-Documentation site statis untuk Xninetzy, dibangun dengan Astro 7. UI mengikuti design system terminal client: deep-space background, purple orbit, dan orange event-horizon accent.
+Static documentation site for Xninetzy, built with Astro 7. The UI follows the terminal client design system: a deep-space background, purple orbit, and orange event-horizon accent.
 
-## Prasyarat
+## Prerequisites
 
-- Node.js 22.12 atau lebih baru.
+- Node.js 22.12 or newer.
 - Yarn 1.22.
 
-## Menjalankan lokal
+## Run locally
 
 ```bash
 cd apps/docs
@@ -15,7 +15,7 @@ yarn install --frozen-lockfile
 yarn dev
 ```
 
-Buka `http://127.0.0.1:4321`.
+Open `http://127.0.0.1:4321`.
 
 ## Quality checks
 
@@ -24,15 +24,15 @@ yarn check
 yarn build
 ```
 
-Production output berada di `apps/docs/dist` dan tidak masuk Git.
+Production output is written to `apps/docs/dist` and is not tracked by Git.
 
-Preview output tersebut:
+Preview that output:
 
 ```bash
 yarn preview --host 127.0.0.1
 ```
 
-## Struktur
+## Structure
 
 ```text
 apps/docs/
@@ -41,71 +41,71 @@ apps/docs/
 │   └── og.svg
 ├── src/
 │   ├── components/         # brand, header, search, sidebar, mobile drawer
-│   ├── data/navigation.ts  # source of truth navigasi dan search index
-│   ├── layouts/            # base HTML shell dan Markdown docs shell
+│   ├── data/navigation.ts  # source of truth for navigation and the search index
+│   ├── layouts/            # base HTML shell and Markdown documentation shell
 │   ├── pages/
-│   │   ├── docs/*.md       # seluruh panduan
+│   │   ├── docs/*.md       # all guides
 │   │   └── index.astro     # landing page
-│   └── styles/global.css   # design tokens dan responsive styles
+│   └── styles/global.css   # design tokens and responsive styles
 ├── astro.config.mjs
 ├── package.json
 ├── tsconfig.json
 └── yarn.lock
 ```
 
-## Menambah halaman
+## Add a page
 
-1. Buat file Markdown di `src/pages/docs`, misalnya `backup.md`.
-2. Tambahkan frontmatter:
+1. Create a Markdown file di `src/pages/docs`, for example `backup.md`.
+2. Add frontmatter:
 
 ```yaml
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Backup dan restore
-description: Strategi backup vault dan database.
-section: Operasional
+title: Backup and restore
+description: Vault and database backup strategy.
+section: Operations
 ---
 ```
 
-3. Tulis isi Markdown.
-4. Tambahkan item pada `src/data/navigation.ts`:
+3. Write the Markdown content.
+4. Add an item to `src/data/navigation.ts`:
 
 ```ts
 {
-  title: 'Backup dan restore',
-  description: 'Vault, database, dan runtime state.',
+  title: 'Backup and restore',
+  description: 'Vault, database, and runtime state.',
   href: '/docs/backup/'
 }
 ```
 
-5. Jalankan `yarn check && yarn build`.
+5. Run `yarn check && yarn build`.
 
-Navigation data juga menjadi indeks pencarian client-side. Tidak ada search backend atau API key.
+Navigation data also provides the client-side search index. It does not require a search backend or API key.
 
 ## Design system
 
-Token utama berada pada `src/styles/global.css`:
+The primary tokens live in `src/styles/global.css`:
 
-| Token | Nilai | Peran |
+| Token | Value | Role |
 |---|---|---|
 | `--background-deep` | `#020008` | canvas |
-| `--surface` | `#05010f` | cards dan code |
+| `--surface` | `#05010f` | cards and code |
 | `--purple` | `#8b5cf6` | primary accent |
 | `--purple-bright` | `#c084fc` | active state |
 | `--orange` | `#f97316` | event/action accent |
 | `--lavender` | `#ddd6fe` | reading text |
 
-Pertahankan contrast, keyboard focus, mobile layout, dan `prefers-reduced-motion`. Gunakan SVG/code-native visual untuk diagram ringan; hindari dependency UI hanya untuk satu komponen.
+Preserve contrast, keyboard focus, the mobile layout, and `prefers-reduced-motion`. Use SVG or code-native visuals for lightweight diagrams; avoid adding a UI dependency for a single component.
 
-## Konten dan keamanan
+## Content and security
 
-- Gunakan placeholder untuk API key, password, nomor, JID, dan path personal.
-- Jangan menyalin `.env`, cookie, session, log, atau course material ke docs.
-- Jelaskan current security boundary secara jujur; jangan mengklaim endpoint aman jika guard belum diterapkan.
-- Perbarui root `README.md` ketika command atau struktur utama berubah.
+- Use placeholders for API key, password, phone numbers, JIDs, and personal paths.
+- Do not copy `.env`, cookie, session, log, atau course material into documentation.
+- Describe the current security boundary accurately; do not claim an endpoint is secure when its guard is not implemented.
+- Update the root `README.md` when commands or the main structure change.
 
 ## Deployment
 
-Site menggunakan `output: 'static'` dan menghasilkan HTML/CSS/JS portabel. Upload isi `dist` ke static hosting pilihanmu. Jika memakai subpath, set `base` pada `astro.config.mjs` dan gunakan `import.meta.env.BASE_URL` untuk asset/link yang membutuhkan prefix.
+Site uses `output: 'static'` and produces HTML/CSS/JS portable. Upload the contents of `dist` to your preferred static host. When deploying to a subpath, set `base` pada `astro.config.mjs` and use `import.meta.env.BASE_URL` for assets or links that require the prefix.
 
-Untuk canonical URL dan social metadata produksi, tambahkan nilai `site` pada `astro.config.mjs` setelah domain final diketahui.
+For the production canonical URL and social metadata, add a `site` pada `astro.config.mjs` after the final domain is known.

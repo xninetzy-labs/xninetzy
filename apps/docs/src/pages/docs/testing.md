@@ -1,11 +1,12 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Testing dan quality gates
-description: Jalankan unit test, typecheck, build, compose validation, dan MCP health check secara terarah.
-section: Operasional
+title: Testing and quality gates
+description: Run unit tests, type checks, builds, Compose validation, and MCP health checks.
+section: Operations
 ---
 
-Jalankan test dari komponen yang berubah terlebih dahulu, lalu full suite sebelum handoff.
+Run tests for the changed component first, then run its full suite before
+handoff.
 
 ## AI service
 
@@ -16,16 +17,17 @@ uv run pytest -q
 uv run ruff check app tests
 ```
 
-Test mencakup routing, provider, MCP adapter/server, Obsidian, HEBAT, knowledge, reminder, HITL, media, research, workflow, dan Life OS.
+Tests cover routing, providers, MCP adapters and servers, Obsidian, HEBAT,
+knowledge, reminders, HITL, media, research, workflows, and Life OS.
 
-Targeted example:
+Focused example:
 
 ```bash
 uv run pytest -q tests/interfaces/test_mcp_server.py \
   tests/interfaces/test_mcp_tool_adapter.py
 ```
 
-## WA engine
+## WhatsApp engine
 
 ```bash
 cd services/wa-enggine
@@ -34,7 +36,8 @@ yarn test
 yarn build
 ```
 
-Build TypeScript wajib lulus karena test runtime saja tidak selalu menangkap type mismatch.
+The TypeScript build must pass because runtime tests do not catch every type
+mismatch.
 
 ## Terminal CLI
 
@@ -54,13 +57,14 @@ yarn check
 yarn build
 ```
 
-Preview hasil statis:
+Preview the static output:
 
 ```bash
 yarn preview --host 127.0.0.1
 ```
 
-Periksa link navigasi, mobile drawer, pencarian, code overflow, dan heading pada viewport kecil.
+Inspect navigation links, the mobile drawer, search, code overflow, and headings
+on a narrow viewport.
 
 ## Docker configuration
 
@@ -68,7 +72,7 @@ Periksa link navigasi, mobile drawer, pencarian, code overflow, dan heading pada
 docker compose config -q
 ```
 
-Smoke stack:
+Smoke-test the stack:
 
 ```bash
 docker compose up --build -d ai wa-enggine
@@ -76,9 +80,10 @@ curl -s http://127.0.0.1:8000/health
 curl -s http://127.0.0.1:8081/health
 ```
 
-## MCP global
+## Global MCP
 
-Uji dari luar repository agar config project tidak menutupi masalah:
+Test outside the repository so project configuration cannot hide a global
+configuration problem:
 
 ```bash
 cd /tmp
@@ -87,7 +92,7 @@ claude mcp list
 opencode mcp list
 ```
 
-Claude dan OpenCode melakukan health check dan seharusnya menampilkan `Connected`.
+Claude and OpenCode perform health checks and should report `Connected`.
 
 ## Repository checks
 
@@ -96,15 +101,17 @@ git diff --check
 git status --short
 ```
 
-Review setiap runtime artifact. Jangan commit `.env`, SQLite/WAL/SHM, FAISS runtime index, HEBAT downloads, session WhatsApp, browser profile, atau `node_modules`.
+Review every runtime artifact. Never commit `.env`, SQLite/WAL/SHM, runtime
+FAISS indexes, HEBAT downloads, WhatsApp sessions, browser profiles, or
+`node_modules`.
 
-## Saat full lint belum hijau
+## When the full checks are not green
 
-Jangan menyamarkan failure. Pisahkan:
+Do not hide a failure. Separate:
 
-1. error baru pada file yang diubah;
-2. debt yang sudah ada dan tidak berkaitan;
-3. warning tooling/deprecation;
-4. test yang memerlukan credential atau service eksternal.
+1. new errors in changed files;
+2. existing unrelated debt;
+3. tooling or deprecation warnings;
+4. tests that require credentials or external services.
 
-Catat command serta hasil eksaknya dalam handoff.
+Record the exact command and result in the handoff.

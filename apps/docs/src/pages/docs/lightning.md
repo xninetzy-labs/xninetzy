@@ -1,12 +1,12 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Lightning Reinforcement Learning
-description: Episode, reward, contextual bandit, regression, dan approval untuk self-improvement Xninetzy.
-section: Operasional
+title: Lightning reinforcement learning
+description: Episodes, rewards, contextual bandits, regressions, and approval-based self-improvement.
+section: AI & developer tools
 ---
 
-Lightning adalah loop evaluasi Xninetzy. Implementasinya menggunakan
-contextual bandit CPU-only, bukan online fine-tuning bobot model.
+Lightning is Xninetzy's evaluation loop. It uses a CPU-only contextual bandit,
+not online fine-tuning of model weights.
 
 ~~~text
 request → episode → action → outcome → reward → strategy ranking
@@ -16,38 +16,35 @@ request → episode → action → outcome → reward → strategy ranking
                               regression / rollback
 ~~~
 
-## Kemampuan yang tersedia
+## Available capabilities
 
-Setiap request dari WhatsApp, LangGraph, MCP, Codex, Claude Code, atau OpenCode
-dapat dicatat sebagai episode owner-scoped. Episode menyimpan route, strategy,
-provider/model, tool action, status, latency, outcome, dan reward ter-redact.
+A request from WhatsApp, LangGraph, MCP, Codex, Claude Code, or OpenCode can be
+recorded as an owner-scoped episode. Episodes store redacted route, strategy,
+provider and model, tool actions, status, latency, outcome, and reward.
 
-Sinyal reward:
+Reward signals include:
 
-- keberhasilan task;
-- feedback positif atau koreksi user;
-- groundedness dan validitas citation;
-- reliability tool;
-- latency dan batas biaya.
+- task success;
+- positive feedback or owner corrections;
+- groundedness and citation validity;
+- tool reliability;
+- latency and cost boundaries.
 
-Reward selalu dibatasi ke [-1, 1]. Event yang sama tidak boleh dihitung dua
-kali karena setiap lifecycle menerima idempotency key.
+Rewards are clamped to `[-1, 1]`. The same lifecycle event cannot be counted
+twice because each record carries an idempotency key.
 
 ## Contextual bandit
 
-Strategy dibentuk dari route, provider, model, retrieval policy, skill set, dan
-versi urutan tool. Context dibuat dari domain, intent, modality, risk class, dan
-task type tanpa menyimpan prompt mentah sebagai key.
+A strategy includes route, provider, model, retrieval policy, skill set, and tool
+ordering version. Context contains domain, intent, modality, risk class, and task
+type without using the raw prompt as a key.
 
-Ranking memakai UCB deterministik:
+Deterministic UCB ranking provides limited exploration for new strategies,
+raises strategies with better observed rewards, and lowers repeated failures
+through statistics and circuit breakers. Providers remain deployment-
+allowlisted, and write or final actions remain subject to action policy.
 
-- strategy baru mendapat eksplorasi terbatas;
-- strategy dengan reward lebih baik naik ranking;
-- strategy error berulang turun melalui statistik dan circuit breaker;
-- provider hanya dipilih dari allowlist deployment;
-- aksi write dan final tetap tunduk pada action policy.
-
-Lihat ringkasan:
+Inspect results with:
 
 ~~~text
 /agent-reward
@@ -56,7 +53,7 @@ Lihat ringkasan:
 /agent-proposals
 ~~~
 
-Melalui MCP, gunakan:
+MCP tools:
 
 ~~~text
 lightning_episode_start
@@ -69,30 +66,28 @@ lightning_regression_check
 lightning_propose_improvement
 ~~~
 
-## Proposal dan approval
+## Proposals and approval
 
-Lightning tidak mengubah kode atau policy secara otomatis. Proposal memiliki
-confidence, risk score, evidence, baseline/candidate metrics, rollout state,
-dan rollback metadata.
-
-Lifecycle:
+Lightning never changes code or policy automatically. A proposal includes
+confidence, risk score, evidence, baseline and candidate metrics, rollout state,
+and rollback metadata.
 
 ~~~text
 pending → approved/rejected → active/canary → rolled_back
 ~~~
 
-Rule low-risk tetap membutuhkan approval owner pada konfigurasi default.
-Proposal code-fix hanya boleh menghasilkan diagnosis, diff, dan test report melalui
-host coding bridge. Commit dan push tetap keputusan owner.
+Low-risk rules still require owner approval under the default configuration. A
+code-fix proposal may produce only diagnosis, a diff, and a test report through
+the host coding bridge. Commit and push remain owner decisions.
 
-Regression default membutuhkan minimal 20 sample per strategy. Proposal ditandai
-regression jika reward turun minimal 0.15, error rate naik 10%, atau latency
-rata-rata naik 25%.
+Regression analysis requires at least 20 samples per strategy by default. A
+proposal is marked as a regression when reward drops by at least `0.15`, error
+rate rises by 10%, or average latency rises by 25%.
 
 ## Scheduler
 
-Review harian dapat diaktifkan melalui OS scheduler. Job memiliki key harian dan
-aman saat restart.
+Enable daily review through the OS scheduler. Its daily key is replay-safe
+across restarts.
 
 ~~~env
 LIGHTNING_ENABLED=true
@@ -109,13 +104,13 @@ LIGHTNING_RETENTION_DAYS=90
 LIGHTNING_MAX_EVENT_CHARS=4000
 ~~~
 
-## Privasi
+## Privacy
 
-Prompt dan output dipotong serta disanitasi. API key, cookie, password, CAPTCHA,
-browser state, token, dan isi attachment tidak disimpan dalam episode. Data
-tersimpan lokal di SQLite sesuai retention.
+Prompts and outputs are truncated and sanitized. API keys, cookies, passwords,
+CAPTCHA values, browser state, tokens, and attachment contents are not stored in
+episodes. Retained data stays in local SQLite.
 
-## Verifikasi
+## Verification
 
 ~~~bash
 cd services/ai

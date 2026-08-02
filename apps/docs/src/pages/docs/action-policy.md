@@ -1,27 +1,27 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Action policy dan provider CPU
-description: Mode auto, approval, manual, final hard gate, serta pilihan provider lokal dan berbayar.
-section: Operasional
+title: Action policy and CPU providers
+description: Automatic, approval, manual, and final hard gates across local and paid providers.
+section: Operations
 ---
 
-Xninetzy memakai satu action policy untuk WhatsApp, LangGraph, MCP, Codex,
-Claude Code, dan OpenCode. Policy ini tidak memberi izin baru; policy hanya
-membuat keputusan safety konsisten di semua interface.
+Xninetzy uses one action policy across WhatsApp, LangGraph, MCP, Codex,
+Claude Code, and OpenCode. The policy does not grant new permissions; it keeps
+safety decisions consistent across every interface.
 
-## Mode aksi
+## Action modes
 
-| Risiko | Default | Perilaku |
+| Risk | Default | Behavior |
 |---|---|---|
-| read | auto | Baca data tanpa mengubah state |
-| draft | auto | Buat rencana/preview tanpa side effect eksternal |
-| write | approval | Owner/admin menyetujui sebelum perubahan |
-| final | approval | Hard gate; tidak dapat diubah menjadi auto |
+| read | auto | Read data without changing state |
+| draft | auto | Create a plan or preview without external side effects |
+| write | approval | Require owner or administrator approval before a change |
+| final | approval | Enforce a hard gate that cannot be changed to automatic |
 
-ACTION_POLICY_KILL_SWITCH=true mengubah write dan final menjadi manual.
-Approval memiliki TTL dan hash isi aksi. Mengubah payload, plan, kelas, file, atau
-snapshot portal membuat approval lama tidak valid. Mengulang approval yang sudah
-disetujui tidak mengulang eksekusi.
+`ACTION_POLICY_KILL_SWITCH=true` changes write and final actions to manual.
+Approvals include a TTL and a content hash. Changing the payload, plan, class,
+file, or portal snapshot invalidates the previous approval. Replaying an
+approved request does not repeat execution.
 
 ~~~env
 ACTION_POLICY_DEFAULT_MODE=approval
@@ -31,29 +31,30 @@ ACTION_POLICY_MAX_WRITES_PER_RUN=30
 ACTION_POLICY_KILL_SWITCH=false
 ~~~
 
-Override hanya untuk aksi yang memang aman di deployment owner:
+Use overrides only for actions that are safe in the owner's deployment:
 
 ~~~env
 ACTION_POLICY_OVERRIDES=obsidian_append=auto,portal_krs_war_arm=approval
 ~~~
 
-KRS finalisasi, KRS War execution, HEBAT final submission, dan submit kuesioner
-tetap membutuhkan approval owner walaupun ada override yang mencoba mengubahnya.
+KRS finalization, KRS War execution, final HEBAT submission, and questionnaire
+submission always require owner approval, even if an override attempts to
+change their mode.
 
-## HEBAT dan Cyber Campus
+## HEBAT and Cyber Campus
 
-HEBAT upload tetap menggunakan confirmation token dan policy kill switch.
-KRS War tetap membutuhkan admin identity, allowlist plan, arm/disarm, dan
-revalidasi. Portal Cyber Campus read tools tidak menerima cookie/token dari
-caller MCP; identity owner disuntikkan oleh server.
+HEBAT uploads keep their confirmation token and policy kill switch. KRS War
+requires administrator identity, a plan allowlist, arm and disarm controls, and
+revalidation. Cyber Campus read tools never accept cookies or tokens from an
+MCP caller; the server injects trusted owner identity.
 
-Final adapter Cyber Campus harus memvalidasi ulang session, kuota, jadwal,
-action hash, dan snapshot portal sesaat sebelum submit. CAPTCHA/OTP tidak
-dipecahkan oleh agent.
+The final Cyber Campus adapter must revalidate the session, capacity, schedule,
+action hash, and portal snapshot immediately before submission. Agents never
+solve CAPTCHA or OTP challenges.
 
-## CPU-only dan provider fleksibel
+## CPU-only and flexible providers
 
-Xninetzy dirancang tanpa GPU:
+Xninetzy is designed to run without a GPU:
 
 ~~~env
 XNINETZY_DEVICE=cpu
@@ -62,30 +63,30 @@ CUDA_VISIBLE_DEVICES=
 NVIDIA_VISIBLE_DEVICES=void
 ~~~
 
-Default retrieval memakai SQLite + FAISS dan model Sentence Transformers yang
-diunduh lalu dijalankan lokal di CPU. Model publik Hugging Face dapat dipilih
-melalui EMBEDDING_MODEL; token hanya diperlukan untuk model private.
+Default retrieval uses SQLite, FAISS, and a Sentence Transformers model
+downloaded and executed locally on the CPU. Select a public Hugging Face model
+with `EMBEDDING_MODEL`; a token is only required for private models.
 
-Provider berbayar bersifat optional dan deployment-scoped:
+Paid providers are optional and scoped to the deployment:
 
-- Tavily atau Serper untuk web search;
-- YouTube Data API untuk metadata YouTube;
-- Flaz, OpenAI-compatible, OpenRouter, atau provider lain untuk chat;
-- model embedding Hugging Face private bila benar-benar diperlukan.
+- Tavily or Serper for web search;
+- YouTube Data API for YouTube metadata;
+- Flaz, OpenAI-compatible, OpenRouter, or another chat provider;
+- a private Hugging Face embedding model when it is genuinely required.
 
-Kosongkan API key optional untuk tetap memakai fallback lokal yang tersedia.
-Credential tidak pernah disimpan dalam vault, prompt, payload MCP, action summary,
-atau database approval.
+Leave optional API keys empty to use available local fallbacks. Credentials are
+never stored in the vault, prompts, MCP payloads, action summaries, or the
+approval database.
 
-## Evaluasi retrieval
+## Retrieval evaluation
 
-Gunakan dataset kecil owner-scoped untuk mengukur source recall, term support,
-sufficiency, dan citation identifiers:
+Use a small owner-scoped dataset to measure source recall, term support,
+sufficiency, and citation identifiers:
 
 ~~~bash
 cd services/ai
 uv run pytest tests/os/knowledge tests/os/policy -q
 ~~~
 
-knowledge_evaluate_retrieval hanya mengembalikan metrik. Jawaban final tetap
-harus melewati knowledge_answer, evidence bundle, dan citation validation.
+`knowledge_evaluate_retrieval` returns metrics only. Final answers must still
+pass through `knowledge_answer`, the evidence bundle, and citation validation.

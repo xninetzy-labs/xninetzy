@@ -1,16 +1,16 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Automation dan scheduled jobs
-description: Morning briefing, evening check-in, weekly review, periodic HEBAT sync, lease, retry, dan status delivery.
-section: Operasional
+title: Automation and scheduled jobs
+description: Morning briefings, evening check-ins, weekly reviews, periodic HEBAT sync, leases, retries, and delivery state.
+section: Operations
 ---
 
-Automation Xninetzy menutup loop `Capture → Understand → Plan → Execute →
-Review → Adapt`. Pesan terjadwal dibangun dari state aktual—task, deadline,
-roadmap, habit, goal, workout, event, serta freshness—bukan template LLM tanpa
-bukti.
+Xninetzy automation closes the
+`Capture → Understand → Plan → Execute → Review → Adapt` loop. Scheduled
+messages are built from current tasks, deadlines, roadmaps, habits, goals,
+workouts, events, and freshness state rather than an unsupported LLM template.
 
-## Konfigurasi
+## Configuration
 
 ```dotenv
 OS_SCHEDULER_ENABLED=true
@@ -32,58 +32,58 @@ HEBAT_PERIODIC_SYNC_ENABLED=false
 HEBAT_SYNC_INTERVAL_MINUTES=60
 ```
 
-Jam mengikuti `APP_TIMEZONE`; weekday memakai format Python, yaitu Senin `0`
-hingga Minggu `6`. Target delivery dipilih dari `OS_NOTIFY_CHAT_ID`, lalu
-`HEBAT_NOTIFY_CHAT_ID`, lalu `ADMIN_JID`.
+Hours follow `APP_TIMEZONE`. Weekdays use Python numbering: Monday is `0`
+and Sunday is `6`. Delivery targets are resolved from
+`OS_NOTIFY_CHAT_ID`, then `HEBAT_NOTIFY_CHAT_ID`, then `ADMIN_JID`.
 
-Periodic HEBAT sync default-nya mati karena membuka authenticated Moodle session.
-Aktifkan hanya setelah login stabil, target owner benar, dan rate limit sudah
-ditinjau.
+Periodic HEBAT sync is disabled by default because it opens an authenticated
+Moodle session. Enable it only after login is stable, the owner target is
+correct, and rate limits have been reviewed.
 
-## Jenis job
+## Job types
 
-| Job | Idempotency key | Isi |
+| Job | Idempotency key | Content |
 |---|---|---|
-| Morning briefing | owner + tanggal | task, deadline, roadmap, freshness HEBAT |
-| Evening check-in | owner + tanggal | task selesai, habit, prompt review |
-| Weekly review | owner + ISO week | event nyata, goal, dan progress roadmap |
-| HEBAT sync | interval bucket | assignment, shared task, dan reminder deadline |
+| Morning briefing | owner + date | Tasks, deadlines, roadmap, and HEBAT freshness |
+| Evening check-in | owner + date | Completed tasks, habits, and review prompt |
+| Weekly review | owner + ISO week | Real events, goals, and roadmap progress |
+| HEBAT sync | interval bucket | Assignments, shared tasks, and deadline reminders |
 
-## Lease dan delivery safety
+## Leases and delivery safety
 
-Setiap run disimpan di SQLite sebelum bekerja. Job internal yang terputus dapat
-diambil ulang setelah lease habis. HEBAT sync yang gagal memakai persisted
-backoff dan attempt count.
+Each run is persisted in SQLite before work begins. An interrupted internal job
+can be reclaimed after its lease expires. Failed HEBAT syncs use persisted
+backoff and attempt counts.
 
-Untuk pesan WhatsApp, Xninetzy menyimpan `delivery_started` beserta isi pesan
-sebelum memanggil WA engine. Ini mencegah retry otomatis setelah restart. Jika
-respons socket hilang, status menjadi `delivery_uncertain`: pesan mungkin sudah
-diterima WhatsApp sehingga sistem tidak mengirim ulang secara buta. Operator
-harus memeriksa chat lalu menentukan tindakan manual.
+Before calling the WhatsApp engine, Xninetzy stores `delivery_started` with the
+message content. This prevents a blind retry after restart. If the socket
+response is lost, the state becomes `delivery_uncertain`: WhatsApp may already
+have received the message, so an operator must inspect the chat before deciding
+what to do.
 
-Saat AI restart, run lama yang masih berstatus `delivery_started` otomatis
-direkonsiliasi menjadi `delivery_uncertain` sebelum scheduler mengambil job baru.
+At AI startup, stale `delivery_started` runs are reconciled to
+`delivery_uncertain` before the scheduler claims new work.
 
-## Memeriksa status
+## Inspecting status
 
-Dari natural chat atau MCP client, panggil tool:
+Call this tool from natural chat or any MCP client:
 
 ```text
 os_job_status
 ```
 
-Tool menampilkan target, freshness HEBAT, status, attempt, dan error terakhir.
-Status utama:
+It reports the target, HEBAT freshness, state, attempt count, and last error.
+Important states are:
 
-- `running`: sedang dikerjakan dan memiliki lease;
-- `delivery_started`: pengiriman sudah dimulai;
-- `delivered`: WA engine menerima pengiriman;
-- `succeeded`: job internal selesai;
-- `failed`: gagal dan dapat memiliki jadwal retry;
-- `delivery_uncertain`: hasil pengiriman ambigu dan perlu pemeriksaan manual.
+- `running`: active with a lease;
+- `delivery_started`: delivery has started;
+- `delivered`: the WhatsApp engine accepted delivery;
+- `succeeded`: an internal job completed;
+- `failed`: failed and may have a retry schedule;
+- `delivery_uncertain`: delivery is ambiguous and requires manual inspection.
 
 ## Freshness
 
-HEBAT dianggap stale ketika timestamp sync terakhir melewati dua kali
-`HEBAT_SYNC_INTERVAL_MINUTES`. Morning briefing selalu mengungkapkan status ini;
-data stale tidak ditampilkan seolah-olah deadline pasti terbaru.
+HEBAT is stale when the last sync is older than twice
+`HEBAT_SYNC_INTERVAL_MINUTES`. The morning briefing always discloses this
+state; stale data is never presented as a guaranteed current deadline.

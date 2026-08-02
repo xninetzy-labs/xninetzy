@@ -1,11 +1,12 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: HTTP API
-description: Endpoint AI service dan WA engine, payload chat, reminder, health, debug, serta authentication boundary.
-section: Operasional
+description: AI service and WhatsApp engine endpoints, chat payloads, reminders, health checks, debugging, and authentication boundaries.
+section: Operations
 ---
 
-AI service default berada di `http://127.0.0.1:8000`. WA engine default berada di `http://127.0.0.1:8081`.
+The AI service listens on `http://127.0.0.1:8000` by default. The WhatsApp
+engine listens on `http://127.0.0.1:8081`.
 
 ## AI health
 
@@ -27,50 +28,49 @@ curl -X POST http://127.0.0.1:8000/api/chat \
     "chat_id": "628xxxxxxxxxx@s.whatsapp.net",
     "sender_id": "628xxxxxxxxxx@s.whatsapp.net",
     "sender_name": "Owner",
-    "message": "jelaskan classification dan clustering",
+    "message": "explain classification and clustering",
     "chat_type": "private",
     "metadata": {}
   }'
 ```
 
-Field identitas memengaruhi memory, preference, admin guard, dan chat history.
-Dalam single-owner mode, `sender_id` harus cocok dengan `ADMIN_JID` atau
-`OWNER_ALLOWED_JIDS`. Bearer key mengautentikasi service caller; sender ID
-menentukan owner scope. Jangan meneruskan identitas admin dari input user.
+Identity fields affect memory, preferences, administrator guards, and chat
+history. In single-owner mode, `sender_id` must match `ADMIN_JID` or
+`OWNER_ALLOWED_JIDS`. The bearer key authenticates the service caller, while
+the sender ID determines owner scope. Never forward administrator identity from
+untrusted user input.
 
 ## Reminder API
 
-| Method | Endpoint | Fungsi |
+| Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/api/reminders` | list reminder |
-| `POST` | `/api/reminders` | membuat reminder |
-| `POST` | `/api/reminders/{id}/cancel` | membatalkan |
-| `POST` | `/api/reminders/{id}/close` | menutup |
+| `GET` | `/api/reminders` | List reminders |
+| `POST` | `/api/reminders` | Create a reminder |
+| `POST` | `/api/reminders/{id}/cancel` | Cancel a reminder |
+| `POST` | `/api/reminders/{id}/close` | Close a reminder |
 
-Kirim `Authorization: Bearer <AI_API_KEY>` pada semua request reminder.
+Send `Authorization: Bearer <AI_API_KEY>` with every reminder request.
 
 ## Debug API
 
-| Method | Endpoint | Fungsi |
+| Method | Endpoint | Purpose |
 |---|---|---|
-| `GET` | `/api/debug/tools` | daftar tool registry |
-| `POST` | `/api/debug/invoke-tool/{tool}` | invoke tool development |
+| `GET` | `/api/debug/tools` | List the tool registry |
+| `POST` | `/api/debug/invoke-tool/{tool}` | Invoke a development tool |
 
-Nonaktifkan pada instalasi nyata:
+Disable debug endpoints on a real installation:
 
 ```dotenv
 AGENT_DEBUG_ENDPOINTS=false
 ```
 
-## WA health
+## WhatsApp health and tools
 
 ```bash
 curl -s http://127.0.0.1:8081/health
 ```
 
-Periksa `socket_ready` sebelum mengirim aksi WhatsApp.
-
-## WA tools
+Check `socket_ready` before sending a WhatsApp action.
 
 List tools:
 
@@ -79,7 +79,7 @@ curl -H 'Authorization: Bearer <MCP_API_KEY>' \
   http://127.0.0.1:8081/mcp/tools
 ```
 
-Invoke:
+Invoke a tool:
 
 ```bash
 curl -X POST http://127.0.0.1:8081/mcp/call \
@@ -89,32 +89,33 @@ curl -X POST http://127.0.0.1:8081/mcp/call \
     "tool": "send_text_message",
     "input": {
       "jid": "628xxxxxxxxxx@s.whatsapp.net",
-      "text": "Halo dari Xninetzy"
+      "text": "Hello from Xninetzy"
     }
   }'
 ```
 
 ## Authentication boundary
 
-`AI_API_KEY` melindungi `/api/chat`, reminder, dan debug routes. Jika
-`AI_API_AUTH_REQUIRED=true` tetapi key server kosong, endpoint terlindungi
-merespons `503`; key hilang atau salah menghasilkan `401`.
+`AI_API_KEY` protects `/api/chat`, reminder routes, and debug routes. When
+`AI_API_AUTH_REQUIRED=true` but the server key is empty, protected endpoints
+return `503`; a missing or invalid caller key returns `401`.
 
-Tetap lakukan hal berikut:
+Keep these controls in place:
 
-- bind ke `127.0.0.1` atau private network;
-- jangan port-forward `8000` ke internet;
-- matikan debug endpoints;
-- gunakan firewall/reverse proxy authentication jika akses lintas host diperlukan;
-- gunakan shared secret berbeda untuk AI API dan WA tool server.
+- bind to `127.0.0.1` or a private network;
+- never forward port `8000` directly to the internet;
+- disable debug endpoints;
+- use firewall or reverse-proxy authentication for cross-host access;
+- use different shared secrets for the AI API and WhatsApp tool server.
 
 ## Error handling
 
-Gunakan status HTTP untuk membedakan:
+Use HTTP status codes to distinguish failures:
 
-- `4xx`: payload, auth, allowlist, atau permission;
-- `5xx`: dependency, provider, database, atau unexpected exception;
-- health OK tetapi chat gagal: periksa provider/tool log;
-- AI OK tetapi WA gagal: periksa socket dan shared key.
+- `4xx`: payload, authentication, allowlist, or permission failure;
+- `5xx`: dependency, provider, database, or unexpected exception;
+- health is OK but chat fails: inspect provider and tool logs;
+- AI is OK but WhatsApp fails: inspect socket state and the shared key.
 
-Jangan log request headers atau full payload media pada production karena dapat memuat credential dan data personal.
+Do not log request headers or complete media payloads in production because they
+may contain credentials and personal data.

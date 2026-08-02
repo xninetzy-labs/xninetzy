@@ -1,30 +1,30 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Backup dan restore
-description: Membuat, memverifikasi, meretensi, dan memulihkan state Xninetzy dengan aman.
-section: Operasional
+title: Backup and restore
+description: Create, verify, retain, and safely restore Xninetzy state.
+section: Operations
 ---
 
-Backup Xninetzy mencakup snapshot konsisten SQLite serta `faiss.index` dan
-`faiss_map.json` jika tersedia. Setiap snapshot memiliki manifest SHA-256.
-Credential, `.env`, cookie, session WhatsApp, browser profile, course download,
-dan Obsidian vault tidak disalin. Backup vault dan secret harus dikelola
-terpisah.
+A Xninetzy backup contains a consistent SQLite snapshot and, when available,
+`faiss.index` and `faiss_map.json`. Every snapshot has a SHA-256 manifest.
+Credentials, `.env`, cookies, WhatsApp sessions, browser profiles, course
+downloads, and the Obsidian vault are excluded. Back up vaults and secrets
+separately.
 
-## Konfigurasi
+## Configuration
 
 ```dotenv
 BACKUP_DIR=/app/data/backups
 BACKUP_RETENTION=14
 ```
 
-Direktori backup berisi data pribadi dan diabaikan Git. Simpan salinan kedua di
-media terenkripsi yang hanya dapat dibaca pemilik.
+The backup directory contains private data and is ignored by Git. Keep a second
+copy on encrypted storage that only the owner can read.
 
-## Membuat dan memeriksa snapshot
+## Create and verify a snapshot
 
-Untuk stack Docker, jalankan di container agar `/app/data` menunjuk volume yang
-benar:
+For Docker, run inside the container so `/app/data` resolves to the mounted
+volume:
 
 ```bash
 docker compose exec ai uv run python scripts/xninetzy_backup.py create
@@ -32,39 +32,41 @@ docker compose exec ai uv run python scripts/xninetzy_backup.py list
 docker compose exec ai uv run python scripts/xninetzy_backup.py verify <backup-name>
 ```
 
-Untuk host mode, jalankan dari `services/ai` setelah `SQLITE_PATH`,
-`VECTOR_DATA_DIR`, dan `BACKUP_DIR` diarahkan ke path host.
+For host mode, run from `services/ai` after pointing `SQLITE_PATH`,
+`VECTOR_DATA_DIR`, and `BACKUP_DIR` to host paths.
 
-`create` menggunakan SQLite online backup API agar database tidak disalin secara
-mentah ketika WAL aktif. Snapshot lama dipangkas setelah jumlahnya melewati
-`BACKUP_RETENTION`.
+`create` uses the SQLite online backup API, so a running service can produce a
+consistent snapshot. A retention policy removes old snapshots only after a new
+snapshot succeeds.
 
 ## Restore
 
-Restore adalah operasi eksplisit dan tidak berjalan tanpa `--confirm`:
+Stop writers before restoring:
+
+```bash
+docker compose stop ai
+docker compose run --rm ai uv run python scripts/xninetzy_backup.py restore <backup-name>
+docker compose up -d ai
+```
+
+Restore requires explicit confirmation. It verifies the manifest, backs up the
+current target, writes through temporary files, validates SQLite integrity, and
+atomically replaces the targets. If verification fails, the current database
+is left unchanged.
+
+After restore:
 
 ```bash
 docker compose exec ai uv run python scripts/xninetzy_backup.py verify <backup-name>
-docker compose stop ai wa-enggine
-docker compose run --rm --no-deps ai uv run python scripts/xninetzy_backup.py restore <backup-name> --confirm
-docker compose up -d ai wa-enggine
+curl -s http://127.0.0.1:8000/health
 ```
 
-One-off container memakai volume yang sama tetapi tidak menjalankan FastAPI atau
-background loop. Command
-memvalidasi seluruh checksum terlebih dahulu dan mengganti file target secara
-atomik, tetapi tidak dapat menjamin konsistensi jika service lain tetap menulis.
+Also verify important tools through MCP or WhatsApp.
 
-## Recovery drill
+## Recovery boundaries
 
-Minimal setiap bulan:
-
-1. buat snapshot baru;
-2. verifikasi checksum;
-3. restore ke direktori staging, bukan data aktif;
-4. buka SQLite dan validasi jumlah task/note/event;
-5. validasi invariant FAISS melalui test atau startup service;
-6. catat tanggal, backup ID, hasil, dan operator di log operasional.
-
-Backup belum lengkap sebelum restore pernah diuji. Jangan menaruh secret di log
-drill atau menyalin snapshot personal ke repository.
+- SQLite is canonical for structured OS state.
+- FAISS is rebuildable from SQLite when its chunk map invariant fails.
+- Neo4j is a projection and is not part of the canonical snapshot.
+- WhatsApp and HEBAT sessions require separate reauthentication.
+- The Obsidian vault requires its own versioned or encrypted backup.

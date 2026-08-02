@@ -1,63 +1,65 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: Local data per installation
-description: Model SQLite per owner, runtime-data isolation, migration, backup, dan sanitasi repository open-source.
-section: Operasional
+description: Per-owner SQLite, runtime-data isolation, migrations, backups, and open-source repository hygiene.
+section: Operations
 ---
 
-Setiap instalasi Xninetzy memiliki SQLite sendiri. Repository tidak membawa
-database contoh, database pemilik, WAL/SHM, FAISS, session Moodle, hasil download,
-atau snapshot analisis.
+Every Xninetzy installation owns a separate SQLite database. The repository
+contains no sample owner database, WAL or SHM files, FAISS state, Moodle
+sessions, downloads, or analysis snapshots.
 
 ```text
-clone A → services/ai/data/xninetzy.sqlite3 milik owner A
-clone B → services/ai/data/xninetzy.sqlite3 milik owner B
+clone A → services/ai/data/xninetzy.sqlite3 owned by owner A
+clone B → services/ai/data/xninetzy.sqlite3 owned by owner B
 ```
 
-Database dibuat dan dimigrasikan otomatis saat AI service startup. State tidak
-dibagi melalui Git, Codex config, Claude config, atau OpenCode config. MCP client
-pada satu mesin menunjuk instalasi lokal yang dikonfigurasi untuk mesin tersebut.
+The database is created and migrated automatically when the AI service starts.
+State is never shared through Git, Codex configuration, Claude configuration, or
+OpenCode configuration. An MCP client on a machine points to that machine's
+configured local installation.
 
-## Aturan repository
+## Repository rules
 
-Seluruh `services/ai/data/**` diabaikan Git kecuali file kebijakan
-`services/ai/data/README.md`. Ini meliputi:
+All of `services/ai/data/**` is ignored by Git except the policy file
+`services/ai/data/README.md`. This includes:
 
-- SQLite, `-wal`, dan `-shm`;
-- FAISS index/map yang merepresentasikan knowledge pribadi;
-- HEBAT browser profile, cookie/state, download, dan debug HTML;
-- web-analysis snapshot/report;
-- snapshot nilai Cyber Campus yang sudah dinormalisasi tanpa verified token;
-- concept graph, evidence, dan mastery Learning OS;
-- recall cards, jawaban attempt, confidence, dan jadwal spaced repetition;
-- media WhatsApp dan backup lokal.
+- SQLite, `-wal`, and `-shm`;
+- FAISS indexes and maps that represent personal knowledge;
+- HEBAT browser profiles, cookies, state, downloads, and debug HTML;
+- web-analysis snapshots and reports;
+- normalized Cyber Campus grade snapshots without verified tokens;
+- Learning OS concept graphs, evidence, and mastery;
+- recall cards, attempts, confidence, and spaced-repetition schedules;
+- WhatsApp media and local backups.
 
-Sebelum commit:
+Before committing:
 
 ```bash
 git status --short
 git ls-files services/ai/data
 ```
 
-Output `git ls-files` seharusnya hanya menampilkan
-`services/ai/data/README.md`.
+`git ls-files` should list only `services/ai/data/README.md`.
 
-## Memindahkan instalasi
+## Move an installation
 
-Gunakan [Backup dan restore](/docs/backup-restore/), bukan commit database. Backup
-memiliki checksum dan restore confirmation. Transfer snapshot lewat media
-terenkripsi, batasi akses ke owner, lalu hapus salinan sementara.
+Use [Backup and restore](/docs/backup-restore/) instead of committing a
+database. Backups have checksums and restore confirmation. Transfer a snapshot
+through encrypted media, restrict access to the owner, and remove temporary
+copies.
 
-## Jika data pernah ter-push
+## If data was pushed
 
-Menghapus file pada commit terbaru tidak menghapus blob dari history. Sebelum
-repository dibuat publik:
+Removing a file from the latest commit does not remove its blob from history.
+Before making the repository public:
 
-1. revoke atau rotate session/credential yang mungkin terekspos;
-2. buat clone cadangan privat;
-3. sanitasi history dengan tool seperti `git filter-repo`;
-4. force-push hanya setelah koordinasi dengan seluruh collaborator;
-5. jalankan secret scan dan periksa kembali `git ls-files`;
-6. minta collaborator membuat clone baru setelah history berubah.
+1. revoke or rotate any exposed session or credential;
+2. create a private backup clone;
+3. sanitize history with a tool such as `git filter-repo`;
+4. force-push only after coordinating with every collaborator;
+5. run a secret scan and inspect `git ls-files` again;
+6. ask collaborators to create fresh clones after history changes.
 
-History rewrite bersifat destruktif dan tidak dijalankan otomatis oleh Xninetzy.
+History rewriting is destructive and is never performed automatically by
+Xninetzy.

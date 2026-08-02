@@ -13,7 +13,7 @@ type InputBoxProps = {
   onRemoveLastAttachment: () => void;
   onSubmit: () => void;
   width: number;
-};
+}
 
 // A multi-char chunk that looks like a paste rather than a keystroke.
 const PASTE_MIN_CHARS = 64;

@@ -1,7 +1,6 @@
 ---
 import Brand from './Brand.astro';
 import Icon from './Icon.astro';
-import LanguageSwitcher from './LanguageSwitcher.astro';
 import { flatNavigation } from '../data/navigation';
 ---
 
@@ -18,7 +17,6 @@ import { flatNavigation } from '../data/navigation';
         <kbd>Ctrl K</kbd>
       </button>
       <a class="header-link" href="/docs/mcp/">MCP</a>
-      <LanguageSwitcher />
       <a class="header-link" href="https://misbahul-muttaqin.vercel.app/" target="_blank" rel="noreferrer">Portfolio</a>
       <a class="header-link header-github" href="https://github.com/misbahul45" target="_blank" rel="noreferrer" aria-label="Misbahul45 on GitHub"><Icon name="github" /></a>
       <a class="header-cta" href="/docs/getting-started/">Get started <Icon name="arrow" /></a>
@@ -30,7 +28,7 @@ import { flatNavigation } from '../data/navigation';
   <div class="search-panel">
     <div class="search-field">
       <Icon name="search" />
-      <input id="search-input" type="search" placeholder="Cari provider, WhatsApp, Obsidian…" autocomplete="off" />
+      <input id="search-input" type="search" placeholder="Search providers, WhatsApp, Obsidian…" autocomplete="off" />
       <button id="search-close" class="icon-button" aria-label="Close search"><Icon name="x" /></button>
     </div>
     <p id="search-title" class="search-hint">Quick navigation</p>

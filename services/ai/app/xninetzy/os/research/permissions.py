@@ -65,6 +65,12 @@ def can_run_deep_research(
     if not settings.DEEP_RESEARCH_ADMIN_ONLY:
         return True, "deep_research_open"
 
+    context = metadata or {}
+    if context.get("client") == "cli" or (
+        context.get("source") == "mcp" and context.get("principal") == "local-owner"
+    ):
+        return True, "trusted_local_interface"
+
     if normalize_whatsapp_jid(sender_id) in _owner_jids():
         return True, "admin_jid"
 

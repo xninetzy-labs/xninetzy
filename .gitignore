@@ -154,3 +154,7 @@ services/ai/data/**
 /article.json
 /*-headers.txt
 /sciencedirect.html
+.backup/
+.playwright-cli/
+.xninetzy/checkpoints/*.tmp
+output/*.tmp

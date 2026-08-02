@@ -553,4 +553,6 @@ Status: In progress
 - [x] Add host `xninetzy config` commands backed by the canonical Python schema.
 - [x] Cover every `Settings` field and documented `.env.example` key without exposing secrets.
 - [x] Add atomic writes, type validation, redaction, and regression coverage.
-- [ ] Complete setup, doctor, native/Docker onboarding, and interface parity work.
+- [x] Add provider-neutral `xninetzy setup` and read-only `xninetzy doctor` host workflows.
+- [x] Gate Docker Compose and local service probes behind explicit doctor flags.
+- [ ] Complete native/Docker onboarding automation and host-runtime interface parity work.

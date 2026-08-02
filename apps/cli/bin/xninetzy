@@ -21,7 +21,7 @@ function findRepositoryRoot(start) {
   return null;
 }
 
-function runConfigCommand(argumentsList) {
+function runHostCommand(moduleName, argumentsList) {
   const entryDirectory = dirname(fileURLToPath(import.meta.url));
   const root = findRepositoryRoot(process.cwd()) ?? findRepositoryRoot(entryDirectory);
 
@@ -40,7 +40,7 @@ function runConfigCommand(argumentsList) {
       join(root, "services", "ai"),
       "python",
       "-m",
-      "app.xninetzy.interfaces.config_cli",
+      moduleName,
       ...argumentsList,
     ],
     {
@@ -51,7 +51,7 @@ function runConfigCommand(argumentsList) {
 
   if (result.error) {
     process.stderr.write(
-      "Unable to run the Xninetzy configuration CLI. Install uv and run this command on the host.\n"
+      "Unable to run the Xninetzy host CLI. Install uv and run this command on the host.\n"
     );
     process.exit(2);
   }
@@ -62,7 +62,12 @@ function runConfigCommand(argumentsList) {
 const argumentsList = process.argv.slice(2);
 
 if (argumentsList[0] === "config") {
-  runConfigCommand(argumentsList.slice(1));
+  runHostCommand(
+    "app.xninetzy.interfaces.config_cli",
+    argumentsList.slice(1)
+  );
+} else if (argumentsList[0] === "setup" || argumentsList[0] === "doctor") {
+  runHostCommand("app.xninetzy.interfaces.onboarding_cli", argumentsList);
 } else {
   import("../dist/index.js");
 }

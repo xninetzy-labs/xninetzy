@@ -55,7 +55,7 @@ apps/docs/
 
 ## Add a page
 
-1. Create a Markdown file di `src/pages/docs`, for example `backup.md`.
+1. Create a Markdown file in `src/pages/docs`, for example `backup.md`.
 2. Add frontmatter:
 
 ```yaml
@@ -100,12 +100,12 @@ Preserve contrast, keyboard focus, the mobile layout, and `prefers-reduced-motio
 ## Content and security
 
 - Use placeholders for API key, password, phone numbers, JIDs, and personal paths.
-- Do not copy `.env`, cookie, session, log, atau course material into documentation.
+- Do not copy `.env`, cookie, session, log, or course material into documentation.
 - Describe the current security boundary accurately; do not claim an endpoint is secure when its guard is not implemented.
 - Update the root `README.md` when commands or the main structure change.
 
 ## Deployment
 
-Site uses `output: 'static'` and produces HTML/CSS/JS portable. Upload the contents of `dist` to your preferred static host. When deploying to a subpath, set `base` pada `astro.config.mjs` and use `import.meta.env.BASE_URL` for assets or links that require the prefix.
+Site uses `output: 'static'` and produces portable HTML/CSS/JS. Upload the contents of `dist` to your preferred static host. When deploying to a subpath, set `base` in `astro.config.mjs` and use `import.meta.env.BASE_URL` for assets or links that require the prefix.
 
-For the production canonical URL and social metadata, add a `site` pada `astro.config.mjs` after the final domain is known.
+For the production canonical URL and social metadata, add a `site` value to `astro.config.mjs` after the final domain is known.

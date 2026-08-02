@@ -1,21 +1,37 @@
-import { useEffect, useState } from "react";
-import { useStdout } from "ink";
+import { useEffect, useState } from 'react';
+import { useStdout } from 'ink';
 
-export function useStdoutDimensions(): [number, number] {
+type TerminalDimensions = [
+  columns: number,
+  rows: number
+];
+
+function readDimensions(
+  stdout: NodeJS.WriteStream
+): TerminalDimensions {
+  return [
+    Math.max(40, stdout.columns ?? 120),
+    Math.max(20, stdout.rows ?? 40)
+  ];
+}
+
+export function useStdoutDimensions(): TerminalDimensions {
   const { stdout } = useStdout();
-  const [dimensions, setDimensions] = useState<[number, number]>([
-    stdout.columns || 100,
-    stdout.rows || 30,
-  ]);
+
+  const [dimensions, setDimensions] =
+    useState<TerminalDimensions>(() =>
+      readDimensions(stdout)
+    );
 
   useEffect(() => {
-    const handler = () => {
-      setDimensions([stdout.columns || 100, stdout.rows || 30]);
+    const handleResize = (): void => {
+      setDimensions(readDimensions(stdout));
     };
 
-    stdout.on("resize", handler);
+    stdout.on('resize', handleResize);
+
     return () => {
-      stdout.off("resize", handler);
+      stdout.off('resize', handleResize);
     };
   }, [stdout]);
 

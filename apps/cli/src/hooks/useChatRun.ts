@@ -1,87 +1,344 @@
-import { useCallback, useRef, useState } from 'react';
-import type { ChatActivity, ChatRun, ChatRunPhase } from '../types/chat-run.js';
+import {
+  useCallback,
+  useRef,
+  useState
+} from 'react';
+import { performance } from 'node:perf_hooks';
 
-function activityId(kind: string, label: string, detail?: string): string {
-  return [kind, label, detail || ""].join(":").toLowerCase();
-}
+import type {
+  ChatActivityKind,
+  ChatActivityStatus,
+  ChatRun,
+  ChatRunPhase
+} from '../types/chat-run.js';
 
-const allowedTransitions: Record<ChatRunPhase, ReadonlySet<ChatRunPhase>> = {
-  idle: new Set(["queued"]),
-  queued: new Set(["planning", "thinking", "tool-running", "waiting-approval", "streaming", "completed", "failed", "cancelled", "timed-out"]),
-  planning: new Set(["thinking", "tool-running", "waiting-approval", "streaming", "completed", "failed", "cancelled", "timed-out"]),
-  thinking: new Set(["planning", "tool-running", "waiting-approval", "streaming", "completed", "failed", "cancelled", "timed-out"]),
-  "tool-running": new Set(["planning", "thinking", "waiting-approval", "streaming", "completed", "failed", "cancelled", "timed-out"]),
-  "waiting-approval": new Set(["thinking", "tool-running", "streaming", "completed", "failed", "cancelled", "timed-out"]),
-  streaming: new Set(["completed", "failed", "cancelled", "timed-out"]),
-  completed: new Set(),
-  failed: new Set(),
-  cancelled: new Set(),
-  "timed-out": new Set(),
+const validTransitions: Record<
+  ChatRunPhase,
+  readonly ChatRunPhase[]
+> = {
+  idle: ['queued'],
+
+  queued: [
+    'planning',
+    'thinking',
+    'tool-running',
+    'waiting-approval',
+    'streaming',
+    'completed',
+    'cancelled',
+    'timed-out',
+    'failed'
+  ],
+
+  planning: [
+    'thinking',
+    'tool-running',
+    'waiting-approval',
+    'streaming',
+    'completed',
+    'cancelled',
+    'timed-out',
+    'failed'
+  ],
+
+  thinking: [
+    'tool-running',
+    'waiting-approval',
+    'streaming',
+    'completed',
+    'cancelled',
+    'timed-out',
+    'failed'
+  ],
+
+  'tool-running': [
+    'thinking',
+    'waiting-approval',
+    'streaming',
+    'completed',
+    'cancelled',
+    'timed-out',
+    'failed'
+  ],
+
+  'waiting-approval': [
+    'tool-running',
+    'thinking',
+    'streaming',
+    'completed',
+    'cancelled',
+    'timed-out',
+    'failed'
+  ],
+
+  streaming: [
+    'completed',
+    'cancelled',
+    'timed-out',
+    'failed'
+  ],
+
+  completed: [],
+  cancelled: [],
+  'timed-out': [],
+  failed: []
 };
 
-export function canTransition(from: ChatRunPhase, to: ChatRunPhase): boolean {
-  return from === to || allowedTransitions[from].has(to);
+function isTerminalPhase(phase: ChatRunPhase): boolean {
+  return [
+    'completed',
+    'cancelled',
+    'timed-out',
+    'failed'
+  ].includes(phase);
+}
+
+function normalizeActivityKey(value: string): string {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+}
+
+function createActivityId(
+  kind: ChatActivityKind,
+  label: string
+): string {
+  return `${kind}:${normalizeActivityKey(label)}`;
+}
+
+function canTransition(
+  current: ChatRunPhase,
+  next: ChatRunPhase
+): boolean {
+  if (current === next) {
+    return true;
+  }
+
+  return validTransitions[current].includes(next);
 }
 
 export function useChatRun() {
   const [run, setRun] = useState<ChatRun | null>(null);
-  const currentId = useRef<string | null>(null);
 
-  const start = useCallback((id: string) => {
-    const next: ChatRun = { id, phase: 'queued', startedAt: performance.now(), activity: [] };
-    currentId.current = id;
-    setRun(next);
-  }, []);
+  const currentRequestIdRef =
+    useRef<string | null>(null);
 
-  const addActivity = useCallback((id: string, kind: string, label: string, status: ChatActivity['status'], detail?: string) => {
-    if (currentId.current !== id) return;
-    setRun((current) => {
-      if (!current || current.id !== id) return current;
-      const key = activityId(kind, label, detail);
-      const existing = current.activity.findIndex((activity) => activity.id === key);
-      const entry: ChatActivity = { id: key, kind, label, status, detail };
-      const settled = current.activity.map((item) =>
-        item.kind === kind && item.status === "active" && item.id !== key
-          ? { ...item, status: "completed" as const }
-          : item
-      );
-      const activity = existing === -1
-        ? [...settled, entry]
-        : settled.map((item, index) => index === existing ? { ...item, ...entry } : item);
-      return { ...current, activity };
+  const isCurrent = useCallback(
+    (requestId: string): boolean => {
+      return currentRequestIdRef.current === requestId;
+    },
+    []
+  );
+
+  const start = useCallback((requestId: string) => {
+    const now = performance.now();
+
+    currentRequestIdRef.current = requestId;
+
+    setRun({
+      requestId,
+      phase: 'queued',
+      startedAt: now,
+      activity: []
     });
   }, []);
 
-  const setPhase = useCallback((id: string, phase: ChatRunPhase) => {
-    if (currentId.current !== id) return;
-    setRun((current) => {
-      if (!current || current.id !== id || !canTransition(current.phase, phase)) return current;
-      const firstTokenAt = phase === 'streaming' && !current.firstTokenAt
-        ? performance.now()
-        : current.firstTokenAt;
-      return { ...current, phase, firstTokenAt };
-    });
-  }, []);
+  const setPhase = useCallback(
+    (
+      requestId: string,
+      phase: ChatRunPhase
+    ) => {
+      if (currentRequestIdRef.current !== requestId) {
+        return;
+      }
 
-  const finish = useCallback((id: string, phase: Extract<ChatRunPhase, 'completed' | 'failed' | 'cancelled' | 'timed-out'>, error?: string) => {
-    if (currentId.current !== id) return;
-    currentId.current = null;
-    setRun((current) => {
-      if (!current || current.id !== id || !canTransition(current.phase, phase)) return current;
-      const activityStatus = phase === "completed" ? "completed" : "failed";
-      const activity = current.activity.map((item) =>
-        item.status === "active" ? { ...item, status: activityStatus as ChatActivity["status"] } : item
-      );
-      return { ...current, phase, activity, finishedAt: performance.now(), error };
-    });
-  }, []);
+      setRun((current) => {
+        if (
+          !current ||
+          current.requestId !== requestId ||
+          isTerminalPhase(current.phase)
+        ) {
+          return current;
+        }
+
+        if (!canTransition(current.phase, phase)) {
+          return current;
+        }
+
+        if (current.phase === phase) {
+          return current;
+        }
+
+        const now = performance.now();
+
+        return {
+          ...current,
+          phase,
+
+          firstTokenAt:
+            phase === 'streaming' &&
+            current.firstTokenAt === undefined
+              ? now
+              : current.firstTokenAt
+        };
+      });
+    },
+    []
+  );
+
+  const addActivity = useCallback(
+    (
+      requestId: string,
+      kind: ChatActivityKind,
+      label: string,
+      status: ChatActivityStatus,
+      detail?: string
+    ) => {
+      if (currentRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      setRun((current) => {
+        if (
+          !current ||
+          current.requestId !== requestId ||
+          isTerminalPhase(current.phase)
+        ) {
+          return current;
+        }
+
+        const now = performance.now();
+        const id = createActivityId(kind, label);
+
+        const existingIndex =
+          current.activity.findIndex(
+            (activity) => activity.id === id
+          );
+
+        if (existingIndex === -1) {
+          return {
+            ...current,
+
+            activity: [
+              ...current.activity,
+              {
+                id,
+                kind,
+                label,
+                status,
+                detail,
+
+                startedAt: now,
+
+                finishedAt:
+                  status === 'active'
+                    ? undefined
+                    : now
+              }
+            ]
+          };
+        }
+
+        const existing =
+          current.activity[existingIndex];
+
+        if (
+          existing.status === status &&
+          existing.detail === detail
+        ) {
+          return current;
+        }
+
+        const activity = current.activity.slice();
+
+        activity[existingIndex] = {
+          ...existing,
+          label,
+          status,
+          detail: detail ?? existing.detail,
+
+          finishedAt:
+            status === 'active'
+              ? undefined
+              : existing.finishedAt ?? now
+        };
+
+        return {
+          ...current,
+          activity
+        };
+      });
+    },
+    []
+  );
+
+  const finish = useCallback(
+    (
+      requestId: string,
+      phase:
+        | 'completed'
+        | 'cancelled'
+        | 'timed-out'
+        | 'failed',
+      error?: string
+    ) => {
+      if (currentRequestIdRef.current !== requestId) {
+        return;
+      }
+
+      const now = performance.now();
+
+      setRun((current) => {
+        if (
+          !current ||
+          current.requestId !== requestId ||
+          isTerminalPhase(current.phase)
+        ) {
+          return current;
+        }
+
+        return {
+          ...current,
+          phase,
+          error,
+          finishedAt: now,
+
+          activity: current.activity.map((activity) => {
+            if (activity.status !== 'active') {
+              return activity;
+            }
+
+            return {
+              ...activity,
+
+              status:
+                phase === 'completed'
+                  ? 'completed'
+                  : 'failed',
+
+              finishedAt: now
+            };
+          })
+        };
+      });
+    },
+    []
+  );
 
   const reset = useCallback(() => {
-    currentId.current = null;
+    currentRequestIdRef.current = null;
     setRun(null);
   }, []);
 
-  const isCurrent = useCallback((id: string) => currentId.current === id, []);
-
-  return { run, start, addActivity, setPhase, finish, isCurrent, reset };
+  return {
+    run,
+    start,
+    setPhase,
+    addActivity,
+    finish,
+    isCurrent,
+    reset
+  };
 }

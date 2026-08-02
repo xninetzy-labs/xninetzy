@@ -33,7 +33,7 @@ code, tests, configuration, and documentation agree.
 | Reliability-01 | Graph path mapping, Flaz thinking guard, skill ranking, and inbox triage | Complete | 27 focused tests; GraphRAG host smoke; provider error diagnosis |
 | Academic-01d | QA standard-browser login and HEBAT Moodle upload smoke | Complete | QA headed login live; HEBAT overdue assignment verified `Submitted for grading`; uploader selector fix |
 | Academic-01e | Academic parser hardening, grade snapshot idempotency, and KRS watcher timing | Complete | 31 focused academic tests; Ruff; hash regression X→Y→X; adaptive watcher intervals |
-| Reliability-02 | Bounded GraphRAG Neo4j lifecycle, host-path bootstrap, and bilingual docs | Complete | 21 focused graph tests; 569 full AI tests; Ruff; Astro check/build |
+| Reliability-02 | Bounded GraphRAG Neo4j lifecycle, host-path bootstrap, and English-only docs | Complete | 21 focused graph tests; 569 full AI tests; Ruff; Astro check/build |
 
 ## Batch P0-01 — API authentication and owner boundary
 
@@ -482,7 +482,7 @@ Verification:
 - Skill MCP registry count increased from 229 to 232.
 - Astro check/build passed with 24 pages.
 
-## Obsidian-01 — Canonical foldering and bilingual documentation
+## Obsidian-01 — Canonical foldering and English documentation
 
 Status: Complete
 
@@ -490,7 +490,7 @@ Status: Complete
 - [x] Route templates, goals, daily reviews, HEBAT material, helper docs, and KRS operational logs through canonical paths.
 - [x] Add dry-run inventory, source-hash migration, backup, wikilink update, MOC refresh, and vault verification.
 - [x] Expose folder management through the central tool registry with HITL for moves.
-- [x] Add metadata schema, configuration, focused tests, and English/Indonesia Astro documentation switcher.
+- [x] Add metadata schema, configuration, focused tests, and English-only Astro documentation.
 - [x] Document shared skill installation and validation.
 - [x] Verify focused AI tests, Ruff, Astro check, and Astro build.
 
@@ -505,7 +505,7 @@ Completed: 2026-08-02
 - [x] Make graph health statistics passive and expose the cooldown state for diagnosis.
 - [x] Add regression tests for failure latching, retry suppression, and connection timeout propagation.
 - [x] Bootstrap host path mapping before Settings so direct local graph calls never write to /app.
-- [x] Add shared English/Indonesia metadata switching and explicit source-language notices in Astro docs.
+- [x] Remove runtime locale state and keep one canonical English source for every Astro guide.
 - [x] Document the runtime variables and the observed timeout resolution in `docs/plan/bug.md`.
 
 The default readiness bound is 10 seconds even when an installation still has the legacy 60-second boot setting. Operators can increase it explicitly when a cold Neo4j image needs more time.

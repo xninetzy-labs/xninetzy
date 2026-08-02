@@ -1,240 +1,136 @@
-import React, { memo } from 'react';
+import React, { memo, useMemo } from 'react';
 import { Box, Text } from 'ink';
+
 import type { ChatMessage } from '../types.js';
-import { describeBlock } from '../types.js';
+import type { ChatRun } from '../types/chat-run.js';
+import type {
+  ChatInlineSpan,
+  ChatRenderRow,
+  ChatRowTone
+} from '../rendering/chat-markdown.js';
+import {
+  buildChatRows,
+  selectViewportRows
+} from '../rendering/chat-markdown.js';
 import { colors } from '../theme/colors.js';
 
 type ChatViewProps = {
   messages: ChatMessage[];
   width: number;
-  maxContentLines?: number;
+  maxLines: number;
+  runSnapshots?: Record<string, ChatRun>;
 };
 
-function boundedContent(content: string, maxContentLines?: number, lineWidth = 72): string {
-  if (!maxContentLines) return content;
-  const visualLines = content.split("\n").flatMap((line) => {
-    if (!line) return [""];
-    const chunks: string[] = [];
-    for (let offset = 0; offset < line.length; offset += lineWidth) {
-      chunks.push(line.slice(offset, offset + lineWidth));
-    }
-    return chunks;
-  });
-  if (visualLines.length <= maxContentLines) return content;
-  return ["… streaming preview", ...visualLines.slice(-maxContentLines)].join("\n");
-}
-
-/** Inline markdown: **bold**, `code`, *italic* / _italic_. */
-function InlineMarkdown({ text }: { text: string }) {
-  const parts = text.split(/(\*\*.*?\*\*|`.*?`|\*.*?\*|_.*?_)/g);
-
-  return (
-    <>
-      {parts.map((part, i) => {
-        if (!part) return null;
-        if (part.startsWith('**') && part.endsWith('**')) {
-          return (
-            <Text key={i} bold color={colors.white}>
-              {part.slice(2, -2)}
-            </Text>
-          );
-        }
-        if (part.startsWith('`') && part.endsWith('`')) {
-          return (
-            <Text key={i} color={colors.cyan}>
-              {' '}
-              {part.slice(1, -1)}
-              {' '}
-            </Text>
-          );
-        }
-        if (
-          (part.startsWith('*') && part.endsWith('*')) ||
-          (part.startsWith('_') && part.endsWith('_'))
-        ) {
-          return (
-            <Text key={i} italic color={colors.lavender}>
-              {part.slice(1, -1)}
-            </Text>
-          );
-        }
-        return <Text key={i}>{part}</Text>;
-      })}
-    </>
-  );
-}
-
-/** A single non-code markdown line: headers, list bullets, inline styles. */
-function MarkdownLine({ text }: { text: string }) {
-  let lineText = text;
-  let color: string = colors.white;
-  let bold = false;
-  let prefix = '';
-
-  if (lineText.startsWith('### ')) {
-    lineText = lineText.slice(4);
-    color = colors.white;
-    bold = true;
-  } else if (lineText.startsWith('## ')) {
-    lineText = lineText.slice(3);
-    color = colors.white;
-    bold = true;
-  } else if (lineText.startsWith('# ')) {
-    lineText = lineText.slice(2);
-    color = colors.white;
-    bold = true;
+function toneColor(tone: ChatRowTone | undefined): string {
+  switch (tone) {
+    case 'secondary':
+      return colors.textSecondary;
+    case 'muted':
+      return colors.muted;
+    case 'accent':
+      return colors.cyanBright;
+    case 'user':
+      return colors.orangeBright;
+    case 'code':
+      return colors.textSecondary;
+    case 'success':
+      return colors.green;
+    case 'warning':
+      return colors.yellow;
+    case 'danger':
+      return colors.red;
+    default:
+      return colors.textPrimary;
   }
-
-  const trimmed = lineText.trim();
-  if (trimmed.startsWith('- ') || trimmed.startsWith('* ')) {
-    prefix = '  • ';
-    lineText = trimmed.slice(2);
-  }
-
-  return (
-    <Box flexDirection="row">
-      {prefix && <Text color={colors.white}>{prefix}</Text>}
-      <Text color={color} bold={bold}>
-        <InlineMarkdown text={lineText} />
-      </Text>
-    </Box>
-  );
 }
 
-/** Fenced code block rendered as a soft-background panel. */
-function CodeBlock({ lines, lang }: { lines: string[]; lang: string }) {
+function InlineSpan({
+  span,
+  fallbackColor
+}: {
+  span: ChatInlineSpan;
+  fallbackColor: string;
+}) {
+  switch (span.style) {
+    case 'strong':
+      return <Text bold color={colors.white}>{span.text}</Text>;
+    case 'emphasis':
+      return <Text italic color={colors.textSecondary}>{span.text}</Text>;
+    case 'code':
+      return <Text color={colors.cyanBright}>{span.text}</Text>;
+    case 'link':
+      return <Text underline color={colors.cyanBright}>{span.text}</Text>;
+    case 'citation':
+      return <Text bold color={colors.blueBright}>{span.text}</Text>;
+    case 'strike':
+      return <Text strikethrough color={colors.muted}>{span.text}</Text>;
+    default:
+      return <Text color={fallbackColor}>{span.text}</Text>;
+  }
+}
+
+function RenderRow({ row }: { row: ChatRenderRow }) {
+  const color = toneColor(row.tone);
+  const userMessage = row.role === 'user';
+  const railColor = userMessage
+    ? colors.orange
+    : colors.borderBright;
+
   return (
-    <Box flexDirection="column" marginY={0} paddingX={1} borderStyle="round" borderColor={colors.borderDim}>
-      {lang && (
-        <Text color={colors.dim} italic>
-          {lang}
-        </Text>
+    <Box
+      width={row.panelWidth}
+      alignSelf={userMessage ? 'flex-end' : 'flex-start'}
+      flexDirection="row"
+    >
+      {row.kind === 'blank' ? (
+        <Text> </Text>
+      ) : (
+        <>
+          {row.rail ? <Text color={railColor}>┃{' '}</Text> : null}
+          <Text color={color} bold={row.bold} wrap="truncate">
+            {row.prefix ? <Text color={color}>{row.prefix}</Text> : null}
+            {row.spans.map((span, index) => (
+              <InlineSpan
+                key={`${row.key}:span:${index}`}
+                span={span}
+                fallbackColor={color}
+              />
+            ))}
+          </Text>
+        </>
       )}
-      {lines.map((codeLine, i) => (
-        <Text key={i} color={colors.cyan}>
-          {codeLine || ' '}
-        </Text>
-      ))}
     </Box>
   );
 }
 
-type Block =
-  | { kind: 'md'; text: string }
-  | { kind: 'code'; lang: string; lines: string[] };
-
-function parseBlocks(content: string): Block[] {
-  const blocks: Block[] = [];
-  let inCode = false;
-  let codeLang = '';
-  let codeLines: string[] = [];
-
-  for (const raw of content.split('\n')) {
-    if (raw.trim().startsWith('```')) {
-      if (!inCode) {
-        inCode = true;
-        codeLang = raw.trim().slice(3).trim();
-        codeLines = [];
-      } else {
-        blocks.push({ kind: 'code', lang: codeLang, lines: codeLines });
-        inCode = false;
-      }
-      continue;
-    }
-
-    if (inCode) {
-      codeLines.push(raw);
-    } else {
-      blocks.push({ kind: 'md', text: raw });
-    }
-  }
-
-  if (inCode) {
-    // Unclosed fence — still render what we captured.
-    blocks.push({ kind: 'code', lang: codeLang, lines: codeLines });
-  }
-
-  return blocks;
-}
-
-function MessageBody({ content }: { content: string }) {
-  const blocks = parseBlocks(content);
-  return (
-    <>
-      {blocks.map((block, i) =>
-        block.kind === 'code' ? (
-          <CodeBlock key={i} lines={block.lines} lang={block.lang} />
-        ) : (
-          <MarkdownLine key={i} text={block.text} />
-        )
-      )}
-    </>
+function ChatViewComponent({
+  messages,
+  width,
+  maxLines,
+  runSnapshots = {}
+}: ChatViewProps) {
+  const rows = useMemo(
+    () => buildChatRows(
+      messages,
+      Math.max(24, width - 2),
+      runSnapshots
+    ),
+    [messages, runSnapshots, width]
   );
-}
-
-function AttachmentChips({ attachments }: { attachments: string[] }) {
-  return (
-    <Box flexDirection="column">
-      {attachments.map((block, i) => (
-        <Text key={i} color={colors.orangeBright}>
-          ❏ pasted #{i + 1} · {describeBlock(block)}
-        </Text>
-      ))}
-    </Box>
+  const visibleRows = useMemo(
+    () => selectViewportRows(rows, maxLines),
+    [maxLines, rows]
   );
-}
 
-function ChatViewComponent({ messages, width, maxContentLines }: ChatViewProps) {
-  const visibleMessages = messages
-    .filter((message) => message.role !== 'system')
-    .slice(-10);
-
-  if (visibleMessages.length === 0) {
-    return (
-      <Box width={width} flexDirection="column" paddingX={1}>
-        <Text color={colors.dim}>
-          Live AI session ready. Ketik pesan untuk mulai.
-        </Text>
-      </Box>
-    );
+  if (visibleRows.length === 0) {
+    return null;
   }
 
   return (
     <Box width={width} flexDirection="column" paddingX={1}>
-      {visibleMessages.map((message, index) => {
-        const isUser = message.role === 'user';
-        const label = isUser ? 'You' : '◎ Xninetzy';
-        const labelColor = isUser ? colors.orangeBright : colors.blueBright;
-        const alignment = isUser ? 'flex-end' : 'flex-start';
-        const bubbleWidth = Math.floor(width * 0.78);
-        const hasAttachments = (message.attachments?.length ?? 0) > 0;
-
-        return (
-          <Box
-            key={message.id}
-            flexDirection="column"
-            alignItems={alignment}
-            marginTop={index === 0 ? 0 : 1}
-            width="100%"
-          >
-            <Box flexDirection="column" alignItems={alignment} width={bubbleWidth}>
-              <Text bold color={labelColor}>
-                {label}
-              </Text>
-
-              <Box
-                flexDirection="column"
-                paddingX={1}
-                borderStyle="round"
-                borderColor={colors.border}
-              >
-                {hasAttachments && <AttachmentChips attachments={message.attachments!} />}
-                {message.content.length > 0 && <MessageBody content={boundedContent(message.content, maxContentLines, Math.max(20, bubbleWidth - 4))} />}
-              </Box>
-            </Box>
-          </Box>
-        );
-      })}
+      {visibleRows.map((row) => (
+        <RenderRow key={row.key} row={row} />
+      ))}
     </Box>
   );
 }

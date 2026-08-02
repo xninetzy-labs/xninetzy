@@ -1,62 +1,52 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Cyber Campus dan token nilai
-description: Login headless dengan CAPTCHA manual, session terenkripsi, dan verifikasi melalui WhatsApp admin.
-section: Learning OS
+title: Cyber Campus and grade tokens
+description: Manual CAPTCHA login, encrypted sessions, deterministic academic readers, and WhatsApp-admin verification.
+section: Integrations
 ---
 
-Integrasi Cyber Campus dibangun sebagai adapter akademik terpisah dari HEBAT.
-HEBAT menangani course dan materi Moodle; Cyber Campus menangani data akademik,
-nilai, jadwal, dan rencana KRS.
+Cyber Campus is an academic adapter separate from HEBAT. HEBAT handles Moodle
+courses and materials; Cyber Campus handles academic profile, status, grades,
+schedule, and KRS planning.
 
-## Status saat ini
+## Current capabilities
 
-- Credential provider memakai `HEBAT_USERNAME` dan `HEBAT_PASSWORD` secara
-  in-memory tanpa menyalinnya ke SQLite atau MCP.
-- `/cyber-login` membuka browser Chromium headless dan mengisi credential.
-- Gambar CAPTCHA dikirim ke `ADMIN_JID` WhatsApp.
-- Reply image dengan nilai, nilai tunggal selama challenge aktif, atau
-  `/captcha <challenge-id> <jawaban>` menyelesaikan login secara manual.
-- Salah ketik `/catchpa` dinormalisasi sebelum request mencapai AI.
-- Challenge memiliki TTL, owner binding, dan batas percobaan.
-- Session berhasil disimpan melalui encrypted session manager.
-- Authenticated crawler memprioritaskan struktur KRS, KPRS, nilai, jadwal, dan
-  draft akademik, termasuk menu yang berada di frame.
-- `/jadwal` membaca jadwal real-time secara deterministik dari session owner.
-- `/cyber-profile` membaca hanya nama, NIM, fakultas, dan program studi.
-- `/status-akademik` membaca riwayat status akademik per semester.
-- `/krs status` membaca mata kuliah, kelas, status, dan total SKS aktif tanpa
-  mengubah portal.
-- `/nilai` membuka halaman KHS agar Cyber Campus mengirim token melalui akun
-  Telegram yang terdaftar pada portal, lalu mengirim challenge balasan ke
-  WhatsApp admin.
-- Reply token diteruskan langsung ke reader KHS tanpa LLM, MCP, persistence,
-  Telegram Bot Token, atau Telegram Engine milik Xninetzy.
-- KRS write/final submit belum diaktifkan sampai bound approval dan selector
-  portal memiliki fixture serta test yang memadai.
+- Credentials come from `HEBAT_USERNAME` and `HEBAT_PASSWORD` in memory only.
+- `/cyber-login` opens headless Chromium and fills those credentials.
+- The login CAPTCHA image is sent only to the WhatsApp `ADMIN_JID`.
+- The owner answers the image, sends one answer during the active challenge, or uses `/captcha <challenge-id> <answer>`.
+- The common `/catchpa` typo is normalized before the AI request.
+- Challenges have a TTL, owner binding, and attempt limit.
+- Successful sessions are stored through the encrypted session manager.
+- The authenticated crawler prioritizes KRS, KPRS, grades, schedule, and academic draft pages, including framed menus.
+- `/jadwal` reads the current schedule deterministically.
+- `/cyber-profile` returns only name, student identifier, faculty, and program.
+- `/status-akademik` reads academic status by semester.
+- `/krs status` reads selected courses, classes, state, and total credits without mutation.
+- `/nilai` opens the KHS page, waits for the portal's official token, and sends a WhatsApp challenge to the administrator.
+- Token replies go directly to the KHS reader without LLM, MCP persistence, a Telegram bot, or a Xninetzy Telegram engine.
+- Final KRS write and submission remain gated until selectors, fixtures, and bound approval have sufficient coverage.
 
-## Alur login
+## Login flow
 
 ```text
-/cyber-login di WhatsApp admin
-  -> Chromium headless membuka portal
-  -> credential HEBAT diisi dari secret lokal
-  -> CAPTCHA di-screenshot
-  -> image dikirim ke ADMIN_JID
-  -> owner membalas image/nilai langsung atau /captcha <id> <jawaban>
-  -> halaman divalidasi
-  -> session terenkripsi disimpan
+/cyber-login from the WhatsApp administrator
+  → headless Chromium opens the portal
+  → local HEBAT credentials are filled
+  → the CAPTCHA element is captured
+  → the image is sent to ADMIN_JID
+  → the owner replies with the answer or /captcha <id> <answer>
+  → the resulting page is validated
+  → the encrypted session is stored
 ```
 
-Agent tidak menjalankan OCR untuk CAPTCHA, tidak menebak jawaban, dan tidak
-mencoba melewati challenge. Jika challenge salah atau kedaluwarsa, owner menerima
-CAPTCHA baru atau memulai ulang login.
+The agent does not OCR, guess, or bypass the CAPTCHA. A failed or expired
+challenge produces a new image or requires a new login. A single unprefixed
+answer is converted to a command only while a challenge is active and only for
+the administrator. WhatsApp JIDs are normalized so Baileys device suffixes
+remain bound to the correct owner.
 
-Nilai tunggal hanya diubah menjadi command selama challenge aktif dan hanya jika
-sender sama dengan `ADMIN_JID`. JID WhatsApp dinormalisasi agar suffix perangkat
-Baileys seperti `:7@s.whatsapp.net` tetap terikat ke owner yang benar.
-
-Setelah session tersedia, jalankan:
+After login:
 
 ```text
 /portal-nav
@@ -71,21 +61,19 @@ Setelah session tersedia, jalankan:
 /nilai
 ```
 
-Kemampuan read-only ini berada di shared Cyber Campus adapter. WhatsApp memakai
-slash command langsung, natural chat memakai LangGraph, sedangkan Codex, Claude
-Code, dan OpenCode memakai tool MCP `portal_profile`,
-`portal_academic_status`, `portal_current_krs`, dan `portal_schedule`. Semua
-interface membaca struktur dan session yang sama. Profil dibatasi ke empat field
-akademik; data biodata lain tidak dikembalikan atau disimpan.
+These read-only capabilities live in the shared adapter. WhatsApp uses direct
+slash commands, natural chat uses LangGraph, and Codex, Claude Code, and OpenCode
+use `portal_profile`, `portal_academic_status`, `portal_current_krs`, and
+`portal_schedule` through MCP.
 
-Untuk site `mahasiswa`, `/web-refresh` otomatis memakai encrypted owner session.
-Crawler hanya meneruskan GET/HEAD, memblokir request mutasi, menolak URL submit,
-logout, delete, dan query sensitif, lalu menyimpan struktur tanpa nilai field,
-credential, cookie, token, atau data akademik terlihat.
+For the `mahasiswa` site, `/web-refresh` automatically loads the encrypted
+owner session. The crawler forwards only GET or HEAD, blocks mutation requests
+and sensitive routes, and stores structure without field values, credentials,
+cookies, tokens, grades, or visible academic data.
 
-## Struktur KRS yang sudah diverifikasi
+## Verified KRS structure
 
-Audit read-only terhadap portal aktif menemukan halaman berikut:
+Read-only portal analysis identified:
 
 ```text
 /modul/mhs/akademik-krs.php
@@ -96,108 +84,96 @@ Audit read-only terhadap portal aktif menemukan halaman berikut:
 /modul/mhs/akademik-draft.php
 ```
 
-Halaman KRS memiliki tahap **Penawaran MK**, **MK Lintas Rumpun**,
-**MK Terambil**, dan **Cetak KRS**. Pada saat periode KRS tidak aktif, portal
-tidak menampilkan form atau checkbox pilihan. Xninetzy hanya melaporkan status
-tersebut; ia tidak mencoba memanggil endpoint POST internal.
+The KRS page contains course offerings, cross-cluster courses, selected courses,
+and print views. Outside an active KRS window the portal exposes no selection
+form or checkbox. Xninetzy reports that state and does not guess or call an
+internal write endpoint.
 
-Pembacaan `MK Terambil` memakai endpoint tampilan fixed dengan payload
-`aksi=tampil`, lalu memvalidasi header enam kolom sebelum membentuk model typed.
-Status akademik juga divalidasi terhadap header portal. Jika struktur berubah,
-reader gagal secara eksplisit dan tidak menebak posisi kolom.
+The selected-course reader uses the fixed display endpoint with
+`aksi=tampil` and validates the six-column header before creating typed
+models. Academic status uses the same fail-closed parser approach. When portal
+structure changes, readers fail explicitly instead of guessing column order.
 
-Implementasi write KRS belum aktif. Target workflow adalah: baca penawaran dan
-status akademik, susun plan tanpa mutasi, minta approval WhatsApp untuk perubahan,
-validasi ulang portal, terapkan pilihan, lalu minta approval final yang berbeda.
+A future write workflow must read offerings and academic state, prepare a
+mutation-free plan, request WhatsApp approval, revalidate the portal, apply the
+selection, and request a separate final approval.
 
-`/portal-nav` membaca anchor dan handler menu di seluruh frame, menyimpan hanya
-label/path same-origin, lalu menandai setiap item sebagai `read_only`,
-`krs_guarded`, atau `blocked_write`. `/krs-capabilities` membaca form, control,
-tab, target internal, dan menghasilkan structure hash baru setiap kali DOM atau
-JavaScript portal berubah. Raw script tidak masuk prompt dan tidak dijalankan
-sebagai kode dari LLM.
+`/portal-nav` inventories same-origin labels and paths across frames and marks
+them as `read_only`, `krs_guarded`, or `blocked_write`.
+`/krs-capabilities` inventories forms, controls, tabs, and internal targets and
+produces a new structure hash whenever portal DOM or JavaScript changes. Raw
+scripts are not placed in prompts or executed as LLM-generated code.
 
-## Konfirmasi dan media
+## Confirmation and media
 
-Semua confirmation, approval KRS, upload, dan verifikasi dikirim ke WhatsApp
-admin. WA engine mendukung tombol Approve/Reject serta fallback command teks.
-Image dan document dari chat asal dapat diteruskan ke admin melalui durable media
-store; tool tidak menerima file path bebas dari LLM.
+Every confirmation, KRS approval, upload, and verification goes to the WhatsApp
+administrator. The engine supports Approve and Reject buttons plus text-command
+fallbacks. Images and documents can be forwarded through the durable media
+store; tools never accept an arbitrary local path from an LLM.
 
-## Token nilai melalui WhatsApp
+## Grade tokens through WhatsApp
 
-Token nilai hanya diterima dari `ADMIN_JID` WhatsApp. Input terikat ke challenge
-berumur pendek, tidak melewati LLM, tidak disimpan, dan hanya dapat digunakan
-untuk satu percobaan pembacaan nilai.
+Cyber Campus states that KHS tokens are delivered to the Telegram account
+registered with the portal. That is the portal's official channel, not a
+Xninetzy Telegram integration. Xninetzy requires no `TELEGRAM_BOT_TOKEN`. The
+owner forwards the received token by replying to the WhatsApp administrator
+prompt.
 
-Cyber Campus sendiri menyatakan bahwa token KHS dikirim ke akun Telegram yang
-terdaftar pada portal. Itu adalah kanal resmi milik Cyber Campus, bukan integrasi
-Telegram Xninetzy. Project tidak membutuhkan `TELEGRAM_BOT_TOKEN`. Setelah token
-resmi diterima, owner meneruskannya dengan membalas prompt WhatsApp admin.
+The token is bound to one short-lived challenge, bypasses the LLM, is never
+persisted, and can be used for one read attempt.
 
-## Urutan wajib pembacaan KHS
+## Required KHS sequence
 
-Cyber Campus memvalidasi verified token terhadap urutan interaksi halaman.
-Karena itu, Xninetzy menjalankan tahapan berikut secara berurutan pada satu
-browser page yang sama:
+The portal validates the token against page interaction order. Xninetzy keeps
+one browser page alive and performs:
 
 ```text
-1. Buka halaman KHS
-2. Tunggu verified token terbaru
-3. Isi field token
-4. Pilih dropdown semester
-5. Ambil dan parse tabel KHS
+1. Open the KHS page
+2. Wait for a new verified token
+3. Fill the token field
+4. Select the requested semester
+5. Fetch and parse the KHS table
 ```
 
-Jangan memilih semester sebelum token diisi. Melakukannya akan memanggil handler
-KHS dengan token kosong dan token berikutnya dapat ditolak portal. Pemilihan
-`/nilai semester 1` hanya mengikat target periode ke challenge; dropdown tetap
-bernilai default sampai owner mengirim token.
+Never select the semester before filling the token. Doing so invokes the KHS
+handler with an empty token and may invalidate the next token. A command such
+as `/nilai semester 1` binds a target period to the challenge but leaves the
+dropdown untouched until the owner replies.
 
-Kirim `/nilai` untuk semester terbaru, `/nilai semester 1` untuk semester kuliah
-pertama, atau `/nilai <kode-periode>` untuk periode tertentu. Setelah halaman
-terbuka, reply pesan **Verified Token Cyber Campus** dengan token angka. Reader
-baru mengisi token dan mengatur dropdown semester setelah balasan token masuk.
-Prompt selalu menampilkan label semester yang akan dipilih.
-Alternatif eksplisitnya adalah `/grade-token <challenge-id> <token>`.
-Command privat ini tidak masuk registry dan tidak diekspos ke Codex, Claude Code,
-OpenCode, atau LangGraph. MCP hanya dapat memulai `portal_grades`, sedangkan token
-tetap harus datang dari WhatsApp admin.
-Selain balasan WhatsApp admin, client MCP/CLI yang terautentikasi sebagai owner
-lokal dapat mengirim token lewat tool `portal_grade_token_submit`; token tidak
-pernah disimpan atau ditulis ke log.
+Use `/nilai` for the latest semester, `/nilai semester 1` for the first study
+semester, or `/nilai <period-code>` for an exact period. Reply to the
+**Verified Token Cyber Campus** prompt with the numeric token. The prompt always
+shows the target semester. The explicit alternative is
+`/grade-token <challenge-id> <token>`.
 
-Browser KHS tetap hidup selama challenge agar pembukaan halaman kedua tidak
-mengganti token portal. Urutannya adalah: buka halaman, tunggu token, isi token,
-baru atur nilai dropdown, lalu jalankan `fetch` same-origin ke endpoint tampilan
-KHS. Alur ini tidak bergantung pada jQuery halaman.
+That private command is not registered for LangGraph or external coding clients.
+Authenticated local MCP or CLI owners can call
+`portal_grade_token_submit`; the token still is not stored or logged.
 
-Jadwal nyata yang diverifikasi pada 29 Juli 2026 menghasilkan 10 mata ajar untuk
-Semester Genap 2025/2026. Nilai hanya dinyatakan berhasil setelah token aktif
-menghasilkan tabel KHS; token salah atau kedaluwarsa tidak menghasilkan klaim.
+The reader fills the token, updates the dropdown, and uses same-origin
+`fetch` for the display endpoint without depending on page jQuery. Success is
+declared only when the active token produces a valid KHS table.
 
-## Snapshot dan perubahan nilai
+## Snapshots and grade changes
 
-Pembacaan KHS yang berhasil dinormalisasi menjadi identitas mata kuliah, kode,
-SKS, nilai, dan field sumbernya. Xninetzy menghitung hash isi sebelum menyimpan
-snapshot ke SQLite lokal. Hasil yang identik bersifat replay-safe dan tidak
-membuat snapshot duplikat.
+Successful KHS results are normalized to course identity, code, credits, grade,
+and source fields. Xninetzy hashes normalized content before storing a local
+SQLite snapshot. Identical results are replay-safe.
 
 ```text
 /nilai changes
 /nilai perubahan
 ```
 
-Kedua command membandingkan dua snapshot berbeda terakhir pada periode yang
-sama. Perubahan diklasifikasikan sebagai mata kuliah baru, nilai berubah, atau
-mata kuliah hilang dari snapshot. Snapshot pertama menjadi baseline dan tidak
-dianggap sebagai perubahan. Codex, Claude Code, OpenCode, dan LangGraph memakai
-tool bersama `portal_grade_changes` melalui registry dan MCP yang sama.
+The commands compare the two most recent distinct snapshots for one period.
+Changes are classified as a new course, changed grade, or removed course. The
+first snapshot is a baseline, not a change notification. Shared tool
+`portal_grade_changes` provides the same result to LangGraph and MCP.
 
-Verified token tidak disimpan bersama snapshot. Database hanya berada pada
-instalasi owner dan tetap diabaikan Git.
+Verified tokens are never stored with snapshots. The database remains local and
+ignored by Git.
 
-## Konfigurasi
+## Configuration
 
 ```dotenv
 CYBER_CAMPUS_ENABLED=true
@@ -215,22 +191,28 @@ CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS=3
 CYBER_CAMPUS_ENTRY_YEAR=0
 ```
 
-`CYBER_CAMPUS_ENTRY_YEAR` dipakai untuk alias `semester 1`, `semester 2`, dan
-seterusnya. Nilai `0` mencoba membaca tahun angkatan dari format NIM UNAIR;
-instalasi dengan format akun berbeda harus mengisinya secara eksplisit.
+`CYBER_CAMPUS_ENTRY_YEAR` resolves aliases such as `semester 1`. A value of
+`0` attempts to derive the entry year from a UNAIR identifier. Installations
+with a different format must set it explicitly.
 
-Jangan aktifkan Cyber Campus sebelum encryption key dan admin JID tersedia.
-
-Setup aman untuk instalasi lokal:
+Do not enable Cyber Campus before the encryption key and administrator JID are
+configured.
 
 ```bash
 cd services/ai
 uv run python scripts/configure_internal_auth.py --enable-cyber-campus
 ```
 
-Script memvalidasi credential HEBAT serta `ADMIN_JID`, membuat Fernet key jika
-belum ada, mengaktifkan authenticated crawl GET/HEAD-only, dan tidak mencetak
-secret.
+The script validates HEBAT credentials and `ADMIN_JID`, generates a Fernet key
+when missing, enables GET/HEAD-only authenticated crawling, and prints no secret.
+
 ## Structural page catalog
-The same web-analysis service now includes three institutional presets: `hebat`, `mahasiswa`, and `qa`. Use `/web-pages <site>` to inspect safe seed routes, then `/web-refresh <site>` after the corresponding encrypted owner session is available. The refresh seeds all catalog routes and follows discovered GET-only same-host links within `WEB_ANALYSIS_PORTAL_MAX_PAGES`.
-QA remains protected by the portal-owned reCAPTCHA flow. Structural analysis never solves CAPTCHA, submits forms, or stores token values.
+
+The web-analysis service includes `hebat`, `mahasiswa`, and `qa` presets.
+Use `/web-pages <site>` to inspect safe seed routes and
+`/web-refresh <site>` after the relevant encrypted owner session is available.
+Refresh follows discovered same-host GET-only links within
+`WEB_ANALYSIS_PORTAL_MAX_PAGES`.
+
+QA remains protected by its portal-owned reCAPTCHA flow. Structural analysis
+never solves a CAPTCHA, submits a form, or stores token values.

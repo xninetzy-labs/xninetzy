@@ -12,7 +12,8 @@
     "build": "tsc",
     "start": "node dist/index.js",
     "typecheck": "tsc --noEmit",
-    "test:smoke": "printf 'Balas hanya dengan CLI_SMOKE_OK\\n' | node dist/index.js"
+    "test:smoke": "printf 'Balas hanya dengan CLI_SMOKE_OK\\n' | node dist/index.js",
+    "test": "yarn build && node --test tests/chat-markdown.test.mjs"
   },
   "engines": {
     "node": ">=20"
@@ -20,7 +21,9 @@
   "dependencies": {
     "ink": "^5.2.1",
     "ink-text-input": "^6.0.0",
-    "react": "^18.3.1"
+    "react": "^18.3.1",
+    "string-width": "^7.2.0",
+    "wrap-ansi": "^9.0.0"
   },
   "devDependencies": {
     "@types/node": "^22.10.2",

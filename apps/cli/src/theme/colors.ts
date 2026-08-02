@@ -1,34 +1,48 @@
 export const colors = {
-  background: '#11101b',
-  backgroundDeep: '#11101b',
-  backgroundSoft: '#151421',
-  elevated: '#191827',
-  output: '#111b32',
+  background: '#000000',
+  backgroundSoft: '#020305',
+  backgroundElevated: '#05070a',
 
-  text: '#f8fafc',
-  textSecondary: '#cbd5e1',
-  white: '#ffffff',
-  lavender: '#ddd6fe',
-  muted: '#7f8798',
-  dim: '#545b6b',
+  surface: '#06090d',
+  surfaceSoft: '#080c12',
+  surfaceBright: '#0b1119',
 
-  purple: '#8b5cf6',
-  purpleDeep: '#3b0764',
-  violet: '#a855f7',
-  purpleBright: '#c084fc',
-  indigo: '#3b82f6',
-  blueBright: '#60a5fa',
-  cyan: '#38bdf8',
+  userPanel: '#05080c',
+  assistantPanel: '#05080c',
+  assistantPanelBright: '#08101a',
+  codePanel: '#04070b',
 
-  orange: '#f97316',
-  orangeDeep: '#9a3412',
-  orangeBright: '#fb923c',
-  amber: '#f59e0b',
-  green: '#4ade80',
-  yellow: '#facc15',
-  red: '#fb7185',
+  border: '#1d3852',
+  borderDim: '#132638',
+  borderBright: '#285878',
 
-  border: '#2f6fff',
-  borderDim: '#244a93',
-  line: '#2f6fff'
+  white: '#d8dde7',
+  textPrimary: '#d8dde7',
+  textSecondary: '#aab2c0',
+  muted: '#687386',
+  dim: '#414b5b',
+
+  cyan: '#4d8ca0',
+  cyanBright: '#68a9ba',
+
+  blue: '#315d80',
+  blueBright: '#47789c',
+
+  indigo: '#596b8b',
+
+  purple: '#675979',
+  purpleBright: '#81708f',
+
+  orange: '#9c7048',
+  orangeBright: '#bc8552',
+
+  green: '#5d9872',
+  yellow: '#a68d52',
+  red: '#a85f69',
+
+  starDark: '#0b1119',
+  starDim: '#111a26',
+  starSoft: '#182334',
+
+  black: '#000000'
 } as const;

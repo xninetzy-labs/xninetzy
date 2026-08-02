@@ -1,19 +1,24 @@
-export type ChatRole = 'user' | 'assistant' | 'system';
+export type ChatMessageRole =
+  | 'system'
+  | 'user'
+  | 'assistant';
 
-export interface ChatMessage {
+export type ChatMessage = {
   id: string;
-  role: ChatRole;
+  role: ChatMessageRole;
   content: string;
-  /** Large pasted blocks shown collapsed as chips instead of dumped inline. */
   attachments?: string[];
   createdAt: Date;
-}
+};
 
-/** Summarize a pasted block for a collapsed chip label, e.g. "1000 lines". */
 export function describeBlock(block: string): string {
-  const lines = block.split(/\r?\n/).length;
-  if (lines > 1) {
-    return `${lines.toLocaleString()} lines`;
+  const normalized = block.replace(/\r\n?/g, '\n');
+  const lineCount = normalized.split('\n').length;
+  const characterCount = block.length;
+
+  if (lineCount > 1) {
+    return `${lineCount.toLocaleString()} lines`;
   }
-  return `${block.length.toLocaleString()} chars`;
+
+  return `${characterCount.toLocaleString()} chars`;
 }

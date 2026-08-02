@@ -1,6 +1,17 @@
-import React, { memo, useEffect, useState } from 'react';
+import React, {
+  memo,
+  useEffect,
+  useState
+} from 'react';
+
+import { performance } from 'node:perf_hooks';
 import { Box, Text } from 'ink';
-import type { ChatRun } from '../types/chat-run.js';
+
+import type {
+  ChatRun,
+  ChatRunActivity
+} from '../types/chat-run.js';
+
 import { colors } from '../theme/colors.js';
 import { cliConfig } from '../config/env.js';
 
@@ -9,124 +20,389 @@ type ThinkingPanelProps = {
   expanded: boolean;
 };
 
-const spinnerFrames = ['\u280b', '\u2819', '\u2839', '\u2838', '\u283c', '\u2834', '\u2826', '\u2827', '\u2807', '\u280f'];
+const spinnerFrames = [
+  '⠋',
+  '⠙',
+  '⠹',
+  '⠸',
+  '⠼',
+  '⠴',
+  '⠦',
+  '⠧',
+  '⠇',
+  '⠏'
+];
+
+function isActiveRun(run: ChatRun): boolean {
+  return ![
+    'idle',
+    'completed',
+    'failed',
+    'cancelled',
+    'timed-out'
+  ].includes(run.phase);
+}
 
 function formatElapsed(milliseconds: number): string {
-  const seconds = Math.max(0, milliseconds) / 1000;
-  const minutes = Math.floor(seconds / 60);
-  const remainder = seconds % 60;
-  return `${String(minutes).padStart(2, '0')}:${remainder.toFixed(1).padStart(4, '0')}`;
+  const totalSeconds =
+    Math.max(0, milliseconds) / 1000;
+
+  const minutes = Math.floor(totalSeconds / 60);
+  const seconds = totalSeconds % 60;
+
+  return `${String(minutes).padStart(
+    2,
+    '0'
+  )}:${seconds
+    .toFixed(1)
+    .padStart(4, '0')}`;
 }
 
 function formatDuration(milliseconds: number): string {
-  const seconds = Math.max(0, milliseconds) / 1000;
-  if (seconds < 60) return `${seconds.toFixed(1)}s`;
-  const minutes = Math.floor(seconds / 60);
-  return `${minutes}m ${(seconds % 60).toFixed(1)}s`;
-}
+  const totalSeconds =
+    Math.max(0, milliseconds) / 1000;
 
-function SpinnerGlyph({ active, completed }: { active: boolean; completed: boolean }) {
-  const [frame, setFrame] = useState(0);
-
-  useEffect(() => {
-    if (!active) return;
-    const timer = setInterval(() => setFrame((current) => (current + 1) % spinnerFrames.length), 100);
-    return () => clearInterval(timer);
-  }, [active]);
-
-  if (active) return <Text color={colors.blueBright}>{spinnerFrames[frame]}</Text>;
-  return <Text color={completed ? colors.green : colors.blueBright}>{completed ? '\u2713' : '\u25ce'}</Text>;
-}
-
-function ElapsedClock({ run }: { run: ChatRun }) {
-  const [now, setNow] = useState(performance.now());
-  const active = !["idle", "completed", "failed", "cancelled", "timed-out"].includes(run.phase);
-
-  useEffect(() => {
-    if (!active) return;
-    const timer = setInterval(() => setNow(performance.now()), 200);
-    return () => clearInterval(timer);
-  }, [active]);
-
-  const endedAt = run.finishedAt ?? now;
-  const elapsed = endedAt - run.startedAt;
-  const deepResearch = run.activity.some((activity) => activity.label.toLowerCase().includes("research"));
-  const limit = deepResearch
-    ? cliConfig.deepResearchTimeoutMs
-    : run.phase === "streaming"
-      ? cliConfig.streamTimeoutMs
-      : cliConfig.thinkTimeoutMs;
-  const slow = elapsed >= cliConfig.slowRequestWarningMs;
-  return <Text color={slow ? colors.yellow : colors.textSecondary}>{slow ? '\u25b3 ' : ''}{formatElapsed(elapsed)} / {formatElapsed(limit)}</Text>;
-}
-
-function titleFor(run: ChatRun, now: number): string {
-  if (run.phase === 'completed') {
-    const endedAt = run.finishedAt ?? now;
-    const thoughtEndedAt = run.firstTokenAt ?? endedAt;
-    return `Thought for ${formatDuration(thoughtEndedAt - run.startedAt)} · completed in ${formatDuration(endedAt - run.startedAt)}`;
+  if (totalSeconds < 1) {
+    return `${Math.round(milliseconds)}ms`;
   }
-  if (run.phase === "queued") return "Xninetzy is queued";
-  if (run.phase === "planning") return "Xninetzy is planning";
-  if (run.phase === "tool-running") return "Xninetzy is working";
-  if (run.phase === "waiting-approval") return "Xninetzy is waiting for approval";
-  if (run.phase === "streaming") return "Xninetzy is responding";
-  if (run.phase === 'cancelled') return 'Generation stopped';
-  if (run.phase === 'timed-out') return 'Thinking timed out';
-  if (run.phase === 'failed') return 'Request failed';
-  return 'Xninetzy is thinking';
+
+  if (totalSeconds < 60) {
+    return `${totalSeconds.toFixed(1)}s`;
+  }
+
+  const minutes = Math.floor(totalSeconds / 60);
+
+  return `${minutes}m ${(totalSeconds % 60).toFixed(
+    1
+  )}s`;
 }
 
-function ThinkingPanelView({ run, expanded }: ThinkingPanelProps) {
-  const active = Boolean(run && !["idle", "completed", "failed", "cancelled", "timed-out"].includes(run.phase));
-  const completed = run?.phase === 'completed';
-  const latest = run?.activity.slice().reverse().find((activity) => activity.status === "active") ?? run?.activity.at(-1);
-  const now = performance.now();
-  const title = run ? titleFor(run, now) : 'Xninetzy is ready';
-  const activityLabel = latest?.label ?? 'Waiting for your next request';
-  const completedActivities = run?.activity.filter((activity) => activity.status === 'completed').length ?? 0;
-  const activityCount = run?.activity.length ?? 0;
-  const toolCount = run?.activity.filter((activity) => activity.kind === "tool").length ?? 0;
-  const agentCount = run?.activity.filter((activity) => activity.kind === "agent").length ?? 0;
-  const sourceCount = run?.activity.filter((activity) => activity.kind === "source").length ?? 0;
-  const visibleActivities = run?.activity.slice(-4) ?? [];
-  const hiddenActivityCount = Math.max(0, activityCount - visibleActivities.length);
+function phaseLabel(run: ChatRun): string {
+  switch (run.phase) {
+    case 'queued':
+      return 'waiting for execution';
+
+    case 'planning':
+      return 'building execution plan';
+
+    case 'thinking':
+      return 'reasoning over the request';
+
+    case 'tool-running':
+      return 'running tools';
+
+    case 'waiting-approval':
+      return 'waiting for approval';
+
+    case 'streaming':
+      return 'writing final response';
+
+    default:
+      return run.phase;
+  }
+}
+
+function activityVisual(
+  activity: ChatRunActivity,
+  spinnerFrame: string
+): {
+  symbol: string;
+  color: string;
+} {
+  if (activity.status === 'active') {
+    return {
+      symbol: spinnerFrame,
+      color: colors.cyan
+    };
+  }
+
+  if (activity.status === 'failed') {
+    return {
+      symbol: '×',
+      color: colors.red
+    };
+  }
+
+  if (activity.kind === 'tool') {
+    return {
+      symbol: '⚙',
+      color: colors.blueBright
+    };
+  }
+
+  if (activity.kind === 'agent') {
+    return {
+      symbol: '◇',
+      color: colors.purpleBright
+    };
+  }
+
+  if (activity.kind === 'source') {
+    return {
+      symbol: '↗',
+      color: colors.cyanBright
+    };
+  }
+
+  return {
+    symbol: '✓',
+    color: colors.green
+  };
+}
+
+function hasDeepResearch(run: ChatRun): boolean {
+  return run.activity.some((activity) => {
+    const content = [
+      activity.kind,
+      activity.label,
+      activity.detail ?? ''
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return (
+      content.includes('deep research') ||
+      content.includes('deep-research')
+    );
+  });
+}
+
+function hasMcpActivity(run: ChatRun): boolean {
+  return run.activity.some((activity) => {
+    const content = [
+      activity.label,
+      activity.detail ?? ''
+    ]
+      .join(' ')
+      .toLowerCase();
+
+    return content.includes('mcp');
+  });
+}
+
+function timeoutForRun(run: ChatRun): number {
+  if (hasDeepResearch(run)) {
+    return cliConfig.deepResearchTimeoutMs;
+  }
+
+  if (run.phase === 'streaming') {
+    return cliConfig.streamTimeoutMs;
+  }
+
+  if (run.phase === 'tool-running') {
+    return hasMcpActivity(run)
+      ? cliConfig.mcpCallTimeoutMs
+      : cliConfig.toolTimeoutMs;
+  }
+
+  return cliConfig.thinkTimeoutMs;
+}
+
+function ThinkingPanelView({
+  run,
+  expanded
+}: ThinkingPanelProps) {
+  const [frame, setFrame] = useState(0);
+  const [now, setNow] = useState(performance.now());
+
+  const active = Boolean(run && isActiveRun(run));
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    const spinnerTimer = setInterval(() => {
+      setFrame(
+        (current) =>
+          (current + 1) % spinnerFrames.length
+      );
+    }, 95);
+
+    return () => {
+      clearInterval(spinnerTimer);
+    };
+  }, [active]);
+
+  useEffect(() => {
+    if (!active) {
+      return;
+    }
+
+    const clockTimer = setInterval(() => {
+      setNow(performance.now());
+    }, 180);
+
+    return () => {
+      clearInterval(clockTimer);
+    };
+  }, [active]);
+
+  if (!run || !active) {
+    return null;
+  }
+
+  const spinner = spinnerFrames[frame];
+
+  const elapsed = now - run.startedAt;
+  const timeout = timeoutForRun(run);
+
+  const slow =
+    elapsed >= cliConfig.slowRequestWarningMs;
+
+  const thoughtEnd =
+    run.firstTokenAt ?? now;
+
+  const thoughtDuration =
+    thoughtEnd - run.startedAt;
+
+  const activities = expanded
+    ? run.activity
+    : run.activity.slice(-5);
+
+  const hiddenCount = Math.max(
+    0,
+    run.activity.length - activities.length
+  );
 
   return (
-    <Box width="100%" flexDirection="column" paddingX={1} minHeight={expanded ? 7 : 4}>
-      <Box borderStyle="round" borderColor={active ? colors.border : colors.borderDim} paddingX={1} flexDirection="column">
-        <Box justifyContent="space-between">
-          <Box>
-            <SpinnerGlyph active={Boolean(active)} completed={Boolean(completed)} />
-            <Text color={colors.white} bold> {title}</Text>
-          </Box>
-          {run && active && <ElapsedClock run={run} />}
+    <Box
+      width="100%"
+      flexDirection="column"
+      paddingX={2}
+      flexShrink={0}
+      marginTop={1}
+      marginBottom={1}
+    >
+      <Box justifyContent="space-between">
+        <Box>
+          <Text
+            bold
+            color={colors.orangeBright}
+          >
+            ✦ Thought:
+          </Text>
+
+          <Text color={colors.textSecondary}>
+            {' '}{formatDuration(thoughtDuration)}
+          </Text>
+
+          <Text color={colors.dim}>
+            {' '}·{' '}
+          </Text>
+
+          <Text color={colors.cyanBright}>
+            {phaseLabel(run)}
+          </Text>
         </Box>
-        <Text color={colors.textSecondary}>{activityLabel}</Text>
-        <Text color={colors.muted}>
-          {completedActivities} of {activityCount} activities completed{toolCount ? " · " + toolCount + " tools" : ""}{agentCount ? " · " + agentCount + " agents" : ""}{sourceCount ? " · " + sourceCount + " sources" : ""} · Ctrl+T {expanded ? 'hide' : 'show'} details
+
+        <Text
+          color={
+            slow
+              ? colors.yellow
+              : colors.muted
+          }
+        >
+          {slow ? '△ ' : ''}
+          {formatElapsed(elapsed)}
+          {' / '}
+          {formatElapsed(timeout)}
         </Text>
       </Box>
-      {expanded && run && (
-        <Box marginTop={1} paddingX={1} flexDirection="column" borderStyle="single" borderColor={colors.borderDim}>
-          {visibleActivities.length === 0 ? (
-            <Text color={colors.muted}>No backend activity has been reported yet.</Text>
-          ) : (
-            <>
-              {hiddenActivityCount > 0 && (
-                <Text color={colors.muted}>… {hiddenActivityCount} earlier activities hidden</Text>
-              )}
-              {visibleActivities.map((activity) => (
-              <Text key={activity.id} color={activity.status === 'failed' ? colors.red : colors.textSecondary}>
-                {activity.status === 'active' ? '\u2839' : activity.status === 'completed' ? '\u2713' : '\u00d7'} [{activity.kind.toUpperCase()}] {activity.label}{activity.detail ? ` · ${activity.detail}` : ''}
+
+      {hiddenCount > 0 && (
+        <Text color={colors.dim}>
+          {'  '}… {hiddenCount} earlier activities hidden
+        </Text>
+      )}
+
+      {activities.map((activity) => {
+        const visual = activityVisual(
+          activity,
+          spinner
+        );
+
+        return (
+          <Box
+            key={activity.id}
+            paddingLeft={2}
+          >
+            <Text color={visual.color}>
+              {visual.symbol}
+            </Text>
+
+            <Text color={colors.dim}>
+              {' '}
+              {activity.kind}
+              {' · '}
+            </Text>
+
+            <Text
+              color={
+                activity.status === 'failed'
+                  ? colors.red
+                  : colors.textSecondary
+              }
+            >
+              {activity.label}
+            </Text>
+
+            {activity.detail && (
+              <Text color={colors.muted}>
+                {' '}· {activity.detail}
               </Text>
-              ))}
-            </>
-          )}
+            )}
+          </Box>
+        );
+      })}
+
+      {run.activity.length === 0 && (
+        <Box paddingLeft={2}>
+          <Text color={colors.cyan}>
+            {spinner}
+          </Text>
+
+          <Text color={colors.muted}>
+            {' '}processing request
+          </Text>
         </Box>
       )}
+
+      {run.firstTokenAt !== undefined && (
+        <Box marginTop={1}>
+          <Text
+            bold
+            color={colors.orangeBright}
+          >
+            ✦ Thought:
+          </Text>
+
+          <Text color={colors.textSecondary}>
+            {' '}
+            {formatDuration(
+              now - run.firstTokenAt
+            )}
+          </Text>
+
+          <Text color={colors.dim}>
+            {' '}· final synthesis{' '}
+          </Text>
+
+          <Text color={colors.cyan}>
+            {spinner}
+          </Text>
+        </Box>
+      )}
+
+      <Text color={colors.dim}>
+        {'  '}
+        Ctrl+T {expanded ? 'hide' : 'show'}
+        {' '}full activity
+      </Text>
     </Box>
   );
 }
 
-export const ThinkingPanel = memo(ThinkingPanelView);
+export const ThinkingPanel = memo(
+  ThinkingPanelView
+);

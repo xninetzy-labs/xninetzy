@@ -1,56 +1,82 @@
 import React from 'react';
 import { render } from 'ink';
-import { execSync } from 'node:child_process';
-import { App } from './app.js';
-import { sendChat } from './api/client.js';
+import { App } from './App.js';
 
-async function runPipedInput() {
-  let buffer = '';
+const ENTER_ALTERNATE_SCREEN = '\x1b[?1049h';
+const EXIT_ALTERNATE_SCREEN = '\x1b[?1049l';
+const HIDE_CURSOR = '\x1b[?25l';
+const SHOW_CURSOR = '\x1b[?25h';
+const RESET_STYLE = '\x1b[0m';
+const SET_DEFAULT_BACKGROUND_BLACK = '\x1b]11;#000000\x07';
+const SET_DEFAULT_FOREGROUND_WHITE = '\x1b]10;#f8faff\x07';
+const RESET_DEFAULT_BACKGROUND = '\x1b]111\x07';
+const RESET_DEFAULT_FOREGROUND = '\x1b]110\x07';
+const BLACK_BACKGROUND = '\x1b[48;2;0;0;0m';
+const PRIMARY_FOREGROUND = '\x1b[38;2;248;250;255m';
+const CLEAR_SCREEN = '\x1b[2J\x1b[3J\x1b[H';
 
-  process.stdin.setEncoding('utf8');
-  for await (const chunk of process.stdin) {
-    buffer += chunk;
-  }
+let terminalCleaned = false;
 
-  const lines = buffer
-    .split(/\r?\n/)
-    .map((line) => line.trim())
-    .filter(Boolean);
+function applyBlackTerminalTheme(): void {
+  process.stdout.write(
+    SET_DEFAULT_BACKGROUND_BLACK +
+    SET_DEFAULT_FOREGROUND_WHITE +
+    BLACK_BACKGROUND +
+    PRIMARY_FOREGROUND
+  );
+}
 
-  for (const line of lines) {
-    process.stdout.write(`You\n${line}\n\n`);
-    try {
-      const reply = await sendChat(line);
-      process.stdout.write(`Xninetzy\n${reply}\n`);
-    } catch (error) {
-      const message = error instanceof Error ? error.message : 'Unknown AI request error';
-      process.stderr.write(`Xninetzy error\n${message}\n`);
-      process.exitCode = 1;
+function enterTerminalMode(): void {
+  process.stdout.write(
+    ENTER_ALTERNATE_SCREEN +
+    HIDE_CURSOR
+  );
+  applyBlackTerminalTheme();
+  process.stdout.write(CLEAR_SCREEN);
+}
+
+function cleanupTerminal(): void {
+  if (terminalCleaned) return;
+  terminalCleaned = true;
+  process.stdout.write(
+    RESET_STYLE +
+    SHOW_CURSOR +
+    EXIT_ALTERNATE_SCREEN +
+    RESET_DEFAULT_BACKGROUND +
+    RESET_DEFAULT_FOREGROUND
+  );
+}
+
+async function main(): Promise<void> {
+  enterTerminalMode();
+
+  const instance = render(
+    <App />,
+    {
+      exitOnCtrlC: false,
+      patchConsole: true
     }
-  }
-}
+  );
 
-if (process.stdin.isTTY) {
-  // Clear screen, move cursor to home, set stable Xninetzy background, foreground white
-  process.stdout.write('\x1b[2J\x1b[3J\x1b[H\x1b[48;2;17;16;27m\x1b[37m');
-  
-  const { waitUntilExit } = render(<App />);
-  
-  await waitUntilExit();
+  const terminate = (): void => {
+    instance.unmount();
+    cleanupTerminal();
+  };
 
-  // Full terminal reset command
+  process.once('SIGTERM', terminate);
+  process.once('SIGHUP', terminate);
+  process.once('exit', cleanupTerminal);
+
   try {
-    execSync('reset', { stdio: 'inherit' });
-  } catch {
-    // Fallback to ANSI reset if 'reset' command fails
-    process.stdout.write('\x1bc');
+    await instance.waitUntilExit();
+  } finally {
+    cleanupTerminal();
   }
-
-  // Closing message following the style
-  process.stdout.write('\x1b[38;5;135mX N I N E T Z Y\x1b[0m\n');
-  process.stdout.write('\x1b[38;5;214m◎ event horizon detached\x1b[0m\n\n');
-  process.stdout.write('\x1b[37mready for making a .., continue session ...\x1b[0m\n');
-  process.stdout.write('\x1b[38;5;63m✦ drifting through your second brain space ✦\x1b[0m\n\n');
-} else {
-  await runPipedInput();
 }
+
+void main().catch((error: unknown) => {
+  cleanupTerminal();
+  const message = error instanceof Error ? error.stack ?? error.message : String(error);
+  process.stderr.write(message + '\n');
+  process.exitCode = 1;
+});

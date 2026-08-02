@@ -1,17 +1,18 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Konfigurasi environment
-description: Peta konfigurasi service, provider, persistence, dan guard yang aman untuk instalasi baru.
-section: Mulai
+title: Environment configuration
+description: Service, provider, persistence, and safety settings for a secure installation.
+section: Start
 ---
 
-Root `.env.example` adalah kontrak konfigurasi seluruh monorepo. Salin menjadi `.env`; jangan mengubah template dengan nilai rahasia.
+The root `.env.example` is the configuration contract for the entire
+monorepo. Copy it to `.env`; never place real secrets in the template.
 
-Setiap clone memakai SQLite lokal yang berbeda. Tidak ada database runtime di
-repository. Startup membuat/migrasikan database pada `SQLITE_PATH`; lihat
-[Local data per installation](/docs/local-data/).
+Every clone uses a different local SQLite database. Runtime databases are not
+stored in the repository. Startup creates or migrates the database at
+`SQLITE_PATH`; see [Local data per installation](/docs/local-data/).
 
-## Konfigurasi inti
+## Core settings
 
 ```dotenv
 APP_ENV=development
@@ -21,9 +22,10 @@ HOST_UID=1000
 HOST_GID=1000
 ```
 
-Gunakan UID/GID pemilik repository dan vault. Ini mencegah file Docker dimiliki root.
+Use the UID and GID of the repository and vault owner so Docker-created files
+are not owned by root.
 
-## AI dan provider
+## AI and providers
 
 ```dotenv
 LLM_DEFAULT_PROVIDER=flaz
@@ -34,7 +36,8 @@ FLAZ_MODEL=deepseek-v4-pro
 FLAZ_MODELS=deepseek-v4-pro
 ```
 
-`*_MODELS` adalah allowlist model yang dipisahkan koma. Lihat [Provider LLM](/docs/providers/) untuk konfigurasi multi-provider.
+Each `*_MODELS` value is a comma-separated model allowlist. See
+[LLM providers](/docs/providers/) for multi-provider configuration.
 
 ## WhatsApp
 
@@ -47,7 +50,8 @@ WA_COMMAND_PREFIX=!
 WA_GROUP_ALLOW_ALL=false
 ```
 
-Untuk local development, path session/media harus absolute dan menunjuk lokasi yang sama bagi kedua service:
+For local development, session and media paths must be absolute and resolve to
+the same locations for both services:
 
 ```dotenv
 WA_AUTH_DIR=/absolute/path/to/xninetzy/services/wa-enggine/sessions
@@ -72,9 +76,10 @@ OBSIDIAN_PERSIST_ACADEMIC_SENSITIVE=false
 OBSIDIAN_LEGACY_PATH_COMPATIBILITY=true
 ```
 
-`OBSIDIAN_VAULT_HOST_PATH` dipakai Docker host. `OBSIDIAN_VAULT_PATH` adalah mount path di container.
+`OBSIDIAN_VAULT_HOST_PATH` is the host path mounted by Docker.
+`OBSIDIAN_VAULT_PATH` is the corresponding container path.
 
-## HEBAT / Moodle
+## HEBAT and Moodle
 
 ```dotenv
 HEBAT_USERNAME=
@@ -87,7 +92,8 @@ HEBAT_REQUIRE_CONFIRMATION=true
 HEBAT_ALLOW_AUTO_SUBMIT=false
 ```
 
-Credential hanya boleh berada di `.env` lokal. Session browser dan file download diabaikan Git.
+Credentials belong only in the local `.env`. Browser sessions and downloaded
+files are ignored by Git.
 
 ## Internal service authentication
 
@@ -102,34 +108,40 @@ ADMIN_JID=628xxxxxxxxxx@s.whatsapp.net
 OWNER_ALLOWED_JIDS=
 ```
 
-`MCP_API_KEY` dan `WA_MCP_API_KEY` harus sama. `AI_API_KEY` wajib dikirim oleh WA
-engine dan CLI ke chat, reminder, dan debug API. Buat key acak, misalnya dengan
-`openssl rand -hex 32`; jangan menggunakan password akun atau API key provider.
+`MCP_API_KEY` and `WA_MCP_API_KEY` must match. The WhatsApp engine and CLI
+must send `AI_API_KEY` to chat, reminder, and debug APIs. Generate independent
+keys with a command such as `openssl rand -hex 32`; never reuse an account
+password or provider API key.
 
-Untuk instalasi lokal, jalankan `uv run python scripts/configure_internal_auth.py`
-dari `services/ai`. Script menambah konfigurasi yang belum ada, membuat key
-internal secara kriptografis aman, tidak mencetak secret, dan tidak menimpa nilai
-yang sudah terisi.
+For a local installation, run this command from `services/ai`:
 
-`ADMIN_JID` adalah identitas owner utama. `OWNER_ALLOWED_JIDS` hanya untuk alias
-owner yang memang diperlukan, misalnya JID `@lid`; pisahkan dengan koma.
+```bash
+uv run python scripts/configure_internal_auth.py
+```
 
-Startup menu WhatsApp dikendalikan dengan:
+The script adds missing configuration, generates cryptographically secure
+internal keys, never prints secrets, and preserves populated values.
+
+`ADMIN_JID` is the primary WhatsApp owner identity.
+`OWNER_ALLOWED_JIDS` is for explicitly reviewed aliases such as an `@lid`
+identity. Separate multiple aliases with commas.
+
+## WhatsApp startup menu
 
 ```dotenv
 WA_STARTUP_MENU_ENABLED=true
 WA_STARTUP_MENU_DELAY_MS=1500
 ```
 
-Target selalu `ADMIN_JID`; LLM tidak dapat memilih penerimanya. Delay memberi
-waktu singkat agar socket stabil setelah connection `open`. Nilai `false`
-menonaktifkan menu tanpa memengaruhi approval atau notifikasi lain.
+The target is always `ADMIN_JID`; the LLM cannot select it. The delay gives
+the socket time to stabilize after an `open` connection. Setting the feature
+to `false` does not affect approvals or other notifications.
 
-WA engine juga mencoba memetakan Baileys `@lid` ke phone JID sebelum request
-masuk ke AI. Jika WhatsApp tidak menyediakan mapping, tambahkan alias `@lid`
-owner secara eksplisit ke `OWNER_ALLOWED_JIDS`.
+The WhatsApp engine attempts to map a Baileys `@lid` identity to its phone JID.
+If WhatsApp provides no mapping, add the reviewed owner alias explicitly to
+`OWNER_ALLOWED_JIDS`.
 
-## Cyber Campus dan token nilai
+## Cyber Campus and grade tokens
 
 ```dotenv
 CYBER_CAMPUS_ENABLED=false
@@ -143,19 +155,19 @@ CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS=3
 CYBER_CAMPUS_ENTRY_YEAR=0
 ```
 
-Cyber Campus mengambil username/password langsung dari `HEBAT_USERNAME` dan
-`HEBAT_PASSWORD` hanya saat login. CAPTCHA dikirim ke WhatsApp admin dan harus
-dijawab manual. Owner dapat reply gambar dengan nilai, mengirim nilai tunggal
-selama challenge aktif, atau memakai `/captcha <id> <jawaban>`. Token nilai juga
-hanya diterima dari WhatsApp admin melalui challenge berumur pendek dan tidak
-pernah dipersistenkan.
+Cyber Campus reads `HEBAT_USERNAME` and `HEBAT_PASSWORD` in memory only
+during login. Login CAPTCHA images are sent to the WhatsApp administrator and
+must be answered manually. The owner can reply to the image, send one answer
+while a challenge is active, or use `/captcha <id> <answer>`.
 
-`CYBER_CAMPUS_ENTRY_YEAR` mengaktifkan alias seperti `/nilai semester 1`.
-Nilai `0` membuat Xninetzy mencoba menurunkan tahun masuk dari format NIM UNAIR.
-Target semester dipilih secara deterministik, tetapi dropdown portal baru diisi
-setelah verified token diterima pada challenge yang sama.
+Grade tokens are accepted only from the WhatsApp administrator through a
+short-lived challenge and are never persisted. `CYBER_CAMPUS_ENTRY_YEAR`
+enables aliases such as `/nilai semester 1`. A value of `0` attempts to
+derive the entry year from a UNAIR student identifier. The target semester is
+resolved deterministically, but the portal dropdown is changed only after a
+verified token arrives for the same challenge.
 
-## Replay safety dan backup
+## Replay safety and backups
 
 ```dotenv
 WA_PROCESSING_DIR=/app/data/wa-processing
@@ -166,9 +178,9 @@ BACKUP_DIR=/app/data/backups
 BACKUP_RETENTION=14
 ```
 
-WA engine menyimpan claim dan reply outbox agar pengiriman ulang event tidak
-menjalankan LLM/tool yang sama. Direktori ini harus persisten dan hanya dapat
-dibaca owner. Lihat [Backup dan restore](/docs/backup-restore/) untuk recovery.
+The WhatsApp engine persists claims and a reply outbox so redelivery cannot run
+the same LLM or tool action twice. This directory must be persistent and
+owner-readable only. See [Backup and restore](/docs/backup-restore/).
 
 ## Scheduled Personal OS
 
@@ -183,12 +195,12 @@ WEEKLY_REVIEW_HOUR=20
 HEBAT_PERIODIC_SYNC_ENABLED=false
 ```
 
-Gunakan [Automation dan scheduled jobs](/docs/automation/) untuk memahami lease,
-at-most-once delivery, ambiguous status, dan periodic HEBAT sync.
+See [Automation and scheduled jobs](/docs/automation/) for lease behavior,
+at-most-once delivery boundaries, ambiguous state, and periodic HEBAT sync.
 
-## MCP runtime path
+## MCP runtime paths
 
-Saat server MCP berjalan di host, path container perlu dipetakan ke data host:
+When the MCP server runs on the host, container paths must resolve to host data:
 
 ```dotenv
 MCP_RUNTIME_MODE=auto
@@ -196,7 +208,8 @@ MCP_HOST_DATA_DIR=
 MCP_HOST_SQLITE_PATH=
 ```
 
-Mode `auto` meng-resolve layout repository standar. Isi override hanya jika data berada di tempat lain.
+`auto` resolves the standard repository layout. Set overrides only when runtime
+data lives elsewhere.
 
 ## Coding runtime
 
@@ -214,13 +227,13 @@ CODING_AGENT_TIMEOUT_SECONDS=600
 CODING_AGENT_SANDBOX=workspace-write
 ```
 
-`/code` tidak menjalankan Codex, Claude Code, atau OpenCode di dalam container.
-AI service mengirim task terautentikasi ke host bridge, lalu bridge menjalankan
-CLI host pada workspace yang diizinkan dan mengembalikan output terbatas ke
-WhatsApp. Token bridge harus sama di `.env` host dan container, tetapi tidak
-pernah diteruskan ke subprocess coding.
+`/code` never executes Codex, Claude Code, or OpenCode inside the AI
+container. The AI service sends an authenticated task to the host bridge, which
+runs the host CLI in an allowed workspace and returns bounded output to
+WhatsApp. The host and container must share the bridge token, but the bridge
+never forwards it to the coding subprocess.
 
-Linux dapat mengaktifkan bridge saat login dan setelah reboot:
+Install and enable the Linux user service:
 
 ```bash
 bash scripts/install_host_agent_bridge.sh
@@ -229,66 +242,42 @@ systemctl --user status xninetzy-host-agent-bridge
 curl -s http://127.0.0.1:8765/health
 ```
 
-Untuk menjalankan sementara:
+Run the bridge temporarily with:
 
 ```bash
 bash scripts/run_host_agent_bridge.sh
 ```
 
-Bridge melakukan MCP preflight dari host. Jika konfigurasi `xninetzy` tidak
-tersedia pada CLI yang dipilih, task dihentikan dan tidak dijalankan tanpa OS
-access. Pilih runtime dari WhatsApp dengan `/agent use codex`,
-`/agent use claude-code`, atau `/agent use opencode`, lalu jalankan `/code ...`.
+The bridge performs MCP preflight on the host. If the selected CLI cannot reach
+the `xninetzy` MCP server, the task fails closed. Select a runtime with
+`/agent use codex`, `/agent use claude-code`, or
+`/agent use opencode`, then invoke `/code ...`.
 
-## Validasi
+## GraphRAG and the Neo4j projection
+
+```dotenv
+GRAPHRAG_V3_ENABLED=false
+NEO4J_ENABLED=false
+NEO4J_AUTOSTART_ENABLED=true
+NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
+NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
+NEO4J_CONNECT_TIMEOUT_SECONDS=3
+NEO4J_FAILURE_COOLDOWN_SECONDS=60
+```
+
+SQLite is canonical. Neo4j and FAISS are rebuildable projections and may be
+offline. After an autostart failure, requests do not repeat Docker startup
+during the cooldown and retrieval falls back to SQLite or FAISS. Enable
+`NEO4J_ENABLED` only when the graph Compose profile is available.
+
+The vault folder policy is shared by every interface. Preview Obsidian
+organization before applying a legacy migration.
+
+## Validation
 
 ```bash
 docker compose config -q
 cd services/ai && uv run python -c "from app.xninetzy.core.config import get_settings; print(get_settings().app_env)"
 ```
 
-Jangan mencetak object settings lengkap karena dapat memuat secret.
-
-The vault folder policy is shared by all interfaces. Use the Obsidian organization preview before applying a legacy migration.
-
-
-<div data-localized-body data-locale="en">
-
-## GraphRAG and Neo4j projection
-
-```dotenv
-GRAPHRAG_V3_ENABLED=false
-NEO4J_ENABLED=false
-NEO4J_AUTOSTART_ENABLED=true
-NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
-NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
-NEO4J_CONNECT_TIMEOUT_SECONDS=3
-NEO4J_FAILURE_COOLDOWN_SECONDS=60
-```
-
-SQLite is the canonical source of truth. Neo4j and FAISS are rebuildable
-projections and may be offline. When autostart fails, later requests do not
-repeat Docker boot during the cooldown; retrieval falls back to SQLite/FAISS.
-Enable NEO4J_ENABLED only when the graph compose profile is available.
-
-</div>
-
-<div data-locale="id" hidden>
-
-## GraphRAG dan Neo4j projection
-
-```dotenv
-GRAPHRAG_V3_ENABLED=false
-NEO4J_ENABLED=false
-NEO4J_AUTOSTART_ENABLED=true
-NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
-NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
-NEO4J_CONNECT_TIMEOUT_SECONDS=3
-NEO4J_FAILURE_COOLDOWN_SECONDS=60
-```
-
-SQLite adalah canonical source of truth. Neo4j dan FAISS hanya projection yang
-boleh offline. Saat autostart gagal, request berikutnya tidak mengulang boot
-Docker selama cooldown; retrieval turun ke SQLite/FAISS. Set NEO4J_ENABLED=true
-hanya jika compose profile graph memang tersedia.
-</div>
+Never print the complete settings object because it may contain secrets.

@@ -4,33 +4,25 @@ import { colors } from '../theme/colors.js';
 import { describeBlock } from '../types.js';
 
 type InputBoxProps = {
-  /** The editable tail the user is typing (the "..." part). */
   draft: string;
-  /** Collapsed large pastes, shown as chips before the editable tail. */
   attachments: string[];
   onDraftChange: (value: string) => void;
   onPaste: (block: string) => void;
   onRemoveLastAttachment: () => void;
   onSubmit: () => void;
   width: number;
-}
+  isSending: boolean;
+  variant?: 'welcome' | 'session';
+};
 
-// A multi-char chunk that looks like a paste rather than a keystroke.
 const PASTE_MIN_CHARS = 64;
 
 function isLargePaste(input: string): boolean {
   if (input.length <= 1) return false;
-  const lines = input.replace(/\r\n?/g, "\n").split("\n").filter(Boolean);
-  return lines.length > 1 || input.length >= PASTE_MIN_CHARS;
+  const normalized = input.replace(/\r\n?/g, '\n');
+  return normalized.includes('\n') || input.length >= PASTE_MIN_CHARS;
 }
 
-/**
- * Custom controlled input.
- *
- * Unlike `ink-text-input`, big pastes are not dumped into the buffer — they are
- * lifted into collapsed chips (`[1000 lines] ▸`) and the user keeps typing a
- * short tail after them. On submit the chips + tail are combined upstream.
- */
 function InputBoxComponent({
   draft,
   attachments,
@@ -38,15 +30,21 @@ function InputBoxComponent({
   onPaste,
   onRemoveLastAttachment,
   onSubmit,
-  width
+  width,
+  isSending,
+  variant = 'session'
 }: InputBoxProps) {
   const [cursor, setCursor] = useState(draft.length);
 
-  // Keep the cursor inside the draft when it changes from the outside
-  // (e.g. after submit clears it).
   useEffect(() => {
-    setCursor((c) => Math.min(c, draft.length));
+    setCursor((current) => Math.min(current, draft.length));
   }, [draft]);
+
+  const borderColor = attachments.length > 0
+    ? colors.orange
+    : variant === 'welcome'
+      ? colors.borderBright
+      : colors.border;
 
   useInput((input, key) => {
     if (key.tab || key.escape) return;
@@ -57,86 +55,93 @@ function InputBoxComponent({
     }
 
     if (key.leftArrow) {
-      setCursor((c) => Math.max(0, c - 1));
+      setCursor((current) => Math.max(0, current - 1));
       return;
     }
+
     if (key.rightArrow) {
-      setCursor((c) => Math.min(draft.length, c + 1));
+      setCursor((current) => Math.min(draft.length, current + 1));
       return;
     }
 
     if (key.backspace || key.delete) {
       if (cursor > 0) {
         onDraftChange(draft.slice(0, cursor - 1) + draft.slice(cursor));
-        setCursor((c) => Math.max(0, c - 1));
-      } else if (attachments.length > 0) {
-        // At the start of an empty tail, backspace pops the last paste chip.
-        onRemoveLastAttachment();
+        setCursor((current) => Math.max(0, current - 1));
+        return;
       }
+
+      if (cursor === 0 && attachments.length > 0) onRemoveLastAttachment();
       return;
     }
 
-    // Ctrl+U clears the editable tail (matches common shell behaviour).
     if (key.ctrl && input === 'u') {
       onDraftChange('');
       setCursor(0);
       return;
     }
 
-    // Escape / arrows / other control keys arrive with empty input — ignore.
-    if (!input || key.ctrl || key.meta) {
-      return;
-    }
+    if (!input || key.ctrl || key.meta) return;
 
     if (isLargePaste(input)) {
       onPaste(input);
       return;
     }
 
-    const printable = input.replace(/[\r\n]/g, "");
+    const printable = input.replace(/[\r\n]/g, '');
     if (!printable) return;
+
     onDraftChange(draft.slice(0, cursor) + printable + draft.slice(cursor));
-    setCursor((c) => c + printable.length);
+    setCursor((current) => current + printable.length);
   });
 
   const hasContent = draft.length > 0 || attachments.length > 0;
   const placeholder = attachments.length > 0
-    ? 'Add a comment…'
-    : 'Ask anything… "halo"';
+    ? 'Add a message for this attachment…'
+    : 'Ask Xninetzy anything…';
 
   return (
-    <Box width={width} flexDirection="column" paddingX={1}>
-      <Box
-        width={width - 2}
-        borderStyle="round"
-        borderColor={attachments.length > 0 ? colors.orange : colors.border}
-        paddingX={1}
-      >
-        <Text color={colors.orange}>◎ </Text>
-
-        {attachments.map((block, i) => (
-          <Box key={i} marginRight={1}>
-            <Text color={colors.backgroundSoft} backgroundColor={colors.orangeBright} bold>
-              {' '}❏ {describeBlock(block)}{' '}
-            </Text>
-            <Text color={colors.dim}> ▸ </Text>
+    <Box width={width} flexDirection="column" flexShrink={0}>
+      <Box width="100%" flexDirection="column" borderStyle="round" borderColor={borderColor} paddingX={1}>
+        {attachments.length > 0 && (
+          <Box flexWrap="wrap" marginBottom={1}>
+            {attachments.map((block, index) => (
+              <Box key={String(index) + '-' + String(block.length)} marginRight={1}>
+                <Text bold color={colors.black} backgroundColor={colors.orangeBright}>
+                  {' '}❏ {describeBlock(block)}{' '}
+                </Text>
+              </Box>
+            ))}
           </Box>
-        ))}
+        )}
 
-        <Box flexGrow={1}>
-          <DraftLine
-            draft={draft}
-            cursor={cursor}
-            placeholder={placeholder}
-            showPlaceholder={!hasContent}
-          />
+        <Box width="100%" flexDirection="row">
+          <Text color={colors.cyanBright}>›{' '}</Text>
+          <Box flexGrow={1}>
+            <DraftLine
+              draft={draft}
+              cursor={cursor}
+              placeholder={placeholder}
+              showPlaceholder={!hasContent}
+            />
+          </Box>
+        </Box>
+
+        <Box width="100%" justifyContent="space-between" marginTop={1}>
+          <Box>
+            <Text bold color={colors.blueBright}>Build</Text>
+            <Text color={colors.dim}>{' '}· Xninetzy Neon</Text>
+          </Box>
+          <Text color={colors.muted}>
+            {isSending ? 'request active · Esc stop' : 'Enter send · Ctrl+U clear'}
+          </Text>
         </Box>
       </Box>
 
       {attachments.length > 0 && (
         <Box paddingX={1}>
           <Text color={colors.dim} italic>
-            {attachments.length} pasted block{attachments.length > 1 ? 's' : ''} attached · backspace on empty line removes the last · ctrl+u clears
+            {attachments.length} attached · backspace removes last
           </Text>
         </Box>
       )}
@@ -144,25 +149,18 @@ function InputBoxComponent({
   );
 }
 
-type DraftLineProps = {
+function DraftLine({
+  draft,
+  cursor,
+  placeholder,
+  showPlaceholder
+}: {
   draft: string;
   cursor: number;
   placeholder: string;
   showPlaceholder: boolean;
-};
-
-/** Renders the editable tail with a block cursor (no real terminal cursor). */
-function DraftLine({ draft, cursor, placeholder, showPlaceholder }: DraftLineProps) {
-  if (showPlaceholder) {
-    return (
-      <Text>
-        <Text inverse color={colors.dim}>
-          {placeholder.charAt(0)}
-        </Text>
-        <Text color={colors.dim}>{placeholder.slice(1)}</Text>
-      </Text>
-    );
-  }
+}) {
+  if (showPlaceholder) return <Text color={colors.muted}>{placeholder}</Text>;
 
   const before = draft.slice(0, cursor);
   const atCursor = draft.charAt(cursor) || ' ';
@@ -171,7 +169,7 @@ function DraftLine({ draft, cursor, placeholder, showPlaceholder }: DraftLinePro
   return (
     <Text color={colors.white}>
       {before}
-      <Text inverse>{atCursor}</Text>
+      <Text color={colors.black} backgroundColor={colors.cyanBright}>{atCursor}</Text>
       {after}
     </Text>
   );

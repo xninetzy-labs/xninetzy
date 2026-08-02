@@ -1,48 +1,49 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: Integrasi WhatsApp
-description: Login, trigger chat, slash command, dokumen, gambar, OCR, dan tool WhatsApp internal.
-section: Integrasi
+title: WhatsApp integration
+description: Login, chat triggers, slash commands, documents, images, OCR, and internal WhatsApp tools.
+section: Integrations
 ---
 
-WA engine memakai Baileys untuk linked-device session. Pesan yang memenuhi trigger diubah menjadi payload terstruktur, lalu dikirim ke AI service.
+The WhatsApp engine uses Baileys for a linked-device session. Messages that pass
+trigger policy become structured payloads for the AI service.
 
 ## Login
 
-QR:
+QR mode:
 
 ```dotenv
 WA_LOGIN_MODE=qr
 ```
 
-Pairing code:
+Pairing-code mode:
 
 ```dotenv
 WA_LOGIN_MODE=pairing_code
 WA_PHONE_NUMBER=628xxxxxxxxxx
 ```
 
-Pantau proses:
+Monitor the process:
 
 ```bash
 docker compose logs -f wa-enggine
 ```
 
-Session disimpan pada named volume `wa-session` dalam Docker atau `WA_AUTH_DIR` saat lokal.
+Docker stores the session in the `wa-session` volume. Host mode uses
+`WA_AUTH_DIR`.
 
-## Startup admin menu
+## Administrator startup menu
 
-Pada connection `open` pertama setiap process launch, WA engine otomatis
-mengirim lima kartu ke `ADMIN_JID`. Setiap kartu memakai maksimal tiga button
-Baileys agar payload tetap kompatibel.
+On the first `open` connection of each process launch, the engine sends five
+cards to `ADMIN_JID`. Each card has at most three Baileys buttons.
 
-| Kartu | Tombol |
+| Card | Buttons |
 |---|---|
-| Harian | `/today`, `/inbox`, `/review` |
+| Daily | `/today`, `/inbox`, `/review` |
 | Life OS | `/tasks`, `/goals`, `/workout` |
 | Learning OS | `/hebat`, `/roadmaps`, `/study-today` |
 | Knowledge | `/memory`, `/skills`, `/helper knowledge` |
-| Kontrol AI | `/approvals`, `/llm`, `/agent` |
+| AI control | `/approvals`, `/llm`, `/agent` |
 
 ```dotenv
 ADMIN_JID=628xxxxxxxxxx@s.whatsapp.net
@@ -50,21 +51,18 @@ WA_STARTUP_MENU_ENABLED=true
 WA_STARTUP_MENU_DELAY_MS=1500
 ```
 
-State `once per launch` disimpan di proses WA engine. Reconnect tidak mengirim
-menu kedua; restart container mengawali launch baru dan mengirim menu lagi. Jika
-interactive button gagal, satu pesan fallback berisi semua command dikirim.
-`ADMIN_JID` boleh berupa nomor atau JID penuh dan dinormalisasi sebelum delivery.
+“Once per launch” state lives in the WhatsApp process. Reconnects do not send a
+second menu; restarting the container begins a new launch. If interactive
+buttons fail, the engine sends one text fallback containing all commands.
+`ADMIN_JID` can be a number or complete JID and is normalized before delivery.
 
-## Trigger private dan group
+## Private and group triggers
 
-Private chat diproses langsung. Group diproses jika salah satu kondisi terpenuhi:
+Private chats are processed directly. A group message is processed when the bot
+is mentioned, the message uses the configured prefix, it replies to a bot
+message, or `WA_GROUP_ALLOW_ALL=true`.
 
-- bot di-mention;
-- pesan memakai prefix, default `!`;
-- user reply pesan bot;
-- `WA_GROUP_ALLOW_ALL=true`.
-
-Konfigurasi aman:
+Safe defaults:
 
 ```dotenv
 WA_GROUP_TRIGGER_MODE=mention_or_prefix
@@ -72,61 +70,64 @@ WA_COMMAND_PREFIX=!
 WA_GROUP_ALLOW_ALL=false
 ```
 
-## Command penting
+## Important commands
 
-| Command | Fungsi |
+| Command | Purpose |
 |---|---|
-| `/helper [topic]` | panduan kemampuan |
-| `/today` | attention queue OS |
-| `/capture`, `/inbox`, `/triage` | capture dan triage lintas interface |
-| `/tasks`, `/goals` | life OS |
-| `/research`, `/deep-research` | research |
-| `/roadmaps`, `/study-today` | learning OS |
-| `/media-info`, `/analyze-media` | attachment/reply |
-| `/approvals`, `/approve`, `/reject` | human approval |
-| `/llm list`, `/llm use` | provider/model |
-| `/agent list`, `/agent use`, `/code` | coding runtime |
+| `/helper [topic]` | Capability guide |
+| `/today` | OS attention queue |
+| `/capture`, `/inbox`, `/triage` | Cross-interface capture and triage |
+| `/tasks`, `/goals` | Life OS |
+| `/research`, `/deep-research` | Research |
+| `/roadmaps`, `/study-today` | Learning OS |
+| `/media-info`, `/analyze-media` | Attachment and reply inspection |
+| `/approvals`, `/approve`, `/reject` | Human approval |
+| `/llm list`, `/llm use` | Provider and model |
+| `/agent list`, `/agent use`, `/code` | Coding runtime |
 
-## Dokumen dan gambar
+## Documents and images
 
-Kirim atau reply PDF, DOCX, TXT, CSV, JSON, spreadsheet, presentasi, atau gambar:
+Send or reply to a PDF, DOCX, TXT, CSV, JSON, spreadsheet, presentation, or
+image:
 
 ```text
-ringkas dokumen ini
-buat action item dari file yang aku reply
-baca teks pada gambar ini lalu simpan ke Obsidian
-jadikan PDF ini knowledge dan jawab berdasarkan isinya
+summarize this document
+create action items from the file I replied to
+read the text in this image and save it to Obsidian
+ingest this PDF and answer from its evidence
 ```
 
-Pipeline media:
+Media processing is:
 
-1. WA engine mengunduh attachment ke shared durable storage.
-2. Payload membawa metadata dan resolved path.
-3. AI memvalidasi checksum, MIME, extension, dan ukuran.
-4. Teks native diekstrak lebih dulu.
-5. Gambar atau scanned PDF memakai OCR Tesseract sebagai fallback.
-6. Hasil dapat diberikan ke agent, knowledge ingest, atau Obsidian tool.
+1. the WhatsApp engine downloads the attachment to shared durable storage;
+2. the payload carries metadata and a resolved path;
+3. the AI validates checksum, MIME type, extension, and size;
+4. native text is extracted first;
+5. images and scanned PDFs use Tesseract OCR as a fallback;
+6. extracted content can reach an agent, knowledge ingestion, or Obsidian tools.
 
-Jika reply attachment tidak terbaca, jalankan `/media-info` dan periksa apakah file terlihat pada `WA_MEDIA_DIR` yang sama bagi kedua service.
+If a replied attachment is unavailable, run `/media-info` and verify both
+services resolve the same `WA_MEDIA_DIR`.
 
 ## HTTP MCP-style tools
 
-WA engine menyediakan tool untuk mengirim pesan, mengunduh media, membaca kontak, dan aksi group:
+List WhatsApp tools:
 
 ```bash
 curl -H 'Authorization: Bearer <MCP_API_KEY>' \
   http://127.0.0.1:8081/mcp/tools
 ```
 
-Contoh call:
+Invoke a tool:
 
 ```bash
 curl -X POST http://127.0.0.1:8081/mcp/call \
   -H 'Content-Type: application/json' \
   -H 'Authorization: Bearer <MCP_API_KEY>' \
-  -d '{"tool":"send_text_message","input":{"jid":"628xxxxxxxxxx@s.whatsapp.net","text":"Halo"}}'
+  -d '{"tool":"send_text_message","input":{"jid":"628xxxxxxxxxx@s.whatsapp.net","text":"Hello"}}'
 ```
 
-Isi `MCP_API_KEY` pada WA engine dan nilai yang sama sebagai `WA_MCP_API_KEY` pada AI service.
+Set `MCP_API_KEY` in the WhatsApp engine and the same value as
+`WA_MCP_API_KEY` in the AI service.
 
-> Baileys bukan WhatsApp Business API resmi. Perubahan protokol atau kebijakan WhatsApp dapat memengaruhi koneksi.
+> Baileys is not the official WhatsApp Business API. Protocol or policy changes can affect connectivity.

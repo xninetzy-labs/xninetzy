@@ -1,44 +1,52 @@
 import React, { memo } from 'react';
 import { Box, Text } from 'ink';
+
 import { colors } from '../theme/colors.js';
 
 type HeaderProps = {
-  columns: number;
-  compact?: boolean;
+  width: number;
+  isSending: boolean;
 };
 
-const logo = [
-  '██╗  ██╗███╗   ██╗██╗███╗   ██╗███████╗████████╗███████╗██╗   ██╗',
-  '╚██╗██╔╝████╗  ██║██║████╗  ██║██╔════╝╚══██╔══╝╚══███╔╝╚██╗ ██╔╝',
-  ' ╚███╔╝ ██╔██╗ ██║██║██╔██╗ ██║█████╗     ██║     ███╔╝  ╚████╔╝ ',
-  ' ██╔██╗ ██║╚██╗██║██║██║╚██╗██║██╔══╝     ██║    ███╔╝    ╚██╔╝  ',
-  '██╔╝ ██╗██║ ╚████║██║██║ ╚████║███████╗   ██║   ███████╗   ██║   ',
-  '╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝   '
-];
-
-function HeaderComponent({ columns, compact = false }: HeaderProps) {
-  const useCompact = compact || columns < 96;
-
+function HeaderComponent({
+  width,
+  isSending
+}: HeaderProps) {
   return (
-    <Box flexDirection="column" alignItems="center" width="100%">
-      {useCompact ? (
-        <Text bold color={colors.purpleBright}>X N I N E T Z Y</Text>
-      ) : (
-        <Box flexDirection="column" alignItems="center">
-          {logo.map((line, index) => (
-            <Text key={index} bold color={colors.purpleBright}>
-              {line}
-            </Text>
-          ))}
+    <Box
+      width={width}
+      flexDirection="column"
+      paddingX={1}
+    >
+      <Box
+        width="100%"
+        justifyContent="space-between"
+      >
+        <Box>
+          <Text bold color={colors.cyanBright}>
+            XNINETZY
+          </Text>
+
+          <Text color={colors.dim}>
+            {' '}· neon intelligence shell
+          </Text>
         </Box>
-      )}
 
-      <Text color={colors.white}>
-        future-ready AI session shell · live backend · cosmos
-      </Text>
+        <Text
+          color={
+            isSending
+              ? colors.cyan
+              : colors.muted
+          }
+        >
+          {isSending
+            ? '● live request'
+            : '○ ready'}
+        </Text>
+      </Box>
 
-      <Text color={colors.orange}>
-        ───── ◎ event horizon ◎ ─────
+      <Text color={colors.borderDim}>
+        {'─'.repeat(Math.max(1, width - 2))}
       </Text>
     </Box>
   );

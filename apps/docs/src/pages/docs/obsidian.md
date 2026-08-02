@@ -5,8 +5,6 @@ description: Canonical foldering, safe migration, note metadata, MOCs, and groun
 section: Integrations
 ---
 
-<div data-localized-body data-locale="en">
-
 Xninetzy treats Obsidian as the human-readable persistence layer for the Learning OS and Life OS. Every interface uses the same vault policy: WhatsApp, LangGraph, MCP, Codex, Claude Code, and OpenCode never maintain separate note conventions.
 
 ## Canonical vault structure
@@ -107,44 +105,3 @@ Use the shared loop:
 5. Review progress through daily and weekly notes.
 
 `knowledge_search` is evidence inspection. `knowledge_answer` produces grounded answers with citations. Raw vector chunks are never presented as final answers.
-
-</div>
-
-<div data-locale="id" hidden>
-
-Xninetzy menggunakan Obsidian sebagai lapisan penyimpanan yang mudah dibaca manusia untuk Learning OS dan Life OS. Semua interface memakai aturan vault yang sama: WhatsApp, LangGraph, MCP, Codex, Claude Code, dan OpenCode tidak memiliki konvensi note terpisah.
-
-## Struktur folder canonical
-
-```text
-Home.md
-Inbox/Captures/       Inbox/Triage/        Inbox/Unsorted/
-Daily/YYYY/YYYY-MM-DD.md
-Learning/Roadmaps/    Learning/Concepts/   Learning/Sessions/
-Learning/Notes/       Learning/Reviews/    Learning/MOCs/
-Projects/<project>/README.md
-Academic/HEBAT/Courses/<course>/Materials/
-Academic/HEBAT/Courses/<course>/Assignments/
-Academic/Cyber-Campus/{Schedule,Grades,KRS}/
-Research/{Briefs,Sources,Topics,MOCs}/
-Life/{Goals,Tasks,Habits,Money,Workouts,Areas,Reviews}/
-Knowledge/{Notes,Sources,MOCs}/
-Attachments/
-System/{MOCs,Templates,Help,Logs,Migration}/
-Archive/
-```
-
-Path lama tetap bisa dibaca. Note baru memakai path canonical. Migrasi menggunakan mode hybrid: preview, approval owner, backup, pemindahan atomic, pembaruan link, lalu verifikasi.
-
-## Tool management folder
-
-- `obsidian_vault_init` menyiapkan struktur folder.
-- `obsidian_folder_status` memeriksa folder dan duplicate ID.
-- `obsidian_organize_preview` membuat inventory dan rencana migrasi read-only.
-- `obsidian_organize_apply` meminta approval sebelum memindahkan note.
-- `obsidian_moc_refresh` memperbarui index dan navigasi.
-- `obsidian_verify` menjalankan health check vault.
-
-Nilai, token, cookie, KRS, session browser, SQLite, dan credential tidak disimpan otomatis ke vault.
-
-</div>

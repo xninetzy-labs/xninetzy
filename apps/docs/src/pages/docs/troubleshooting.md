@@ -1,34 +1,37 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: Troubleshooting
-description: Diagnosis cepat untuk provider, WhatsApp, media, Obsidian, HEBAT, MCP, permission, dan docs build.
-section: Operasional
+description: Diagnose provider, WhatsApp, media, Obsidian, HEBAT, MCP, permission, and documentation failures.
+section: Operations
 ---
 
-Mulai dari health check dan boundary terdekat. Jangan langsung menghapus session, database, atau volume.
+Start with health checks and the nearest system boundary. Do not begin by
+deleting sessions, databases, or volumes.
 
-## Model tidak dapat dihubungi
+## The model cannot be reached
 
 ```text
 /llm list
 ```
 
-Periksa enabled provider, allowlist model, base URL, credential, dan restart service setelah `.env` berubah. Jalankan script Flaz lagi jika perlu:
+Inspect enabled providers, model allowlists, base URL, and credentials, then
+restart the service after changing `.env`.
 
 ```bash
 cd services/ai
 uv run python scripts/configure_flaz.py
 ```
 
-## QR atau pairing code tidak muncul
+## QR or pairing code does not appear
 
 ```bash
 docker compose logs -f wa-enggine
 ```
 
-Pastikan `WA_LOGIN_MODE` valid. Pairing membutuhkan `WA_PHONE_NUMBER`. Jangan hapus volume session sebelum memastikan session memang rusak.
+Verify `WA_LOGIN_MODE`. Pairing requires `WA_PHONE_NUMBER`. Do not remove the
+session volume before confirming that the session is corrupt.
 
-## Bot tidak merespons group
+## The bot ignores a group
 
 ```dotenv
 WA_GROUP_TRIGGER_MODE=mention_or_prefix
@@ -36,59 +39,55 @@ WA_COMMAND_PREFIX=!
 WA_GROUP_ALLOW_ALL=false
 ```
 
-Mention bot, reply pesan bot, atau gunakan prefix `!`.
+Mention the bot, reply to its message, or use the `!` prefix.
 
-## Dokumen/gambar tidak terbaca
+## A document or image cannot be read
 
-1. reply attachment lalu jalankan `/media-info`;
-2. periksa file ada di shared `WA_MEDIA_DIR`;
-3. pastikan AI dan WA melihat storage yang sama;
-4. periksa MIME, extension, checksum, serta limit ukuran;
-5. pastikan Tesseract dan language pack tersedia untuk OCR;
-6. untuk scanned PDF, pastikan fallback OCR aktif.
+1. reply to the attachment and run `/media-info`;
+2. verify the file exists in shared `WA_MEDIA_DIR`;
+3. verify both services resolve the same storage;
+4. inspect MIME type, extension, checksum, and size limits;
+5. verify Tesseract and required language packs;
+6. enable OCR fallback for scanned PDFs.
 
-## AI tidak dapat memakai tool WhatsApp
+## AI cannot call WhatsApp tools
 
 ```bash
 curl -s http://127.0.0.1:8081/health
 ```
 
-Pastikan `socket_ready=true`, `WA_MCP_BASE_URL` benar, dan `WA_MCP_API_KEY` sama dengan `MCP_API_KEY`.
+Verify `socket_ready=true`, `WA_MCP_BASE_URL`, and that
+`WA_MCP_API_KEY` equals `MCP_API_KEY`.
 
-## Obsidian gagal menulis
+## Obsidian cannot write
 
-- `OBSIDIAN_VAULT_HOST_PATH` harus absolute dan ada.
-- UID/GID container harus memiliki akses.
+- `OBSIDIAN_VAULT_HOST_PATH` is absolute and exists.
+- The container UID and GID can access the vault.
 - `OBSIDIAN_ALLOW_WRITE=true`.
-- Input tool menggunakan path relatif.
-- Extension harus masuk allowlist.
-- Vault tidak sedang read-only/mounted salah.
+- Tool input uses vault-relative paths.
+- The extension is allowlisted.
+- The vault is not mounted read-only.
 
-## HEBAT login/download gagal
+## HEBAT login or download fails
 
 ```text
 /hebat-debug
 ```
 
-Periksa credential, Chromium, write permission browser profile, expiry session, maintenance portal, perubahan selector, dan apakah hasil download memiliki magic bytes file yang benar.
-
-
-<div data-localized-body data-locale="en">
+Inspect credentials, Chromium, browser-profile permissions, session expiry,
+portal maintenance, selector changes, and downloaded file magic bytes.
 
 ## GraphRAG timeout or Neo4j offline
 
-GraphRAG V3 keeps SQLite as the canonical source of truth. Neo4j and FAISS are
-rebuildable projections; retrieval continues through SQLite/FAISS when Neo4j is
-offline. Neo4j autostart has bounded command, readiness, and connection timeouts
-plus a failure cooldown, so one outage cannot hold the next MCP request.
+GraphRAG V3 keeps SQLite canonical. Neo4j and FAISS are rebuildable projections,
+so retrieval can continue when Neo4j is offline. Autostart has bounded command,
+readiness, and connection timeouts plus a failure cooldown.
 
-Inspect status without forcing a boot:
+Inspect state without forcing startup:
 
 ```text
 graph_v3_stats
 ```
-
-Relevant settings:
 
 ```dotenv
 NEO4J_ENABLED=false
@@ -99,49 +98,12 @@ NEO4J_CONNECT_TIMEOUT_SECONDS=3
 NEO4J_FAILURE_COOLDOWN_SECONDS=60
 ```
 
-Keep NEO4J_ENABLED=false when Docker/Neo4j is not used. If a cold image needs
-more time, raise the readiness timeout deliberately. The smaller legacy
-NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS remains the effective upper bound. Do not
-rebuild or delete canonical SQLite to recover from a projection timeout.
+Keep `NEO4J_ENABLED=false` when Docker or Neo4j is not used. Deliberately raise
+the readiness timeout for a slow cold image. The smaller legacy
+`NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS` remains an upper bound. Never delete
+canonical SQLite to recover a projection timeout.
 
-</div>
-
-<div data-locale="id" hidden>
-
-## GraphRAG timeout atau Neo4j offline
-
-GraphRAG V3 menyimpan kebenaran di SQLite. Neo4j dan FAISS adalah projection
-rebuildable; pencarian tetap memakai jalur SQLite/FAISS ketika Neo4j tidak aktif.
-Autostart Neo4j memiliki batas waktu dan cooldown agar satu kegagalan tidak
-menahan request MCP berikutnya.
-
-Periksa status tanpa memaksa boot:
-
-```text
-graph_v3_stats
-```
-
-Konfigurasi yang relevan:
-
-```dotenv
-NEO4J_ENABLED=false
-NEO4J_AUTOSTART_ENABLED=true
-NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
-NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
-NEO4J_CONNECT_TIMEOUT_SECONDS=3
-NEO4J_FAILURE_COOLDOWN_SECONDS=60
-```
-
-Jika Docker/Neo4j tidak dipakai, biarkan NEO4J_ENABLED=false. Jika image
-Neo4j membutuhkan cold start lebih lama, naikkan readiness timeout secara
-sengaja. Nilai legacy NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS yang lebih kecil tetap
-menjadi batas maksimum. Jangan menjalankan rebuild projection hanya untuk
-memulihkan timeout; SQLite canonical tidak perlu dihapus.
-</div>
-
-## MCP tidak muncul dari folder lain
-
-Uji dari `/tmp`:
+## MCP is unavailable outside the repository
 
 ```bash
 cd /tmp
@@ -150,24 +112,27 @@ claude mcp list
 opencode mcp list
 ```
 
-Jika command masih memakai `services/ai` relatif, migrasikan ke global config dengan absolute path. Jika repository dipindah, update path ketiga client.
+Replace relative AI paths with absolute global configuration. Update all clients
+after moving the repository.
 
-### Claude pending approval
+### Claude waits for approval
 
-Entry `.mcp.json` project memerlukan approval. Untuk penggunaan global, pastikan output `claude mcp get xninetzy` menunjukkan `Scope: User config`.
+A project `.mcp.json` entry requires approval. For global use,
+`claude mcp get xninetzy` should report `Scope: User config`.
 
-### OpenCode tidak connected
+### OpenCode is not connected
 
 ```bash
 opencode debug paths
 opencode debug config
 ```
 
-Periksa `~/.config/opencode/opencode.jsonc`, JSON syntax, path `uv`, timeout, dan dependency Python.
+Inspect `~/.config/opencode/opencode.jsonc`, JSON syntax, the absolute `uv`
+path, timeout, and Python dependencies.
 
 ### MCP protocol error
 
-Stdout hanya untuk protocol frame. Arahkan logging aplikasi ke stderr. Jalankan targeted test:
+Stdout carries protocol frames only. Send application logging to stderr.
 
 ```bash
 cd services/ai
@@ -175,20 +140,21 @@ uv run pytest -q tests/interfaces/test_mcp_server.py \
   tests/interfaces/test_mcp_tool_adapter.py
 ```
 
-## Permission denied SQLite/download
+## SQLite or download permission denied
 
-Periksa `HOST_UID`, `HOST_GID`, ownership `services/ai/data`, dan owner vault. Jangan bergantian menjalankan service sebagai root dan user biasa.
+Inspect `HOST_UID`, `HOST_GID`, ownership of `services/ai/data`, and vault
+ownership. Do not alternate between root and a normal user.
 
-## Port sudah digunakan
+## Port already in use
 
 ```bash
 ss -ltnp | grep -E ':8000|:8081'
 docker compose ps
 ```
 
-Stop instance yang tidak dipakai. Jangan menjalankan local dan Docker pada port yang sama.
+Stop the unused instance. Do not run host and Docker services on the same ports.
 
-## Docs build gagal
+## Documentation build fails
 
 ```bash
 cd apps/docs
@@ -198,18 +164,20 @@ yarn check
 yarn build
 ```
 
-Astro 7 membutuhkan Node 22.12 atau lebih baru. Hapus cache hanya setelah membaca error; jangan menghapus source atau lockfile.
+Astro 7 requires Node 22.12 or newer. Read the error before removing a cache;
+never delete source files or the lockfile as a first response.
 
-## Informasi untuk laporan bug
+## Bug-report information
 
-Sertakan:
+Include:
 
-- command yang dijalankan;
-- expected vs actual result;
-- status health;
-- versi Python/Node/client;
-- log yang sudah disanitasi;
-- scope: host/Docker, private/group, text/media;
-- test minimal yang gagal.
+- the exact command;
+- expected and actual results;
+- health state;
+- Python, Node, and client versions;
+- sanitized logs;
+- host or Docker scope, chat type, and text or media scope;
+- the smallest failing test.
 
-Jangan sertakan API key, password, cookie, JID pribadi, atau isi dokumen sensitif.
+Never include API keys, passwords, cookies, private JIDs, or sensitive document
+content.

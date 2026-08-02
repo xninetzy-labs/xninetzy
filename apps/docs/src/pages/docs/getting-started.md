@@ -1,29 +1,30 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: Quick start
-description: Instalasi satu perintah untuk Linux, macOS, dan Windows hingga chat WhatsApp pertama.
-section: Mulai
+description: Install Xninetzy on Linux, macOS, or Windows and reach the first WhatsApp conversation.
+section: Start
 ---
 
-Jalur Docker menjalankan AI service dan WA engine secara konsisten melalui
-bridge network Compose. Port hanya dipublikasikan ke loopback host, sehingga
-konfigurasi yang sama bekerja di Linux, macOS, Windows, dan WSL2.
+The Docker path runs the AI service and WhatsApp engine on one Compose bridge
+network. Ports are published only to host loopback, so the same configuration
+works on Linux, macOS, Windows, and WSL2.
 
-## Prasyarat
+## Prerequisites
 
-- Linux: Docker Engine dan Docker Compose plugin.
+- Linux: Docker Engine and the Docker Compose plugin.
 - macOS: Docker Desktop.
-- Windows 10/11: Docker Desktop dengan WSL2 backend atau PowerShell 7.
-- Git. Installer Unix juga memerlukan OpenSSL.
-- Flaz API key atau credential provider LLM lain.
-- Absolute path menuju Obsidian vault.
-- Akun WhatsApp yang dapat ditautkan sebagai linked device.
+- Windows 10 or 11: Docker Desktop with the WSL2 backend, or PowerShell 7.
+- Git. The Unix installer also requires OpenSSL.
+- A Flaz API key or credentials for another supported LLM provider.
+- An absolute path to an Obsidian vault.
+- A WhatsApp account that can link a new device.
 
-Untuk development lokal, gunakan Python 3.11+, `uv`, Node.js 22.12+, Yarn 1.22, Chromium Playwright, dan Tesseract untuk OCR.
+For host development, also install Python 3.11+, `uv`, Node.js 22.12+, Yarn
+1.22, Playwright Chromium, and Tesseract for OCR.
 
-## Instalasi satu perintah
+## One-command installation
 
-Linux, macOS, atau WSL2:
+Linux, macOS, or WSL2:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.sh | bash
@@ -35,38 +36,39 @@ Windows PowerShell:
 irm https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.ps1 | iex
 ```
 
-Installer akan clone atau memakai checkout aktif, membuat `.env`, meminta vault,
-nomor WhatsApp admin, dan Flaz API key, menghasilkan key internal secara acak,
-menjalankan validasi Compose, lalu membangun dan menyalakan service. API key
-dibaca tanpa echo dan tidak dicetak. Setelah selesai, ikuti log WA untuk scan QR.
+The installer clones the repository or uses the active checkout, creates
+`.env`, asks for the vault path, WhatsApp administrator number, and Flaz API
+key, generates independent internal keys, validates Compose, builds the images,
+and starts the services. Secret input is not echoed or printed. Follow the
+WhatsApp engine logs to scan the QR code.
 
-Audit isi script dari GitHub sebelum memakai pola pipe-to-shell pada mesin yang
-tidak sepenuhnya Anda kontrol. Jalur manual berikut memberikan hasil yang sama.
+Audit any remote install script before using a pipe-to-shell command. The manual
+path below produces the same result.
 
-## Dukungan platform
+## Platform support
 
-| Platform | Runtime | Startup otomatis |
+| Platform | Runtime | Automatic startup |
 |---|---|---|
-| Linux | Docker Engine + Compose | Aktifkan service Docker melalui systemd |
-| macOS | Docker Desktop | Aktifkan “Start Docker Desktop when you sign in” |
-| Windows | Docker Desktop + WSL2 | Aktifkan “Start Docker Desktop when you sign in” |
-| WSL2 | Docker Desktop integration | Mengikuti startup Docker Desktop Windows |
+| Linux | Docker Engine and Compose | Enable Docker through systemd |
+| macOS | Docker Desktop | Enable “Start Docker Desktop when you sign in” |
+| Windows | Docker Desktop and WSL2 | Enable “Start Docker Desktop when you sign in” |
+| WSL2 | Docker Desktop integration | Follows Windows Docker Desktop startup |
 
-Volume vault memakai absolute path native platform. Jangan memakai path network
-yang belum dibagikan ke Docker Desktop.
+Use an absolute native-platform vault path. Do not use a network path that has
+not been shared with Docker Desktop.
 
-## 1. Siapkan environment secara manual
+## 1. Prepare the environment manually
 
-Dari root repository:
+From the repository root:
 
 ```bash
 cp .env.example .env
 chmod 600 .env
 ```
 
-Jangan menaruh password, token, cookie, atau API key asli di `.env.example`.
+Never place a real password, token, cookie, or API key in `.env.example`.
 
-## 2. Masukkan Flaz API key dengan aman
+## 2. Add the Flaz API key safely
 
 ```bash
 cd services/ai
@@ -74,9 +76,10 @@ uv run python scripts/configure_flaz.py
 cd ../..
 ```
 
-Script memakai prompt `getpass`, tidak mencetak key, menulis `.env` secara atomik, dan menjaga permission `600`.
+The script uses `getpass`, writes `.env` atomically, preserves mode `600`,
+and never echoes the key.
 
-Konfigurasi default:
+Default provider settings:
 
 ```dotenv
 LLM_DEFAULT_PROVIDER=flaz
@@ -85,7 +88,7 @@ FLAZ_BASE_URL=https://ai.flaz.id/v1
 FLAZ_MODEL=deepseek-v4-pro
 ```
 
-Lengkapi autentikasi internal tanpa menampilkan secret:
+Generate internal service authentication without printing secrets:
 
 ```bash
 cd services/ai
@@ -93,16 +96,16 @@ uv run python scripts/configure_internal_auth.py
 cd ../..
 ```
 
-## 3. Hubungkan data host
+## 3. Connect host data
 
-Cari identitas user host:
+Find the host user identity:
 
 ```bash
 id -u
 id -g
 ```
 
-Isi `.env`:
+Set these values in `.env`:
 
 ```dotenv
 HOST_UID=1000
@@ -115,9 +118,9 @@ WA_STARTUP_MENU_ENABLED=true
 WA_STARTUP_MENU_DELAY_MS=1500
 ```
 
-`OBSIDIAN_VAULT_HOST_PATH` harus absolute. Compose menolak start ketika nilainya kosong.
+`OBSIDIAN_VAULT_HOST_PATH` must be absolute. Compose rejects an empty value.
 
-## 4. Pilih login WhatsApp
+## 4. Choose WhatsApp login
 
 QR mode:
 
@@ -125,16 +128,16 @@ QR mode:
 WA_LOGIN_MODE=qr
 ```
 
-Atau pairing code:
+Pairing-code mode:
 
 ```dotenv
 WA_LOGIN_MODE=pairing_code
 WA_PHONE_NUMBER=628xxxxxxxxxx
 ```
 
-Nomor memakai kode negara tanpa `+`, spasi, atau tanda baca.
+Use the country code without `+`, spaces, or punctuation.
 
-## 5. Jalankan service
+## 5. Start services
 
 ```bash
 docker compose config -q
@@ -143,15 +146,16 @@ docker compose ps
 docker compose logs -f wa-enggine
 ```
 
-Selesaikan QR atau pairing melalui **WhatsApp → Linked devices**.
+Complete QR or pairing through **WhatsApp → Linked devices**.
 
-Setelah koneksi pertama berstatus `open`, admin menerima lima kartu menu berisi
-15 tombol command. Menu hanya dikirim sekali untuk setiap process launch, bukan
-setiap reconnect. Jika button tidak didukung, sistem mengirim fallback teks.
+After the first `open` connection, the administrator receives five menu cards
+with 15 command buttons. The menu is sent once per process launch, not after
+every reconnect. A text fallback is sent when interactive buttons are not
+supported.
 
-## Startup otomatis saat laptop boot atau login
+## Automatic startup after boot or login
 
-Pada Linux dengan systemd:
+On Linux with systemd:
 
 ```bash
 sudo systemctl enable --now docker
@@ -159,40 +163,40 @@ systemctl is-enabled docker
 systemctl is-active docker
 ```
 
-Compose menetapkan `restart: unless-stopped` untuk AI dan WA engine. Setelah
-container dibuat, keduanya kembali hidup bersama Docker saat laptop boot. Hindari
-`docker compose down` apabila container harus tetap terdaftar untuk startup
-otomatis.
+Compose uses `restart: unless-stopped` for the AI and WhatsApp services. Once
+created, the containers return with Docker after reboot. Avoid
+`docker compose down` when containers must remain registered for automatic
+startup.
 
-Pada macOS dan Windows, buka Docker Desktop → Settings → General, lalu aktifkan
-startup saat login. Pada WSL2, pastikan integration distro aktif. Container akan
-dipulihkan oleh Docker Desktop dengan policy yang sama.
+On macOS and Windows, enable Docker Desktop startup under Settings → General.
+On WSL2, verify distribution integration. Docker Desktop restores the
+containers with the same restart policy.
 
-## 6. Verifikasi health
+## 6. Verify health
 
 ```bash
 curl -s http://127.0.0.1:8000/health
 curl -s http://127.0.0.1:8081/health
 ```
 
-AI service seharusnya mengembalikan:
+The AI service should return:
 
 ```json
 {"status":"ok","service":"xninetzy-ai"}
 ```
 
-Health WA menampilkan status socket serta koneksi WhatsApp.
+WhatsApp health reports socket and connection state.
 
-## 7. Coba dari WhatsApp
+## 7. Try WhatsApp
 
 ```text
 /helper
-buat roadmap belajar machine learning 14 hari
-ingatkan aku besok jam 08.00 untuk review tugas
-simpan ringkasan percakapan ini ke Obsidian
+create a 14-day machine-learning roadmap
+remind me tomorrow at 08:00 to review my assignment
+save this conversation summary to Obsidian
 ```
 
-## Development lokal
+## Host development
 
 AI service:
 
@@ -203,7 +207,7 @@ uv run playwright install chromium
 uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
 ```
 
-WA engine di terminal kedua:
+WhatsApp engine in a second terminal:
 
 ```bash
 cd services/wa-enggine
@@ -211,4 +215,5 @@ yarn install --frozen-lockfile
 yarn dev
 ```
 
-Jangan jalankan instance Docker dan lokal bersamaan pada port atau akun WhatsApp yang sama.
+Never run Docker and host instances on the same ports or WhatsApp account at the
+same time.

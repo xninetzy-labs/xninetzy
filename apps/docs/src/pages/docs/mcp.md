@@ -1,42 +1,40 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: MCP global
-description: Hubungkan registry Xninetzy ke Codex, Claude Code, dan OpenCode agar tersedia dari folder mana pun.
+title: Global MCP
+description: Connect the Xninetzy registry to Codex, Claude Code, and OpenCode from any directory.
 section: AI & developer tools
 ---
 
-Xninetzy MCP memakai transport `stdio` dan mengekspos katalog tool langsung dari registry AI service. Konfigurasi global harus memakai **absolute path**; relative path hanya berfungsi ketika client dibuka dari repository.
+Xninetzy MCP uses `stdio` and exposes tools directly from the AI service
+registry. Global configuration must use absolute paths; relative paths work only
+when a client starts inside the repository.
 
-MCP ini adalah pintu masuk owner lokal ke OS yang sama dengan WhatsApp dan
-LangGraph. Identitas context diinjeksi oleh server; parameter `sender_id`,
-`sender_name`, dan `chat_id` tidak dipercaya dari client.
+MCP is the trusted local-owner entry point to the same OS used by WhatsApp and
+LangGraph. The server injects identity context. Client-supplied `sender_id`,
+`sender_name`, and `chat_id` values are never authorization evidence.
 
-## Prasyarat
+## Prerequisites
 
 ```bash
 cd /absolute/path/to/xninetzy/services/ai
 uv sync
-```
-
-Catat dua path:
-
-```bash
 command -v uv
 pwd
 ```
 
-Contoh di bawah memakai:
+The examples use:
 
 ```text
 /home/you/.local/bin/uv
 /home/you/code/xninetzy/services/ai
 ```
 
-Ganti dengan path milikmu.
+Replace both paths with values from your host.
 
-## Codex global
+## Global Codex
 
-Codex CLI, IDE extension, dan Codex desktop pada host yang sama berbagi `~/.codex/config.toml`.
+Codex CLI, its IDE extension, and Codex desktop on the same host share
+`~/.codex/config.toml`.
 
 ```bash
 codex mcp add xninetzy -- \
@@ -45,7 +43,7 @@ codex mcp add xninetzy -- \
   python -m app.xninetzy.interfaces.mcp_server
 ```
 
-Tambahkan timeout pada `~/.codex/config.toml` jika tool browser/research membutuhkan waktu lebih lama:
+For browser or research tools, configure explicit timeouts:
 
 ```toml
 [mcp_servers.xninetzy]
@@ -55,7 +53,7 @@ startup_timeout_sec = 30
 tool_timeout_sec = 120
 ```
 
-Verifikasi:
+Verify outside the repository:
 
 ```bash
 cd /tmp
@@ -63,9 +61,9 @@ codex mcp get xninetzy
 codex mcp list
 ```
 
-## Claude Code global
+## Global Claude Code
 
-Scope `user` membuat server tersedia pada seluruh project:
+User scope makes the server available in every project:
 
 ```bash
 claude mcp add --scope user xninetzy \
@@ -75,17 +73,15 @@ claude mcp add --scope user xninetzy \
   python -m app.xninetzy.interfaces.mcp_server
 ```
 
-Verifikasi dari luar repository:
-
 ```bash
 cd /tmp
 claude mcp get xninetzy
 claude mcp list
 ```
 
-Output seharusnya menampilkan `Scope: User config` dan `Connected`.
+The result should report `Scope: User config` and `Connected`.
 
-## OpenCode global
+## Global OpenCode
 
 Edit `~/.config/opencode/opencode.jsonc`:
 
@@ -111,7 +107,7 @@ Edit `~/.config/opencode/opencode.jsonc`:
 }
 ```
 
-Jika file memiliki konfigurasi lain, merge key `mcp.xninetzy`; jangan menimpa seluruh file.
+Merge only `mcp.xninetzy` when the file already has other settings.
 
 ```bash
 cd /tmp
@@ -119,74 +115,71 @@ opencode mcp list
 opencode debug config
 ```
 
-## Uji pemakaian
+## Use the server
 
-Buka salah satu client dari directory bebas lalu gunakan prompt:
-
-```text
-Gunakan MCP xninetzy untuk menampilkan daftar note pada folder Learning.
-```
-
-Atau:
+From any directory:
 
 ```text
-Gunakan MCP xninetzy untuk membaca course HEBAT yang tersedia tanpa melakukan submission.
+Use MCP xninetzy to list notes in the Learning folder.
 ```
-
-Untuk jawaban dari knowledge base gunakan:
 
 ```text
-Gunakan knowledge_answer dari MCP xninetzy untuk menjawab pertanyaan ini dan pertahankan sitasi sumbernya.
+Use MCP xninetzy to read available HEBAT courses without submitting anything.
 ```
 
-`knowledge_search` hanya menampilkan evidence terpilih untuk inspeksi.
-`knowledge_answer` melakukan hybrid retrieval, sintesis, dan validasi sitasi.
-Jika evidence tidak cukup, client harus menyampaikan kekurangan tersebut.
-
-## Agent Skills lintas client
-
-Katalog `SKILL.md` Xninetzy ditemukan dinamis oleh registry. Built-in skill
-berada di `services/ai/.agents/skills`; skill owner berada di direktori data
-runtime. Ketiga client memakai MCP yang sama, sehingga tidak ada daftar tool
-skill terpisah untuk Codex, Claude Code, atau OpenCode.
-
-Gunakan urutan berikut dari client mana pun:
+For a grounded answer:
 
 ```text
-Gunakan skill_suggest_for_request untuk request ini.
-Gunakan skill_get pada skill yang paling relevan.
+Use knowledge_answer from MCP xninetzy and preserve its source citations.
 ```
 
-Owner dapat memasang skill baru tanpa menambah kode:
+`knowledge_search` exposes selected evidence for inspection.
+`knowledge_answer` performs hybrid retrieval, synthesis, and citation
+validation. When evidence is insufficient, the client must disclose the gap.
+
+## Shared Agent Skills
+
+The registry discovers the Xninetzy `SKILL.md` catalog at runtime. Built-ins
+live under `services/ai/.agents/skills`; owner-installed skills live in the
+runtime data directory. All clients use the same MCP catalog.
+
+Recommended flow:
 
 ```text
-Validasi SKILL.md ini dengan skill_validate, lalu pasang dengan skill_install
-menggunakan idempotency_key `skill-<nama>-v1`.
+Use skill_suggest_for_request for this request.
+Load the most relevant result with skill_get.
 ```
 
-`skill_install` hanya menerima owner lokal yang diinjeksi server. Isi skill
-dibaca sebagai instruksi workflow, bukan sebagai bukti fakta, dan tetap tunduk
-pada safety policy. Perubahan katalog terdeteksi pada request berikutnya tanpa
-restart LangGraph atau MCP client.
-
-Codex menemukan skill dari `.agents/skills`, Claude Code dari `.claude/skills`,
-dan OpenCode dari `.agents/skills`/`.opencode/skills` sesuai Agent Skills
-convention. Di repository ini `.claude/skills` diarahkan ke katalog yang sama;
-MCP tetap menjadi sumber akses domain dan state bersama.
-
-State learning session juga sama pada semua client. Contoh:
+Install a skill without adding application code:
 
 ```text
-Gunakan MCP xninetzy. Tampilkan learning_generate_today_plan, lalu mulai sesi
-melalui learning_start_study_session dengan idempotency_key yang stabil.
+Validate this SKILL.md with skill_validate, then install it with skill_install
+using the idempotency key skill-example-v1.
 ```
 
-Jika sesi sudah dimulai dari WhatsApp, Codex, Claude Code, dan OpenCode akan
-melihat sesi aktif yang sama dan tidak membuat sesi paralel baru.
+`skill_install` accepts only the injected local owner. A skill is workflow
+guidance, never factual evidence or a safety-policy override. Catalog changes
+are visible on the next request without restarting LangGraph or the MCP client.
 
-## Path dan environment
+Codex discovers repository skills under `.agents/skills`, Claude Code under
+`.claude/skills`, and OpenCode under `.agents/skills` or
+`.opencode/skills`. In this repository, `.claude/skills` points to the shared
+catalog. MCP remains the source for domain tools and OS state.
 
-Server menjalankan AI project sehingga root `.env` tetap terbaca. Jangan menaruh API key langsung dalam file MCP.
+Learning sessions are also shared:
+
+```text
+Use MCP xninetzy to show learning_generate_today_plan, then start a session
+with learning_start_study_session and a stable idempotency key.
+```
+
+A session started from WhatsApp remains the same active session in every coding
+client.
+
+## Paths and environment
+
+The server starts in the AI project, so it reads the root `.env`. Never place
+API keys directly in MCP configuration.
 
 ```dotenv
 MCP_RUNTIME_MODE=auto
@@ -194,24 +187,25 @@ MCP_HOST_DATA_DIR=
 MCP_HOST_SQLITE_PATH=
 ```
 
-`auto` memetakan path container standar ke data host ketika server berjalan di luar Docker.
+`auto` maps standard container paths to host runtime data when MCP runs outside
+Docker.
 
-## Menghapus konfigurasi
+## Remove configuration
 
 ```bash
 codex mcp remove xninetzy
 claude mcp remove xninetzy --scope user
 ```
 
-Untuk OpenCode, hapus hanya object `mcp.xninetzy` dari config global.
+For OpenCode, delete only the `mcp.xninetzy` object.
 
 ## Troubleshooting
 
-- Gunakan path absolut untuk binary `uv` dan directory AI.
-- Jalankan `uv sync` pada `services/ai`.
-- Pastikan stdout server tidak berisi log biasa; stdout adalah protocol stream.
-- Jalankan `claude mcp list` atau `opencode mcp list` untuk health check.
-- Jika repository dipindah, perbarui ketiga absolute path global.
-- Restart IDE/client setelah mengubah config.
+- Use absolute paths for `uv` and the AI directory.
+- Run `uv sync` in `services/ai`.
+- Keep stdout free of application logs because it carries MCP protocol frames.
+- Run `claude mcp list` or `opencode mcp list` for health checks.
+- Update all global absolute paths after moving the repository.
+- Restart the IDE or client after changing configuration.
 
-> Global berarti tersedia dari folder mana pun pada host yang sama. Ia tidak menyalin repository atau credential ke mesin lain.
+> Global means available from any directory on the same host. It does not copy the repository or credentials to another machine.

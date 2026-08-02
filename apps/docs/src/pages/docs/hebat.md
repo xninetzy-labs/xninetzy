@@ -1,13 +1,14 @@
 ---
 layout: ../../layouts/DocsLayout.astro
-title: HEBAT dan Moodle
-description: Login aman, sinkronisasi course, download materi asli, pembacaan PDF, dan submission dengan konfirmasi.
-section: Integrasi
+title: HEBAT and Moodle
+description: Safe login, course sync, original material downloads, PDF reading, and confirmed submission.
+section: Integrations
 ---
 
-Integrasi HEBAT memakai Playwright untuk authenticated browser session dan Moodle client untuk course, activity, resource, serta assignment.
+The HEBAT integration uses Playwright for authenticated browser sessions and a
+Moodle client for courses, activities, resources, and assignments.
 
-## Konfigurasi
+## Configuration
 
 ```dotenv
 HEBAT_USERNAME=
@@ -20,9 +21,10 @@ HEBAT_REQUIRE_CONFIRMATION=true
 HEBAT_ALLOW_AUTO_SUBMIT=false
 ```
 
-Simpan credential hanya di `.env` lokal dengan permission `600`. Jangan commit browser profile, cookie, storage state, atau hasil download course.
+Keep credentials only in a local `.env` with mode `600`. Never commit browser
+profiles, cookies, storage state, or course downloads.
 
-## Setup browser
+## Browser setup
 
 ```bash
 cd services/ai
@@ -30,95 +32,91 @@ uv sync
 uv run playwright install chromium
 ```
 
-Image Docker AI sudah menyiapkan dependency browser yang dibutuhkan.
+The AI Docker image already installs the required browser dependencies.
 
-## Alur penggunaan
-
-```text
-login hebat
-sync course hebat
-cek course hebat
-masuk ke course Pembelajaran Mesin dan tampilkan activity
-download semua PDF dari Pembelajaran Mesin
-baca seluruh PDF lalu buat roadmap lengkap di Obsidian
-```
-
-Gunakan nama course yang cukup spesifik. Tool dapat mencari course dari cache lokal setelah sync.
-
-## Assignment menjadi task dan reminder
-
-`hebat_sync_assignments` tidak berhenti pada cache Moodle. Setiap assignment
-diproyeksikan secara idempotent ke task bersama:
+## Example workflow
 
 ```text
-HEBAT assignment -> task priority tinggi -> reminder deadline
+log in to HEBAT
+sync HEBAT courses
+list HEBAT courses
+open the Machine Learning course and list its activities
+download every PDF from Machine Learning
+read the PDFs and create a complete roadmap in Obsidian
 ```
 
-Sync berikutnya memperbarui judul, instruksi, deadline, dan status task yang
-sama—bukan membuat duplikat. Reminder menyimpan `source=hebat`, source reference,
-deadline, dan offset terstruktur. Task serta relasinya bersifat installation-
-global, sehingga hasil sync dari WhatsApp dapat dilihat melalui MCP/Codex/Claude/
-OpenCode dan sebaliknya.
+Use a sufficiently specific course name. After sync, tools can search the local
+course cache.
 
-Jika Moodle menyatakan submission sudah terkirim, task terkait ditandai selesai.
-Aksi upload tetap memerlukan confirmation sesuai guard submission.
+## Assignments become tasks and reminders
 
-## Download materi
+`hebat_sync_assignments` projects each assignment idempotently into shared OS
+state:
 
-File ditempatkan pada:
+```text
+HEBAT assignment → high-priority task → deadline reminder
+```
+
+Later syncs update the same title, instructions, deadline, and task status rather
+than creating duplicates. Reminders store `source=hebat`, a source reference,
+a deadline, and a structured offset. This installation-global state is visible
+from WhatsApp, MCP, Codex, Claude Code, and OpenCode.
+
+When Moodle reports a submitted assignment, the linked task is completed.
+Uploading a file still requires submission confirmation.
+
+## Download materials
+
+Files are stored under:
 
 ```text
 services/ai/data/hebat/downloads/<course-id>/<activity>/<filename>
 ```
 
-Downloader meng-resolve halaman resource Moodle sampai URL file asli `pluginfile.php`. Content-Type, magic bytes, serta extension diperiksa agar halaman login atau HTML redirect tidak disimpan sebagai PDF.
+The downloader follows Moodle resource pages to the original `pluginfile.php`
+URL. It validates content type, magic bytes, and extension so a login page or
+HTML redirect cannot be stored as a PDF.
 
-## Membaca materi
+## Read materials
 
-PDF reader mengambil text native. Jika PDF merupakan scan, media pipeline dapat memakai OCR. Setelah text tersedia, agent dapat:
+The PDF reader uses native text first and OCR for scanned pages. After
+extraction, the agent can summarize each resource, order prerequisites, create a
+roadmap, write concept notes, or ingest chunks into the knowledge base.
 
-- membuat ringkasan per materi;
-- mengurutkan prerequisite;
-- menghasilkan roadmap;
-- membuat note konsep di vault;
-- ingest chunks ke knowledge base.
+## Assignment submission
 
-## Assignment dan submission
+Submission is a high-risk action. Guards include:
 
-Upload submission adalah aksi berisiko. Guard meliputi:
+- administrator identity;
+- extension allowlist;
+- file-size limits;
+- allowed-path confinement;
+- a confirmation token;
+- `HEBAT_ALLOW_AUTO_SUBMIT=false` by default.
 
-- admin identity;
-- allowlist extension;
-- batas ukuran file;
-- file harus berada pada allowed path;
-- confirmation token;
-- `HEBAT_ALLOW_AUTO_SUBMIT=false` sebagai default.
+Do not disable confirmation for convenience. Review the file preview, course,
+and assignment before approval.
 
-Jangan menonaktifkan confirmation hanya demi convenience. Preview file serta course/assignment target sebelum menyetujui.
+## Safe debugging
 
-## Debug aman
-
-Dari WhatsApp:
+From WhatsApp:
 
 ```text
 /hebat-debug
 ```
 
-Atau periksa service:
+Or inspect service logs:
 
 ```bash
 docker compose logs --tail=200 ai
 ```
 
-Debug output tidak seharusnya mencetak password/cookie. Periksa:
+Logs must not print passwords or cookies. Check the base and login URLs,
+credential whitespace, Chromium installation, profile permissions, session
+expiry, maintenance, and selector changes.
 
-1. base/login URL dapat dijangkau;
-2. credential ada tanpa whitespace tidak sengaja;
-3. Chromium terpasang;
-4. browser profile writable;
-5. session belum kedaluwarsa;
-6. portal tidak sedang maintenance atau mengubah selector.
+## Responsible use
 
-## Penggunaan yang bertanggung jawab
-
-Integrasi ini bersifat personal. Hormati kebijakan institusi dan rate limit. Jangan membagikan session, cookie, materi berlisensi, atau mengotomatisasi submission tanpa review pemilik.
+This is a personal integration. Respect institutional policy and rate limits.
+Never share a session, cookie, licensed material, or automate final submission
+without owner review.

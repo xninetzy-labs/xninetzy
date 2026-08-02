@@ -1,21 +1,50 @@
-export type ChatRunPhase = 'idle' | 'queued' | 'planning' | 'thinking' | 'tool-running' | 'waiting-approval' | 'streaming' | 'completed' | 'failed' | 'cancelled' | 'timed-out';
+export type ChatRunPhase =
+  | 'idle'
+  | 'queued'
+  | 'planning'
+  | 'thinking'
+  | 'tool-running'
+  | 'waiting-approval'
+  | 'streaming'
+  | 'completed'
+  | 'cancelled'
+  | 'timed-out'
+  | 'failed';
 
-export type ChatActivityStatus = 'active' | 'completed' | 'failed';
+export type ChatActivityKind =
+  | 'request'
+  | 'phase'
+  | 'activity'
+  | 'tool'
+  | 'agent'
+  | 'source'
+  | 'response';
 
-export interface ChatActivity {
+export type ChatActivityStatus =
+  | 'active'
+  | 'completed'
+  | 'failed';
+
+export type ChatRunActivity = {
   id: string;
-  kind: string;
+  kind: ChatActivityKind;
   label: string;
   status: ChatActivityStatus;
   detail?: string;
-}
 
-export interface ChatRun {
-  id: string;
+  startedAt: number;
+  finishedAt?: number;
+};
+
+export type ChatRun = {
+  requestId: string;
   phase: ChatRunPhase;
+
   startedAt: number;
   firstTokenAt?: number;
   finishedAt?: number;
-  activity: ChatActivity[];
+
+  activity: ChatRunActivity[];
+
   error?: string;
-}
+};

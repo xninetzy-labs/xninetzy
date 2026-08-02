@@ -33,6 +33,33 @@ Lokasi `services/wa-enggine`. Hanya proses ini yang memiliki socket Baileys, seh
 
 Lokasi `apps/cli`. Terminal client memanggil endpoint `/api/chat` yang sama sehingga provider, memory, routing, dan tool tidak terduplikasi.
 
+### Streaming dan activity CLI
+
+CLI memakai SSE `/api/chat/stream` dengan request ID per pesan. Hanya satu request, `AbortController`, listener stream, dan timer Thinking yang aktif untuk satu giliran. Delta jawaban dibuffer sebelum dirender sehingga input tidak dibuat ulang pada setiap token. Event lama diabaikan bila request sudah selesai atau dibatalkan.
+
+Panel **AI Thinking** berada di atas composer dan menampilkan durasi serta ringkasan tahap routing, workflow, ReAct, tool, dan riset. Event tidak boleh memuat chain-of-thought tersembunyi, credential, prompt mentah, argumen tool, atau output tool yang belum dipercaya. Tekan `Ctrl+T` untuk membuka ringkasan aktivitas dan `Escape` untuk membatalkan request aktif.
+
+### Stabilitas renderer CLI
+
+Ink memakai reconciliation React untuk memperbarui terminal. Flicker sebelumnya berasal dari timer status dan backdrop animasi yang mengubah parent tree, perubahan properti composer selama request, serta pembaruan delta tanpa lifecycle request yang ketat. Implementasi saat ini mempertahankan ID widget dan callback input, memoize header, backdrop, composer, conversation, dan footer, serta membatasi tick 100 ms dan 200 ms ke glyph spinner dan label waktu. Satu listener resize dimiliki root, streaming dibuffer 50 ms, dan scroll atau layout tidak dipicu oleh timer.
+
+Lifecycle run memakai state `queued`, `planning`, `thinking`, `tool-running`, `waiting-approval`, `streaming`, lalu satu state terminal. Transisi ilegal dan event dengan request ID lama diabaikan. Activity digabung berdasarkan identitas stabil dan heartbeat SSE menjaga request panjang tetap aktif tanpa menampilkan reasoning internal.
+
+### Timeout CLI dan workflow
+
+| Variable | Default | Boundary |
+|---|---:|---|
+| `XNINETZY_THINK_TIMEOUT_SECONDS` | 120 | waktu sampai token pertama untuk chat normal |
+| `XNINETZY_INACTIVITY_TIMEOUT_SECONDS` | 60 | waktu tanpa SSE event atau heartbeat |
+| `XNINETZY_TOOL_TIMEOUT_SECONDS` | 180 | direct registry tool |
+| `XNINETZY_MCP_CONNECT_TIMEOUT_SECONDS` | 20 | koneksi dan katalog MCP eksternal |
+| `XNINETZY_MCP_CALL_TIMEOUT_SECONDS` | 180 | satu call MCP eksternal |
+| `XNINETZY_DEEP_RESEARCH_TIMEOUT_SECONDS` | 900 | keseluruhan deep research dan stream CLI terkait |
+| `XNINETZY_STREAM_TIMEOUT_SECONDS` | 300 | keseluruhan stream chat normal |
+| `XNINETZY_SLOW_REQUEST_WARNING_SECONDS` | 45 | ambang label warning tanpa screen tint |
+
+Timeout dan cancellation menghentikan reader, timer, dan listener, mempertahankan output parsial yang sudah diterima, serta menolak event terlambat.
+
 ## Tiga jalur request
 
 1. **Slash command** masuk ke command router deterministik.

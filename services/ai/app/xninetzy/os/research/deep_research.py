@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+import asyncio
+
 from app.xninetzy.core.config import get_settings
+from app.xninetzy.interfaces.api.chat_events import emit_chat_event
 from app.xninetzy.os.notifications.admin_notifier import notify_admin
 from app.xninetzy.os.research.actions.base import ResearchActionInput
 from app.xninetzy.os.research.actions.registry import ResearchActionRegistry
@@ -13,6 +16,7 @@ from app.xninetzy.os.research.session import (
     create_research_session,
     fail_session,
     finish_session,
+    list_research_sessions,
     set_plan,
     update_substep_status,
 )
@@ -118,7 +122,7 @@ def generate_research_brief(topic: str, subplans: list[ResearchSubPlan], sources
     return "\n".join(lines)
 
 
-async def run_deep_research(
+async def _run_deep_research(
     topic: str,
     chat_id: str,
     sender_id: str | None,
@@ -145,10 +149,12 @@ async def run_deep_research(
         "medium",
     )
     try:
+        emit_chat_event("phase", "Planning research")
         plan_step = add_substep(session_id, "planning", "Membuat rencana riset", topic)
         plan_action = ResearchActionRegistry.get("plan")
         plan = await plan_action.execute(ResearchActionInput(session_id=session_id, topic=topic, mode=mode)) if plan_action else None
         update_substep_status(session_id, plan_step, "done", plan.data if plan else {})
+        emit_chat_event("phase", "Research plan completed", "completed")
 
         sub_step = add_substep(session_id, "subplanning", "Memecah topik menjadi sub-plan")
         sub_action = ResearchActionRegistry.get("subplan")
@@ -177,6 +183,7 @@ async def run_deep_research(
         academic_action = ResearchActionRegistry.get("academic_search")
 
         for subplan in subplans:
+            emit_chat_event("source", "Researching source group", detail=subplan.title)
             search_step = add_substep(session_id, "web_searching", subplan.title, payload={"queries": subplan.search_queries})
             for query in subplan.search_queries:
                 if query_count >= limits["query_limit"]:
@@ -216,11 +223,14 @@ async def run_deep_research(
                     )
                     all_sources.extend(out.data.get("sources", []))
             update_substep_status(session_id, search_step, "done")
+            emit_chat_event("source", "Source group completed", "completed", subplan.title)
 
         add_sources(session_id, all_sources)
+        emit_chat_event("phase", "Ranking evidence")
         rank_step = add_substep(session_id, "source_ranking", "Ranking dan deduplikasi sumber")
         ranked = assign_sids(rank_research_sources(topic, subplans, all_sources, mode))
         update_substep_status(session_id, rank_step, "done", {"selected": len(ranked)})
+        emit_chat_event("phase", "Synthesizing research brief")
         brief_step = add_substep(session_id, "brief_writing", "Menulis research brief")
         brief = generate_research_brief(topic, subplans, ranked)
         brief, removed = validate_citations(brief, ranked)
@@ -228,6 +238,7 @@ async def run_deep_research(
         done_step = add_substep(session_id, "done", "Riset selesai")
         update_substep_status(session_id, done_step, "done")
         finish_session(session_id, brief)
+        emit_chat_event("phase", "Research completed", "completed")
         await notify_admin(
             "deep_research_done",
             {
@@ -240,6 +251,40 @@ async def run_deep_research(
         )
         return brief
     except Exception as exc:
+        emit_chat_event("phase", "Research failed", "failed")
         fail_session(session_id, str(exc))
         await notify_admin("deep_research_failed", {"topic": topic, "status": str(exc)}, "critical")
         return f"⚠️ Deep research gagal: {exc}"
+
+
+async def run_deep_research(
+    topic: str,
+    chat_id: str,
+    sender_id: str | None,
+    sender_name: str | None,
+    chat_type: str,
+    metadata: dict | None,
+    mode: str = "balanced",
+    include_youtube: bool = True,
+    include_academic: bool = False,
+) -> str:
+    timeout_seconds = get_settings().XNINETZY_DEEP_RESEARCH_TIMEOUT_SECONDS
+    try:
+        async with asyncio.timeout(timeout_seconds):
+            return await _run_deep_research(
+                topic=topic,
+                chat_id=chat_id,
+                sender_id=sender_id,
+                sender_name=sender_name,
+                chat_type=chat_type,
+                metadata=metadata,
+                mode=mode,
+                include_youtube=include_youtube,
+                include_academic=include_academic,
+            )
+    except TimeoutError:
+        sessions = list_research_sessions(chat_id, limit=1)
+        if sessions and sessions[0].get("status") != "done":
+            fail_session(int(sessions[0]["id"]), "deep_research_timeout")
+        emit_chat_event("phase", "Research timed out", "failed")
+        return f"Deep research timed out after {timeout_seconds} seconds. Partial session progress was preserved."

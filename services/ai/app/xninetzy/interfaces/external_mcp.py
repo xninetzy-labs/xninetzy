@@ -175,7 +175,7 @@ async def external_mcp_tools(
     try:
         result = await asyncio.wait_for(
             _with_session(server, lambda session: session.list_tools()),
-            timeout=settings.EXTERNAL_MCP_TIMEOUT_SECONDS,
+            timeout=settings.XNINETZY_MCP_CONNECT_TIMEOUT_SECONDS,
         )
     except Exception as error:
         return {"success": False, "message": f"MCP eksternal tidak tersedia: {type(error).__name__}"}
@@ -215,7 +215,7 @@ async def external_mcp_call(
     try:
         result = await asyncio.wait_for(
             _with_session(server, lambda session: session.call_tool(tool_name, arguments)),
-            timeout=settings.EXTERNAL_MCP_TIMEOUT_SECONDS,
+            timeout=settings.XNINETZY_MCP_CALL_TIMEOUT_SECONDS,
         )
     except Exception as error:
         return {"success": False, "message": f"MCP eksternal gagal: {type(error).__name__}"}

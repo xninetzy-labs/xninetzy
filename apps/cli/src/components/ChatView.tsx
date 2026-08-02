@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import type { ChatMessage } from '../types.js';
 import { describeBlock } from '../types.js';
@@ -26,7 +26,7 @@ function InlineMarkdown({ text }: { text: string }) {
         }
         if (part.startsWith('`') && part.endsWith('`')) {
           return (
-            <Text key={i} color={colors.orangeBright} backgroundColor={colors.backgroundSoft}>
+            <Text key={i} color={colors.cyan}>
               {' '}
               {part.slice(1, -1)}
               {' '}
@@ -52,21 +52,21 @@ function InlineMarkdown({ text }: { text: string }) {
 /** A single non-code markdown line: headers, list bullets, inline styles. */
 function MarkdownLine({ text }: { text: string }) {
   let lineText = text;
-  let color: string = colors.text;
+  let color: string = colors.white;
   let bold = false;
   let prefix = '';
 
   if (lineText.startsWith('### ')) {
     lineText = lineText.slice(4);
-    color = colors.purpleBright;
+    color = colors.white;
     bold = true;
   } else if (lineText.startsWith('## ')) {
     lineText = lineText.slice(3);
-    color = colors.purpleBright;
+    color = colors.white;
     bold = true;
   } else if (lineText.startsWith('# ')) {
     lineText = lineText.slice(2);
-    color = colors.purpleBright;
+    color = colors.white;
     bold = true;
   }
 
@@ -78,7 +78,7 @@ function MarkdownLine({ text }: { text: string }) {
 
   return (
     <Box flexDirection="row">
-      {prefix && <Text color={colors.orange}>{prefix}</Text>}
+      {prefix && <Text color={colors.white}>{prefix}</Text>}
       <Text color={color} bold={bold}>
         <InlineMarkdown text={lineText} />
       </Text>
@@ -96,7 +96,7 @@ function CodeBlock({ lines, lang }: { lines: string[]; lang: string }) {
         </Text>
       )}
       {lines.map((codeLine, i) => (
-        <Text key={i} color={colors.orangeBright} backgroundColor={colors.backgroundSoft}>
+        <Text key={i} color={colors.cyan}>
           {codeLine || ' '}
         </Text>
       ))}
@@ -169,7 +169,7 @@ function AttachmentChips({ attachments }: { attachments: string[] }) {
   );
 }
 
-export function ChatView({ messages, width }: ChatViewProps) {
+function ChatViewComponent({ messages, width }: ChatViewProps) {
   const visibleMessages = messages
     .filter((message) => message.role !== 'system')
     .slice(-10);
@@ -189,7 +189,7 @@ export function ChatView({ messages, width }: ChatViewProps) {
       {visibleMessages.map((message, index) => {
         const isUser = message.role === 'user';
         const label = isUser ? 'You' : '◎ Xninetzy';
-        const labelColor = isUser ? colors.purpleBright : colors.orange;
+        const labelColor = isUser ? colors.orangeBright : colors.blueBright;
         const alignment = isUser ? 'flex-end' : 'flex-start';
         const bubbleWidth = Math.floor(width * 0.78);
         const hasAttachments = (message.attachments?.length ?? 0) > 0;
@@ -211,7 +211,7 @@ export function ChatView({ messages, width }: ChatViewProps) {
                 flexDirection="column"
                 paddingX={1}
                 borderStyle="round"
-                borderColor={isUser ? colors.border : colors.line}
+                borderColor={colors.border}
               >
                 {hasAttachments && <AttachmentChips attachments={message.attachments!} />}
                 {message.content.length > 0 && <MessageBody content={message.content} />}
@@ -223,3 +223,5 @@ export function ChatView({ messages, width }: ChatViewProps) {
     </Box>
   );
 }
+
+export const ChatView = memo(ChatViewComponent);

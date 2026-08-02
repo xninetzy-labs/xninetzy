@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import { colors } from '../theme/colors.js';
 
@@ -6,30 +6,14 @@ type SpaceBackdropProps = {
   compact?: boolean;
 };
 
-export function SpaceBackdrop({ compact = false }: SpaceBackdropProps) {
-  const [frame, setFrame] = useState(0);
-
-  useEffect(() => {
-    if (compact) return;
-    const timer = setInterval(() => setFrame((current) => (current + 1) % 3), 900);
-    return () => clearInterval(timer);
-  }, [compact]);
-
-  if (compact) {
-    return null;
-  }
-
-  const trails = [
-    '☄          ·        ✦             ·        *          ✧        ◌',
-    '   ☄       ·             ✦        ·          *        ✧        ◌',
-    '      ☄    ·        ✦             ·        *          ✧        ◌'
-  ];
+function SpaceBackdropComponent({ compact = false }: SpaceBackdropProps) {
+  if (compact) return null;
 
   return (
     <Box width="100%" justifyContent="center">
-      <Text color={colors.indigo}>
-        {trails[frame]}
-      </Text>
+      <Text color={colors.indigo}>      comet trail - starfield - Xninetzy OS - starfield      </Text>
     </Box>
   );
 }
+
+export const SpaceBackdrop = memo(SpaceBackdropComponent);

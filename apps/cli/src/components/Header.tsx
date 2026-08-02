@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { memo } from 'react';
 import { Box, Text } from 'ink';
 import { colors } from '../theme/colors.js';
 
@@ -16,7 +16,7 @@ const logo = [
   '╚═╝  ╚═╝╚═╝  ╚═══╝╚═╝╚═╝  ╚═══╝╚══════╝   ╚═╝   ╚══════╝   ╚═╝   '
 ];
 
-export function Header({ columns, compact = false }: HeaderProps) {
+function HeaderComponent({ columns, compact = false }: HeaderProps) {
   const useCompact = compact || columns < 96;
 
   return (
@@ -43,3 +43,5 @@ export function Header({ columns, compact = false }: HeaderProps) {
     </Box>
   );
 }
+
+export const Header = memo(HeaderComponent);

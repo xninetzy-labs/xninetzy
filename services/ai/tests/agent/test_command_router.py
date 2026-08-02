@@ -62,3 +62,11 @@ def test_recall_commands_use_shared_learning_tools():
             "answer": "model memakai data berlabel",
         },
     )
+
+
+def test_command_catalog_routes_to_shared_tool_catalog():
+    assert parse_command("/commands research") == (
+        "tool_catalog",
+        {"feature_pack": "research"},
+    )
+    assert parse_command("/tools") == ("tool_catalog", {"feature_pack": ""})

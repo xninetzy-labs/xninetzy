@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import json
 import time
+import uuid
 
 from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
@@ -14,6 +15,7 @@ from app.xninetzy.os.memory.chat_store import ChatStore
 from app.xninetzy.os.ai_preferences import resolve_user_profile
 from app.xninetzy.schemas.chat import ChatRequest, ChatResponse
 from app.xninetzy.interfaces.api.deps.auth import require_api_key
+from app.xninetzy.interfaces.api.chat_events import bind_chat_event_queue, emit_chat_event
 from app.xninetzy.interfaces.api.owner_policy import (
     authorize_owner,
     owner_denied_message,
@@ -24,6 +26,7 @@ from app.xninetzy.core.logging import logging
 logger = logging.getLogger(__name__)
 
 router = APIRouter(tags=["chat"], dependencies=[Depends(require_api_key)])
+CHAT_STREAM_HEARTBEAT_SECONDS = 15.0
 
 
 def _has_media(metadata: dict | None) -> bool:
@@ -76,7 +79,13 @@ async def _invoke_tool_directly(
         kwargs.setdefault("sender_name", request.sender_name)
         kwargs.setdefault("chat_type", request.chat_type)
         kwargs.setdefault("metadata", request.metadata)
-        result = await tool.ainvoke(kwargs)
+        timeout_seconds = (
+            get_settings().XNINETZY_DEEP_RESEARCH_TIMEOUT_SECONDS
+            if tool_name == "deep_research_topic"
+            else get_settings().XNINETZY_TOOL_TIMEOUT_SECONDS
+        )
+        async with asyncio.timeout(timeout_seconds):
+            result = await tool.ainvoke(kwargs)
         return str(result)
     except Exception as e:
         return f"Error menjalankan command: {e}"
@@ -200,11 +209,14 @@ async def chat(request: ChatRequest) -> ChatResponse:
         return ChatResponse(reply=owner_denied_message(owner.reason))
 
     episode_id, episode_started = _lightning_episode_start(request)
+    emit_chat_event("phase", "Routing request")
 
     # 1. Check for slash command (deterministic routing, skip LangGraph)
     tool_name, kwargs = parse_command(request.message)
     if tool_name:
+        emit_chat_event("activity", "Executing direct command")
         reply = await _invoke_tool_directly(tool_name, kwargs, request)
+        emit_chat_event("activity", "Direct command completed", "completed")
         _lightning_episode_finish(
             episode_id,
             request,
@@ -217,6 +229,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         return ChatResponse(reply=reply)
 
     # 1b. Multi-action workflow (compound request → staged execution + WA progress)
+    emit_chat_event("phase", "Checking workflow")
     workflow_reply = await _maybe_run_workflow(request)
     if workflow_reply is not None:
         _lightning_episode_finish(
@@ -251,6 +264,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
         "response": "",
     }
 
+    emit_chat_event("phase", "Running LangGraph workflow")
     graph = get_compiled_graph()
     try:
         result = await graph.ainvoke(initial_state)
@@ -351,27 +365,49 @@ async def chat(request: ChatRequest) -> ChatResponse:
     return ChatResponse(reply=result["response"])
 
 
+def _sse(event_type: str, payload: dict) -> str:
+    encoded = json.dumps(payload, ensure_ascii=False)
+    return f"event: {event_type}\ndata: {encoded}\n\n"
+
+
 @router.post("/chat/stream")
 async def chat_stream(request: ChatRequest) -> StreamingResponse:
+    metadata = dict(request.metadata or {})
+    request_id = str(metadata.get("clientRequestId") or uuid.uuid4().hex)[:128]
+
     async def events():
-        phases = (
-            "Understanding what you need",
-            "Selecting tools and knowledge",
-            "Executing the Xninetzy OS plan",
-        )
-        for label in phases:
-            payload = json.dumps({"label": label}, ensure_ascii=False)
-            yield f"event: status\ndata: {payload}\n\n"
-            await asyncio.sleep(0.04)
-        response = await chat(request)
-        payload = json.dumps({"label": "Synthesizing the result"}, ensure_ascii=False)
-        yield f"event: status\ndata: {payload}\n\n"
-        for offset in range(0, len(response.reply), 96):
-            chunk = response.reply[offset : offset + 96]
-            payload = json.dumps({"delta": chunk}, ensure_ascii=False)
-            yield f"event: delta\ndata: {payload}\n\n"
-            await asyncio.sleep(0.015)
-        yield "event: done\ndata: {}\n\n"
+        queue: asyncio.Queue[dict[str, str]] = asyncio.Queue()
+        with bind_chat_event_queue(queue):
+            task = asyncio.create_task(chat(request))
+            last_heartbeat = time.monotonic()
+            try:
+                yield _sse("run_started", {"requestId": request_id})
+                while not task.done() or not queue.empty():
+                    try:
+                        event = await asyncio.wait_for(queue.get(), timeout=0.1)
+                    except asyncio.TimeoutError:
+                        now = time.monotonic()
+                        if now - last_heartbeat >= CHAT_STREAM_HEARTBEAT_SECONDS:
+                            yield _sse("heartbeat", {})
+                            last_heartbeat = now
+                        continue
+                    event_type = event.pop("type", "activity")
+                    yield _sse(event_type, event)
+                response = await task
+                yield _sse("phase", {"label": "Rendering response", "status": "active"})
+                for offset in range(0, len(response.reply), 96):
+                    payload = {"delta": response.reply[offset : offset + 96]}
+                    yield _sse("delta", payload)
+                    await asyncio.sleep(0.015)
+                yield _sse("phase", {"label": "Response completed", "status": "completed"})
+                yield _sse("done", {})
+            except asyncio.CancelledError:
+                task.cancel()
+                raise
+            except Exception:
+                logger.exception("Chat stream failed")
+                yield _sse("phase", {"label": "Request failed", "status": "failed"})
+                yield _sse("done", {})
 
     return StreamingResponse(
         events(),

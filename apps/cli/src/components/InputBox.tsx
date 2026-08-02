@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { memo, useEffect, useState } from 'react';
 import { Box, Text, useInput } from 'ink';
 import { colors } from '../theme/colors.js';
 import { describeBlock } from '../types.js';
@@ -12,7 +12,6 @@ type InputBoxProps = {
   onPaste: (block: string) => void;
   onRemoveLastAttachment: () => void;
   onSubmit: () => void;
-  disabled?: boolean;
   width: number;
 };
 
@@ -35,14 +34,13 @@ function isLargePaste(input: string): boolean {
  * lifted into collapsed chips (`[1000 lines] ▸`) and the user keeps typing a
  * short tail after them. On submit the chips + tail are combined upstream.
  */
-export function InputBox({
+function InputBoxComponent({
   draft,
   attachments,
   onDraftChange,
   onPaste,
   onRemoveLastAttachment,
   onSubmit,
-  disabled = false,
   width
 }: InputBoxProps) {
   const [cursor, setCursor] = useState(draft.length);
@@ -54,7 +52,6 @@ export function InputBox({
   }, [draft]);
 
   useInput((input, key) => {
-    if (disabled) return;
     if (key.return) {
       onSubmit();
       return;
@@ -102,18 +99,16 @@ export function InputBox({
   });
 
   const hasContent = draft.length > 0 || attachments.length > 0;
-  const placeholder = disabled
-    ? 'Waiting for Xninetzy AI…'
-    : attachments.length > 0
-      ? 'Add a comment…'
-      : 'Ask anything… "halo"';
+  const placeholder = attachments.length > 0
+    ? 'Add a comment…'
+    : 'Ask anything… "halo"';
 
   return (
     <Box width={width} flexDirection="column" paddingX={1}>
       <Box
         width={width - 2}
         borderStyle="round"
-        borderColor={disabled ? colors.dim : attachments.length > 0 ? colors.orange : colors.border}
+        borderColor={attachments.length > 0 ? colors.orange : colors.border}
         paddingX={1}
       >
         <Text color={colors.orange}>◎ </Text>
@@ -132,7 +127,7 @@ export function InputBox({
             draft={draft}
             cursor={cursor}
             placeholder={placeholder}
-            showPlaceholder={disabled || !hasContent}
+            showPlaceholder={!hasContent}
           />
         </Box>
       </Box>
@@ -180,3 +175,5 @@ function DraftLine({ draft, cursor, placeholder, showPlaceholder }: DraftLinePro
     </Text>
   );
 }
+
+export const InputBox = memo(InputBoxComponent);

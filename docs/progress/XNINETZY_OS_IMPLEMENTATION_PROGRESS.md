@@ -561,3 +561,16 @@ Status: In progress
 - [x] Add focused deployment, read-only doctor, and MCP diagnostic regression coverage.
 - [ ] Complete interactive feature-pack activation, streamed CLI responses, and clean-install
   parity checks across Linux, macOS, and Windows.
+
+
+## CLI Thinking UI and safe streamed activity - 2026-08-02
+
+- [x] Replace message-list timer updates with isolated 100ms spinner and 200ms Thinking-panel clock widgets.
+- [x] Enforce one active request, AbortController, stream listener, and buffered 50ms delta flush per CLI chat turn.
+- [x] Ignore stale stream events and retain a completed, collapsible safe activity summary.
+- [x] Replace fabricated SSE stages with sanitized routing, workflow, ReAct, tool, and deep-research events.
+- [x] Keep hidden chain-of-thought, credentials, raw prompts, and tool arguments out of stream payloads.
+- [x] Use static cosmic decoration and fixed status height to avoid timer-driven terminal flicker.
+- [x] Remove character-level message backgrounds; keep white message text on the stable launch background with electric-blue borders.
+
+Focused verification: 22 focused tests and 661 full AI tests passed; full AI Ruff passed; CLI TypeScript typecheck and build passed; Astro check and 70-page build passed.

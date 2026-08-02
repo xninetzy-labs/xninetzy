@@ -13,8 +13,11 @@ Dark fullscreen terminal client untuk Xninetzy AI.
 - Purple logo/border accent
 - Orange node/event horizon accent
 - Live chat melalui SSE endpoint FastAPI `/api/chat/stream`
-- Status routing dan aktivitas tool yang aman di status bar
-- Meteor shower terminal backdrop yang ringan
+- Fixed AI Thinking panel above the composer with a request timer
+- Safe workflow, tool, and research activity summaries with Ctrl+T details
+- One active request, timer, stream listener, and cancellation lifecycle
+- Static deep-space cosmic backdrop without timer-driven screen redraws
+- White assistant and user text on the stable launch background, with electric-blue borders and compact orange user accents
 - Mendukung pasted block sebagai konteks pesan
 - Timeout dan error state yang terlihat di status bar
 
@@ -50,11 +53,19 @@ xninetzy config get LLM_DEFAULT_PROVIDER
 xninetzy config set LLM_DEFAULT_PROVIDER flaz
 xninetzy config set FLAZ_API_KEY
 xninetzy config validate
+xninetzy commands
 ```
 
 Use `--stdin` for automation and `--env-file path/to/.env` for another local
 installation. Secret values use a no-echo prompt, remain redacted in command
 output, and are never printed by `get` or `list`.
+
+The catalog is generated from every AI `Settings` field and every key documented in `.env.example`. Use `xninetzy config list` to discover all supported configuration before setting a value.
+
+## Command discovery
+
+The interactive CLI forwards the same slash commands as WhatsApp through the shared API router. Use `/commands` for the registry catalog, `/commands research` to filter a feature pack, and `/tools` to inspect all registered Xninetzy tools. Use `xninetzy commands` for a short host-terminal reminder. Deployment configuration stays host-only so API keys and secrets never travel through chat.
+
 ## Setup and diagnostics
 
 ```bash
@@ -86,8 +97,7 @@ The AI API, WhatsApp engine, MCP stdio server, and local CLI normalize this
 number to the same owner identity. The CLI inherits it unless
 `XNINETZY_CLI_SENDER_ID` is explicitly set.
 
-The activity bar shows safe execution milestones only. It intentionally does not
-show hidden model reasoning, credentials, raw prompts, or untrusted tool input.
+The Thinking panel shows only safe execution milestones. It never shows hidden model reasoning, credentials, raw prompts, tool arguments, or untrusted tool input. Press Ctrl+T to expand or collapse the activity summary; Escape cancels an active request and Escape again exits.
 
 
 ## External MCP

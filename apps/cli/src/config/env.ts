@@ -8,6 +8,11 @@ export interface CliConfig {
   senderId: string;
   senderName: string;
   requestTimeoutMs: number;
+  thinkTimeoutMs: number;
+  inactivityTimeoutMs: number;
+  streamTimeoutMs: number;
+  deepResearchTimeoutMs: number;
+  slowRequestWarningMs: number;
   aiApiKey: string;
   envFilePath: string | null;
   envLoaded: boolean;
@@ -78,6 +83,10 @@ function positiveInteger(value: string | undefined, fallback: number): number {
   return Number.isInteger(parsed) && parsed > 0 ? parsed : fallback;
 }
 
+function positiveSeconds(value: string | undefined, fallback: number): number {
+  return positiveInteger(value, fallback) * 1000;
+}
+
 export const cliConfig: CliConfig = {
   aiUrl:
     process.env.XNINETZY_AI_URL ??
@@ -92,6 +101,11 @@ export const cliConfig: CliConfig = {
     'mcp:local-owner',
   senderName: process.env.XNINETZY_CLI_SENDER_NAME ?? process.env.OWNER_ALIAS ?? process.env.BOT_OWNER ?? 'Local Owner',
   requestTimeoutMs: positiveInteger(process.env.XNINETZY_CLI_TIMEOUT_MS, 120_000),
+  thinkTimeoutMs: positiveSeconds(process.env.XNINETZY_THINK_TIMEOUT_SECONDS, 120),
+  inactivityTimeoutMs: positiveSeconds(process.env.XNINETZY_INACTIVITY_TIMEOUT_SECONDS, 60),
+  streamTimeoutMs: positiveSeconds(process.env.XNINETZY_STREAM_TIMEOUT_SECONDS, 300),
+  deepResearchTimeoutMs: positiveSeconds(process.env.XNINETZY_DEEP_RESEARCH_TIMEOUT_SECONDS, 900),
+  slowRequestWarningMs: positiveSeconds(process.env.XNINETZY_SLOW_REQUEST_WARNING_SECONDS, 45),
   aiApiKey: process.env.AI_API_KEY ?? '',
   envFilePath,
   envLoaded: Boolean(envFilePath),

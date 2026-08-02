@@ -8,6 +8,7 @@ from langgraph.prebuilt import create_react_agent
 from app.xninetzy.agent.prompts import AGENT_PROMPT
 from app.xninetzy.agent.state import AgentState
 from app.xninetzy.core.config import get_settings
+from app.xninetzy.interfaces.api.chat_events import emit_chat_event
 from app.xninetzy.core.llm import get_llm_pro
 from app.xninetzy.core.providers import LLMProfile, profile_from_metadata
 from app.xninetzy.tools.internal.datetime_info import get_now_info
@@ -185,10 +186,14 @@ async def agent_node(state: AgentState) -> dict:
     )
 
     profile = profile_from_metadata(metadata)
+    emit_chat_event("phase", "Preparing contextual evidence")
     react = _get_react_agent(profile)
+    emit_chat_event("agent", "Running ReAct agent")
     try:
         result = await react.ainvoke({"messages": messages_with_system})
+        emit_chat_event("agent", "ReAct agent completed", "completed")
     except Exception as exc:
+        emit_chat_event("agent", "ReAct agent failed, using safe fallback", "failed")
         fallback_llm = get_llm_pro(profile)
         fallback_prompt = SystemMessage(
             content=(
@@ -202,6 +207,12 @@ async def agent_node(state: AgentState) -> dict:
         )
         content = fallback.content if isinstance(fallback.content, str) else str(fallback.content)
         return {"messages": [fallback], "response": content.strip()}
+
+    for message in result.get("messages", []):
+        for call in getattr(message, "tool_calls", None) or []:
+            name = call.get("name") if isinstance(call, dict) else getattr(call, "name", None)
+            if name:
+                emit_chat_event("tool", f"Tool completed: {name}", "completed")
 
     final_msg = next(
         (

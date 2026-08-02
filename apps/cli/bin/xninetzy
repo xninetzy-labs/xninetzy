@@ -68,6 +68,11 @@ if (argumentsList[0] === "config") {
   );
 } else if (argumentsList[0] === "setup" || argumentsList[0] === "doctor") {
   runHostCommand("app.xninetzy.interfaces.onboarding_cli", argumentsList);
+} else if (argumentsList[0] === "commands") {
+  process.stdout.write(
+    "Interactive commands: start xninetzy, then use /commands, /commands <feature-pack>, or /tools.\n" +
+    "Host configuration: xninetzy config list|get|set|unset|validate.\n"
+  );
 } else {
   import("../dist/index.js");
 }

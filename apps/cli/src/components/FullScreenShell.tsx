@@ -1,21 +1,18 @@
 import React from 'react';
 import { Box } from 'ink';
-import { useStdoutDimensions } from '../hooks/useStdoutDimensions.js';
-import { colors } from '../theme/colors.js';
 
 type FullScreenShellProps = {
   children: React.ReactNode;
+  columns: number;
+  rows: number;
 };
 
-export function FullScreenShell({ children }: FullScreenShellProps) {
-  const [columns, rows] = useStdoutDimensions();
-
+export function FullScreenShell({ children, columns, rows }: FullScreenShellProps) {
   return (
     <Box
       width={columns}
-      minHeight={rows}
+      height={Math.max(1, rows - 1)}
       flexDirection="column"
-      paddingX={1}
     >
       {children}
     </Box>

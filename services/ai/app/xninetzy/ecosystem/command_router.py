@@ -4,6 +4,8 @@ import re
 
 # Maps slash commands to (tool_name, args_dict) or special handler keys
 SLASH_COMMANDS: dict[str, str] = {
+    "/commands": "tool_catalog",
+    "/tools": "tool_catalog",
     "/helper": "helper_get",
     "/today": "os_today",
     "/inbox": "os_inbox",
@@ -63,6 +65,7 @@ MCP_PATTERN = re.compile(r"^/mcp(?:\s+(?:list|status))?$", re.I)
 MCP_TOOLS_PATTERN = re.compile(r"^/mcp\s+tools\s+([a-z][a-z0-9_-]{1,63})$", re.I)
 PROVIDER_LIST_PATTERN = re.compile(r"^/provider(?:\s+list)?$", re.I)
 PROVIDER_USE_PATTERN = re.compile(r"^/provider\s+use\s+([\w-]+)(?:\s+(.+))?$", re.I | re.S)
+COMMANDS_PATTERN = re.compile(r"^/(?:commands|tools)(?:\s+([\w-]+))?$", re.I)
 LLM_USE_PATTERN = re.compile(r"^/llm\s+use\s+([\w-]+)(?:\s+(.+))?$", re.I | re.S)
 AGENT_LIST_PATTERN = re.compile(r"^/agent\s+list$", re.I)
 AGENT_USE_PATTERN = re.compile(r"^/agent\s+use\s+([\w-]+)$", re.I)
@@ -134,6 +137,9 @@ def parse_command(message: str) -> tuple[str | None, dict]:
 
     if CONFIG_PATTERN.match(stripped):
         return "helper_get", {"topic": "config"}
+    m = COMMANDS_PATTERN.match(stripped)
+    if m:
+        return "tool_catalog", {"feature_pack": (m.group(1) or "").strip()}
     if MCP_PATTERN.match(stripped):
         return "external_mcp_list", {}
     m = MCP_TOOLS_PATTERN.match(stripped)

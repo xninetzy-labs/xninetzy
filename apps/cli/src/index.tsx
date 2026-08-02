@@ -31,8 +31,8 @@ async function runPipedInput() {
 }
 
 if (process.stdin.isTTY) {
-  // Clear screen, move cursor to home, set background black, foreground white
-  process.stdout.write('\x1b[2J\x1b[3J\x1b[H\x1b[40m\x1b[37m');
+  // Clear screen, move cursor to home, set stable Xninetzy background, foreground white
+  process.stdout.write('\x1b[2J\x1b[3J\x1b[H\x1b[48;2;17;16;27m\x1b[37m');
   
   const { waitUntilExit } = render(<App />);
   

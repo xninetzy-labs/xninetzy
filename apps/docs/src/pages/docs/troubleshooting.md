@@ -72,6 +72,73 @@ Pastikan `socket_ready=true`, `WA_MCP_BASE_URL` benar, dan `WA_MCP_API_KEY` sama
 
 Periksa credential, Chromium, write permission browser profile, expiry session, maintenance portal, perubahan selector, dan apakah hasil download memiliki magic bytes file yang benar.
 
+
+<div data-localized-body data-locale="en">
+
+## GraphRAG timeout or Neo4j offline
+
+GraphRAG V3 keeps SQLite as the canonical source of truth. Neo4j and FAISS are
+rebuildable projections; retrieval continues through SQLite/FAISS when Neo4j is
+offline. Neo4j autostart has bounded command, readiness, and connection timeouts
+plus a failure cooldown, so one outage cannot hold the next MCP request.
+
+Inspect status without forcing a boot:
+
+```text
+graph_v3_stats
+```
+
+Relevant settings:
+
+```dotenv
+NEO4J_ENABLED=false
+NEO4J_AUTOSTART_ENABLED=true
+NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
+NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
+NEO4J_CONNECT_TIMEOUT_SECONDS=3
+NEO4J_FAILURE_COOLDOWN_SECONDS=60
+```
+
+Keep NEO4J_ENABLED=false when Docker/Neo4j is not used. If a cold image needs
+more time, raise the readiness timeout deliberately. The smaller legacy
+NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS remains the effective upper bound. Do not
+rebuild or delete canonical SQLite to recover from a projection timeout.
+
+</div>
+
+<div data-locale="id" hidden>
+
+## GraphRAG timeout atau Neo4j offline
+
+GraphRAG V3 menyimpan kebenaran di SQLite. Neo4j dan FAISS adalah projection
+rebuildable; pencarian tetap memakai jalur SQLite/FAISS ketika Neo4j tidak aktif.
+Autostart Neo4j memiliki batas waktu dan cooldown agar satu kegagalan tidak
+menahan request MCP berikutnya.
+
+Periksa status tanpa memaksa boot:
+
+```text
+graph_v3_stats
+```
+
+Konfigurasi yang relevan:
+
+```dotenv
+NEO4J_ENABLED=false
+NEO4J_AUTOSTART_ENABLED=true
+NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
+NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
+NEO4J_CONNECT_TIMEOUT_SECONDS=3
+NEO4J_FAILURE_COOLDOWN_SECONDS=60
+```
+
+Jika Docker/Neo4j tidak dipakai, biarkan NEO4J_ENABLED=false. Jika image
+Neo4j membutuhkan cold start lebih lama, naikkan readiness timeout secara
+sengaja. Nilai legacy NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS yang lebih kecil tetap
+menjadi batas maksimum. Jangan menjalankan rebuild projection hanya untuk
+memulihkan timeout; SQLite canonical tidak perlu dihapus.
+</div>
+
 ## MCP tidak muncul dari folder lain
 
 Uji dari `/tmp`:

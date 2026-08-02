@@ -36,6 +36,24 @@ yarn link
 xninetzy
 ```
 
+## Configuration
+
+Run configuration commands from the repository host. The command manages the
+same root `.env` consumed by Docker, the AI service, WhatsApp, and the terminal
+client.
+
+```bash
+xninetzy config list
+xninetzy config get LLM_DEFAULT_PROVIDER
+xninetzy config set LLM_DEFAULT_PROVIDER flaz
+xninetzy config set FLAZ_API_KEY
+xninetzy config validate
+```
+
+Use `--stdin` for automation and `--env-file path/to/.env` for another local
+installation. Secret values use a no-echo prompt, remain redacted in command
+output, and are never printed by `get` or `list`.
+
 ## Docker
 
 Jalankan AI terlebih dahulu, lalu buka CLI interaktif:

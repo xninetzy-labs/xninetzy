@@ -18,6 +18,7 @@ from __future__ import annotations
 
 import atexit
 import threading
+import time
 from pathlib import Path
 
 from app.xninetzy.core.config import get_settings
@@ -27,7 +28,8 @@ logger = logging.getLogger(__name__)
 
 _driver = None
 _driver_lock = threading.Lock()
-_unavailable = False  # sticky: once we fail connectivity, stop retrying per-call
+_unavailable = False
+_unavailable_until = 0.0
 
 
 def _resolve_password(settings) -> str:
@@ -55,11 +57,29 @@ def _resolve_uri(settings) -> str:
 
 
 def clear_unavailable() -> None:
-    """Let a future access retry after the container was stopped for idle. The
-    idle-watch loop calls this alongside ``close_driver`` so on-demand boot can
-    reconnect cleanly."""
-    global _unavailable
+    global _unavailable, _unavailable_until
     _unavailable = False
+    _unavailable_until = 0.0
+
+
+def _failure_active(settings) -> bool:
+    global _unavailable, _unavailable_until
+    if not _unavailable:
+        return False
+    if _unavailable_until <= 0.0:
+        return True
+    if time.monotonic() < _unavailable_until:
+        return True
+    _unavailable = False
+    _unavailable_until = 0.0
+    return False
+
+
+def _latch_unavailable(settings) -> None:
+    global _unavailable, _unavailable_until
+    _unavailable = True
+    cooldown = max(0.0, float(settings.NEO4J_FAILURE_COOLDOWN_SECONDS))
+    _unavailable_until = time.monotonic() + cooldown if cooldown else 0.0
 
 
 def _touch_access() -> None:
@@ -72,8 +92,9 @@ def _touch_access() -> None:
 
 
 def _get_driver():
-    global _driver, _unavailable
-    if _unavailable:
+    global _driver, _unavailable, _unavailable_until
+    settings = get_settings()
+    if _failure_active(settings):
         return None
     if _driver is not None:
         _touch_access()
@@ -82,42 +103,46 @@ def _get_driver():
         if _driver is not None:
             _touch_access()
             return _driver
-        if _unavailable:
+        if _failure_active(settings):
             return None
-        settings = get_settings()
         if not (settings.GRAPHRAG_V3_ENABLED and settings.NEO4J_ENABLED):
             _unavailable = True
+            _unavailable_until = 0.0
             return None
-        # On-demand boot (host-mode autostart). Best-effort: if it can't boot we
-        # still try to connect — an externally-running Neo4j is fine.
-        autostart = settings.NEO4J_AUTOSTART_ENABLED
-        if autostart:
+        if settings.NEO4J_AUTOSTART_ENABLED:
             try:
                 from app.xninetzy.os.graph.v3 import neo4j_lifecycle
 
                 neo4j_lifecycle.ensure_running()
             except Exception as e:
-                logger.warning("Neo4j ensure_running failed (non-fatal): %s", e)
+                logger.warning('Neo4j ensure_running failed (non-fatal): %s', e)
+        driver = None
         try:
             from neo4j import GraphDatabase
 
             driver = GraphDatabase.driver(
                 _resolve_uri(settings),
                 auth=(settings.NEO4J_USERNAME, _resolve_password(settings)),
+                connection_timeout=max(
+                    0.5, float(settings.NEO4J_CONNECT_TIMEOUT_SECONDS)
+                ),
             )
             driver.verify_connectivity()
             _driver = driver
+            _unavailable = False
+            _unavailable_until = 0.0
             atexit.register(close_driver)
             _ensure_constraints()
-            logger.info("Neo4j projection connected: %s", _resolve_uri(settings))
+            logger.info('Neo4j projection connected: %s', _resolve_uri(settings))
             return _driver
         except Exception as e:
-            logger.warning("Neo4j unavailable — projection disabled: %s", e)
-            # With autostart the container is stopped when idle, so a failure
-            # now is not permanent — allow the next access to boot and retry.
-            # Only latch sticky when autostart is off (legacy behaviour).
-            if not autostart:
-                _unavailable = True
+            if driver is not None:
+                try:
+                    driver.close()
+                except Exception:
+                    pass
+            _latch_unavailable(settings)
+            logger.warning('Neo4j unavailable — projection disabled: %s', e)
             return None
 
 
@@ -310,6 +335,21 @@ def wipe_all() -> bool:
     except Exception as e:
         logger.warning("Neo4j wipe failed (non-fatal): %s", e)
         return False
+
+
+def availability_status() -> dict:
+    settings = get_settings()
+    configured = bool(settings.GRAPHRAG_V3_ENABLED and settings.NEO4J_ENABLED)
+    remaining = 0.0
+    if _unavailable_until > 0.0:
+        remaining = max(0.0, _unavailable_until - time.monotonic())
+    latched = _failure_active(settings) if configured else False
+    return {
+        "configured": configured,
+        "available": _driver is not None,
+        "failure_latched": latched,
+        "cooldown_seconds": round(remaining, 3),
+    }
 
 
 def is_available() -> bool:

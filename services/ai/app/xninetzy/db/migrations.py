@@ -780,6 +780,14 @@ def run_migrations() -> None:
             PRIMARY KEY(owner_scope, window)
         )
         """,
+        """
+        CREATE TABLE IF NOT EXISTS obsidian_note_index (
+            path TEXT PRIMARY KEY,
+            content_hash TEXT NOT NULL,
+            modified_at TEXT NOT NULL DEFAULT ''
+        )
+        """,
+        "CREATE VIRTUAL TABLE IF NOT EXISTS obsidian_notes_fts USING fts5(path UNINDEXED, content)",
     ]
     with connect() as conn:
         for statement in statements:

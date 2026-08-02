@@ -48,6 +48,8 @@ from app.xninetzy.os.academic.hebat.submission import (
     remove_submission_via_playwright,
     upload_submission_via_playwright,
 )
+from app.xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
 from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     CampusCredentialError,
     resolve_campus_credentials,
@@ -722,7 +724,11 @@ async def hebat_prepare_submission_from_whatsapp_file(
 
 
 @tool
-async def hebat_upload_submission(chat_id: str, confirmation_token: str) -> str:
+async def hebat_upload_submission(
+    chat_id: str,
+    confirmation_token: str,
+    approval_id: int | None = None,
+) -> str:
     """Upload tugas ke HEBAT setelah user konfirmasi token.
 
     Args:
@@ -730,9 +736,6 @@ async def hebat_upload_submission(chat_id: str, confirmation_token: str) -> str:
         confirmation_token: Token konfirmasi dari hebat_prepare_submission_from_whatsapp_file
     """
     s = get_settings()
-    policy = evaluate_action("hebat_upload_submission", {"confirmation_token": confirmation_token})
-    if not policy.allowed:
-        return f"Upload ditahan policy: {policy.reason}"
     sub = get_submission_by_token(confirmation_token)
     if not sub:
         return f"Token `{confirmation_token}` tidak valid atau sudah digunakan."
@@ -743,6 +746,37 @@ async def hebat_upload_submission(chat_id: str, confirmation_token: str) -> str:
     if sub["source_chat_id"] != chat_id:
         return "Token ini bukan milik chat kamu."
 
+    payload = {
+        "submission_id": sub["id"],
+        "assignment_id": sub["assignment_id"],
+        "uploaded_filename": sub["uploaded_filename"],
+        "source_chat_id": sub["source_chat_id"],
+    }
+    policy = evaluate_action("hebat_submit_submission", payload)
+    if not policy.allowed:
+        return f"Upload ditahan policy: {policy.reason}"
+    if policy.requires_approval:
+        if approval_id is None:
+            requested_id = request_approval(
+                chat_id,
+                sub["source_chat_id"],
+                "hebat_submit_submission",
+                "Upload tugas HEBAT",
+                f"{sub['uploaded_filename']} untuk activity {sub['assignment_id']}.",
+                payload,
+            )
+            delivered = await notify_admin_approval(
+                requested_id,
+                "hebat_submit_submission",
+                "Upload tugas HEBAT",
+                f"{sub['uploaded_filename']} untuk activity {sub['assignment_id']}.",
+            )
+            delivery = "Tombol approval dikirim ke WhatsApp admin." if delivered else "Tombol approval gagal dikirim."
+            return f"Upload HEBAT membutuhkan approval #{requested_id}. {delivery}"
+        try:
+            validate_approval(approval_id, "hebat_submit_submission", policy.action_hash)
+        except ValueError as exc:
+            return f"Upload HEBAT ditahan approval: {exc}"
     # Find assignment URL
     all_assigns = list_assignments()
     assign = next(

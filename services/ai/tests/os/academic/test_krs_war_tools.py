@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from types import SimpleNamespace
+
 import pytest
 
 from app.xninetzy.core.config import get_settings
@@ -120,6 +122,11 @@ async def test_arm_sets_armed_and_plan(monkeypatch, store):
 
     monkeypatch.setattr(portal_tools, "is_owner_admin", lambda s, n: True)
     monkeypatch.setattr(portal_tools, "load_krs_plan", fake_load)
+    monkeypatch.setattr(
+        portal_tools,
+        "evaluate_action",
+        lambda action, payload: SimpleNamespace(allowed=True, requires_approval=False),
+    )
 
     result = await portal_tools.portal_krs_war_arm.ainvoke(
         {"chat_id": "chat", "sender_id": "628123@s.whatsapp.net"}

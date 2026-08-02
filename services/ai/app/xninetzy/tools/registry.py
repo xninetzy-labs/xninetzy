@@ -28,6 +28,7 @@ from app.xninetzy.tools.internal.obsidian import (
     obsidian_read,
     obsidian_save_note,
     obsidian_search,
+    obsidian_search_health,
     obsidian_set_frontmatter,
     obsidian_todos,
     obsidian_update_section,
@@ -151,6 +152,7 @@ from app.xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_rebuild_index,
 )
 from app.xninetzy.tools.ecosystem.knowledge_eval_tools import knowledge_evaluate_retrieval
+from app.xninetzy.tools.ecosystem.unified_search_tools import unified_search
 from app.xninetzy.tools.ecosystem.document_tools import (
     document_analyze,
     document_ingest,
@@ -179,6 +181,7 @@ from app.xninetzy.tools.ecosystem.helper_tools import (
     helper_get,
     helper_generate_obsidian_docs,
 )
+from app.xninetzy.tools.ecosystem.tool_catalog_tools import tool_catalog
 from app.xninetzy.tools.ecosystem.ai_runtime_tools import (
     ai_provider_list,
     ai_provider_status,
@@ -318,6 +321,7 @@ def get_all_tools() -> list[BaseTool]:
             calculate_percentage,
             datetime_now,
             # Obsidian
+            obsidian_search_health,
             obsidian_search,
             obsidian_read,
             obsidian_create,
@@ -446,6 +450,7 @@ def get_all_tools() -> list[BaseTool]:
             knowledge_list_sources,
             knowledge_rebuild_index,
             knowledge_evaluate_retrieval,
+            unified_search,
             # Document extraction (router-based)
             document_analyze,
             document_ingest,
@@ -582,6 +587,7 @@ def get_all_tools() -> list[BaseTool]:
             # Helper
             helper_get,
             helper_generate_obsidian_docs,
+            tool_catalog,
         ]
     return _ALL_TOOLS
 
@@ -627,6 +633,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "learning_list_study_sessions",
         ],
         "knowledge": ["knowledge_ingest_text", "knowledge_search", "knowledge_answer", "knowledge_evaluate_retrieval"],
+        "unified_search": ["unified_search"],
         "pixelrag": [
             "pixelrag_capture",
             "pixelrag_search_public",
@@ -655,6 +662,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "skill_healthcheck",
         ],
         "notes": [
+            "obsidian_search_health",
             "obsidian_search",
             "obsidian_read",
             "obsidian_list",

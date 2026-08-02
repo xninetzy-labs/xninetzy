@@ -261,3 +261,16 @@ def test_backfill_v1_migrates_nodes_and_edges():
     again = backfill_v1.backfill_legacy_graph()
     assert again["nodes"] == 2
     assert _active_node_count() == 2
+
+
+
+def test_stats_is_passive_when_neo4j_is_disabled(monkeypatch):
+    from app.xninetzy.os.graph.v3 import graph_service, neo4j_store
+
+    def fail_if_called():
+        raise AssertionError("stats must not connect to Neo4j")
+
+    monkeypatch.setattr(neo4j_store, "_get_driver", fail_if_called)
+    snapshot = graph_service.stats()
+    assert snapshot["neo4j_available"] is False
+    assert snapshot["neo4j"]["configured"] is False

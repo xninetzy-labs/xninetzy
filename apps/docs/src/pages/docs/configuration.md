@@ -250,3 +250,45 @@ cd services/ai && uv run python -c "from app.xninetzy.core.config import get_set
 Jangan mencetak object settings lengkap karena dapat memuat secret.
 
 The vault folder policy is shared by all interfaces. Use the Obsidian organization preview before applying a legacy migration.
+
+
+<div data-localized-body data-locale="en">
+
+## GraphRAG and Neo4j projection
+
+```dotenv
+GRAPHRAG_V3_ENABLED=false
+NEO4J_ENABLED=false
+NEO4J_AUTOSTART_ENABLED=true
+NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
+NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
+NEO4J_CONNECT_TIMEOUT_SECONDS=3
+NEO4J_FAILURE_COOLDOWN_SECONDS=60
+```
+
+SQLite is the canonical source of truth. Neo4j and FAISS are rebuildable
+projections and may be offline. When autostart fails, later requests do not
+repeat Docker boot during the cooldown; retrieval falls back to SQLite/FAISS.
+Enable NEO4J_ENABLED only when the graph compose profile is available.
+
+</div>
+
+<div data-locale="id" hidden>
+
+## GraphRAG dan Neo4j projection
+
+```dotenv
+GRAPHRAG_V3_ENABLED=false
+NEO4J_ENABLED=false
+NEO4J_AUTOSTART_ENABLED=true
+NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS=8
+NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS=10
+NEO4J_CONNECT_TIMEOUT_SECONDS=3
+NEO4J_FAILURE_COOLDOWN_SECONDS=60
+```
+
+SQLite adalah canonical source of truth. Neo4j dan FAISS hanya projection yang
+boleh offline. Saat autostart gagal, request berikutnya tidak mengulang boot
+Docker selama cooldown; retrieval turun ke SQLite/FAISS. Set NEO4J_ENABLED=true
+hanya jika compose profile graph memang tersedia.
+</div>

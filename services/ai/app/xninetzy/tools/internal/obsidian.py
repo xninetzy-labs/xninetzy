@@ -120,29 +120,48 @@ def obsidian_search(query: str, limit: int = 10) -> str:
 
 
 @tool
-def obsidian_read(path: str) -> str:
+def obsidian_search_health() -> str:
+    """Periksa kesehatan indeks pencarian Obsidian berbasis SQLite FTS."""
+    try:
+        health = _vault().search_index_health().as_dict()
+        return json.dumps(health, ensure_ascii=False)
+    except Exception as exc:
+        return json.dumps({"healthy": False, "error": str(exc)}, ensure_ascii=False)
+
+
+@tool
+def obsidian_read(path: str, offset: int = 0, limit: int = 3000) -> str:
     """Baca isi catatan markdown dari Obsidian vault.
 
     Args:
         path: Path relatif ke file di vault, contoh: "Daily/2026-06-01.md"
+        offset: Karakter awal yang dibaca (default 0)
+        limit: Jumlah karakter maksimal yang dibaca (default 3000)
     """
     try:
         content = _vault().read_note(path)
-        return f"*{path}*\n\n{content[:3000]}"
+        total = len(content)
+        selected = content[offset : offset + limit]
+        truncated = offset + len(selected) < total
+        note = f"*{path}* (total {total} chars)\n\n{selected}"
+        if truncated:
+            note += f"\n\n_(dipotong: {offset + len(selected)}/{total} — gunakan offset untuk lanjut)_"
+        return note
     except Exception as e:
         return f"Gagal membaca '{path}': {e}"
 
 
 @tool
-def obsidian_create(path: str, content: str) -> str:
-    """Buat catatan baru di Obsidian vault (gagal jika sudah ada).
+def obsidian_create(path: str, content: str, overwrite: bool = False) -> str:
+    """Buat catatan baru di Obsidian vault.
 
     Args:
         path: Path relatif file baru, contoh: "Tasks/2026-06-01-tugas.md"
         content: Konten markdown catatan
+        overwrite: Timpa file yang sudah ada (default False)
     """
     try:
-        result = _vault().create_note(path, content, overwrite=False)
+        result = _vault().create_note(path, content, overwrite=overwrite)
         return f"✅ Catatan dibuat: `{result['path']}`"
     except Exception as e:
         return f"Gagal membuat catatan: {e}"

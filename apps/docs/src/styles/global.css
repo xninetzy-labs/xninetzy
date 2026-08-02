@@ -97,6 +97,7 @@ a { color: inherit; }
 .language-switcher span { text-transform: uppercase; letter-spacing: .08em; }
 .language-switcher select { border: 0; outline: 0; color: var(--lavender); background: transparent; font: .68rem var(--font-mono); cursor: pointer; }
 .language-switcher option { color: #111; background: #fff; }
+.language-note { margin: 0 0 1.25rem; padding: .65rem .8rem; border: 1px solid var(--line); border-radius: .55rem; color: var(--muted); font: .72rem var(--font-mono); }
 [hidden] { display: none !important; }
 .header-link, .header-cta, .search-trigger {
   border-radius: .62rem;

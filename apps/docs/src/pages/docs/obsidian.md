@@ -5,7 +5,7 @@ description: Canonical foldering, safe migration, note metadata, MOCs, and groun
 section: Integrations
 ---
 
-<div data-locale="en">
+<div data-localized-body data-locale="en">
 
 Xninetzy treats Obsidian as the human-readable persistence layer for the Learning OS and Life OS. Every interface uses the same vault policy: WhatsApp, LangGraph, MCP, Codex, Claude Code, and OpenCode never maintain separate note conventions.
 

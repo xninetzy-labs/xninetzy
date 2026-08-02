@@ -1,6 +1,6 @@
 # Xninetzy OS Implementation Progress
 
-Last updated: 2026-08-01
+Last updated: 2026-08-02
 
 This log tracks implementation batches from
 `docs/plan/XNINETZY_OS_UNIFIED_ACCESS_PLAN.md`. A batch is complete only after
@@ -33,6 +33,7 @@ code, tests, configuration, and documentation agree.
 | Reliability-01 | Graph path mapping, Flaz thinking guard, skill ranking, and inbox triage | Complete | 27 focused tests; GraphRAG host smoke; provider error diagnosis |
 | Academic-01d | QA standard-browser login and HEBAT Moodle upload smoke | Complete | QA headed login live; HEBAT overdue assignment verified `Submitted for grading`; uploader selector fix |
 | Academic-01e | Academic parser hardening, grade snapshot idempotency, and KRS watcher timing | Complete | 31 focused academic tests; Ruff; hash regression X→Y→X; adaptive watcher intervals |
+| Reliability-02 | Bounded GraphRAG Neo4j lifecycle, host-path bootstrap, and bilingual docs | Complete | 21 focused graph tests; 569 full AI tests; Ruff; Astro check/build |
 
 ## Batch P0-01 — API authentication and owner boundary
 
@@ -492,3 +493,64 @@ Status: Complete
 - [x] Add metadata schema, configuration, focused tests, and English/Indonesia Astro documentation switcher.
 - [x] Document shared skill installation and validation.
 - [x] Verify focused AI tests, Ruff, Astro check, and Astro build.
+
+
+## Batch Reliability-02 — Bounded GraphRAG projection lifecycle
+
+Completed: 2026-08-02
+
+- [x] Bound Docker compose boot, Bolt readiness polling, and Neo4j driver connection time.
+- [x] Latch autostart and connectivity failures during a configurable cooldown so MCP retries do not repeat slow boot attempts.
+- [x] Keep GraphRAG V3 SQLite as canonical truth and FAISS/SQLite retrieval as the degraded path when Neo4j is offline.
+- [x] Make graph health statistics passive and expose the cooldown state for diagnosis.
+- [x] Add regression tests for failure latching, retry suppression, and connection timeout propagation.
+- [x] Bootstrap host path mapping before Settings so direct local graph calls never write to /app.
+- [x] Add shared English/Indonesia metadata switching and explicit source-language notices in Astro docs.
+- [x] Document the runtime variables and the observed timeout resolution in `docs/plan/bug.md`.
+
+The default readiness bound is 10 seconds even when an installation still has the legacy 60-second boot setting. Operators can increase it explicitly when a cold Neo4j image needs more time.
+
+## V1 Phase 1 — Shared contracts and safe execution
+
+Status: In progress
+
+- [x] Split the V1 execution plan into five independent phase goal files.
+- [x] Replace registered MCP manual-wrapper schemas with canonical registry
+  schemas at server bootstrap while retaining server-injected identity fields.
+- [x] Classify KRS War arming as final and require a WhatsApp-admin approval
+  bound to the exact plan source hash, target classes, and fallback classes.
+- [x] Require payload-bound WhatsApp-admin approval before QA responses are
+  filled and before HEBAT browser upload begins.
+- [x] Add the shared tool manifest and canonical `tool_catalog` registry tool
+  for feature-pack, risk, approval, idempotency, and evidence metadata.
+- [ ] Migrate remaining high-risk workflows to the same action gate and make
+  approval continuation automatic after a verified WhatsApp button response.
+
+Focused verification: `26 passed` for MCP, manifest, KRS War, QA, and HEBAT
+approval tests; focused
+Ruff checks passed.
+
+## V1 Phase 2 — Grounded retrieval and graph evidence
+
+Status: In progress
+
+- [x] Remove the paid-provider-only gate from canonical `web_search`.
+- [x] Preserve DDGS, Tavily, and Serper as provider-neutral retrieval paths.
+- [x] Add regression coverage for the free fallback through the tool layer.
+- [x] Add bounded SQLite FTS for Obsidian notes, excluding backups and updating
+  changed documents by content hash.
+- [x] Expose `obsidian_search_health` through the canonical registry/MCP schema.
+- [x] Add focused FTS, backup exclusion, and index-health regression coverage.
+- [ ] Complete the remaining explicit GraphRAG projection health and migration
+  work.
+
+Focused verification: `13 passed` for Obsidian and MCP registry tests; targeted Ruff checks passed.
+
+## V1 Phase 3 — Install, CLI, and interface parity
+
+Status: In progress
+
+- [x] Add host `xninetzy config` commands backed by the canonical Python schema.
+- [x] Cover every `Settings` field and documented `.env.example` key without exposing secrets.
+- [x] Add atomic writes, type validation, redaction, and regression coverage.
+- [ ] Complete setup, doctor, native/Docker onboarding, and interface parity work.

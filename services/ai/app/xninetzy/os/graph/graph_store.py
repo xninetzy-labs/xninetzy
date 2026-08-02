@@ -38,15 +38,25 @@ def add_edge(source_node_id: int, target_node_id: int, edge_type: str, metadata:
 
 
 def search_nodes(query: str, limit: int = 10) -> list[dict]:
-    needle = f"%{query}%"
+    keywords = [kw for kw in query.split() if kw]
+    if not keywords:
+        return []
+    clauses = []
+    params: list[str] = []
+    for kw in keywords:
+        needle = f"%{kw}%"
+        clauses.append(
+            "(title LIKE ? COLLATE NOCASE OR content LIKE ? COLLATE NOCASE OR node_type LIKE ? COLLATE NOCASE)"
+        )
+        params.extend([needle, needle, needle])
     with connect() as conn:
         rows = conn.execute(
-            """
+            f"""
             SELECT * FROM graph_nodes
-            WHERE title LIKE ? OR content LIKE ? OR node_type LIKE ?
+            WHERE {' AND '.join(clauses)}
             ORDER BY updated_at DESC LIMIT ?
             """,
-            (needle, needle, needle, limit),
+            (*params, limit),
         ).fetchall()
     return [dict(row) for row in rows]
 

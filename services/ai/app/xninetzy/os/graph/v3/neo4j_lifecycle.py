@@ -32,6 +32,8 @@ _last_access_lock = threading.Lock()
 _idle_thread_lock = threading.Lock()
 _idle_thread_started = False
 _boot_lock = threading.Lock()
+_boot_failure_lock = threading.Lock()
+_boot_failure_until = 0.0
 _atexit_registered = False
 _started_here = False  # we booted the container (so we own stopping it on exit)
 
@@ -78,13 +80,26 @@ def _compose_cmd(settings, *args: str) -> list[str]:
     ]
 
 
-def ensure_running() -> bool:
-    """Boot the neo4j container on demand and wait for bolt. Best-effort.
+def _boot_failure_active() -> bool:
+    with _boot_failure_lock:
+        return _boot_failure_until > time.monotonic()
 
-    Returns True when bolt is reachable (already up, or booted here). Records an
-    access and starts the idle-watch loop so the container is stopped again once
-    graph tools go quiet.
-    """
+
+def _mark_boot_failure(settings, reason: str) -> None:
+    global _boot_failure_until
+    cooldown = max(0.0, float(settings.NEO4J_FAILURE_COOLDOWN_SECONDS))
+    with _boot_failure_lock:
+        _boot_failure_until = time.monotonic() + cooldown if cooldown else 0.0
+    logger.warning("Neo4j autostart unavailable for %.1fs: %s", cooldown, reason)
+
+
+def reset_boot_failure() -> None:
+    global _boot_failure_until
+    with _boot_failure_lock:
+        _boot_failure_until = 0.0
+
+
+def ensure_running() -> bool:
     settings = get_settings()
     if not (settings.NEO4J_AUTOSTART_ENABLED and is_host_runtime()):
         return False
@@ -94,38 +109,61 @@ def ensure_running() -> bool:
     service = settings.NEO4J_AUTOSTART_COMPOSE_SERVICE
 
     if _bolt_ready(host, port):
+        reset_boot_failure()
         touch_access()
         _start_idle_watch()
         return True
 
+    if _boot_failure_active():
+        return False
+
     with _boot_lock:
-        # Another thread may have booted it while we waited on the lock.
         if _bolt_ready(host, port):
+            reset_boot_failure()
             touch_access()
             _start_idle_watch()
             return True
+        if _boot_failure_active():
+            return False
+        command_timeout = max(
+            0.1, float(settings.NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS)
+        )
         try:
-            subprocess.run(
+            result = subprocess.run(
                 _compose_cmd(settings, "up", "-d", service),
                 cwd=_compose_root(),
                 capture_output=True,
-                timeout=settings.NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS,
+                timeout=command_timeout,
                 check=False,
             )
         except Exception as e:
-            logger.warning("Neo4j autostart 'up' failed (non-fatal): %s", e)
+            _mark_boot_failure(settings, f"compose command failed: {e}")
+            return False
+        if getattr(result, "returncode", 0) != 0:
+            _mark_boot_failure(
+                settings,
+                f"compose command exited with {result.returncode}",
+            )
             return False
 
-        deadline = time.monotonic() + settings.NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS
+        readiness_timeout = max(
+            0.0,
+            min(
+                float(settings.NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS),
+                float(settings.NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS),
+            ),
+        )
+        deadline = time.monotonic() + readiness_timeout
         while time.monotonic() < deadline:
             if _bolt_ready(host, port):
                 _started_here = True
+                reset_boot_failure()
                 touch_access()
                 _start_idle_watch()
                 _register_atexit()
                 return True
-            time.sleep(1.0)
-        logger.warning("Neo4j autostart timed out waiting for bolt at %s:%s", host, port)
+            time.sleep(0.25)
+        _mark_boot_failure(settings, f"bolt readiness timeout at {host}:{port}")
         return False
 
 
@@ -144,6 +182,9 @@ def stop() -> None:
         )
     except Exception as e:
         logger.warning("Neo4j autostart 'stop' failed (non-fatal): %s", e)
+    global _started_here
+    _started_here = False
+    reset_boot_failure()
     _reset_store()
 
 

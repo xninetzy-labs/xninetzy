@@ -6,12 +6,14 @@ import '../styles/global.css';
 type Props = {
   title?: string;
   description?: string;
+  descriptionId?: string;
   image?: string;
 };
 
 const {
   title = 'Xninetzy — Personal Learning OS',
   description = 'Xninetzy documentation: WhatsApp AI agent, Obsidian, HEBAT, MCP, and coding agents.',
+  descriptionId = description,
   image = '/og.svg'
 } = Astro.props;
 
@@ -24,7 +26,7 @@ const canonical = Astro.site ? new URL(Astro.url.pathname, Astro.site) : undefin
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width" />
-    <meta name="description" content={description} />
+    <meta name="description" data-docs-description data-i18n-en={description} data-i18n-id={descriptionId} content={description} />
     <meta name="theme-color" content="#020008" />
     <meta name="generator" content={Astro.generator} />
     <meta property="og:type" content="website" />

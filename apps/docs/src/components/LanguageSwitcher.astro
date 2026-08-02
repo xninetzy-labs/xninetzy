@@ -12,7 +12,14 @@ const selected = Astro.url.searchParams.get('lang') === 'id' ? 'id' : 'en';
 
 <script>
   const selector = document.querySelector<HTMLSelectElement>('#docs-language');
-  const initial = selector?.dataset.initialLanguage ?? localStorage.getItem('xninetzy-docs-language') ?? 'en';
+
+  function readStoredLanguage() {
+    try {
+      return localStorage.getItem('xninetzy-docs-language');
+    } catch {
+      return null;
+    }
+  }
 
   function applyLanguage(language: string) {
     const locale = language === 'id' ? 'id' : 'en';
@@ -24,12 +31,42 @@ const selected = Astro.url.searchParams.get('lang') === 'id' ? 'id' : 'en';
     document.querySelectorAll<HTMLElement>('[data-i18n-en][data-i18n-id]').forEach((element) => {
       element.textContent = locale === 'id' ? element.dataset.i18nId ?? '' : element.dataset.i18nEn ?? '';
     });
-    localStorage.setItem('xninetzy-docs-language', locale);
+    const title = document.querySelector<HTMLElement>('[data-docs-title]');
+    if (title) document.title = (title.textContent ?? 'Xninetzy') + ' · Xninetzy Docs';
+    const description = document.querySelector<HTMLMetaElement>('meta[data-docs-description]');
+    if (description) description.content = locale === 'id' ? description.dataset.i18nId ?? '' : description.dataset.i18nEn ?? '';
+    const hasLocalizedBody = document.querySelector('[data-localized-body]') !== null;
+    document.querySelectorAll<HTMLElement>('[data-locale-note]').forEach((note) => {
+      note.hidden = hasLocalizedBody;
+    });
+    try {
+      localStorage.setItem('xninetzy-docs-language', locale);
+    } catch {
+      return;
+    }
   }
 
-  if (selector) {
+  function bootLanguage() {
+    if (!selector) return;
+    const queryLanguage = new URLSearchParams(window.location.search).get('lang');
+    const initial = queryLanguage === 'id' || queryLanguage === 'en'
+      ? queryLanguage
+      : readStoredLanguage() === 'id'
+        ? 'id'
+        : 'en';
     selector.value = initial;
     applyLanguage(initial);
-    selector.addEventListener('change', () => applyLanguage(selector.value));
+    selector.addEventListener('change', () => {
+      applyLanguage(selector.value);
+      const url = new URL(window.location.href);
+      url.searchParams.set('lang', selector.value);
+      window.history.replaceState({}, '', url);
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', bootLanguage, { once: true });
+  } else {
+    bootLanguage();
   }
 </script>

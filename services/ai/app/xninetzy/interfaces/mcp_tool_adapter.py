@@ -168,15 +168,12 @@ def expose_xninetzy_tools(
 
         tools = get_all_tools()
 
-    existing = {tool.name for tool in server._tool_manager.list_tools()}
-    exposed = set(existing)
     for tool in tools:
-        if tool.name in exposed:
-            continue
+        if server._tool_manager.get_tool(tool.name) is not None:
+            server._tool_manager.remove_tool(tool.name)
         server.add_tool(
             langchain_tool_as_mcp_callable(tool, principal),
             name=tool.name,
             description=tool.description or "",
         )
-        exposed.add(tool.name)
-    return tuple(sorted(exposed))
+    return tuple(sorted(tool.name for tool in server._tool_manager.list_tools()))

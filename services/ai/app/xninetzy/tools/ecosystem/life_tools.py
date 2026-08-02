@@ -361,6 +361,8 @@ def daily_review_generate(chat_id: str = "system") -> str:
             f"Mood {review.get('mood', '?')}/5, Fokus {review.get('focus', '?')}/5"
         )
 
+    summary_text = "\n".join(f"• {part}" for part in summary_parts) or "Belum ada ringkasan."
+
     wins = (
         "\n".join(f"• {t['title']}" for t in today_done[:5])
         or "Belum ada task selesai dicatat."
@@ -372,6 +374,7 @@ def daily_review_generate(chat_id: str = "system") -> str:
 
     output = (
         f"📔 *Review {today}*\n\n"
+        f"*Ringkasan:*\n{summary_text}\n\n"
         f"*Task selesai hari ini:*\n{wins}\n\n"
         f"*Goal aktif:*\n{goal_status}\n\n"
         f"*Saran besok:*\nLihat goal dan task yang belum progress."

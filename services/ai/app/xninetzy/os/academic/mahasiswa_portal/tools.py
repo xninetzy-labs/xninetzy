@@ -38,7 +38,8 @@ from app.xninetzy.os.academic.mahasiswa_portal.reader import (
 from app.xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
     PortalRuntimeAnalyzer,
 )
-from app.xninetzy.os.notifications.admin_notifier import admin_jid
+from app.xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from app.xninetzy.os.notifications.admin_notifier import admin_jid, notify_admin_approval
 from app.xninetzy.os.research.permissions import is_owner_admin
 from app.xninetzy.os.policy.action_policy import evaluate_action
 from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
@@ -526,6 +527,21 @@ def _plan_summary(plan: KrsPlan) -> str:
     return f"{len(plan.courses)} MK, {total_sks} SKS"
 
 
+def _krs_war_approval_payload(plan: KrsPlan) -> dict:
+    return {
+        "source_hash": plan.source_hash,
+        "semester_label": plan.semester_label,
+        "courses": [
+            {
+                "code": course.code,
+                "target_class": course.target_class,
+                "fallback_classes": list(course.fallback_classes),
+            }
+            for course in plan.courses
+        ],
+    }
+
+
 @tool
 async def portal_krs_war_status(
     chat_id: str = "system", sender_id: str | None = None
@@ -540,14 +556,13 @@ async def portal_krs_war_status(
 
 @tool
 async def portal_krs_war_arm(
-    chat_id: str = "system", sender_id: str | None = None
+    chat_id: str = "system",
+    sender_id: str | None = None,
+    approval_id: int | None = None,
 ) -> str:
     """Aktifkan KRS War: submit otomatis sesuai plan saat window KRS terbuka."""
     if not is_owner_admin(sender_id or chat_id, None):
         return "KRS War hanya dapat diaktifkan oleh admin."
-    policy = evaluate_action("portal_krs_war_arm")
-    if not policy.allowed:
-        return f"KRS War ditahan policy: {policy.reason}"
     try:
         plan = await load_krs_plan()
     except Exception as exc:
@@ -557,6 +572,32 @@ async def portal_krs_war_arm(
             "Plan KRS tidak ditemukan atau kosong. KRS War tidak diaktifkan.\n"
             "Periksa file KRS_Plan_Semester_5.md di vault Obsidian."
         )
+    payload = _krs_war_approval_payload(plan)
+    policy = evaluate_action("portal_krs_war_arm", payload)
+    if not policy.allowed:
+        return f"KRS War ditahan policy: {policy.reason}"
+    if policy.requires_approval:
+        if approval_id is None:
+            requested_id = request_approval(
+                chat_id,
+                sender_id,
+                "portal_krs_war_arm",
+                "Aktifkan KRS War",
+                f"{plan.semester_label or plan.source_path} ({_plan_summary(plan)})",
+                payload,
+            )
+            delivered = await notify_admin_approval(
+                requested_id,
+                "portal_krs_war_arm",
+                "Aktifkan KRS War",
+                f"{plan.semester_label or plan.source_path} ({_plan_summary(plan)})",
+            )
+            delivery = "Tombol approval dikirim ke WhatsApp admin." if delivered else "Tombol approval gagal dikirim."
+            return f"KRS War membutuhkan approval #{requested_id}. {delivery}"
+        try:
+            validate_approval(approval_id, "portal_krs_war_arm", policy.action_hash)
+        except ValueError as exc:
+            return f"KRS War ditahan approval: {exc}"
     KrsWarStore().set_armed(True, plan)
     return (
         "*KRS War Aktif*\n"

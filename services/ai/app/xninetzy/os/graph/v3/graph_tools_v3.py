@@ -114,12 +114,15 @@ def graph_v3_path(
 def graph_v3_stats() -> str:
     """Status GraphRAG V3: outbox pending, ketersediaan Neo4j, jumlah node/edge."""
     s = graph_service.stats()
+    neo4j = s["neo4j"]
     return (
         f"*GraphRAG V3*\n"
         f"Enabled: {s['enabled']}\n"
         f"Node aktif: {s['active_nodes']}, Edge aktif: {s['active_edges']}\n"
         f"Outbox pending: {s['outbox_pending']}\n"
-        f"Neo4j online: {s['neo4j_available']}"
+        f"Neo4j online: {s['neo4j_available']}\n"
+        f"Neo4j configured: {neo4j['configured']}\n"
+        f"Neo4j failure cooldown: {neo4j['cooldown_seconds']}s"
     )
 
 

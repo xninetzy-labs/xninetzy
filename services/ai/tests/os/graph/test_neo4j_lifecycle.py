@@ -8,6 +8,9 @@ already open.
 
 from __future__ import annotations
 
+import sys
+from types import SimpleNamespace
+
 import pytest
 
 from app.xninetzy.core.config import get_settings
@@ -19,6 +22,7 @@ def _reset(monkeypatch):
     get_settings.cache_clear()
     monkeypatch.setattr(neo4j_lifecycle, "_idle_thread_started", False, raising=False)
     monkeypatch.setattr(neo4j_lifecycle, "_last_access", 0.0, raising=False)
+    monkeypatch.setattr(neo4j_lifecycle, "_boot_failure_until", 0.0, raising=False)
     yield
     get_settings.cache_clear()
 
@@ -100,3 +104,59 @@ def test_clear_unavailable_resets_sticky_flag(monkeypatch):
     monkeypatch.setattr(neo4j_store, "_unavailable", True, raising=False)
     neo4j_store.clear_unavailable()
     assert neo4j_store._unavailable is False
+
+
+def test_ensure_running_failure_is_cooled_down(monkeypatch):
+    monkeypatch.setenv('NEO4J_AUTOSTART_ENABLED', 'true')
+    monkeypatch.setenv('NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS', '0')
+    monkeypatch.setenv('NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS', '1')
+    monkeypatch.setenv('NEO4J_FAILURE_COOLDOWN_SECONDS', '60')
+    get_settings.cache_clear()
+    monkeypatch.setattr(neo4j_lifecycle, 'is_host_runtime', lambda: True)
+    monkeypatch.setattr(neo4j_lifecycle, '_bolt_ready', lambda *a, **k: False)
+    monkeypatch.setattr(neo4j_lifecycle, '_start_idle_watch', lambda: None)
+    calls = {'count': 0}
+
+    class Result:
+        returncode = 1
+
+    def run(*args, **kwargs):
+        calls['count'] += 1
+        return Result()
+
+    monkeypatch.setattr(neo4j_lifecycle.subprocess, 'run', run)
+    assert neo4j_lifecycle.ensure_running() is False
+    assert neo4j_lifecycle.ensure_running() is False
+    assert calls['count'] == 1
+
+def test_neo4j_driver_failure_is_cooled_down(monkeypatch):
+    monkeypatch.setenv('GRAPHRAG_V3_ENABLED', 'true')
+    monkeypatch.setenv('NEO4J_ENABLED', 'true')
+    monkeypatch.setenv('NEO4J_AUTOSTART_ENABLED', 'false')
+    monkeypatch.setenv('NEO4J_FAILURE_COOLDOWN_SECONDS', '60')
+    get_settings.cache_clear()
+    neo4j_store.clear_unavailable()
+    monkeypatch.setattr(neo4j_store, '_driver', None, raising=False)
+    calls = {'count': 0, 'timeout': None}
+
+    class Driver:
+        def verify_connectivity(self):
+            raise RuntimeError('offline')
+
+        def close(self):
+            pass
+
+    class GraphDatabase:
+        @staticmethod
+        def driver(*args, **kwargs):
+            calls['count'] += 1
+            calls['timeout'] = kwargs['connection_timeout']
+            return Driver()
+
+    monkeypatch.setitem(sys.modules, 'neo4j', SimpleNamespace(GraphDatabase=GraphDatabase))
+    assert neo4j_store._get_driver() is None
+    assert neo4j_store._get_driver() is None
+    assert calls['count'] == 1
+    assert calls['timeout'] == 3.0
+    assert neo4j_store._unavailable is True
+    assert neo4j_store._unavailable_until > 0

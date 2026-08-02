@@ -40,6 +40,26 @@ def test_mcp_server_exposes_all_registered_xninetzy_tools():
     assert "chat_id" not in coding_tool.parameters["properties"]
 
 
+def test_mcp_schema_matches_registry_including_previously_hidden_fields():
+    expected_fields = {
+        "obsidian_read": {"path", "offset", "limit"},
+        "obsidian_create": {"path", "content", "overwrite"},
+        "task_capture": {"title", "description", "priority", "due_at", "goal_id"},
+    }
+
+    registry_tools = {tool.name: tool for tool in get_all_tools()}
+    for tool_name, expected in expected_fields.items():
+        mcp_tool = mcp._tool_manager.get_tool(tool_name)
+        assert mcp_tool is not None
+        assert expected <= set(mcp_tool.parameters["properties"])
+        assert expected <= set(registry_tools[tool_name].args_schema.model_fields)
+        assert not {
+            "sender_id",
+            "sender_name",
+            "chat_id",
+        } & set(mcp_tool.parameters["properties"])
+
+
 @pytest.mark.asyncio
 async def test_mcp_stdio_transport_lists_tools():
     ai_root = Path(__file__).resolve().parents[2]

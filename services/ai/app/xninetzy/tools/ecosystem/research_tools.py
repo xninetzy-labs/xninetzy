@@ -7,17 +7,13 @@ from langchain_core.tools import tool
 async def web_search(query: str, limit: int = 5) -> str:
     """Cari informasi di web.
 
-    Butuh TAVILY_API_KEY atau SERPER_API_KEY di .env.
+    Menggunakan provider berbayar bila tersedia dan DDGS sebagai fallback gratis.
 
     Args:
         query: Query pencarian
         limit: Jumlah hasil (default: 5)
     """
     from app.xninetzy.os.research.web_search import web_search as _search
-    from app.xninetzy.core.config import get_settings
-    s = get_settings()
-    if not s.TAVILY_API_KEY and not s.SERPER_API_KEY:
-        return "⚠️ Web search tidak aktif. Set TAVILY_API_KEY atau SERPER_API_KEY di .env"
 
     results = await _search(query, limit)
     if not results:

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+import re
 import shutil
 from datetime import datetime
 from pathlib import Path
@@ -10,6 +11,7 @@ from app.xninetzy.core.config import get_settings
 from app.xninetzy.db.sqlite import connect
 from app.xninetzy.os.notes.obsidian_config import vault_path
 from app.xninetzy.os.notes.markdown_service import MarkdownService
+from app.xninetzy.os.notes.vault_index import VaultIndexHealth, VaultSearchIndex
 from app.xninetzy.os.notes.safety import (
     ensure_readable_file,
     ensure_write_allowed,
@@ -20,6 +22,9 @@ from app.xninetzy.os.notes.safety import (
 class ObsidianVaultService:
     def __init__(self) -> None:
         self.markdown = MarkdownService()
+        self.index = VaultSearchIndex(
+            get_settings().OBSIDIAN_SEARCH_INDEX_MAX_FILES
+        )
 
     def list_files(self, folder: str | None = None) -> list[dict]:
         root = resolve_vault_path(folder)
@@ -41,22 +46,53 @@ class ObsidianVaultService:
         return note.read_text(encoding="utf-8")
 
     def search_notes(self, query: str, limit: int = 20) -> list[dict]:
-        needle = query.casefold().strip()
-        if not needle:
+        keywords = [kw for kw in re.split(r"\s+", query.strip()) if kw]
+        if not keywords:
             return []
+        files = self.list_files()
+        try:
+            self.index.sync(files, self.read_note)
+            file_by_path = {str(item["path"]): item for item in files}
+            indexed_matches: list[dict] = []
+            for result in self.index.search(query, limit):
+                item = file_by_path.get(str(result["path"]))
+                if item is None:
+                    continue
+                indexed_matches.append(
+                    {
+                        **item,
+                        "preview": str(result.get("preview") or "").replace("\n", " "),
+                        "matched": len(keywords),
+                    }
+                )
+            return indexed_matches
+        except Exception:
+            pass
         matches: list[dict] = []
-        for item in self.list_files():
+        for item in files:
             path = item["path"]
             try:
                 content = self.read_note(path)
             except Exception:
                 continue
             haystack = (path + "\n" + content).casefold()
-            if needle in haystack:
-                matches.append({**item, "preview": self._preview(content, needle)})
-            if len(matches) >= limit:
-                break
-        return matches
+            positions = [haystack.find(kw.casefold()) for kw in keywords]
+            if any(pos == -1 for pos in positions):
+                continue
+            first_pos = min(positions)
+            first_kw = keywords[positions.index(first_pos)]
+            matches.append(
+                {
+                    **item,
+                    "preview": self._preview(content, first_kw.casefold()),
+                    "matched": len(keywords),
+                }
+            )
+        matches.sort(key=lambda m: m["matched"], reverse=True)
+        return matches[:limit]
+
+    def search_index_health(self) -> VaultIndexHealth:
+        return self.index.sync(self.list_files(), self.read_note)
 
     def create_note(self, path: str, content: str, overwrite: bool = False) -> dict:
         note = resolve_vault_path(path, for_write=True)

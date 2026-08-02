@@ -149,6 +149,7 @@ def test_obsidian_search_uses_bounded_fts_and_reports_health(isolated_vault):
     with connect() as conn:
         count = conn.execute("SELECT COUNT(*) FROM obsidian_notes_fts").fetchone()[0]
     assert count == 2
+    assert "x" * 100 in later
 
 
 def test_obsidian_create_respects_overwrite_flag(isolated_vault):

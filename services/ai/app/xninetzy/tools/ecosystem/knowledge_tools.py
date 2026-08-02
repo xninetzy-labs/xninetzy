@@ -49,35 +49,59 @@ def knowledge_ingest_file(
     source_type: str = "hebat_pdf",
     chat_id: str = "system",
 ) -> str:
-    """Ingest file PDF ke knowledge base.
+    """Ingest file ke knowledge base (PDF, Markdown, TXT, JSON, CSV, DOCX, PPTX, XLSX).
 
     Args:
-        file_path: Path lokal file PDF
+        file_path: Path lokal file
         title: Judul (default: nama file)
         source_type: Tipe sumber
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.knowledge.ingestion import ingest_pdf
+    from pathlib import Path
 
-    result = ingest_pdf(file_path, title, source_type)
+    from app.xninetzy.os.knowledge.ingestion import (
+        ingest_document,
+        ingest_pdf,
+        ingest_text,
+    )
+
+    path = Path(file_path)
+    if not path.exists():
+        return f"❌ File tidak ditemukan: {file_path}"
+
+    suffix = path.suffix.lower()
+    if suffix == ".pdf":
+        result = ingest_pdf(file_path, title, source_type)
+    elif suffix in {".md", ".markdown", ".txt", ".json", ".csv"}:
+        try:
+            text = path.read_text(encoding="utf-8", errors="replace")
+        except Exception as e:
+            return f"❌ Gagal membaca file teks: {e}"
+        if not text.strip():
+            return "⚠️ File kosong, tidak ada yang diingest."
+        result = ingest_text(title or path.stem, text, source_type, uri=str(path))
+    else:
+        result = ingest_document(file_path, title=title, source_type=source_type)
 
     if result.get("status") == "error":
         return f"❌ Gagal ingest: {result.get('error')}"
     if result["status"] == "already_exists":
         return "ℹ️ File sudah ada di knowledge base."
+    if result["status"] == "empty":
+        return "⚠️ Isi file kosong, tidak ada yang diingest."
 
     record_event(
         chat_id,
-        "pdf_ingested",
+        "file_ingested",
         "file",
         "note",
         str(result.get("source_id", "")),
         {"title": result.get("title"), "chunks": result.get("chunks", 0)},
     )
     return (
-        f"✅ PDF diingest!\n"
+        f"✅ Diingest!\n"
         f"*{result['title']}*\n"
-        f"{result.get('pages', '?')} halaman | {result['chunks']} chunk"
+        f"{result.get('chunks', 0)} chunk"
     )
 
 

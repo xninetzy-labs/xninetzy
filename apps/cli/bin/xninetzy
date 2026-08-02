@@ -1,2 +1,69 @@
 #!/usr/bin/env node
-import("../dist/index.js");
+import { spawnSync } from "node:child_process";
+import { existsSync } from "node:fs";
+import { dirname, join, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
+
+function findRepositoryRoot(start) {
+  let current = resolve(start);
+
+  for (let index = 0; index < 10; index += 1) {
+    if (existsSync(join(current, "docker-compose.yml"))) {
+      return current;
+    }
+    const parent = dirname(current);
+    if (parent === current) {
+      return null;
+    }
+    current = parent;
+  }
+
+  return null;
+}
+
+function runConfigCommand(argumentsList) {
+  const entryDirectory = dirname(fileURLToPath(import.meta.url));
+  const root = findRepositoryRoot(process.cwd()) ?? findRepositoryRoot(entryDirectory);
+
+  if (!root) {
+    process.stderr.write(
+      "Xninetzy repository root was not found. Run this command inside the repository.\n"
+    );
+    process.exit(2);
+  }
+
+  const result = spawnSync(
+    "uv",
+    [
+      "run",
+      "--directory",
+      join(root, "services", "ai"),
+      "python",
+      "-m",
+      "app.xninetzy.interfaces.config_cli",
+      ...argumentsList,
+    ],
+    {
+      cwd: root,
+      stdio: "inherit",
+    }
+  );
+
+  if (result.error) {
+    process.stderr.write(
+      "Unable to run the Xninetzy configuration CLI. Install uv and run this command on the host.\n"
+    );
+    process.exit(2);
+  }
+
+  process.exit(result.status ?? 1);
+}
+
+const argumentsList = process.argv.slice(2);
+
+if (argumentsList[0] === "config") {
+  runConfigCommand(argumentsList.slice(1));
+} else {
+  import("../dist/index.js");
+}
+

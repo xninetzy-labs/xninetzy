@@ -95,10 +95,12 @@ def shortest_path(source_key: str, target_key: str, *, max_hops: int = 5) -> lis
 
 def stats() -> dict:
     """Cheap health snapshot for tools/diagnostics."""
+    neo4j = neo4j_store.availability_status()
     return {
         "enabled": enabled(),
         "outbox_pending": sqlite_store.outbox_pending_count(),
-        "neo4j_available": neo4j_store.is_available(),
+        "neo4j_available": neo4j["available"],
+        "neo4j": neo4j,
         "active_nodes": len(sqlite_store.iter_active_nodes()),
         "active_edges": len(sqlite_store.iter_active_edges()),
     }

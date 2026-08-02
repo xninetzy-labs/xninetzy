@@ -3,6 +3,11 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+from app.xninetzy.interfaces.mcp_runtime import configure_mcp_runtime_paths
+
+
+configure_mcp_runtime_paths()
+
 
 def find_root_env() -> Path | None:
     for parent in Path(__file__).resolve().parents:
@@ -119,6 +124,7 @@ class Settings(BaseSettings):
     OBSIDIAN_ALLOW_DELETE: bool = False
     OBSIDIAN_BACKUP_BEFORE_WRITE: bool = True
     OBSIDIAN_MAX_FILE_SIZE_MB: int = 5
+    OBSIDIAN_SEARCH_INDEX_MAX_FILES: int = 2000
     OBSIDIAN_FOLDERING_ENABLED: bool = True
     OBSIDIAN_CANONICAL_SCHEMA_VERSION: int = 1
     OBSIDIAN_ORGANIZE_MODE: str = "hybrid"
@@ -368,7 +374,11 @@ class Settings(BaseSettings):
     NEO4J_AUTOSTART_ENABLED: bool = True
     NEO4J_AUTOSTART_COMPOSE_SERVICE: str = "neo4j"
     NEO4J_AUTOSTART_PROFILE: str = "graph"
-    NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS: int = 60  # cold-start bolt-ready wait
+    NEO4J_AUTOSTART_BOOT_TIMEOUT_SECONDS: float = 60.0
+    NEO4J_AUTOSTART_READINESS_TIMEOUT_SECONDS: float = 10.0
+    NEO4J_AUTOSTART_COMMAND_TIMEOUT_SECONDS: float = 8.0
+    NEO4J_CONNECT_TIMEOUT_SECONDS: float = 3.0
+    NEO4J_FAILURE_COOLDOWN_SECONDS: float = 60.0
     NEO4J_AUTOSTART_IDLE_STOP_SECONDS: int = 300  # stop container after idle
     NEO4J_AUTOSTART_STOP_ON_EXIT: bool = True  # stop when the MCP process exits
 

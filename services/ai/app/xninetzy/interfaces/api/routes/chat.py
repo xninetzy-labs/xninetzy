@@ -1,8 +1,11 @@
 from __future__ import annotations
 
+import asyncio
+import json
 import time
 
 from fastapi import APIRouter, Depends
+from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, HumanMessage
 
 from app.xninetzy.agent.graph import get_compiled_graph
@@ -189,8 +192,11 @@ async def _maybe_run_workflow(request: ChatRequest) -> str | None:
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
-    owner = authorize_owner(request.sender_id)
-    if not owner.allowed:
+    owner = authorize_owner(
+        request.sender_id,
+        local_client=(request.metadata or {}).get("client") == "cli",
+    ) if (request.metadata or {}).get("channel") == "whatsapp" else None
+    if owner is not None and not owner.allowed:
         return ChatResponse(reply=owner_denied_message(owner.reason))
 
     episode_id, episode_started = _lightning_episode_start(request)
@@ -342,6 +348,35 @@ async def chat(request: ChatRequest) -> ChatResponse:
     )
 
     return ChatResponse(reply=result["response"])
+
+
+@router.post("/chat/stream")
+async def chat_stream(request: ChatRequest) -> StreamingResponse:
+    async def events():
+        phases = (
+            "Understanding what you need",
+            "Selecting tools and knowledge",
+            "Executing the Xninetzy OS plan",
+        )
+        for label in phases:
+            payload = json.dumps({"label": label}, ensure_ascii=False)
+            yield f"event: status\ndata: {payload}\n\n"
+            await asyncio.sleep(0.04)
+        response = await chat(request)
+        payload = json.dumps({"label": "Synthesizing the result"}, ensure_ascii=False)
+        yield f"event: status\ndata: {payload}\n\n"
+        for offset in range(0, len(response.reply), 96):
+            chunk = response.reply[offset : offset + 96]
+            payload = json.dumps({"delta": chunk}, ensure_ascii=False)
+            yield f"event: delta\ndata: {payload}\n\n"
+            await asyncio.sleep(0.015)
+        yield "event: done\ndata: {}\n\n"
+
+    return StreamingResponse(
+        events(),
+        media_type="text/event-stream",
+        headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"},
+    )
 
 
 def _log_trace(

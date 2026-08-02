@@ -12,7 +12,9 @@ Dark fullscreen terminal client untuk Xninetzy AI.
 - White text
 - Purple logo/border accent
 - Orange node/event horizon accent
-- Live chat ke endpoint FastAPI `/api/chat`
+- Live chat melalui SSE endpoint FastAPI `/api/chat/stream`
+- Status routing dan aktivitas tool yang aman di status bar
+- Meteor shower terminal backdrop yang ringan
 - Mendukung pasted block sebagai konteks pesan
 - Timeout dan error state yang terlihat di status bar
 
@@ -71,6 +73,33 @@ require explicit flags. Both deployment profiles keep `XNINETZY_AI_URL` on
 The root `.env` must use `MCP_RUNTIME_MODE=auto` or `host` so Codex, Claude
 Code, and OpenCode can use the shared host MCP server.
 
+## Single-owner identity
+
+Set one international WhatsApp number in the root `.env`:
+
+```bash
+OWNER_PHONE_NUMBER=62812xxxxxxxx
+OWNER_ALIAS=misbahul
+```
+
+The AI API, WhatsApp engine, MCP stdio server, and local CLI normalize this
+number to the same owner identity. The CLI inherits it unless
+`XNINETZY_CLI_SENDER_ID` is explicitly set.
+
+The activity bar shows safe execution milestones only. It intentionally does not
+show hidden model reasoning, credentials, raw prompts, or untrusted tool input.
+
+
+## External MCP
+
+External stdio MCP servers are owner-scoped and registered through the shared tool catalog. Enable them explicitly, keep credentials in `.env`, and provide only executable names, arguments, and environment variable names to the registry:
+
+```bash
+xninetzy config set EXTERNAL_MCP_ENABLED true
+xninetzy config set EXTERNAL_MCP_ALLOW_CALLS false
+```
+
+Use the Xninetzy tools `external_mcp_add`, `external_mcp_list`, `external_mcp_tools`, and `external_mcp_call` from the CLI chat, LangGraph, or MCP clients. Calls remain disabled until `EXTERNAL_MCP_ALLOW_CALLS=true`; external output is marked untrusted and must not override Xninetzy policy.
 
 ## Docker
 

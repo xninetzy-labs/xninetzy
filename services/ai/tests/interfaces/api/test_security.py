@@ -65,6 +65,18 @@ def test_single_owner_policy_accepts_admin_and_rejects_other_sender():
     assert decision.reason == "not_owner"
 
 
+def test_single_owner_policy_accepts_configured_phone_number():
+    settings = Settings(
+        _env_file=None,
+        SINGLE_OWNER_MODE=True,
+        OWNER_PHONE_NUMBER="+62 812-3456-7890",
+        ADMIN_JID="",
+        OWNER_ALLOWED_JIDS="",
+    )
+
+    assert authorize_owner("6281234567890@s.whatsapp.net", settings).allowed is True
+
+
 def test_single_owner_policy_fails_closed_without_owner_identity():
     settings = Settings(
         _env_file=None,

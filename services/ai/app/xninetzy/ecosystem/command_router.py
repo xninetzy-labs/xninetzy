@@ -58,6 +58,11 @@ SLASH_COMMANDS: dict[str, str] = {
 WORKFLOW_RESUME_PATTERN = re.compile(r"^/workflow-resume\s+([\w-]+)$", re.I)
 WORKFLOW_CANCEL_PATTERN = re.compile(r"^/workflow-cancel\s+([\w-]+)$", re.I)
 LLM_LIST_PATTERN = re.compile(r"^/llm\s+list$", re.I)
+CONFIG_PATTERN = re.compile(r"^/config(?:\s+(?:show|list))?$", re.I)
+MCP_PATTERN = re.compile(r"^/mcp(?:\s+(?:list|status))?$", re.I)
+MCP_TOOLS_PATTERN = re.compile(r"^/mcp\s+tools\s+([a-z][a-z0-9_-]{1,63})$", re.I)
+PROVIDER_LIST_PATTERN = re.compile(r"^/provider(?:\s+list)?$", re.I)
+PROVIDER_USE_PATTERN = re.compile(r"^/provider\s+use\s+([\w-]+)(?:\s+(.+))?$", re.I | re.S)
 LLM_USE_PATTERN = re.compile(r"^/llm\s+use\s+([\w-]+)(?:\s+(.+))?$", re.I | re.S)
 AGENT_LIST_PATTERN = re.compile(r"^/agent\s+list$", re.I)
 AGENT_USE_PATTERN = re.compile(r"^/agent\s+use\s+([\w-]+)$", re.I)
@@ -127,6 +132,18 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     if not stripped.startswith("/"):
         return None, {}
 
+    if CONFIG_PATTERN.match(stripped):
+        return "helper_get", {"topic": "config"}
+    if MCP_PATTERN.match(stripped):
+        return "external_mcp_list", {}
+    m = MCP_TOOLS_PATTERN.match(stripped)
+    if m:
+        return "external_mcp_tools", {"name": m.group(1)}
+    if PROVIDER_LIST_PATTERN.match(stripped) or LLM_LIST_PATTERN.match(stripped):
+        return "ai_provider_list", {}
+    m = PROVIDER_USE_PATTERN.match(stripped)
+    if m:
+        return "ai_provider_use", {"provider": m.group(1).lower(), "model": (m.group(2) or "").strip()}
     if LLM_LIST_PATTERN.match(stripped):
         return "ai_provider_list", {}
     m = LLM_USE_PATTERN.match(stripped)

@@ -39,8 +39,10 @@ class MCPPrincipal:
 def mcp_principal(settings: Settings | None = None) -> MCPPrincipal:
     """Resolve the trusted local owner represented by stdio MCP clients."""
     current = settings or get_settings()
-    sender_id = (current.MCP_PRINCIPAL_ID or current.ADMIN_JID).strip()
-    sender_name = (current.MCP_PRINCIPAL_NAME or sender_id).strip() or "local-owner"
+    sender_id = (
+        current.MCP_PRINCIPAL_ID or current.OWNER_PHONE_NUMBER or current.ADMIN_JID
+    ).strip()
+    sender_name = (current.MCP_PRINCIPAL_NAME or current.OWNER_ALIAS or sender_id).strip() or "local-owner"
     stable_owner = sender_id or "mcp:local-owner"
     chat_id = (current.MCP_DEFAULT_CHAT_ID or sender_id or stable_owner).strip()
     return MCPPrincipal(

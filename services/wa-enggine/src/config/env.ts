@@ -88,7 +88,8 @@ export const env = {
   MCP_API_KEY: process.env.WA_MCP_API_KEY ?? process.env.MCP_API_KEY ?? "",
   BOT_NAME: process.env.BOT_NAME ?? "Xninetzy AI",
   BOT_OWNER: process.env.BOT_OWNER ?? "Misbahul Muttaqin",
-  ADMIN_JID: process.env.ADMIN_JID?.trim() ?? "",
+  OWNER_PHONE_NUMBER: process.env.OWNER_PHONE_NUMBER?.trim() ?? "",
+  ADMIN_JID: process.env.ADMIN_JID?.trim() ?? process.env.OWNER_PHONE_NUMBER?.trim() ?? "",
 };
 
 export function validateEnv(): void {

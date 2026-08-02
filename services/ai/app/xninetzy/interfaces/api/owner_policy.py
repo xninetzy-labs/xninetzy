@@ -14,17 +14,23 @@ class OwnerDecision:
 
 def configured_owner_jids(settings: Settings | None = None) -> frozenset[str]:
     current = settings or get_settings()
-    values = [current.ADMIN_JID, *current.OWNER_ALLOWED_JIDS.split(",")]
+    values = [
+        current.OWNER_PHONE_NUMBER,
+        current.ADMIN_JID,
+        *current.OWNER_ALLOWED_JIDS.split(","),
+    ]
     normalized = (normalize_whatsapp_jid(value) for value in values)
     return frozenset(value for value in normalized if value)
 
 
 def authorize_owner(
-    sender_id: str | None, settings: Settings | None = None
+    sender_id: str | None, settings: Settings | None = None, local_client: bool = False
 ) -> OwnerDecision:
     current = settings or get_settings()
     if not current.SINGLE_OWNER_MODE:
         return OwnerDecision(True, "single_owner_disabled")
+    if local_client and (sender_id or "").strip() in {"mcp:local-owner", "xninetzy-cli"}:
+        return OwnerDecision(True, "trusted_local_cli")
     owners = configured_owner_jids(current)
     if not owners:
         return OwnerDecision(False, "owner_not_configured")
@@ -37,7 +43,7 @@ def owner_denied_message(reason: str = "not_owner") -> str:
     if reason == "owner_not_configured":
         return (
             "Xninetzy OS belum memiliki identitas owner. "
-            "Atur ADMIN_JID atau OWNER_ALLOWED_JIDS pada environment service."
+            "Atur OWNER_PHONE_NUMBER, ADMIN_JID, atau OWNER_ALLOWED_JIDS pada environment service."
         )
     return (
         "Xninetzy OS sedang berjalan dalam mode single-owner. "

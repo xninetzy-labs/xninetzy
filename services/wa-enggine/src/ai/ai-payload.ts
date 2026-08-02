@@ -124,6 +124,7 @@ export function buildAIChatPayload(
     chat_type: chatType === "group" ? "group" : "private",
     group_name: chatType === "group" ? groupName ?? null : null,
     metadata: {
+      channel: "whatsapp",
       traceId,
       messageId,
       isGroup: chatType === "group",

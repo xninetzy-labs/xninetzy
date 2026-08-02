@@ -9,7 +9,7 @@ import { InputBox } from './components/InputBox.js';
 import { StatusBar } from './components/StatusBar.js';
 import { colors } from './theme/colors.js';
 import type { ChatMessage } from './types.js';
-import { sendChat } from './api/client.js';
+import { streamChat } from './api/client.js';
 import { cliConfig } from './config/env.js';
 
 function createMessage(
@@ -34,8 +34,10 @@ export function App() {
   const [attachments, setAttachments] = useState<string[]>([]);
   const [isSending, setIsSending] = useState(false);
   const [lastError, setLastError] = useState<string | null>(null);
+  const [activity, setActivity] = useState<string | null>(null);
   const [messages, setMessages] = useState<ChatMessage[]>([
-    createMessage('system', `AI session ready at ${cliConfig.aiUrl}`)
+    createMessage('system', `Halo, aku Xninetzy AI — siap membantu belajar, bekerja, dan mengelola OS-mu.
+Backend: ${cliConfig.aiUrl}`)
   ]);
 
   const hasUserMessages = messages.some((message) => message.role === 'user');
@@ -58,18 +60,55 @@ export function App() {
 
     if (trimmed.toLowerCase() === '/clear' && pasted.length === 0) {
       setMessages([
-        createMessage('system', `AI session ready at ${cliConfig.aiUrl}`)
+        createMessage('system', `Halo, aku Xninetzy AI — siap membantu belajar, bekerja, dan mengelola OS-mu.
+Backend: ${cliConfig.aiUrl}`)
       ]);
       setLastError(null);
+      setActivity(null);
       return;
     }
 
     setMessages((current) => [...current, createMessage('user', trimmed, pasted)]);
     setIsSending(true);
     setLastError(null);
+    setActivity('Routing request');
+    const thinkingId = "thinking-" + Date.now();
+    const thinkingStarted = Date.now();
+    let thinkingTimer: ReturnType<typeof setInterval> | undefined;
+    const updateThinking = () => {
+      const elapsed = ((Date.now() - thinkingStarted) / 1000).toFixed(1);
+      const orbit = ["◐", "◓", "◑", "◒"][Math.floor(Date.now() / 180) % 4];
+      setMessages((current) => current.map((message) => message.id === thinkingId ? { ...message, content: `${orbit} Thinking · ${elapsed}s · grounding and tools` } : message));
+    };
+    setMessages((current) => [...current, { ...createMessage("system", "◐ Thinking · 0.0s · preparing Xninetzy OS"), id: thinkingId }]);
+    thinkingTimer = setInterval(updateThinking, 180);
+    let streamedReply = "";
     try {
-      const reply = await sendChat(trimmed, pasted);
-      setMessages((current) => [...current, createMessage('assistant', reply)]);
+      await streamChat(
+        trimmed,
+        (event) => {
+          if (event.type === "delta") {
+            if (thinkingTimer) { clearInterval(thinkingTimer); thinkingTimer = undefined; }
+            setMessages((current) => current.filter((message) => message.id !== thinkingId));
+            streamedReply += event.delta;
+            setActivity("Streaming response");
+            setMessages((current) => {
+              const last = current[current.length - 1];
+              if (last?.role === "assistant" && last.id.startsWith("stream-")) {
+                return [...current.slice(0, -1), { ...last, content: streamedReply }];
+              }
+              return [...current, { ...createMessage("assistant", streamedReply), id: "stream-" + Date.now() }];
+            });
+          }
+          if (event.type === "status" || event.type === "tool") setActivity(event.label);
+          if (event.type === "response") {
+            setMessages((current) => current.filter((message) => message.id !== thinkingId));
+            setActivity(null);
+            setMessages((current) => [...current, createMessage("assistant", event.reply)]);
+          }
+        },
+        pasted
+      );
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Unknown AI request error';
       setLastError(message);
@@ -78,6 +117,9 @@ export function App() {
         createMessage('assistant', `⚠ AI request gagal: ${message}`)
       ]);
     } finally {
+      if (thinkingTimer) clearInterval(thinkingTimer);
+      setMessages((current) => current.filter((message) => message.id !== thinkingId));
+      setActivity(null);
       setIsSending(false);
     }
   }
@@ -137,6 +179,7 @@ export function App() {
             width={contentWidth}
             aiUrl={cliConfig.aiUrl}
             isSending={isSending}
+            activity={activity}
             lastError={lastError}
           />
 

@@ -87,9 +87,10 @@ export const cliConfig: CliConfig = {
   chatId: process.env.XNINETZY_CLI_CHAT_ID ?? 'xninetzy-cli',
   senderId:
     process.env.XNINETZY_CLI_SENDER_ID ??
+    process.env.OWNER_PHONE_NUMBER ??
     process.env.ADMIN_JID ??
-    'cli-local-owner',
-  senderName: process.env.XNINETZY_CLI_SENDER_NAME ?? 'CLI User',
+    'mcp:local-owner',
+  senderName: process.env.XNINETZY_CLI_SENDER_NAME ?? process.env.OWNER_ALIAS ?? process.env.BOT_OWNER ?? 'Local Owner',
   requestTimeoutMs: positiveInteger(process.env.XNINETZY_CLI_TIMEOUT_MS, 120_000),
   aiApiKey: process.env.AI_API_KEY ?? '',
   envFilePath,

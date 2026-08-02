@@ -106,6 +106,8 @@ class Settings(BaseSettings):
     AI_API_KEY: str = ""
     AI_API_AUTH_REQUIRED: bool = True
     SINGLE_OWNER_MODE: bool = True
+    OWNER_PHONE_NUMBER: str = ""
+    OWNER_ALIAS: str = "owner"
     OWNER_ALLOWED_JIDS: str = ""
 
     DATA_DIR: str = "/app/data"
@@ -176,6 +178,11 @@ class Settings(BaseSettings):
     MCP_PRINCIPAL_ID: str = ""
     MCP_PRINCIPAL_NAME: str = ""
     MCP_DEFAULT_CHAT_ID: str = ""
+    EXTERNAL_MCP_ENABLED: bool = False
+    EXTERNAL_MCP_ALLOW_CALLS: bool = False
+    EXTERNAL_MCP_REGISTRY_PATH: str = "/app/data/external-mcp.json"
+    EXTERNAL_MCP_TIMEOUT_SECONDS: float = 30.0
+    EXTERNAL_MCP_MAX_SERVERS: int = 8
 
     # OCR for WhatsApp images and scanned PDFs
     OCR_ENABLED: bool = True

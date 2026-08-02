@@ -14,7 +14,11 @@ def _admin_names() -> list[str]:
 
 def _owner_jids() -> set[str]:
     settings = get_settings()
-    values = [settings.ADMIN_JID, *settings.OWNER_ALLOWED_JIDS.split(",")]
+    values = [
+        settings.OWNER_PHONE_NUMBER,
+        settings.ADMIN_JID,
+        *settings.OWNER_ALLOWED_JIDS.split(","),
+    ]
     return {
         normalize_whatsapp_jid(value)
         for value in values

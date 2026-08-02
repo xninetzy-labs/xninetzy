@@ -308,6 +308,7 @@ from app.xninetzy.os.lightning.tools import (
     lightning_reward_summary,
     lightning_strategy_rank,
 )
+from app.xninetzy.interfaces.external_mcp import EXTERNAL_MCP_TOOLS
 
 _ALL_TOOLS: list[BaseTool] | None = None
 
@@ -320,6 +321,7 @@ def get_all_tools() -> list[BaseTool]:
             calculate,
             calculate_percentage,
             datetime_now,
+            *EXTERNAL_MCP_TOOLS,
             # Obsidian
             obsidian_search_health,
             obsidian_search,

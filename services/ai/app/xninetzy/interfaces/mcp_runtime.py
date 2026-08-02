@@ -17,6 +17,7 @@ _CONTAINER_PATHS = {
     "HEBAT_DATA_DIR": "data/hebat",
     "HEBAT_DOWNLOAD_DIR": "data/hebat/downloads",
     "XNINETZY_SKILLS_DIR": "data/opencode-config/opencode/skills",
+    "EXTERNAL_MCP_REGISTRY_PATH": "data/external-mcp.json",
 }
 _VALID_MODES = {"auto", "host", "container"}
 

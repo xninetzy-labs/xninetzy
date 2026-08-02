@@ -555,4 +555,9 @@ Status: In progress
 - [x] Add atomic writes, type validation, redaction, and regression coverage.
 - [x] Add provider-neutral `xninetzy setup` and read-only `xninetzy doctor` host workflows.
 - [x] Gate Docker Compose and local service probes behind explicit doctor flags.
-- [ ] Complete native/Docker onboarding automation and host-runtime interface parity work.
+- [x] Add native and Docker deployment profiles that preserve the host CLI loopback target.
+- [x] Keep Compose-only container MCP and service-host overrides out of the root `.env`.
+- [x] Add opt-in `doctor --mcp` validation using the shared coding-runtime preflight command.
+- [x] Add focused deployment, read-only doctor, and MCP diagnostic regression coverage.
+- [ ] Complete interactive feature-pack activation, streamed CLI responses, and clean-install
+  parity checks across Linux, macOS, and Windows.

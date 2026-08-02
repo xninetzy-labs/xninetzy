@@ -52,3 +52,13 @@ Windows through equal Docker and native paths.
 - Setup and Docker/native `doctor` read the same resulting environment file.
 - Automated tests prove every `Settings` field is discoverable, safely writable,
   and accepted by a fresh application process.
+
+## Host and Docker parity contract
+
+- `setup --deployment native` writes a loopback CLI target and host MCP mode.
+- `setup --deployment docker` keeps the loopback target in the root `.env`;
+  Compose applies container-only `ai` and `container` overrides.
+- `doctor --mcp` is opt-in, invokes the shared coding-runtime MCP preflight
+  command with its minimal environment, and reports only availability.
+- Routine `doctor` remains read-only and never starts Docker, a service, or a
+  coding runtime.

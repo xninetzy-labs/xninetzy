@@ -255,6 +255,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
     try:
         result = await graph.ainvoke(initial_state)
     except Exception as exc:
+        logger.exception("LangGraph request failed")
         _log_trace(
             request,
             {"response": "", "route": "langgraph"},

@@ -184,8 +184,24 @@ async def agent_node(state: AgentState) -> dict:
         state.get("messages") or []
     )
 
-    react = _get_react_agent(profile_from_metadata(metadata))
-    result = await react.ainvoke({"messages": messages_with_system})
+    profile = profile_from_metadata(metadata)
+    react = _get_react_agent(profile)
+    try:
+        result = await react.ainvoke({"messages": messages_with_system})
+    except Exception as exc:
+        fallback_llm = get_llm_pro(profile)
+        fallback_prompt = SystemMessage(
+            content=(
+                "Tool execution is temporarily unavailable. Answer honestly using "
+                "the available context and do not claim that tools were executed. "
+                f"Failure class: {type(exc).__name__}."
+            )
+        )
+        fallback = await fallback_llm.ainvoke(
+            [fallback_prompt, *list(state.get("messages") or [])]
+        )
+        content = fallback.content if isinstance(fallback.content, str) else str(fallback.content)
+        return {"messages": [fallback], "response": content.strip()}
 
     final_msg = next(
         (

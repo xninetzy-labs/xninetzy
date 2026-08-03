@@ -1,4 +1,4 @@
 interface:
-  display_name: "Grounded Research"
-  short_description: "Synthesize verified internal and external evidence"
-  default_prompt: "Use $research to investigate this topic and produce a grounded synthesis."
+  display_name: "Evidence-First Research"
+  short_description: "Plan, verify, synthesize, and audit multi-source research"
+  default_prompt: "Use $research to run an evidence-first research workflow and produce only verified, auditable outputs."

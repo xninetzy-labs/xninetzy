@@ -1,0 +1,29 @@
+{
+  "skill_name": "research",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "Lakukan riset teknis mendalam tentang pilihan arsitektur local-first RAG untuk Xninetzy. Buat laporan Markdown, source matrix, claim-evidence ledger, diagram arsitektur, implementation plan, dan validation report di repository. Cari juga bukti yang menentang pilihan awal.",
+      "expected_output": "Selects technical plus implementation research, audits tools and repository, creates bounded workspace artifacts, verifies primary technical sources, separates proposals from results, and completes citation and adversarial review.",
+      "files": []
+    },
+    {
+      "id": 2,
+      "prompt": "Tolong review evidence terbaru tentang keamanan dan efektivitas intervensi kesehatan ini untuk bahan policy brief. Saya butuh sumber resmi, systematic review, conflicting evidence, dan batasan yang jelas, bukan diagnosis pribadi.",
+      "expected_output": "Selects high-stakes health plus policy research, prioritizes current authoritative evidence, avoids diagnosis, records uncertainty and conflicts, and requires professional validation where evidence is insufficient.",
+      "files": []
+    },
+    {
+      "id": 3,
+      "prompt": "Apa ibu kota Jepang?",
+      "expected_output": "Does not invoke the full research project workflow for a single stable fact.",
+      "files": []
+    },
+    {
+      "id": 4,
+      "prompt": "Baca PDF yang saya lampirkan lalu ringkas bagian metode saja, tanpa mencari sumber lain.",
+      "expected_output": "Uses the document or PDF workflow rather than research unless the user later requests cross-source verification or synthesis.",
+      "files": []
+    }
+  ]
+}

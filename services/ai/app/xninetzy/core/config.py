@@ -231,7 +231,7 @@ class Settings(BaseSettings):
     CYBER_CAMPUS_ENTRY_YEAR: int = 0
     KRS_WATCHER_DEFAULT_INTERVAL_SECONDS: int = 600
     KRS_WATCHER_ANNOUNCEMENT_INTERVAL_SECONDS: int = 30
-    KRS_WATCHER_WINDOW_INTERVAL_SECONDS: int = 10
+    KRS_WATCHER_WINDOW_INTERVAL_SECONDS: int = 7
 
     # HEBAT / Moodle integration
     HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"

@@ -471,10 +471,14 @@ def portal_krs_watcher_status() -> str:
     tetap manual oleh owner instalasi lokal.
     """
     state = KrsWatcherStore().get()
+    interval_seconds = int(state["interval_seconds"] or 0)
+    interval_label = (
+        f"{interval_seconds // 60} menit" if interval_seconds >= 60 else f"{interval_seconds} detik"
+    )
     lines = [
         "*Watcher Slot KRS*",
         f"• Aktif: {'ya' if state['enabled'] else 'tidak'}",
-        f"• Interval: {int(state['interval_seconds'] or 0) // 60} menit",
+        f"• Interval: {interval_label}",
         f"• Mulai: {state['started_at'] or '-'}",
         f"• Tick terakhir: {state['last_tick_at'] or '-'}",
         f"• Status: {state['last_status']}",

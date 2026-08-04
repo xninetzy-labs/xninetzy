@@ -31,8 +31,17 @@ def format_admin_notification(event_type: str, payload: dict) -> str:
             "• link ke Graph RAG"
         )
     if event_type == "krs_watcher_change":
+        opened = payload.get("kprs_opened")
+        status = (
+            "SUDAH DIBUKA"
+            if opened is True
+            else "belum dibuka"
+            if opened is False
+            else "tidak terdeteksi"
+        )
         return (
             "*KRS Watcher — Perubahan Terdeteksi*\n"
+            f"Status KPRS: {status}\n"
             f"Jadwal: {payload.get('announcement') or 'belum ada pengumuman'}\n"
             f"MK terambil: {payload.get('mk_count', 0)}\n"
             f"Dalam jendela buka: {'ya' if payload.get('in_window') else 'tidak'}"

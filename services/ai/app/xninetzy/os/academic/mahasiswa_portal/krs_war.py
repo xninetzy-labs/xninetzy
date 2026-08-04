@@ -32,13 +32,18 @@ OWNER_SCOPE = "local-owner"
 KRS_PLAN_PATH = "Akademik/KRS_Plan_Semester_5.md"
 KRS_WAR_LOG_PATH = "System/Logs/krs-war.md"
 _CODE_RE = re.compile(r"^[A-Z]{2,4}\d{2,3}$")
-_CLASS_RE = re.compile(r"^I\d$")
+_CLASS_RE = re.compile(r"^(?:I\d|BCDLITS\d+)$")
+_SID_RE = re.compile(r"&sid=([a-z0-9]+)")
+_TAKE_ACTION_RE = re.compile(r"krstambah_kirim\((\d+),\s*(\d+)\)")
+_DROP_ACTION_RE = re.compile(r"(?:krstambah_hapus|krshapus_kirim)\((\d+)\)")
+_UPGRADE_COOLDOWN_SECONDS = 180
 _SEMESTER_HEADING_RE = re.compile(r"^#\s+KRS Plan Semester\s+(\d+)", re.IGNORECASE)
 _MUTATION_RE = re.compile(
     r"(simpan|tambah|ambil|delete|hapus|update|submit|batal|cancel)",
     re.IGNORECASE,
 )
 _PRACTIKUM_FALLBACK_CODES = frozenset({"SIA302", "SID304", "SII209", "SII319"})
+_BCD_SAFE_CLASSES = ("BCDLITS6", "BCDLITS5", "BCDLITS4", "BCDLITS3")
 _TAKE_LINK_RE = re.compile(r"proses/[^?#]*_akademik[^?#]*\.php")
 _TAKE_BONUS_RE = re.compile(r"(simpan|tambah|ambil|save|add|submit)", re.IGNORECASE)
 _TAKE_PENALTY_RE = re.compile(
@@ -114,6 +119,17 @@ async () => {
 }
 """
 
+PORTAL_POST_SCRIPT = """
+async (args) => {
+  const resp = await fetch(args.endpoint, {
+    method: 'POST',
+    headers: {'Content-Type': 'application/x-www-form-urlencoded'},
+    body: args.body
+  });
+  return await resp.text();
+}
+"""
+
 
 @dataclass(frozen=True, slots=True)
 class KrsPlanCourse:
@@ -161,7 +177,11 @@ def parse_krs_plan_markdown(text: str, source_path: str = "") -> KrsPlan:
             continue
         cells = [cell.strip() for cell in line.strip("|").split("|")]
         code_cells = [cell for cell in cells if _CODE_RE.fullmatch(cell)]
-        class_cells = [cell for cell in cells if _CLASS_RE.fullmatch(cell)]
+        class_cells: list[str] = []
+        for cell in cells:
+            for token in re.split(r"[,/\s]+", cell):
+                if _CLASS_RE.fullmatch(token) and token not in class_cells:
+                    class_cells.append(token)
         if not code_cells or not class_cells:
             continue
         code = code_cells[0]
@@ -171,11 +191,14 @@ def parse_krs_plan_markdown(text: str, source_path: str = "") -> KrsPlan:
         code_index = cells.index(code)
         name = cells[code_index - 1] if code_index > 0 else ""
         credits = cells[code_index + 1] if code_index + 1 < len(cells) else ""
-        fallback_classes = (
-            ("I2", "I3", "I4")
-            if code in _PRACTIKUM_FALLBACK_CODES
-            else ("I2",)
-        )
+        if len(class_cells) > 1:
+            fallback_classes = tuple(class_cells[1:])
+        else:
+            fallback_classes = (
+                ("I2", "I3", "I4")
+                if code in _PRACTIKUM_FALLBACK_CODES
+                else ("I2",)
+            )
         courses.append(
             KrsPlanCourse(
                 code=code,
@@ -433,12 +456,14 @@ def _read_plan_file_text(vault_service: ObsidianVaultService | None) -> str | No
         if vault_service is not None:
             return vault_service.read_note(KRS_PLAN_PATH)
         settings = get_settings()
-        path = (
-            Path(os.path.expanduser(settings.OBSIDIAN_VAULT_HOST_PATH)) / KRS_PLAN_PATH
-        )
-        if not path.exists():
-            return None
-        return path.read_text(encoding="utf-8")
+        candidates = [
+            Path(os.path.expanduser(settings.OBSIDIAN_VAULT_HOST_PATH)) / KRS_PLAN_PATH,
+            Path(settings.OBSIDIAN_VAULT_PATH) / KRS_PLAN_PATH,
+        ]
+        for path in candidates:
+            if path.exists():
+                return path.read_text(encoding="utf-8")
+        return None
     except Exception as exc:
         logger.warning("KRS plan file read failed: %s", exc)
         return None
@@ -636,6 +661,95 @@ async def _fetch_taken_map(page) -> dict[str, str]:
     return {entry.course_code: entry.class_code for entry in result.entries}
 
 
+async def _post_form(page, endpoint: str, body: str) -> str:
+    return await page.evaluate(
+        PORTAL_POST_SCRIPT, {"endpoint": endpoint, "body": body}
+    )
+
+
+async def _fetch_sid(page) -> str:
+    html = await page.content()
+    match = _SID_RE.search(html)
+    return match.group(1) if match else ""
+
+
+async def _fetch_offers(page) -> dict[str, dict[str, tuple[str, str, bool]]]:
+    html = await _post_form(page, "proses/_akademik-krs_ditambah.php", "aksi=tampil")
+    if looks_like_login(html):
+        raise AcademicPortalReadError(
+            "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
+        )
+    soup = BeautifulSoup(html or "", "lxml")
+    offers: dict[str, dict[str, tuple[str, str, bool]]] = {}
+    for tr in soup.select("tr"):
+        tds = tr.find_all("td", recursive=False)
+        if len(tds) < 4:
+            continue
+        code = tds[0].get_text(strip=True)
+        if not _CODE_RE.fullmatch(code):
+            continue
+        kelas = tds[3].get_text(strip=True)
+        if not _CLASS_RE.fullmatch(kelas):
+            continue
+        entry = offers.setdefault(code, {})
+        button = tr.find("input")
+        onclick = button.get("onclick", "") if button else ""
+        match = _TAKE_ACTION_RE.search(onclick)
+        if match:
+            entry[kelas] = (match.group(1), match.group(2), True)
+        else:
+            entry.setdefault(kelas, ("", "", False))
+    return offers
+
+
+async def _fetch_droppable(page) -> dict[str, tuple[str, str]]:
+    html = await _post_form(page, "proses/_akademik-krs_hapus.php", "aksi=tampil")
+    if looks_like_login(html):
+        raise AcademicPortalReadError(
+            "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
+        )
+    soup = BeautifulSoup(html or "", "lxml")
+    droppable: dict[str, tuple[str, str]] = {}
+    for tr in soup.select("tr"):
+        cells = tr.find_all("td", recursive=False)
+        if len(cells) < 4:
+            continue
+        code = ""
+        kelas = ""
+        for cell in cells:
+            text = cell.get_text(strip=True)
+            if not code and _CODE_RE.fullmatch(text):
+                code = text
+            if not kelas and _CLASS_RE.fullmatch(text):
+                kelas = text
+        if not code or not kelas:
+            continue
+        button = tr.find("input")
+        onclick = button.get("onclick", "") if button else ""
+        match = _DROP_ACTION_RE.search(onclick)
+        if not match:
+            continue
+        droppable[code] = (kelas, match.group(1))
+    return droppable
+
+
+def _upgrade_cooldown_ok(store: KrsWarStore, window: str, code: str) -> bool:
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT created_at FROM krs_war_actions "
+            "WHERE owner_scope = ? AND window = ? AND course_code = ? "
+            "AND action = 'upgrade_attempt' ORDER BY created_at DESC LIMIT 1",
+            (store.owner_scope, window, code),
+        ).fetchone()
+    if row is None or not row["created_at"]:
+        return True
+    try:
+        last = datetime.fromisoformat(row["created_at"])
+    except ValueError:
+        return True
+    return (datetime.now(UTC) - last).total_seconds() >= _UPGRADE_COOLDOWN_SECONDS
+
+
 async def _reload_krs_page(page) -> None:
     settings = get_settings()
     response = await page.goto(
@@ -650,7 +764,20 @@ async def _reload_krs_page(page) -> None:
         )
 
 
+def _is_flexible_goal(course: KrsPlanCourse) -> bool:
+    return course.target_class.startswith("BCDLITS")
+
+
 def _classes_to_try(course: KrsPlanCourse) -> tuple[str, ...]:
+    if _is_flexible_goal(course):
+        ordered: list[str] = []
+        for class_code in (course.target_class, *course.fallback_classes):
+            if class_code in _BCD_SAFE_CLASSES and class_code not in ordered:
+                ordered.append(class_code)
+        for class_code in _BCD_SAFE_CLASSES:
+            if class_code not in ordered:
+                ordered.append(class_code)
+        return tuple(ordered)
     ordered: list[str] = []
     for class_code in (course.target_class, *course.fallback_classes):
         if class_code and class_code not in ordered:
@@ -660,42 +787,42 @@ def _classes_to_try(course: KrsPlanCourse) -> tuple[str, ...]:
 
 async def _attempt_take(
     page,
-    base_url: str,
     course: KrsPlanCourse,
     window: str,
     store: KrsWarStore,
-    take_url: str,
+    offers: dict[str, dict[str, tuple[str, str, bool]]],
+    sid: str,
 ) -> tuple[bool, str]:
-    settings = get_settings()
-    classes_to_try = _classes_to_try(course)
-    for class_code in classes_to_try:
-        final_url = urljoin(base_url, _with_class_param(take_url, class_code))
-        response = await page.goto(
-            final_url,
-            wait_until="domcontentloaded",
-            timeout=settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
-        )
-        if not response or response.status >= 400:
-            raise AcademicPortalReadError(
-                f"Take endpoint gagal (HTTP {response.status if response else 'tanpa respons'})."
-            )
-        page_html = await page.content()
-        if looks_like_login(page_html):
-            raise AcademicPortalReadError(
-                "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
-            )
+    course_offers = offers.get(course.code)
+    if not course_offers:
         store.record_action(
-            window, "take_attempt", course.code, class_code, detail=final_url
+            window, "verify_failed", course.code, course.target_class,
+            detail="tidak tampil di penawaran",
+        )
+        return False, course.target_class
+    for class_code in _classes_to_try(course):
+        slot = course_offers.get(class_code)
+        if not slot or not slot[2]:
+            continue
+        id_kelas, id_kur, _open = slot
+        store.record_action(
+            window, "take_attempt", course.code, class_code,
+            detail=f"kelas={id_kelas} kur={id_kur}",
+        )
+        await _post_form(
+            page,
+            "proses/_akademik-krs_ditambah.php",
+            f"aksi=input&kelas={id_kelas}&id_kur_mk={id_kur}&sid={sid}",
         )
         await _reload_krs_page(page)
         taken_map = await _fetch_taken_map(page)
         if course.code in taken_map:
             actual_class = taken_map[course.code] or class_code
             store.record_action(
-                window, "taken", course.code, actual_class, detail=final_url
+                window, "taken", course.code, actual_class, detail="post_take"
             )
             return True, actual_class
-    tried = ",".join(classes_to_try)
+    tried = ",".join(_classes_to_try(course))
     store.record_action(
         window,
         "verify_failed",
@@ -772,38 +899,141 @@ async def take_krs_plan(
                 f"courses={len(plan.courses)}"
             ),
         )
-        taken_before = set(await _fetch_taken_map(page))
-        cal = KrsWarCalibrationStore().get(window)
-        calibration_used = bool(cal and cal["target_count"] > 0)
-        strategy = cal.get("strategy", "none") if calibration_used else "live"
-        if calibration_used:
-            try:
-                stored = json.loads(cal["targets_json"])
-            except (TypeError, ValueError):
-                stored = {}
-            targets = (
-                {str(k): str(v) for k, v in stored.items() if v}
-                if isinstance(stored, dict)
-                else {}
-            )
-        else:
-            targets = await discover_penawaran_targets(page)
+        taken_before = await _fetch_taken_map(page)
+        offers = await _fetch_offers(page)
+        droppable = await _fetch_droppable(page)
+        sid = await _fetch_sid(page)
+        upgrade_pending: list[str] = []
+        lost: list[str] = []
         for course in plan.courses:
-            if course.code in taken_before:
-                already_taken.append(course.code)
-                store.record_action(
-                    window, "take_skipped", course.code, detail="already_taken"
-                )
-                continue
+            current_class = taken_before.get(course.code)
             if course.code not in allowlist:
                 skipped.append({"code": course.code, "reason": "not in allowlist"})
                 store.record_action(
                     window, "take_skipped", course.code, detail="not in allowlist"
                 )
                 continue
-            take_url = targets.get(course.code)
+            if current_class:
+                desired = _classes_to_try(course)
+                if desired and desired[0] == current_class:
+                    already_taken.append(course.code)
+                    store.record_action(
+                        window, "take_skipped", course.code, detail="already_taken"
+                    )
+                    continue
+                if _is_flexible_goal(course):
+                    already_taken.append(course.code)
+                    store.record_action(
+                        window,
+                        "take_skipped",
+                        course.code,
+                        current_class,
+                        detail="already_taken flexible",
+                    )
+                    continue
+                if dry_run:
+                    store.record_action(
+                        window,
+                        "take_started",
+                        course.code,
+                        desired[0] if desired else course.target_class,
+                        detail="upgrade dry_run",
+                    )
+                    upgrade_pending.append(course.code)
+                    continue
+                goal_slot = (offers.get(course.code) or {}).get(course.target_class)
+                if not goal_slot or not goal_slot[2]:
+                    upgrade_pending.append(course.code)
+                    store.record_action(
+                        window,
+                        "take_skipped",
+                        course.code,
+                        current_class,
+                        detail="upgrade_pending goal tidak terlihat/open",
+                    )
+                    continue
+                drop_id = (droppable.get(course.code) or (None, None))[1]
+                if not drop_id:
+                    upgrade_pending.append(course.code)
+                    store.record_action(
+                        window,
+                        "take_skipped",
+                        course.code,
+                        current_class,
+                        detail="upgrade_pending drop id tidak ditemukan",
+                    )
+                    continue
+                if not _upgrade_cooldown_ok(store, window, course.code):
+                    upgrade_pending.append(course.code)
+                    store.record_action(
+                        window,
+                        "take_skipped",
+                        course.code,
+                        current_class,
+                        detail="upgrade_pending cooldown",
+                    )
+                    continue
+                store.record_action(
+                    window, "upgrade_attempt", course.code, course.target_class
+                )
+                await _post_form(
+                    page,
+                    "proses/_akademik-krs_hapus.php",
+                    f"aksi=hapus&pengambilan_mk={drop_id}",
+                )
+                await _reload_krs_page(page)
+                fresh_offers = await _fetch_offers(page)
+                fresh_goal = (fresh_offers.get(course.code) or {}).get(
+                    course.target_class
+                )
+                if fresh_goal and fresh_goal[2]:
+                    await _post_form(
+                        page,
+                        "proses/_akademik-krs_ditambah.php",
+                        f"aksi=input&kelas={fresh_goal[0]}&id_kur_mk={fresh_goal[1]}&sid={sid}",
+                    )
+                    await _reload_krs_page(page)
+                    taken_map = await _fetch_taken_map(page)
+                    if course.code in taken_map:
+                        actual_class = taken_map[course.code] or course.target_class
+                        taken.append(
+                            {"code": course.code, "class": actual_class, "upgraded": True}
+                        )
+                        store.record_action(
+                            window, "taken", course.code, actual_class, detail="upgraded"
+                        )
+                        continue
+                back_slot = (fresh_offers.get(course.code) or {}).get(current_class)
+                if back_slot and back_slot[2]:
+                    await _post_form(
+                        page,
+                        "proses/_akademik-krs_ditambah.php",
+                        f"aksi=input&kelas={back_slot[0]}&id_kur_mk={back_slot[1]}&sid={sid}",
+                    )
+                    await _reload_krs_page(page)
+                    taken_map = await _fetch_taken_map(page)
+                    if course.code in taken_map:
+                        already_taken.append(course.code)
+                        store.record_action(
+                            window,
+                            "take_skipped",
+                            course.code,
+                            taken_map[course.code] or current_class,
+                            detail="upgrade_rolled_back",
+                        )
+                        continue
+                lost.append(course.code)
+                store.record_action(
+                    window,
+                    "verify_failed",
+                    course.code,
+                    current_class,
+                    detail="upgrade_lost MK tidak kembali",
+                )
+                continue
+            take_url = offers.get(course.code)
             if not take_url:
-                skipped.append({"code": course.code, "reason": "target not found"})
+                skipped.append({"code": course.code, "reason": "kelas penuh/tersembunyi"})
                 store.record_action(
                     window,
                     "take_skipped",
@@ -823,7 +1053,7 @@ async def take_krs_plan(
                 continue
             try:
                 taken_ok, actual_class = await _attempt_take(
-                    page, base_url, course, window, store, take_url
+                    page, course, window, store, offers, sid
                 )
             except AcademicPortalReadError as exc:
                 if "kedaluwarsa" in str(exc):
@@ -861,16 +1091,22 @@ async def take_krs_plan(
                 "verify_failed",
                 detail=f"final verification: {exc}",
             )
+        plan_codes = {course.code for course in plan.courses}
+        remaining = sorted(
+            (plan_codes - set(final_taken_codes)) | set(upgrade_pending)
+        )
         return {
             "window": window,
-            "status": "done",
+            "status": "done" if not remaining else "partial",
             "taken": taken,
             "already_taken": already_taken,
             "skipped": skipped,
+            "upgrade_pending": upgrade_pending,
+            "lost": lost,
+            "remaining": remaining,
             "final_taken_codes": final_taken_codes,
             "dry_run": dry_run,
-            "calibration_used": calibration_used,
-            "strategy": strategy,
+            "strategy": "post",
             "summary": _build_summary(window, taken, already_taken, skipped),
         }
     finally:
@@ -1023,27 +1259,36 @@ async def run_krs_war_if_armed(
     announcement: KrsAnnouncement | None = None,
     vault_service: ObsidianVaultService | None = None,
     store: KrsWarStore | None = None,
+    kprs_opened: bool = False,
 ) -> dict:
     store = store or KrsWarStore()
     state = store.get()
     if not state["armed"]:
         return {"war": {"skipped": "not_armed"}}
-    if announcement is None:
+    if announcement is None and not kprs_opened:
         return {"war": {"skipped": "no_window"}}
-    window_key = f"{announcement.period_start}|{announcement.period_end}"
+    if announcement is not None:
+        window_key = f"{announcement.period_start}|{announcement.period_end}"
+    else:
+        window_key = (
+            state["last_run_window"]
+            or f"{datetime.now(UTC).date().isoformat()}|{datetime.now(UTC).date().isoformat()}"
+        )
     if state["last_run_window"] == window_key and state["last_status"] == "done":
         return {"war": {"skipped": "already_run", "window": window_key}}
+    first_run_for_window = state["last_run_window"] != window_key
     plan = await load_krs_plan(vault_service=vault_service, store=store)
     if plan is None:
         store.record_action(window_key, "run_error", detail="plan tidak tersedia")
         store.update_run(
             window=window_key, status="error", summary="plan tidak tersedia"
         )
-        await notify_admin(
-            "krs_war_error",
-            {"window": window_key, "detail": "plan tidak tersedia"},
-            impact="high",
-        )
+        if first_run_for_window or state["last_status"] != "error":
+            await notify_admin(
+                "krs_war_error",
+                {"window": window_key, "detail": "plan tidak tersedia"},
+                impact="high",
+            )
         return {"war": {"skipped": "no_plan"}}
     if state.get("plan_hash") != plan.source_hash:
         _update_stored_plan(store, plan)
@@ -1055,36 +1300,48 @@ async def run_krs_war_if_armed(
         "plan_loaded",
         detail=f"hash={plan.source_hash[:12]}, semester={plan.semester_label}",
     )
-    await notify_admin(
-        "krs_war_started",
-        {
-            "window": window_key,
-            "courses": len(plan.courses),
-            "semester": plan.semester_label,
-        },
-        impact="high",
-    )
-    try:
-        result = await take_krs_plan(plan, window_key, store=store)
-        retryable_skips = any(
-            item["reason"] in {"target not found", "verify failed"}
-            or str(item["reason"]).startswith("take gagal")
-            for item in result["skipped"]
-        )
-        status = "partial" if retryable_skips else "done"
-        store.record_action(window_key, "run_done", detail=result["summary"])
-        store.update_run(window=window_key, status=status, summary=result["summary"])
+    if first_run_for_window:
         await notify_admin(
-            "krs_war_taken",
+            "krs_war_started",
             {
                 "window": window_key,
-                "taken": len(result["taken"]),
-                "already_taken": len(result["already_taken"]),
-                "skipped": len(result["skipped"]),
-                "summary": result["summary"],
+                "courses": len(plan.courses),
+                "semester": plan.semester_label,
             },
             impact="high",
         )
+    try:
+        result = await take_krs_plan(plan, window_key, store=store)
+        if "remaining" in result:
+            remaining = result["remaining"] or []
+        else:
+            retryable_skips = any(
+                item["reason"] in {"target not found", "verify failed", "kelas penuh/tersembunyi"}
+                or str(item["reason"]).startswith("take gagal")
+                for item in result.get("skipped", [])
+            )
+            remaining = (
+                result.get("upgrade_pending")
+                or (["__retry__"] if retryable_skips else [])
+            )
+        status = "partial" if remaining else "done"
+        store.record_action(window_key, "run_done", detail=result["summary"])
+        store.update_run(window=window_key, status=status, summary=result["summary"])
+        if first_run_for_window or state["last_status"] != status:
+            await notify_admin(
+                "krs_war_taken",
+                {
+                    "window": window_key,
+                    "taken": len(result["taken"]),
+                    "already_taken": len(result["already_taken"]),
+                    "skipped": len(result["skipped"]),
+                    "upgrade_pending": result.get("upgrade_pending"),
+                    "lost": result.get("lost"),
+                    "remaining": remaining,
+                    "summary": result["summary"],
+                },
+                impact="high",
+            )
         log_error = await _append_war_log(vault_service, result, window_key, now)
         war = dict(result)
         if log_error:
@@ -1094,11 +1351,12 @@ async def run_krs_war_if_armed(
         message = str(exc)
         store.record_action(window_key, "run_error", detail=message)
         store.update_run(window=window_key, status="error", summary=message)
-        await notify_admin(
-            "krs_war_error",
-            {"window": window_key, "error": message},
-            impact="high",
-        )
+        if first_run_for_window or state["last_status"] != "error":
+            await notify_admin(
+                "krs_war_error",
+                {"window": window_key, "error": message},
+                impact="high",
+            )
         return {"war": {"status": "error", "error": message}}
 
 

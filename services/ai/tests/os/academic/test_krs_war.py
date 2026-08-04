@@ -10,7 +10,11 @@ from app.xninetzy.db.sqlite import connect, init_db
 from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
     KrsPlan,
     KrsWarStore,
+    _classes_to_try,
     _extract_take_targets,
+    _is_flexible_goal,
+    _read_plan_file_text,
+    _upgrade_cooldown_ok,
     _with_class_param,
     load_krs_plan,
     parse_krs_plan_markdown,
@@ -400,3 +404,74 @@ async def test_run_no_plan_fails_closed(monkeypatch, store):
     assert result == {"war": {"skipped": "no_plan"}}
     assert "krs_war_error" in notifications
     assert store.get()["last_status"] == "error"
+
+
+def test_parse_plan_bae112_multiclass():
+    text = (
+        "# KRS Plan Semester 5\n\n"
+        "| # | MK | Kode | SKS | Dosen | Kelas Target |\n"
+        "|---|---|---|---|---|---|\n"
+        "| 1 | Bahasa Inggris II | BAE112 | 2 | UPT Bahasa | BCDLITS6, BCDLITS5, BCDLITS4, BCDLITS3 |\n"
+    )
+    plan = parse_krs_plan_markdown(text)
+    course = plan.find("BAE112")
+    assert course is not None
+    assert course.target_class == "BCDLITS6"
+    assert course.fallback_classes == ("BCDLITS5", "BCDLITS4", "BCDLITS3")
+
+
+def test_classes_to_try_bae112_always_safe_order():
+    course = parse_krs_plan_markdown(
+        "# KRS Plan Semester 5\n\n"
+        "| # | MK | Kode | SKS | Dosen | Kelas Target |\n"
+        "|---|---|---|---|---|---|\n"
+        "| 1 | Bahasa Inggris II | BAE112 | 2 | UPT Bahasa | BCDLITS2, BCDLITS1 |\n"
+    ).find("BAE112")
+    assert _is_flexible_goal(course) is True
+    assert _classes_to_try(course) == (
+        "BCDLITS6",
+        "BCDLITS5",
+        "BCDLITS4",
+        "BCDLITS3",
+    )
+
+
+def test_classes_to_try_regular_course_keeps_goal_order():
+    course = parse_krs_plan_markdown(
+        "# KRS Plan Semester 5\n\n"
+        "| # | MK | Kode | SKS | Dosen | Kelas Target |\n"
+        "|---|---|---|---|---|---|\n"
+        "| 1 | Kewirausahaan & Bisnis SI | MNW409 | 2 | Barry Nugoba | I2 |\n"
+    ).find("MNW409")
+    assert _is_flexible_goal(course) is False
+    assert _classes_to_try(course) == ("I2",)
+
+
+def test_read_plan_file_falls_back_to_container_vault(monkeypatch, tmp_path):
+    vault_dir = tmp_path / "obsidian-vault"
+    vault_dir.mkdir()
+    plan_file = vault_dir / "Akademik"
+    plan_file.mkdir()
+    (plan_file / "KRS_Plan_Semester_5.md").write_text(
+        "# KRS Plan Semester 5\n\n| kode | kelas |\n| BAE112 | BCDLITS6 |\n",
+        encoding="utf-8",
+    )
+
+    class FakeSettings:
+        OBSIDIAN_VAULT_HOST_PATH = "/nonexistent-host-path"
+        OBSIDIAN_VAULT_PATH = str(vault_dir)
+
+    monkeypatch.setattr(
+        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.get_settings",
+        lambda: FakeSettings(),
+    )
+    text = _read_plan_file_text(None)
+    assert text is not None
+    assert "BAE112" in text
+
+
+def test_upgrade_cooldown(store):
+    assert _upgrade_cooldown_ok(store, "w1", "SII209") is True
+    store.record_action("w1", "upgrade_attempt", "SII209", "I2")
+    assert _upgrade_cooldown_ok(store, "w1", "SII209") is False
+    assert _upgrade_cooldown_ok(store, "w1", "MNW409") is True

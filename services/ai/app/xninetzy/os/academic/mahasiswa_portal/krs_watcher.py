@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
 import json
 import re
@@ -9,14 +10,19 @@ from datetime import UTC, datetime, timedelta
 from urllib.parse import urljoin
 
 from app.xninetzy.core.config import get_settings
+from app.xninetzy.core.identity import normalize_whatsapp_jid
 from app.xninetzy.core.logging import logging
 from app.xninetzy.db.sqlite import connect
+from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
+    LOGIN_COORDINATOR,
+    CampusLoginError,
+)
 from app.xninetzy.os.academic.mahasiswa_portal.reader import (
     AcademicPortalReadError,
     PORTAL_READ_FETCH_SCRIPT,
     parse_current_krs_html,
 )
-from app.xninetzy.os.notifications.admin_notifier import notify_admin
+from app.xninetzy.os.notifications.admin_notifier import admin_jid, notify_admin
 from app.xninetzy.os.web_analysis.security import looks_like_login
 from app.xninetzy.os.web_analysis.session_manager import SessionManager
 
@@ -30,6 +36,14 @@ _ANNOUNCEMENT_RE = re.compile(
     re.IGNORECASE,
 )
 _DATE_RE = re.compile(r"(\d{2})-(\d{2})-(\d{4})")
+_KPRS_CLOSED_RE = re.compile(r"belum\s+(?:di\s+)?buka", re.IGNORECASE)
+_KPRS_OPEN_MARKERS = (
+    "penawaran",
+    "pilih kelas",
+    "ambil kelas",
+    "daftar kelas",
+    "kode kelas",
+)
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,11 +60,21 @@ class KrsWatchSignal:
     announcement: KrsAnnouncement | None
     mk_count: int
     fingerprint: str
+    kprs_opened: bool | None = None
 
 
 def _normalize_date(value: str) -> str:
     day, month, year = _DATE_RE.fullmatch(value).groups()
     return f"{year}-{month}-{day}"
+
+
+def parse_kprs_status(text: str) -> bool | None:
+    lowered = (text or "").lower()
+    if _KPRS_CLOSED_RE.search(lowered):
+        return False
+    if any(marker in lowered for marker in _KPRS_OPEN_MARKERS):
+        return True
+    return None
 
 
 def parse_krs_announcement(text: str) -> KrsAnnouncement | None:
@@ -69,6 +93,7 @@ def parse_krs_announcement(text: str) -> KrsAnnouncement | None:
 def krs_fingerprint(
     announcement: KrsAnnouncement | None,
     mk_codes: tuple[str, ...],
+    kprs_opened: bool | None = None,
 ) -> str:
     payload = {
         "announcement": (
@@ -77,6 +102,7 @@ def krs_fingerprint(
             else None
         ),
         "mk": sorted(mk_codes),
+        "kprs_opened": kprs_opened,
     }
     serialized = json.dumps(payload, sort_keys=True, separators=(",", ":"))
     return hashlib.sha256(serialized.encode("utf-8")).hexdigest()
@@ -216,18 +242,18 @@ async def capture_krs_signal() -> KrsWatchSignal:
             "document.body ? document.body.innerText : ''"
         )
         announcement = parse_krs_announcement(page_text)
-        krs_html = await page.evaluate(
+        kprs_html = await page.evaluate(
             PORTAL_READ_FETCH_SCRIPT,
             {
                 "target": "proses/_akademik-krs_dilihat.php",
                 "payload": {"aksi": "tampil"},
             },
         )
-        if looks_like_login(krs_html):
+        if looks_like_login(kprs_html):
             raise AcademicPortalReadError(
                 "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
             )
-        krs = parse_current_krs_html(krs_html)
+        krs = parse_current_krs_html(kprs_html)
     finally:
         await context.close()
         await browser.close()
@@ -236,8 +262,38 @@ async def capture_krs_signal() -> KrsWatchSignal:
     return KrsWatchSignal(
         announcement=announcement,
         mk_count=len(krs.entries),
-        fingerprint=krs_fingerprint(announcement, codes),
+        fingerprint=krs_fingerprint(announcement, codes, parse_kprs_status(page_text)),
+        kprs_opened=parse_kprs_status(page_text),
     )
+
+
+async def _request_login_captcha() -> None:
+    from app.xninetzy.interfaces.whatsapp.client import WaToolError, call_wa_tool
+
+    jid = admin_jid()
+    if not jid:
+        raise CampusLoginError(
+            "Target WhatsApp owner belum dikonfigurasi untuk mengirim CAPTCHA."
+        )
+    owner_id = normalize_whatsapp_jid(jid) or jid
+    challenge = await LOGIN_COORDINATOR.start(owner_id)
+    try:
+        png = await LOGIN_COORDINATOR.captcha_png(
+            challenge["challenge_id"], owner_id
+        )
+        source = base64.b64encode(png).decode("ascii")
+        caption = (
+            "Login Cyber Campus — session watcher kedaluwarsa\n\n"
+            f"Balas: /captcha {challenge['challenge_id']} JAWABAN\n"
+            f"Berlaku sampai: {challenge['expires_at']}\n\n"
+            "CAPTCHA harus dijawab manual oleh owner."
+        )
+        await call_wa_tool(
+            "send_image", {"jid": jid, "source": source, "caption": caption}
+        )
+    except WaToolError as exc:
+        await LOGIN_COORDINATOR.cancel(challenge["challenge_id"], owner_id)
+        raise CampusLoginError(f"Gagal mengirim CAPTCHA ke WhatsApp owner: {exc}") from exc
 
 
 async def krs_watcher_tick(now: datetime | None = None) -> dict:
@@ -255,7 +311,7 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
         )
         in_window = bool(
             signal.announcement and signal.announcement.contains(current)
-        )
+        ) or signal.kprs_opened is True
         near_window = bool(
             signal.announcement
             and current.date()
@@ -266,7 +322,7 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
         )
         calibration = {"skipped": "no_announcement"}
         war = {"skipped": "not_in_window"}
-        if signal.announcement is not None:
+        if signal.announcement is not None or signal.kprs_opened is True:
             from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
                 auto_calibrate_if_needed,
                 run_krs_war_if_armed,
@@ -280,6 +336,7 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
                 war_result = await run_krs_war_if_armed(
                     now=current,
                     announcement=signal.announcement,
+                    kprs_opened=signal.kprs_opened is True,
                 )
                 war = war_result.get("war", war)
         changed = signal.fingerprint != state["last_notified_fingerprint"]
@@ -291,6 +348,7 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
                     "announcement": announcement_text or "belum ada pengumuman",
                     "mk_count": signal.mk_count,
                     "in_window": in_window,
+                    "kprs_opened": signal.kprs_opened,
                 },
                 impact="high",
             )
@@ -302,6 +360,7 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
             mk_count=signal.mk_count,
             status="ok",
             notified_fingerprint=notified,
+            session_expired_notified=0,
         )
         return {
             "enabled": True,
@@ -316,20 +375,25 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
     except AcademicPortalReadError as exc:
         message = str(exc)
         expired = "kedaluwarsa" in message
+        session_expired_notified = None
+        if expired and not state["session_expired_notified"]:
+            session_expired_notified = 1
+            try:
+                await _request_login_captcha()
+            except Exception as login_error:
+                await notify_admin(
+                    "krs_watcher_session_expired",
+                    {"detail": message, "login_error": str(login_error)},
+                    impact="high",
+                )
         store.update_tick(
             fingerprint=None,
             announcement=state["last_announcement"],
             mk_count=state["last_mk_count"],
             status="error",
             error=message,
-            session_expired_notified=1 if expired else None,
+            session_expired_notified=session_expired_notified,
         )
-        if expired and not state["session_expired_notified"]:
-            await notify_admin(
-                "krs_watcher_session_expired",
-                {"detail": message},
-                impact="high",
-            )
         return {
             "enabled": True,
             "error": message,

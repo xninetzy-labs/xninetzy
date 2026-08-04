@@ -491,9 +491,20 @@ def record_download(
     text_excerpt: str | None = None,
     summary: str | None = None,
 ) -> int:
-    """Persist a downloaded HEBAT file so its content is searchable later."""
+    """Persist a downloaded HEBAT file so its content is searchable later.
+
+    Idempotent per ``(chat_id, local_path)``: recording the same local file
+    again returns the existing row id instead of inserting a duplicate.
+    """
     init_db()
     with connect() as conn:
+        if local_path:
+            existing = conn.execute(
+                "SELECT id FROM hebat_downloads WHERE chat_id=? AND local_path=? LIMIT 1",
+                (chat_id, local_path),
+            ).fetchone()
+            if existing:
+                return int(existing[0])
         cur = conn.execute(
             """
             INSERT INTO hebat_downloads

@@ -371,7 +371,12 @@ async def hebat_download_material(
     ).strip()
     dest_path = dest_dir / (safe_filename or f"{safe_title}.pdf")
 
-    result = await download_file(chat_id, download_url, dest_path)
+    result = await download_file(
+        chat_id,
+        download_url,
+        dest_path,
+        record_meta={"course_id": course_id, "cmid": cmid, "activity_url": url},
+    )
     if not result:
         return f"Gagal mengunduh materi dari `{download_url}`."
 

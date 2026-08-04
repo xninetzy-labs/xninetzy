@@ -152,13 +152,20 @@ def _is_login_html_bytes(content_type: str, head: bytes) -> bool:
 
 
 async def download_file(
-    chat_id: str, url: str, dest_path: Path, *, _relogin_attempt: int = 0
+    chat_id: str,
+    url: str,
+    dest_path: Path,
+    *,
+    record_meta: dict | None = None,
+    _relogin_attempt: int = 0,
 ) -> dict | None:
     """Download a Moodle file to ``dest_path`` with validation.
 
     Never persists a login page as a file: if the response is HTML *and* looks
     like the login form, it re-logs-in once and retries; HTML that is genuine
     content is saved as ``.html`` instead of the requested binary extension.
+    Successful downloads are recorded in ``hebat_downloads`` (idempotent per
+    local path); ``record_meta`` may carry course_id/cmid/activity_url.
     Returns rich metadata (incl. ``source_url`` / ``final_url``) or ``None``.
     """
     s = get_settings()
@@ -208,6 +215,7 @@ async def download_file(
                                 if _relogin_attempt < s.HEBAT_SESSION_MAX_RELOGIN and await relogin_hebat(chat_id):
                                     return await download_file(
                                         chat_id, url, dest_path.with_suffix(""),
+                                        record_meta=record_meta,
                                         _relogin_attempt=_relogin_attempt + 1,
                                     )
                                 logger.error("hebat_download_failed_login url=%s", url)
@@ -223,12 +231,30 @@ async def download_file(
 
         from datetime import datetime, timezone
 
+        mime_type = content_type.split(";")[0].strip()
+
+        from app.xninetzy.os.academic.hebat.storage import record_download
+
+        record_download(
+            chat_id,
+            file_url=url,
+            course_id=(record_meta or {}).get("course_id"),
+            cmid=(record_meta or {}).get("cmid"),
+            activity_url=(record_meta or {}).get("activity_url"),
+            final_url=final_url,
+            filename=filename,
+            mime_type=mime_type,
+            local_path=str(dest_path),
+            size_bytes=total,
+            sha256=sha.hexdigest(),
+        )
+
         return {
             "filename": filename,
             "local_path": str(dest_path),
             "source_url": url,
             "final_url": final_url,
-            "mime_type": content_type.split(";")[0].strip(),
+            "mime_type": mime_type,
             "size_bytes": total,
             "sha256": sha.hexdigest(),
             "downloaded_at": datetime.now(timezone.utc).isoformat(),

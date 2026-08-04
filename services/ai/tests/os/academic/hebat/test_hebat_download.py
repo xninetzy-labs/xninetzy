@@ -116,3 +116,17 @@ def test_record_and_search_downloads():
     assert any(d["filename"] == "graphrag-paper.pdf" for d in found)
     all_for_chat = storage.search_downloads(chat)
     assert len(all_for_chat) >= 1
+
+
+def test_record_download_idempotent_per_local_path():
+    chat = "test-dl-idem"
+    path = "/tmp/fake/hebat/dl/materi.pdf"
+    first = storage.record_download(chat, file_url=f"{BASE}/pluginfile.php/9/x/materi.pdf", local_path=path)
+    second = storage.record_download(chat, file_url=f"{BASE}/pluginfile.php/9/x/materi.pdf", local_path=path)
+    assert first == second
+    found = storage.search_downloads(chat)
+    matches = [d for d in found if d["local_path"] == path]
+    assert len(matches) == 1
+    # Different local path is a new record.
+    other = storage.record_download(chat, file_url=f"{BASE}/pluginfile.php/9/x/other.pdf", local_path="/tmp/fake/hebat/dl/other.pdf")
+    assert other != first

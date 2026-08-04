@@ -1,0 +1,28 @@
+research_question: "What are the core concepts of IP subnetting and addressing, and how are they applied in network design?"
+personal_context: "SIJ206 Jaringan Komputer, Modul 03 covers subnetting basics"
+scope: "Foundational subnetting concepts, CIDR, subnet masks, VLSM, practical calculation"
+subquestions:
+  - "What is subnetting and why is it used?"
+  - "How do subnet masks and CIDR notation work?"
+  - "What is the process of calculating subnets?"
+  - "How does VLSM differ from FLSM?"
+  - "What are common subnetting mistakes?"
+queries:
+  - "subnetting IP address calculation CIDR subnet mask tutorial"
+  - "VLSM variable length subnet mask network design"
+  - "IP subnetting best practices 2024"
+databases:
+  - "web (DuckDuckGo, Bing)"
+  - "arXiv"
+  - "YouTube"
+year_range: "2020-2026"
+inclusion: "Tutorials, official documentation, academic papers on network design"
+exclusion: "Outdated pre-CIDR material, vendor-specific guides without general principles"
+source_hierarchy:
+  1. "Original RFC documents (IANA, IETF)"
+  2. "Official networking education sites"
+  3. "Academic papers"
+  4. "Reputable tech blogs"
+  5. "YouTube tutorials"
+worker_assignments: "single researcher"
+deliverable: "Structured evidence packet with key concepts, web/academic/YouTube sources, conflicting evidence, gaps"

@@ -10,7 +10,10 @@ from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, HumanMessage
 
 from app.xninetzy.agent.graph import get_compiled_graph
-from app.xninetzy.ecosystem.command_router import parse_command
+from app.xninetzy.ecosystem.command_router import (
+    parse_captcha_reply,
+    parse_command,
+)
 from app.xninetzy.os.memory.chat_store import ChatStore
 from app.xninetzy.os.ai_preferences import resolve_user_profile
 from app.xninetzy.schemas.chat import ChatRequest, ChatResponse
@@ -230,6 +233,10 @@ async def chat(request: ChatRequest) -> ChatResponse:
 
     # 1. Check for slash command (deterministic routing, skip LangGraph)
     tool_name, kwargs = parse_command(request.message)
+    if not tool_name:
+        tool_name, kwargs = parse_captcha_reply(
+            request.message, request.metadata or {}
+        )
     if tool_name:
         emit_chat_event("activity", "Executing direct command")
         reply = await _invoke_tool_directly(tool_name, kwargs, request)

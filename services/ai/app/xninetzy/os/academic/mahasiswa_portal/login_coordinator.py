@@ -31,10 +31,46 @@ class CampusChallengeExpired(CampusLoginError):
     pass
 
 
+@dataclass(frozen=True, slots=True)
+class PortalLoginConfig:
+    enabled: bool
+    base_url: str
+    credential_source: str
+    timeout_ms: int
+    challenge_ttl_seconds: int
+    max_attempts: int
+    label: str
+
+
+def portal_login_config(site_slug: str, settings: Any) -> PortalLoginConfig:
+    if site_slug == "uacc":
+        return PortalLoginConfig(
+            enabled=settings.UACC_ENABLED,
+            base_url=settings.UACC_BASE_URL,
+            credential_source=settings.UACC_CREDENTIAL_SOURCE
+            or settings.ACADEMIC_CREDENTIAL_SOURCE,
+            timeout_ms=settings.UACC_LOGIN_TIMEOUT_MS,
+            challenge_ttl_seconds=settings.UACC_LOGIN_CHALLENGE_TTL_SECONDS,
+            max_attempts=settings.UACC_LOGIN_MAX_ATTEMPTS,
+            label="UACC",
+        )
+    return PortalLoginConfig(
+        enabled=settings.CYBER_CAMPUS_ENABLED,
+        base_url=settings.CYBER_CAMPUS_BASE_URL,
+        credential_source=settings.CYBER_CAMPUS_CREDENTIAL_SOURCE
+        or settings.ACADEMIC_CREDENTIAL_SOURCE,
+        timeout_ms=settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
+        challenge_ttl_seconds=settings.CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS,
+        max_attempts=settings.CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS,
+        label="Cyber Campus",
+    )
+
+
 @dataclass(slots=True)
 class LoginChallenge:
     challenge_id: str
     owner_id: str
+    site_slug: str
     playwright: Any
     browser: Any
     context: Any
@@ -59,7 +95,7 @@ class CampusLoginCoordinator:
                 return locator
         raise CampusLoginError(f"Elemen login tidak ditemukan secara unik: {selectors}")
 
-    async def _captcha_image(self, page: Any) -> Any:
+    async def _find_captcha_optional(self, page: Any) -> Any | None:
         for selector in (
             "img[src*='captcha' i]",
             "img[alt*='captcha' i]",
@@ -68,23 +104,30 @@ class CampusLoginCoordinator:
             count = await locator.count()
             if count == 1 and await locator.is_visible():
                 return locator
-        captcha_input = await self._first_visible(
-            page,
-            (
-                "input[name='captcha']",
-                "input[name*='captcha' i]",
-                "input[placeholder*='captcha' i]",
-            ),
-        )
+        try:
+            captcha_input = await self._first_visible(
+                page,
+                (
+                    "input[name='captcha']",
+                    "input[name*='captcha' i]",
+                    "input[placeholder*='captcha' i]",
+                ),
+            )
+        except CampusLoginError:
+            return None
         image = captcha_input.locator("xpath=preceding::img[1]")
         if await image.count() == 1 and await image.is_visible():
             return image
-        raise CampusLoginError("Gambar CAPTCHA tidak ditemukan secara unik.")
+        return None
 
-    async def _fill_credentials(self, page: Any) -> None:
-        settings = get_settings()
-        source = settings.CYBER_CAMPUS_CREDENTIAL_SOURCE or settings.ACADEMIC_CREDENTIAL_SOURCE
-        credentials = resolve_campus_credentials(source)
+    async def _captcha_image(self, page: Any) -> Any:
+        captcha = await self._find_captcha_optional(page)
+        if captcha is None:
+            raise CampusLoginError("Gambar CAPTCHA tidak ditemukan secara unik.")
+        return captcha
+
+    async def _fill_credentials(self, page: Any, credential_source: str) -> None:
+        credentials = resolve_campus_credentials(credential_source)
         username = await self._first_visible(
             page,
             ("input[name='username']", "input[name='nim']"),
@@ -135,10 +178,48 @@ class CampusLoginCoordinator:
         except Exception:
             return await image.screenshot(type="png", timeout=5_000)
 
-    async def start(self, owner_id: str) -> dict[str, Any]:
+    async def _try_direct_login(
+        self,
+        page: Any,
+        context: Any,
+        site: Any,
+        config: PortalLoginConfig,
+    ) -> dict[str, Any] | None:
+        login_button = await self._first_visible(
+            page,
+            (
+                "button[type='submit']",
+                "button:has-text('Login')",
+                "input[type='submit']",
+            ),
+        )
+        await login_button.click()
+        try:
+            await page.wait_for_load_state(
+                "domcontentloaded", timeout=config.timeout_ms
+            )
+        except TimeoutError:
+            logger.info("%s login navigation timed out; validating DOM", config.label)
+        html = await page.content()
+        if not looks_like_login(html, page.url) and is_allowed_url(site, page.url):
+            storage_state = await context.storage_state()
+            SessionManager().save_storage_state(
+                site.slug,
+                storage_state,
+                landing_url=page.url,
+            )
+            return {
+                "authenticated": True,
+                "current_url": page.url,
+                "title": await page.title(),
+            }
+        return None
+
+    async def start(self, owner_id: str, site_slug: str = "mahasiswa") -> dict[str, Any]:
         settings = get_settings()
-        if not settings.CYBER_CAMPUS_ENABLED:
-            raise CampusLoginError("CYBER_CAMPUS_ENABLED=false")
+        config = portal_login_config(site_slug, settings)
+        if not config.enabled:
+            raise CampusLoginError(f"{config.label} login belum diaktifkan.")
         SessionManager()
         async with self._lock:
             await self._cancel_owner_locked(owner_id)
@@ -151,22 +232,36 @@ class CampusLoginCoordinator:
             context = await browser.new_context(viewport={"width": 1280, "height": 900})
             page = await context.new_page()
             try:
-                site = get_site("mahasiswa")
+                site = get_site(site_slug)
                 await self._open_login_page(
                     page,
-                    settings.CYBER_CAMPUS_BASE_URL,
-                    settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS,
+                    config.base_url,
+                    config.timeout_ms,
                 )
                 if not is_allowed_url(site, page.url):
-                    raise CampusLoginError("Login keluar dari origin Cyber Campus.")
-                await self._fill_credentials(page)
-                captcha = await self._captcha_image(page)
+                    raise CampusLoginError(f"Login keluar dari origin {config.label}.")
+                await self._fill_credentials(page, config.credential_source)
+                captcha = await self._find_captcha_optional(page)
+                if captcha is None:
+                    result = await self._try_direct_login(
+                        page, context, site, config
+                    )
+                    if result is None:
+                        raise CampusLoginError(
+                            f"Login otomatis {config.label} gagal; "
+                            "halaman meminta verifikasi manual."
+                        )
+                    await context.close()
+                    await browser.close()
+                    await playwright.stop()
+                    return result
                 captcha_png = await self._capture_captcha(captcha)
                 now = datetime.now(UTC)
                 challenge_id = secrets.token_urlsafe(12)
                 challenge = LoginChallenge(
                     challenge_id=challenge_id,
                     owner_id=owner_id,
+                    site_slug=site_slug,
                     playwright=playwright,
                     browser=browser,
                     context=context,
@@ -175,7 +270,7 @@ class CampusLoginCoordinator:
                     created_at=now,
                     expires_at=now
                     + timedelta(
-                        seconds=settings.CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS
+                        seconds=config.challenge_ttl_seconds
                     ),
                 )
                 self._challenges[challenge_id] = challenge
@@ -200,8 +295,9 @@ class CampusLoginCoordinator:
                 await self._cancel_locked(challenge_id)
                 raise CampusChallengeExpired("Challenge CAPTCHA sudah kedaluwarsa.")
             settings = get_settings()
+            config = portal_login_config(challenge.site_slug, settings)
             challenge.attempts += 1
-            if challenge.attempts > settings.CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS:
+            if challenge.attempts > config.max_attempts:
                 await self._cancel_locked(challenge_id)
                 raise CampusLoginError("Batas percobaan login tercapai.")
             captcha_input = await self._first_visible(
@@ -224,33 +320,33 @@ class CampusLoginCoordinator:
             await login_button.click()
             try:
                 await challenge.page.wait_for_load_state(
-                    "domcontentloaded", timeout=settings.CYBER_CAMPUS_LOGIN_TIMEOUT_MS
+                    "domcontentloaded", timeout=config.timeout_ms
                 )
             except TimeoutError:
-                logger.info("Cyber Campus login navigation timed out; validating DOM")
+                logger.info("%s login navigation timed out; validating DOM", config.label)
             html = await challenge.page.content()
-            site = get_site("mahasiswa")
+            site = get_site(challenge.site_slug)
             authenticated = not looks_like_login(
                 html, challenge.page.url
             ) and is_allowed_url(site, challenge.page.url)
             if not authenticated:
-                await self._fill_credentials(challenge.page)
+                await self._fill_credentials(challenge.page, config.credential_source)
                 captcha = await self._captcha_image(challenge.page)
                 challenge.captcha_png = await self._capture_captcha(captcha)
                 challenge.expires_at = datetime.now(UTC) + timedelta(
-                    seconds=settings.CYBER_CAMPUS_LOGIN_CHALLENGE_TTL_SECONDS
+                    seconds=config.challenge_ttl_seconds
                 )
                 return {
                     **self._public_challenge(challenge),
                     "authenticated": False,
                     "retry_required": True,
-                    "remaining_attempts": settings.CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS
+                    "remaining_attempts": config.max_attempts
                     - challenge.attempts,
                 }
             storage_state = await challenge.context.storage_state()
             manager = SessionManager()
             manager.save_storage_state(
-                "mahasiswa",
+                challenge.site_slug,
                 storage_state,
                 landing_url=challenge.page.url,
             )

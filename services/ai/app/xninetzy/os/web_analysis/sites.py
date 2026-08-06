@@ -19,10 +19,15 @@ class SiteDefinition:
     login_path: str
     protection_flags: tuple[str, ...] = ()
     dynamic: bool = False
+    allowed_hosts: tuple[str, ...] = ()
 
     @property
     def hostname(self) -> str:
         return (urlsplit(self.base_url).hostname or "").lower()
+
+    @property
+    def hostnames(self) -> frozenset[str]:
+        return frozenset((self.hostname, *self.allowed_hosts))
 
     @property
     def port(self) -> int:
@@ -84,6 +89,19 @@ SITES: dict[str, SiteDefinition] = {
             "Sistem hanya menganalisis halaman GET; klik, pilihan kelas, dan submit tetap manual.",
         ),
     ),
+    "uacc": SiteDefinition(
+        slug="uacc",
+        name="UACC SSO (UNAIR Academic Cloud Campus)",
+        base_url="https://uacc.unair.ac.id",
+        public_paths=("/mhs", "/"),
+        authenticated_paths=("/mhs", "/"),
+        login_path="/mhs",
+        allowed_hosts=("unairsatu.unair.ac.id",),
+        protection_flags=(
+            "Login memakai SSO unairsatu dengan CAPTCHA matematika (penjumlahan); "
+            "CAPTCHA dijawab manual oleh owner, tidak pernah di-solve otomatis.",
+        ),
+    ),
     "qa": SiteDefinition(
         slug="qa",
         name="QA UNAIR",
@@ -106,6 +124,9 @@ ALIASES = {
     "mahasiswa.unair.ac.id": "mahasiswa",
     "portal": "mahasiswa",
     "cybercampus": "mahasiswa",
+    "uacc.unair.ac.id": "uacc",
+    "unairsatu.unair.ac.id": "uacc",
+    "sso": "uacc",
     "qa.unair.ac.id": "qa",
     "quality-assurance": "qa",
 }
@@ -192,7 +213,9 @@ def get_site(site_slug: str) -> SiteDefinition:
 
 def is_allowed_url(site: SiteDefinition, url: str) -> bool:
     parsed = urlsplit(url)
-    if parsed.scheme.casefold() != "https" or (parsed.hostname or "").casefold() != site.hostname:
+    if parsed.scheme.casefold() != "https":
+        return False
+    if (parsed.hostname or "").casefold() not in site.hostnames:
         return False
     try:
         return (parsed.port or 443) == site.port

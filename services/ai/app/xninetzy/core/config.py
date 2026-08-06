@@ -229,6 +229,18 @@ class Settings(BaseSettings):
     CYBER_CAMPUS_GRADE_TOKEN_TTL_SECONDS: int = 180
     CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS: int = 3
     CYBER_CAMPUS_ENTRY_YEAR: int = 0
+    UACC_ENABLED: bool = False
+    UACC_BASE_URL: str = "https://uacc.unair.ac.id"
+    UACC_CREDENTIAL_SOURCE: str = "hebat"
+    UACC_BROWSER_HEADLESS: bool = True
+    UACC_LOGIN_CHALLENGE_TTL_SECONDS: int = 600
+    UACC_LOGIN_MAX_ATTEMPTS: int = 3
+    UACC_LOGIN_TIMEOUT_MS: int = 30_000
+    # CAPTCHA delivery: WhatsApp preferred, MCP image blocks as fallback
+    XNINETZY_CAPTCHA_WA_PREFERRED: bool = True
+    XNINETZY_CAPTCHA_AUTO_OPEN: bool = True
+    XNINETZY_CAPTCHA_DIR: str = "/tmp/opencode"
+    XNINETZY_CAPTCHA_WA_TIMEOUT_SECONDS: float = 8.0
     KRS_WATCHER_DEFAULT_INTERVAL_SECONDS: int = 600
     KRS_WATCHER_ANNOUNCEMENT_INTERVAL_SECONDS: int = 30
     KRS_WATCHER_WINDOW_INTERVAL_SECONDS: int = 7

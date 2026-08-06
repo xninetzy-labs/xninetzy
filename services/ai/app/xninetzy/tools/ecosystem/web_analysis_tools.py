@@ -1,10 +1,16 @@
 from __future__ import annotations
 
+import re
+
+import httpx
+from bs4 import BeautifulSoup
 from langchain_core.tools import tool
 
+from app.xninetzy.core.config import get_settings
 from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
 from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
-from app.xninetzy.os.web_analysis.sites import get_site
+from app.xninetzy.os.web_analysis.security import detect_human_verification
+from app.xninetzy.os.web_analysis.sites import _canonical_seed_url, get_site
 
 
 @tool
@@ -100,3 +106,53 @@ async def web_discover(
     if result.errors:
         lines.append(f"• Error aman: {', '.join(result.errors[:3])}")
     return "\n".join(lines)
+
+
+@tool
+async def web_fetch(url: str, max_chars: int = 8000) -> str:
+    """Ambil konten teks satu URL HTTPS publik secara bounded (GET-only).
+
+    Args:
+        url: URL HTTPS publik lengkap
+        max_chars: batas karakter teks yang dikembalikan (500-20000)
+    """
+    if max_chars < 500 or max_chars > 20000:
+        raise ValueError("max_chars harus berada di antara 500 dan 20000.")
+    canonical, _hostname, _port = _canonical_seed_url(url)
+    settings = get_settings()
+    timeout = settings.WEB_ANALYSIS_TIMEOUT_MS / 1000
+    async with httpx.AsyncClient(
+        follow_redirects=True,
+        timeout=timeout,
+        headers={"User-Agent": "Xninetzy-WebFetch/1.0 (read-only)"},
+    ) as client:
+        response = await client.get(canonical)
+    if response.status_code >= 400:
+        return (
+            f"*Web Fetch*\n"
+            f"• URL: {canonical}\n"
+            f"• Status: {response.status_code}\n"
+            "• Tidak ada konten."
+        )
+    content_type = response.headers.get("content-type", "")
+    if "html" not in content_type.casefold():
+        return (
+            f"*Web Fetch*\n"
+            f"• URL: {canonical}\n"
+            f"• Tipe: {content_type or 'unknown'}\n"
+            "• Konten non-HTML tidak diambil."
+        )
+    html = response.text
+    if detect_human_verification(html, canonical):
+        return (
+            f"*Web Fetch*\n"
+            f"• URL: {canonical}\n"
+            "• Human verification terdeteksi; konten tidak diambil."
+        )
+    soup = BeautifulSoup(html, "lxml")
+    for tag in soup(["script", "style", "noscript", "svg", "iframe"]):
+        tag.decompose()
+    text = re.sub(r"\s+", " ", soup.get_text(" ", strip=True)).strip()
+    if len(text) > max_chars:
+        text = text[:max_chars] + "…"
+    return f"*Web Fetch*\n• URL: {canonical}\n• Status: {response.status_code}\n\n{text}"

@@ -35,6 +35,7 @@ dependencies = [
     "neo4j>=5.26",
     "networkx>=3.3",
     "ddgs>=6.0",
+    "opencv-python-headless>=5.0.0.93",
 ]
 
 [dependency-groups]

@@ -1,16 +1,19 @@
 from __future__ import annotations
 
-import base64
 from datetime import UTC, datetime
 
 from langchain_core.tools import tool
+from mcp.types import ImageContent, TextContent
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.core.identity import normalize_whatsapp_jid
 from app.xninetzy.interfaces.whatsapp.client import WaToolError, call_wa_tool
+from app.xninetzy.os.academic.mahasiswa_portal.captcha_delivery import (
+    build_envelope,
+    deliver_captcha,
+)
 from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
     LOGIN_COORDINATOR,
-    CampusLoginError,
 )
 from app.xninetzy.os.academic.mahasiswa_portal.grade_token import (
     GRADE_TOKEN_COORDINATOR,
@@ -58,42 +61,51 @@ def _notification_jid() -> str:
     return admin_jid()
 
 
-async def _send_captcha(owner_id: str, challenge: dict) -> None:
+async def _deliver_captcha(
+    owner_id: str,
+    challenge: dict,
+    site_slug: str = "mahasiswa",
+    label: str = "Cyber Campus",
+    metadata: dict | None = None,
+) -> str | list[TextContent | ImageContent]:
+    """Kirim CAPTCHA: WhatsApp bila tersedia, fallback ke MCP image blocks."""
     jid = _notification_jid()
-    if not jid:
-        raise CampusLoginError(
-            "Target WhatsApp owner belum dikonfigurasi untuk mengirim CAPTCHA."
-        )
     png = await LOGIN_COORDINATOR.captcha_png(
         challenge["challenge_id"], owner_id
     )
-    source = base64.b64encode(png).decode("ascii")
-    caption = (
-        "Login Cyber Campus\n\n"
-        f"Balas: /captcha {challenge['challenge_id']} JAWABAN\n"
-        f"Berlaku sampai: {challenge['expires_at']}\n\n"
-        "CAPTCHA harus dijawab manual oleh owner."
+    envelope = build_envelope(challenge, png, site_slug=site_slug, label=label)
+    settings = get_settings()
+    result = await deliver_captcha(
+        envelope,
+        wa_jid=jid,
+        wa_preferred=settings.XNINETZY_CAPTCHA_WA_PREFERRED,
+        auto_open=settings.XNINETZY_CAPTCHA_AUTO_OPEN,
+        captcha_dir=settings.XNINETZY_CAPTCHA_DIR,
+        wa_timeout_seconds=settings.XNINETZY_CAPTCHA_WA_TIMEOUT_SECONDS,
     )
-    try:
-        await call_wa_tool(
-            "send_image", {"jid": jid, "source": source, "caption": caption}
-        )
-    except WaToolError as exc:
-        raise CampusLoginError(f"Gagal mengirim CAPTCHA ke WhatsApp owner: {exc}") from exc
+    if result.delivered_via == "whatsapp":
+        return result.text
+    if (metadata or {}).get("channel") == "whatsapp":
+        return result.text
+    return result.blocks or [TextContent(type="text", text=result.text)]
 
 
 @tool
 async def portal_login_start(
-    chat_id: str = "system", sender_id: str | None = None
-) -> str:
-    """Mulai login Cyber Campus dan kirim CAPTCHA ke WhatsApp owner untuk dijawab manual."""
+    chat_id: str = "system",
+    sender_id: str | None = None,
+    metadata: dict | None = None,
+) -> str | list[TextContent | ImageContent]:
+    """Mulai login Cyber Campus; CAPTCHA dikirim ke WhatsApp owner atau sebagai gambar MCP."""
     owner_id = _owner_id(sender_id, chat_id)
     if not is_owner_admin(sender_id or chat_id, None):
         return "Login Cyber Campus hanya dapat dimulai oleh admin."
     challenge: dict | None = None
     try:
         challenge = await LOGIN_COORDINATOR.start(owner_id)
-        await _send_captcha(owner_id, challenge)
+        delivered = await _deliver_captcha(
+            owner_id, challenge, metadata=metadata
+        )
     except Exception as exc:
         if challenge:
             try:
@@ -104,11 +116,7 @@ async def portal_login_start(
             except Exception:
                 pass
         return f"Login Cyber Campus belum dapat dimulai: {exc}"
-    return (
-        "CAPTCHA Cyber Campus sudah dikirim ke WhatsApp owner.\n"
-        f"Challenge: `{challenge['challenge_id']}`\n"
-        f"Kedaluwarsa: {challenge['expires_at']}"
-    )
+    return delivered
 
 
 @tool
@@ -117,7 +125,8 @@ async def portal_login_submit_captcha(
     captcha_answer: str,
     chat_id: str = "system",
     sender_id: str | None = None,
-) -> str:
+    metadata: dict | None = None,
+) -> str | list[TextContent | ImageContent]:
     """Masukkan jawaban CAPTCHA yang diberikan manual oleh owner dan selesaikan login."""
     owner_id = _owner_id(sender_id, chat_id)
     if not is_owner_admin(sender_id or chat_id, None):
@@ -127,11 +136,16 @@ async def portal_login_submit_captcha(
             challenge_id, owner_id, captcha_answer
         )
         if result.get("retry_required"):
-            await _send_captcha(owner_id, result)
-            return (
-                "CAPTCHA salah atau login belum berhasil. CAPTCHA baru sudah dikirim.\n"
-                f"Sisa percobaan: {result['remaining_attempts']}"
+            delivered = await _deliver_captcha(
+                owner_id, result, metadata=metadata
             )
+            if isinstance(delivered, str):
+                return (
+                    "CAPTCHA salah atau login belum berhasil. CAPTCHA baru sudah dikirim.\n"
+                    f"Sisa percobaan: {result['remaining_attempts']}\n\n"
+                    f"{delivered}"
+                )
+            return delivered
     except Exception as exc:
         return f"Login Cyber Campus gagal: {exc}"
     jid = _notification_jid()
@@ -193,9 +207,138 @@ def portal_logout() -> str:
     return "Session Cyber Campus dihapus." if removed else "Session Cyber Campus memang tidak ada."
 
 
-def _session_present() -> tuple[bool, str | None]:
+@tool
+async def uacc_login_start(
+    chat_id: str = "system",
+    sender_id: str | None = None,
+    metadata: dict | None = None,
+) -> str | list[TextContent | ImageContent]:
+    """Mulai login UACC SSO; CAPTCHA dikirim ke WhatsApp owner atau sebagai gambar MCP."""
+    owner_id = _owner_id(sender_id, chat_id)
+    if not is_owner_admin(sender_id or chat_id, None):
+        return "Login UACC hanya dapat dimulai oleh admin."
+    challenge: dict | None = None
     try:
-        return SessionManager().has_session("mahasiswa"), None
+        challenge = await LOGIN_COORDINATOR.start(owner_id, site_slug="uacc")
+        delivered = await _deliver_captcha(
+            owner_id, challenge, site_slug="uacc", label="UACC", metadata=metadata
+        )
+    except Exception as exc:
+        if challenge:
+            try:
+                await LOGIN_COORDINATOR.cancel(
+                    challenge["challenge_id"],
+                    owner_id,
+                )
+            except Exception:
+                pass
+        return f"Login UACC belum dapat dimulai: {exc}"
+    return delivered
+
+
+@tool
+async def uacc_login_submit_captcha(
+    challenge_id: str,
+    captcha_answer: str,
+    chat_id: str = "system",
+    sender_id: str | None = None,
+    metadata: dict | None = None,
+) -> str | list[TextContent | ImageContent]:
+    """Masukkan jawaban CAPTCHA UACC yang diberikan manual oleh owner dan selesaikan login."""
+    owner_id = _owner_id(sender_id, chat_id)
+    if not is_owner_admin(sender_id or chat_id, None):
+        return "Jawaban CAPTCHA hanya dapat dikirim oleh admin."
+    try:
+        result = await LOGIN_COORDINATOR.submit(
+            challenge_id, owner_id, captcha_answer
+        )
+        if result.get("retry_required"):
+            delivered = await _deliver_captcha(
+                owner_id, result, site_slug="uacc", label="UACC", metadata=metadata
+            )
+            if isinstance(delivered, str):
+                return (
+                    "CAPTCHA salah atau login belum berhasil. CAPTCHA baru sudah dikirim.\n"
+                    f"Sisa percobaan: {result['remaining_attempts']}\n\n"
+                    f"{delivered}"
+                )
+            return delivered
+    except Exception as exc:
+        return f"Login UACC gagal: {exc}"
+    jid = _notification_jid()
+    if jid:
+        try:
+            await call_wa_tool(
+                "send_text_message",
+                {
+                    "jid": jid,
+                    "text": "UACC berhasil login dan session terenkripsi sudah disimpan.",
+                },
+            )
+        except WaToolError:
+            pass
+    return "UACC berhasil login dan session terenkripsi sudah disimpan."
+
+
+@tool
+async def uacc_login_cancel(
+    challenge_id: str,
+    chat_id: str = "system",
+    sender_id: str | None = None,
+) -> str:
+    """Batalkan challenge login UACC milik owner lokal."""
+    if not is_owner_admin(sender_id or chat_id, None):
+        return "Challenge login hanya dapat dibatalkan oleh admin."
+    try:
+        await LOGIN_COORDINATOR.cancel(
+            challenge_id, _owner_id(sender_id, chat_id)
+        )
+    except Exception as exc:
+        return f"Challenge tidak dapat dibatalkan: {exc}"
+    return "Challenge login UACC dibatalkan."
+
+
+@tool
+def uacc_session_status() -> str:
+    """Cek keberadaan session UACC terenkripsi di instalasi lokal."""
+    try:
+        has, session_error = _session_present("uacc")
+    except SessionEncryptionUnavailable as exc:
+        return f"Session belum siap: {exc}"
+    if has:
+        return "Session UACC tersedia secara lokal; validasi portal via web_analysis_refresh(\"uacc\", authenticated=True)."
+    return "Session UACC belum tersedia. Jalankan /uacc-login untuk CAPTCHA manual."
+
+
+@tool
+def uacc_logout() -> str:
+    """Hapus session UACC terenkripsi milik instalasi lokal."""
+    try:
+        removed = SessionManager().clear_session("uacc")
+    except SessionEncryptionUnavailable as exc:
+        return f"Session tidak dapat dihapus: {exc}"
+    return "Session UACC dihapus." if removed else "Session UACC memang tidak ada."
+
+
+@tool
+def uacc_info() -> str:
+    """Lihat kesiapan cache dan session UACC local-owner."""
+    analysis = AnalysisCacheManager().load("uacc")
+    has_session, session_error = _session_present("uacc")
+    lines = ["*Portal UACC (local-owner)*"]
+    lines.append(f"• Cache struktur: {'ada' if analysis else 'belum ada'}")
+    lines.append(f"• Status struktur: {analysis.auth_status if analysis else '-'}")
+    lines.append(f"• Session terenkripsi: {'ada' if has_session else 'belum ada'}")
+    if session_error:
+        lines.append("• Setup: isi WEB_ANALYSIS_ENCRYPTION_KEY lalu jalankan login manual lokal.")
+    lines.append("• CAPTCHA/OTP tidak pernah disolve oleh agent.")
+    lines.append("• Akses isi portal hanya GET/HEAD read-only.")
+    return "\n".join(lines)
+
+
+def _session_present(site_slug: str = "mahasiswa") -> tuple[bool, str | None]:
+    try:
+        return SessionManager().has_session(site_slug), None
     except SessionEncryptionUnavailable as exc:
         return False, str(exc)
 

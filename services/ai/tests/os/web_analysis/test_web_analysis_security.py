@@ -49,6 +49,15 @@ def test_allowlist_and_mutating_paths_are_enforced():
     assert AnalyzerService._safe_to_visit(site, "https://mahasiswa.unair.ac.id/krs?editsubmission=1") is False
 
 
+def test_uacc_allows_sso_host_and_rejects_foreign():
+    site = get_site("uacc")
+    assert "unairsatu.unair.ac.id" in site.hostnames
+    assert is_allowed_url(site, "https://unairsatu.unair.ac.id/site/login") is True
+    assert is_allowed_url(site, "https://uacc.unair.ac.id/mhs") is True
+    assert is_allowed_url(site, "https://evil.example/") is False
+    assert is_allowed_url(site, "http://unairsatu.unair.ac.id/site/login") is False
+
+
 def test_dynamic_public_site_registry_reuses_host_guard(monkeypatch):
     monkeypatch.setattr(
         "app.xninetzy.os.web_analysis.sites.socket.getaddrinfo",

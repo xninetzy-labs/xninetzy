@@ -144,7 +144,7 @@ class AnalyzerService:
         auth_status = "authenticated" if storage_state else "public"
         page_limit = (
             settings.WEB_ANALYSIS_PORTAL_MAX_PAGES
-            if site.slug in {"hebat", "mahasiswa", "qa"}
+            if site.slug in {"hebat", "mahasiswa", "qa", "uacc"}
             else settings.WEB_ANALYSIS_MAX_PAGES
         )
         seed_paths = site.authenticated_paths if storage_state else site.public_paths

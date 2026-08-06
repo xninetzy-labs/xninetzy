@@ -91,6 +91,13 @@ RECALL_DUE_PATTERN = re.compile(r"^/recall(?:\s+(\d+))?$", re.I)
 CYBER_LOGIN_CANCEL_PATTERN = re.compile(
     r"^/cyber-login-cancel\s+([A-Za-z0-9_-]+)$", re.I
 )
+UACC_LOGIN_PATTERN = re.compile(r"^/uacc-login$", re.I)
+UACC_CAPTCHA_PATTERN = re.compile(
+    r"^/uacc-captcha\s+([A-Za-z0-9_-]+)\s+([^\s]+)$", re.I
+)
+UACC_LOGIN_CANCEL_PATTERN = re.compile(
+    r"^/uacc-login-cancel\s+([A-Za-z0-9_-]+)$", re.I
+)
 
 # /helper <topic> → helper_get with topic
 HELPER_PATTERN = re.compile(r"^/helper\s+(\w+)$", re.I)
@@ -101,9 +108,9 @@ RESEARCH_PATTERN = re.compile(r"^/research\s+(.+)$", re.I | re.S)
 DEEP_RESEARCH_PATTERN = re.compile(
     r"^/deep-research(?:\s+(speed|balanced|quality))?\s+(.+)$", re.I | re.S
 )
-WEB_ANALYSIS_PATTERN = re.compile(r"^/web-analysis\s+(hebat|mahasiswa|qa)$", re.I)
-WEB_REFRESH_PATTERN = re.compile(r"^/web-refresh\s+(hebat|mahasiswa|qa)$", re.I)
-WEB_CATALOG_PATTERN = re.compile(r"^/web-pages\s+(hebat|mahasiswa|qa)$", re.I)
+WEB_ANALYSIS_PATTERN = re.compile(r"^/web-analysis\s+(hebat|mahasiswa|qa|uacc)$", re.I)
+WEB_REFRESH_PATTERN = re.compile(r"^/web-refresh\s+(hebat|mahasiswa|qa|uacc)$", re.I)
+WEB_CATALOG_PATTERN = re.compile(r"^/web-pages\s+(hebat|mahasiswa|qa|uacc)$", re.I)
 WEB_DISCOVER_PATTERN = re.compile(r"^/web-discover(?:\s+(\d+))?\s+(https://\S+)$", re.I)
 
 RULE_ADD_PATTERN = re.compile(r"^/rule\s+add\s+(.+)$", re.I | re.S)
@@ -125,6 +132,45 @@ FEEDBACK_PATTERN = re.compile(
 )
 AGENT_APPROVE_PATTERN = re.compile(r"^/agent-approve\s+(\d+)$", re.I)
 AGENT_REJECT_PATTERN = re.compile(r"^/agent-reject\s+(\d+)$", re.I)
+
+CAPTCHA_REPLY_PATTERN = re.compile(r"^\s*([A-Za-z0-9_-]{1,24})\s*$", re.I)
+_CAPTCHA_ID_IN_QUOTE = re.compile(r"/(?:uacc-captcha|captcha)\s+([A-Za-z0-9_-]+)")
+
+
+def parse_captcha_reply(
+    message: str,
+    metadata: dict | None = None,
+) -> tuple[str | None, dict]:
+    """
+    Deteksi balasan singkat (angka) yang me-reply pesan CAPTCHA bot.
+
+    Route ke uacc_login_submit_captcha atau portal_login_submit_captcha
+    berdasarkan caption pesan yang direply. Tanpa reply atau caption
+    CAPTCHA, mengembalikan (None, {}).
+    """
+    meta = metadata or {}
+    if not meta.get("isReplyToBot"):
+        return None, {}
+    quoted = str(meta.get("quotedMessageText") or "")
+    m = CAPTCHA_REPLY_PATTERN.match(message)
+    if not m:
+        return None, {}
+    id_match = _CAPTCHA_ID_IN_QUOTE.search(quoted)
+    if not id_match:
+        return None, {}
+    answer = m.group(1)
+    challenge_id = id_match.group(1)
+    if "login uacc" in quoted.casefold():
+        return "uacc_login_submit_captcha", {
+            "challenge_id": challenge_id,
+            "captcha_answer": answer,
+        }
+    if "login cyber campus" in quoted.casefold():
+        return "portal_login_submit_captcha", {
+            "challenge_id": challenge_id,
+            "captcha_answer": answer,
+        }
+    return None, {}
 
 
 def parse_command(message: str) -> tuple[str | None, dict]:
@@ -181,6 +227,8 @@ def parse_command(message: str) -> tuple[str | None, dict]:
 
     if stripped.lower() == "/cyber-login":
         return "portal_login_start", {}
+    if stripped.lower() == "/uacc-login":
+        return "uacc_login_start", {}
     if KRS_STATUS_PATTERN.match(stripped):
         return "portal_current_krs", {}
     m = CONCEPT_MAP_PATTERN.match(stripped)
@@ -208,6 +256,12 @@ def parse_command(message: str) -> tuple[str | None, dict]:
         return "portal_grades", {
             "academic_period": (m.group(1) or "latest").strip()
         }
+    m = UACC_CAPTCHA_PATTERN.match(stripped)
+    if m:
+        return "uacc_login_submit_captcha", {
+            "challenge_id": m.group(1),
+            "captcha_answer": m.group(2),
+        }
     m = CAPTCHA_PATTERN.match(stripped)
     if m:
         return "portal_login_submit_captcha", {
@@ -223,6 +277,9 @@ def parse_command(message: str) -> tuple[str | None, dict]:
     m = CYBER_LOGIN_CANCEL_PATTERN.match(stripped)
     if m:
         return "portal_login_cancel", {"challenge_id": m.group(1)}
+    m = UACC_LOGIN_CANCEL_PATTERN.match(stripped)
+    if m:
+        return "uacc_login_cancel", {"challenge_id": m.group(1)}
 
     m = KRS_WAR_PATTERN.match(stripped)
     if m:
@@ -280,7 +337,7 @@ def parse_command(message: str) -> tuple[str | None, dict]:
         site_slug = m.group(1).lower()
         return "web_analysis_refresh", {
             "site_slug": site_slug,
-            "authenticated": site_slug in {"hebat", "mahasiswa", "qa"},
+            "authenticated": site_slug in {"hebat", "mahasiswa", "qa", "uacc"},
         }
     m = WEB_CATALOG_PATTERN.match(stripped)
     if m:

@@ -40,6 +40,10 @@ async def youtube_search(query: str, limit: int = 5) -> list[dict]:
                     "channel": snippet.get("channelTitle", "?"),
                     "description": snippet.get("description", "")[:200],
                     "published_at": snippet.get("publishedAt", ""),
+                    "provider": "youtube",
+                    "source_type": "youtube",
+                    "evidence_level": "metadata",
+                    "fulltext_status": "not_available_via_data_api",
                 })
             return results
     except Exception as e:

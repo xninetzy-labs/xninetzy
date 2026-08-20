@@ -19,12 +19,13 @@ _SENSITIVE_RE = re.compile(
     r"storage[_-]?state|captcha)(\\s*[:=]\\s*)([^,;\\s]+)"
 )
 _SOURCE_WEIGHTS = {
-    "task_success": 0.40,
+    "task_success": 0.30,
     "user_feedback": 0.25,
-    "groundedness": 0.20,
-    "tool_reliability": 0.10,
+    "evidence_quality": 0.25,
+    "tool_reliability": 0.15,
     "latency": 0.05,
 }
+_SOURCE_ALIASES = {"groundedness": "evidence_quality"}
 
 
 def _now() -> str:
@@ -338,26 +339,28 @@ def record_reward_event(
     }
 
 
-def _reward_for(conn, episode_id: str) -> tuple[float, dict]:
-    rows = conn.execute(
-        "SELECT source, value FROM agent_reward_events WHERE episode_id=? ORDER BY id",
-        (episode_id,),
-    ).fetchall()
+def _reward_for(conn, episode_id: str) -> tuple[float, dict, dict]:
+    rows = conn.execute("SELECT source, value FROM agent_reward_events WHERE episode_id=? ORDER BY id", (episode_id,)).fetchall()
     totals: dict[str, list[float]] = {}
     for row in rows:
-        totals.setdefault(row["source"], []).append(float(row["value"]))
+        source = _SOURCE_ALIASES.get(row["source"], row["source"])
+        totals.setdefault(source, []).append(float(row["value"]))
     components = {
         source: sum(values) / len(values)
         for source, values in totals.items()
     }
+    action_counts = conn.execute("SELECT COUNT(*) total, SUM(CASE WHEN status='ok' THEN 1 ELSE 0 END) ok_count FROM agent_episode_actions WHERE episode_id=?", (episode_id,)).fetchone()
+    if action_counts["total"] and "tool_reliability" not in components:
+        total = int(action_counts["total"])
+        components["tool_reliability"] = _clamp((2 * int(action_counts["ok_count"] or 0) / total) - 1)
+    coverage = sum(_SOURCE_WEIGHTS[source] for source in components if source in _SOURCE_WEIGHTS)
     weighted = 0.0
-    weight_total = 0.0
     for source, value in components.items():
-        weight = _SOURCE_WEIGHTS.get(source, 0.05)
-        weighted += weight * _clamp(value)
-        weight_total += weight
-    reward = _clamp(weighted / weight_total) if weight_total else 0.0
-    return reward, components
+        weighted += _SOURCE_WEIGHTS.get(source, 0.0) * _clamp(value)
+    missing = sorted(source for source in _SOURCE_WEIGHTS if source not in components)
+    reward = _clamp(weighted)
+    quality = {"coverage": round(coverage, 6), "confidence": round(coverage, 6), "missing_components": missing, "reward_version": "v2"}
+    return reward, components, quality
 
 
 def finish_episode(
@@ -380,7 +383,7 @@ def finish_episode(
             raise ValueError("Episode tidak ditemukan atau bukan milik owner.")
         if row["status"] != "active":
             return dict(row)
-        reward, components = _reward_for(conn, episode_id)
+        reward, components, quality = _reward_for(conn, episode_id)
         completed_at = _now()
         conn.execute(
             """
@@ -395,7 +398,7 @@ def finish_episode(
                 completed_at,
                 latency_ms,
                 reward,
-                _json({"total": reward, "components": components}),
+                _json({"total": reward, "components": components, **quality}),
                 _json(metadata or {}),
                 episode_id,
                 owner,

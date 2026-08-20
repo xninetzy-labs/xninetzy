@@ -20,12 +20,15 @@ def _settings(tmp_path: Path) -> Settings:
     return Settings(
         _env_file=None,
         CODING_AGENT_ENABLED=True,
-        CODING_AGENT_ALLOWED="internal,codex,claude-code,opencode",
+        CODING_AGENT_ALLOWED="internal,codex,claude-code,opencode,gemini,qwen,kilo",
         CODING_AGENT_ALLOWED_ROOT=str(tmp_path),
         CODING_AGENT_WORKSPACE="repo",
         CODEX_BIN="codex-test",
         CLAUDE_CODE_BIN="claude-test",
         OPENCODE_BIN="opencode-test",
+        GEMINI_BIN="gemini-test",
+        QWEN_BIN="qwen-test",
+        KILO_BIN="kilo-test",
     )
 
 
@@ -68,6 +71,26 @@ def test_claude_and_opencode_never_use_bypass_flags(monkeypatch, tmp_path) -> No
     assert "--dangerously-skip-permissions" not in claude
     assert "--auto" not in opencode
     assert "acceptEdits" in claude
+
+
+def test_gemini_qwen_and_kilo_use_noninteractive_structured_output(
+    monkeypatch, tmp_path
+) -> None:
+    repo = tmp_path / "repo"
+    repo.mkdir()
+    settings = _settings(tmp_path)
+    monkeypatch.setattr(
+        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
+    )
+
+    gemini = build_command("gemini", "review", repo, settings)
+    qwen = build_command("qwen", "review", repo, settings)
+    kilo = build_command("kilo", "review", repo, settings)
+
+    assert gemini == ["gemini-test", "--prompt", "review", "--output-format", "json"]
+    assert qwen == ["qwen-test", "--prompt", "review", "--output-format", "json"]
+    assert kilo == ["kilo-test", "run", "--format", "json", "--dir", str(repo), "review"]
+    assert "--auto" not in kilo
 
 
 def test_runtime_catalog_reports_installed_binaries(monkeypatch, tmp_path) -> None:
@@ -118,6 +141,21 @@ def test_each_external_runtime_has_an_mcp_preflight(monkeypatch, tmp_path) -> No
         "mcp",
         "list",
     ]
+    assert build_mcp_preflight_command("gemini", settings) == [
+        "gemini-test",
+        "mcp",
+        "list",
+    ]
+    assert build_mcp_preflight_command("qwen", settings) == [
+        "qwen-test",
+        "mcp",
+        "list",
+    ]
+    assert build_mcp_preflight_command("kilo", settings) == [
+        "kilo-test",
+        "mcp",
+        "list",
+    ]
 
 
 def test_os_aware_task_requires_agents_md_mcp_and_grounded_answer(tmp_path) -> None:
@@ -148,6 +186,9 @@ def test_host_bridge_marks_external_runtimes_available_without_container_binarie
     assert catalog["codex"].installed is True
     assert catalog["claude-code"].installed is True
     assert catalog["opencode"].installed is True
+    assert catalog["gemini"].installed is True
+    assert catalog["qwen"].installed is True
+    assert catalog["kilo"].installed is True
 
 
 def test_host_workspace_request_translates_container_root(tmp_path) -> None:

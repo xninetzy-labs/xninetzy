@@ -80,6 +80,9 @@ def runtime_catalog(settings: Settings | None = None) -> dict[str, CodingAgentIn
         "codex": (s.CODEX_BIN, s.CODEX_MODEL),
         "claude-code": (s.CLAUDE_CODE_BIN, s.CLAUDE_CODE_MODEL),
         "opencode": (s.OPENCODE_BIN, s.OPENCODE_MODEL),
+        "gemini": (s.GEMINI_BIN, s.GEMINI_MODEL),
+        "qwen": (s.QWEN_BIN, s.QWEN_MODEL),
+        "kilo": (s.KILO_BIN, s.KILO_MODEL),
     }
     return {
         name: CodingAgentInfo(
@@ -170,6 +173,17 @@ def build_command(
             command.extend(["--model", info.model])
         command.append(task)
         return command
+    if runtime in {"gemini", "qwen"}:
+        command = [binary, "--prompt", task, "--output-format", "json"]
+        if info.model:
+            command.extend(["--model", info.model])
+        return command
+    if runtime == "kilo":
+        command = [binary, "run", "--format", "json", "--dir", str(workspace)]
+        if info.model:
+            command.extend(["--model", info.model])
+        command.append(task)
+        return command
     raise ValueError(
         "Runtime 'internal' memakai agent chat Xninetzy; kirim permintaan tanpa /code."
     )
@@ -185,6 +199,8 @@ def build_mcp_preflight_command(
     if runtime in {"codex", "claude-code"}:
         return [binary, "mcp", "get", server_name]
     if runtime == "opencode":
+        return [binary, "mcp", "list"]
+    if runtime in {"gemini", "qwen", "kilo"}:
         return [binary, "mcp", "list"]
     raise ValueError("Runtime internal tidak membutuhkan MCP preflight.")
 

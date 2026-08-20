@@ -42,7 +42,10 @@ async def qa_fill_kuesioner(
         entries = await list_questionnaires()
     except QaPortalError as exc:
         return f"Gagal memuat kuesioner QA sebelum approval: {exc}"
-    payload = {"score": score, "questionnaire_codes": [entry["code"] for entry in entries]}
+    payload = {
+        "score": score,
+        "questionnaire_codes": sorted(entry["code"] for entry in entries),
+    }
     policy = evaluate_action("qa_submit_kuesioner", payload)
     if not policy.allowed:
         return f"Pengisian QA ditahan policy: {policy.reason}"

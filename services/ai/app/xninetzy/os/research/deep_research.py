@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import re
 
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.interfaces.api.chat_events import emit_chat_event
@@ -42,18 +43,25 @@ def _limits(mode: str) -> dict:
 def rank_research_sources(topic: str, subplans: list[ResearchSubPlan], sources: list[dict], mode: str) -> list[dict]:
     seen: set[str] = set()
     ranked: list[dict] = []
-    topic_words = {w.lower() for w in topic.split() if len(w) > 2}
+    topic_words = {w.lower() for w in re.findall(r"[a-z0-9][a-z0-9_-]+", topic.lower()) if len(w) > 2}
     for source in sources:
-        url = source.get("url") or source.get("video_id") or source.get("title")
-        if not url or url in seen:
+        url = source.get("canonical_url") or source.get("url") or source.get("video_id") or source.get("title")
+        if not url:
             continue
-        seen.add(url)
+        canonical = str(url).rstrip("/").lower()
+        if canonical in seen:
+            continue
+        seen.add(canonical)
         text = f"{source.get('title','')} {source.get('snippet','')} {source.get('description','')}".lower()
-        score = sum(1 for word in topic_words if word in text)
-        if source.get("source_type") == "youtube":
-            score += 1
-        ranked.append({**source, "score": score, "why": "Relevan dengan fokus riset dan cocok sebagai sumber belajar."})
-    ranked.sort(key=lambda item: item.get("score", 0), reverse=True)
+        matched = sum(1 for word in topic_words if word in text)
+        relevance = float(source.get("relevance_score") or matched / max(len(topic_words), 1))
+        if topic_words and matched == 0 and relevance <= 0:
+            continue
+        evidence = {"metadata": 0.1, "snippet": 0.25, "abstract": 0.5, "fulltext": 1.0}.get(source.get("evidence_level"), 0.1)
+        quality = relevance * 0.7 + evidence * 0.3
+        score = float(source.get("fusion_score") or 0) + quality
+        ranked.append({**source, "canonical_url": canonical, "relevance_score": round(relevance, 6), "quality_score": round(quality, 6), "score": round(score, 6), "why": "Dipilih setelah deduplikasi, relevance gate, dan penilaian tingkat bukti."})
+    ranked.sort(key=lambda item: (-float(item.get("score") or 0), str(item.get("title") or "")))
     return ranked[: _limits(mode)["selected"]]
 
 
@@ -211,7 +219,7 @@ async def _run_deep_research(
                         )
                     )
                     all_sources.extend(out.data.get("sources", []))
-                if include_academic and academic_action and mode == "quality" and query_count == 1:
+                if include_academic and academic_action and query_count <= min(3, limits["query_limit"]):
                     out = await academic_action.execute(
                         ResearchActionInput(
                             session_id=session_id,

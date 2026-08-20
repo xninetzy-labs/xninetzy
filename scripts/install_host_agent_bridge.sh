@@ -45,13 +45,16 @@ set_env CODING_AGENT_ENABLED true
 set_env CODING_AGENT_DEFAULT opencode
 set_env CODING_AGENT_EXECUTION_MODE host_bridge
 set_env CODING_AGENT_HOST_BRIDGE_URL http://host.docker.internal:8765
-for runtime_binary in codex claude opencode; do
+for runtime_binary in codex claude opencode gemini qwen kilo; do
   binary_path="$(command -v "$runtime_binary" || true)"
   if [ -n "$binary_path" ]; then
     case "$runtime_binary" in
       codex) set_env CODEX_BIN "$binary_path" ;;
       claude) set_env CLAUDE_CODE_BIN "$binary_path" ;;
       opencode) set_env OPENCODE_BIN "$binary_path" ;;
+      gemini) set_env GEMINI_BIN "$binary_path" ;;
+      qwen) set_env QWEN_BIN "$binary_path" ;;
+      kilo) set_env KILO_BIN "$binary_path" ;;
     esac
   fi
 done

@@ -21,6 +21,19 @@ class ResearchSource(BaseModel):
     video_id: str = ""
     score: float = 0.0
     why: str = ""
+    provider: str = ""
+    providers: list[str] = Field(default_factory=list)
+    query_id: str = ""
+    raw_rank: int | None = None
+    canonical_url: str = ""
+    content_hash: str = ""
+    fetched_at: str = ""
+    fulltext_status: str = "not_requested"
+    evidence_locator: str = ""
+    relevance_score: float = 0.0
+    quality_score: float = 0.0
+    duplicate_of: str = ""
+    error: str = ""
 
 
 def assign_sids(sources: list[dict]) -> list[dict]:

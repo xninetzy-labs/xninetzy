@@ -66,7 +66,7 @@ class Settings(BaseSettings):
     # separate from the chat LLM provider selected above.
     CODING_AGENT_ENABLED: bool = False
     CODING_AGENT_DEFAULT: str = "internal"
-    CODING_AGENT_ALLOWED: str = "internal,codex,claude-code,opencode"
+    CODING_AGENT_ALLOWED: str = "internal,codex,claude-code,opencode,gemini,qwen,kilo"
     CODING_AGENT_ADMIN_ONLY: bool = True
     CODING_AGENT_WORKSPACE: str = "."
     CODING_AGENT_ALLOWED_ROOT: str = "."
@@ -89,6 +89,12 @@ class Settings(BaseSettings):
     CLAUDE_CODE_MODEL: str = ""
     OPENCODE_BIN: str = "opencode"
     OPENCODE_MODEL: str = ""
+    GEMINI_BIN: str = "gemini"
+    GEMINI_MODEL: str = ""
+    QWEN_BIN: str = "qwen"
+    QWEN_MODEL: str = ""
+    KILO_BIN: str = "kilo"
+    KILO_MODEL: str = ""
 
     CHAT_FAILOVER_ENABLED: bool = False
     CHAT_FAILOVER_RUNTIME: str = "opencode"
@@ -427,10 +433,14 @@ class Settings(BaseSettings):
     GRAPH_COMMUNITY_INTERVAL_MINUTES: int = 360
 
     # External research
-    WEB_SEARCH_PROVIDER: str = "tavily"
+    WEB_SEARCH_PROVIDER: str = "hybrid"
     TAVILY_API_KEY: str = ""
     SERPER_API_KEY: str = ""
     YOUTUBE_API_KEY: str = ""
+    SEARXNG_BASE_URL: str = ""
+    RESEARCH_PROVIDER_TIMEOUT_SECONDS: int = 15
+    DEEP_RESEARCH_FETCH_FULLTEXT: bool = True
+    DEEP_RESEARCH_FULLTEXT_CONCURRENCY: int = 3
 
     # Life OS
     LIFE_OS_ENABLED: bool = True

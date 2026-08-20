@@ -1,3 +1,5 @@
+import json
+
 from app.xninetzy.core.config import get_settings
 from app.xninetzy.os.lightning.rl import (
     record_action,
@@ -113,3 +115,25 @@ def test_registry_contains_shared_lightning_tools():
         "lightning_regression_check",
         "lightning_propose_improvement",
     } <= names
+
+
+def test_reward_v2_does_not_make_missing_evidence_perfect(monkeypatch, tmp_path):
+    monkeypatch.setenv("SQLITE_PATH", str(tmp_path / "coverage.sqlite3"))
+    get_settings.cache_clear()
+    episode = start_episode(
+        owner_scope="owner-a",
+        interface="test",
+        context={"domain": "research", "intent": "search"},
+        strategy_id="route:open",
+        idempotency_key="coverage-1",
+    )
+    result = record_outcome(
+        episode_id=episode["episode_id"],
+        owner_scope="owner-a",
+        success=True,
+        idempotency_key="coverage-1:outcome",
+    )
+    breakdown = json.loads(result["reward_breakdown_json"])
+    assert result["reward"] < 1.0
+    assert breakdown["confidence"] < 1.0
+    assert "evidence_quality" in breakdown["missing_components"]

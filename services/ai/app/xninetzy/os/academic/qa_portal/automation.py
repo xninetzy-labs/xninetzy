@@ -75,7 +75,7 @@ async def _fill_login_fields(page, creds) -> None:
 
 async def _fresh_captcha_token(page) -> None:
     settle_ms = max(0, get_settings().QA_RECAPTCHA_SETTLE_MS)
-    for _ in range(20):
+    for _ in range(45):
         try:
             state = await page.evaluate(
                 """() => {
@@ -121,7 +121,7 @@ async def _fresh_captcha_token(page) -> None:
                 and stable.get("action") == "validate_captcha"
             ):
                 return
-        await page.wait_for_timeout(1000)
+        await page.wait_for_timeout(1500)
     raise QaHumanVerificationRequired(
         "reCAPTCHA QA belum menghasilkan token stabil; "
         "login QA memerlukan verifikasi manusia di browser."
@@ -130,13 +130,16 @@ async def _fresh_captcha_token(page) -> None:
 
 async def login(page) -> None:
     creds = resolve_campus_credentials(get_settings().QA_CREDENTIAL_SOURCE)
-    await _goto_retry(page, QA_LOGIN_URL)
-    await page.wait_for_selector("input[name='userid']", timeout=20000)
-    for _ in range(6):
+    for _ in range(8):
+        # Reload halaman login setiap attempt: reCAPTCHA v3 hanya membuat
+        # token baru saat halaman dimuat. Token lama sudah basi dan selalu
+        # ditolak server, jadi tanpa reload attempt berikutnya pasti gagal.
+        await _goto_retry(page, QA_LOGIN_URL)
+        await page.wait_for_selector("input[name='userid']", timeout=20000)
         await _fill_login_fields(page, creds)
         await _fresh_captcha_token(page)
         await page.click("button[name='login']")
-        await page.wait_for_timeout(6500)
+        await page.wait_for_timeout(10000)
         if "/qa/gate/menu" in page.url:
             return
         body_text = (await page.locator("body").inner_text()).casefold()
@@ -145,7 +148,6 @@ async def login(page) -> None:
                 "Portal QA menolak token reCAPTCHA otomatis; "
                 "login QA memerlukan verifikasi manusia di browser."
             )
-        await page.wait_for_selector("input[name='userid']", timeout=20000)
     raise QaPortalError("Login QA gagal: tidak sampai ke halaman menu.")
 
 
@@ -202,7 +204,7 @@ async def _fill_radios(page, target_value: str) -> int:
         )
         if names:
             break
-        await page.wait_for_timeout(1000)
+        await page.wait_for_timeout(1500)
     if not names:
         return 0
     filled = 0
@@ -214,6 +216,7 @@ async def _fill_radios(page, target_value: str) -> int:
         chosen = target_value if target_value in options else max(options)
         await page.check(f"input[name='{name}'][value='{chosen}']")
         filled += 1
+        await page.wait_for_timeout(300)
     return filled
 
 
@@ -223,7 +226,7 @@ async def _submit(page) -> None:
         await button.click()
     else:
         await page.evaluate("document.querySelector('form')?.requestSubmit()")
-    await page.wait_for_timeout(6000)
+    await page.wait_for_timeout(8000)
 
 
 async def _fill_form_sections(page, target_value: str) -> dict:
@@ -236,7 +239,18 @@ async def _fill_form_sections(page, target_value: str) -> dict:
         unit = page.locator("select#idunit")
         unit_count = await unit.locator("option").count()
         if mk_count <= 1 and unit_count <= 1:
-            if await page.locator("select[required]").count() == 0:
+            # Form tanpa idmk/idunit (mis. A9 perwalian): pilih dosen wali
+            # dulu jika ada, lalu isi radio satu blok dan submit.
+            dosen = page.locator("select#dosen")
+            dosen_count = await dosen.locator("option").count()
+            if dosen_count > 1:
+                await dosen.select_option(index=1)
+                await page.wait_for_timeout(1500)
+            required_open = await page.evaluate(
+                "() => [...document.querySelectorAll('select[required]')]"
+                ".filter(s => (s.value || '').trim() === '').length"
+            )
+            if required_open == 0:
                 filled = await _fill_radios(page, target_value)
                 if filled:
                     required_text = page.locator("textarea[required]")
@@ -266,7 +280,7 @@ async def _fill_form_sections(page, target_value: str) -> dict:
             if value in submitted_values:
                 continue
             await selector.select_option(index=index)
-            await page.wait_for_timeout(2000)
+            await page.wait_for_timeout(3000)
             if select_id == "idmk":
                 dosen = page.locator("select#dosen")
                 dosen_count = await dosen.locator("option").count()
@@ -276,7 +290,7 @@ async def _fill_form_sections(page, target_value: str) -> dict:
                     )
                     continue
                 await dosen.select_option(index=1)
-                await page.wait_for_timeout(1000)
+                await page.wait_for_timeout(1500)
             filled = await _fill_radios(page, target_value)
             if filled == 0:
                 summary["sections"].append(
@@ -297,13 +311,13 @@ async def _fill_form_sections(page, target_value: str) -> dict:
             summary["total_filled"] += filled
             progressed = True
             submitted_values.add(value)
-            await page.wait_for_timeout(2000)
+            await page.wait_for_timeout(4000)
             if "/qa/kuesioner/success/" in page.url:
                 break
         if not progressed:
             break
         await _goto_retry(page, form_url)
-        await page.wait_for_timeout(3000)
+        await page.wait_for_timeout(5000)
     return summary
 
 
@@ -380,13 +394,14 @@ async def fill_all_questionnaires(score: int = 10) -> dict:
             for entry in entries:
                 print(f"[STEP] opening {entry['code']} {entry['title']}")
                 await page.goto(entry["url"], wait_until="domcontentloaded", timeout=45000)
-                await page.wait_for_timeout(3000)
+                await page.wait_for_timeout(5000)
                 try:
                     summary = await _fill_form_sections(page, target_value)
                 except Exception as exc:
                     summary = {"error": str(exc)}
                 results.append({"code": entry["code"], "title": entry["title"], **summary})
                 print(f"[STEP] {entry['code']} done: {summary}")
+                await page.wait_for_timeout(6000)
             await open_dashboard(page)
             body = await page.evaluate("document.body.innerText.slice(0, 3000)")
             return {"score": score, "results": results, "dashboard_text": body}

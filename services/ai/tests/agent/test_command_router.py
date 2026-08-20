@@ -13,6 +13,10 @@ def test_hebat_debug_command():
     assert parse_command("/hebat-debug") == ("hebat_debug_login", {})
 
 
+def test_hebat_login_command_uses_shared_login_tool():
+    assert parse_command("/hebat-login") == ("hebat_start_login", {})
+
+
 def test_grade_command_preserves_requested_period():
     assert parse_command("/nilai") == (
         "portal_grades",

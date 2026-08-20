@@ -227,6 +227,8 @@ def parse_command(message: str) -> tuple[str | None, dict]:
 
     if stripped.lower() == "/cyber-login":
         return "portal_login_start", {}
+    if stripped.lower() == "/hebat-login":
+        return "hebat_start_login", {}
     if stripped.lower() == "/uacc-login":
         return "uacc_login_start", {}
     if KRS_STATUS_PATTERN.match(stripped):

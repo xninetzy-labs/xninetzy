@@ -129,6 +129,7 @@ CATEGORIES = {
             "/money            — ringkasan keuangan",
             "/workout          — ringkasan workout",
             "/hebat            — digest HEBAT",
+            "/hebat-login      — login HEBAT dengan kredensial server",
             "/jadwal           — snapshot jadwal lokal",
             "/nilai            — minta token untuk membaca KHS",
             "/nilai changes    — perubahan dua snapshot nilai terakhir",
@@ -175,10 +176,10 @@ Web search, YouTube search, deep research brief
 Daily note, learning note, project note, append, search
 
 *11. AI Runtime*
-Pilih provider/model chat dan jalankan Codex, Claude Code, atau OpenCode (admin)
+Pilih provider/model chat dan jalankan Codex, Claude Code, OpenCode, Gemini, Qwen, atau Kilo di host (admin)
 
 *12. Slash Commands*
-/capture, /inbox, /triage, /today, /review, /goals, /tasks, /llm, /agent, /code
+/capture, /inbox, /triage, /today, /review, /goals, /tasks, /hebat-login, /llm, /agent, /code
 
 Ketik: */helper <kategori>* untuk detail
 Contoh: /helper learning"""

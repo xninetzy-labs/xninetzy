@@ -14,6 +14,7 @@ from app.xninetzy.core.coding_agents import (
     CodingAgentResult,
     _run_local_coding_agent,
     runtime_catalog,
+    validate_runtime,
 )
 from app.xninetzy.core.config import Settings, get_settings
 from app.xninetzy.core.chat_failover import (
@@ -107,8 +108,6 @@ async def run_host_agent(payload: HostAgentRunRequest) -> HostAgentRunResponse:
     if not settings.CODING_AGENT_ENABLED:
         raise HTTPException(status_code=503, detail="Coding agent dinonaktifkan")
     runtime = payload.runtime.strip().lower()
-    if runtime not in {"codex", "claude-code", "opencode"}:
-        raise HTTPException(status_code=400, detail="Runtime host tidak didukung")
     host_settings = settings.model_copy(
         update={
             "CODING_AGENT_EXECUTION_MODE": "local",
@@ -116,6 +115,12 @@ async def run_host_agent(payload: HostAgentRunRequest) -> HostAgentRunResponse:
             "CODING_AGENT_ALLOWED_ROOT": settings.CODING_AGENT_HOST_ALLOWED_ROOT,
         }
     )
+    if runtime == "internal":
+        raise HTTPException(status_code=400, detail="Runtime host tidak didukung")
+    try:
+        validate_runtime(runtime, host_settings)
+    except ValueError as exc:
+        raise HTTPException(status_code=400, detail=str(exc)) from exc
     result: CodingAgentResult = await _run_local_coding_agent(
         runtime,
         payload.task,

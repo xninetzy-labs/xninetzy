@@ -76,7 +76,9 @@ def langchain_tool_as_mcp_callable(
             settings = get_settings()
             if settings.LIGHTNING_ENABLED and not tool.name.startswith("lightning_episode_"):
                 from app.xninetzy.os.lightning.rl import start_episode
+                from app.xninetzy.tools.manifest import manifest_for
 
+                manifest = manifest_for(tool.name)
                 episode = start_episode(
                     owner_scope=trusted_context["sender_id"],
                     interface="mcp",
@@ -85,7 +87,7 @@ def langchain_tool_as_mcp_callable(
                     context={
                         "domain": "mcp",
                         "intent": tool.name,
-                        "risk_class": "read",
+                        "risk_class": manifest.risk.value,
                     },
                     strategy_id=f"mcp:{tool.name}",
                     idempotency_key=(

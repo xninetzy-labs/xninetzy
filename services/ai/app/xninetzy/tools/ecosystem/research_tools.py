@@ -26,6 +26,13 @@ async def web_search(query: str, limit: int = 5) -> str:
 
 
 @tool
+def research_capabilities() -> dict:
+    """Tampilkan status provider Deep Research tanpa membocorkan credential."""
+    from app.xninetzy.os.research.web_search import research_capabilities as _capabilities
+    return _capabilities()
+
+
+@tool
 async def youtube_search(query: str, limit: int = 5) -> str:
     """Cari video YouTube yang relevan.
 

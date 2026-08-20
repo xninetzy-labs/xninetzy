@@ -1,3 +1,5 @@
+import fs from "node:fs";
+import path from "node:path";
 import type { WASocket } from "@whiskeysockets/baileys";
 
 import { env } from "../config/env";
@@ -21,6 +23,7 @@ export type StartupMenuOptions = {
   adminJid: string;
   delayMs: number;
   botName: string;
+  statePath?: string;
 };
 
 export type StartupMenuResult = {
@@ -30,6 +33,10 @@ export type StartupMenuResult = {
 
 type StartupMenuSocket = Pick<WASocket, "sendMessage">;
 type StartupMenuState = "idle" | "sending" | "handled";
+type StartupMenuManifest = {
+  version: 1;
+  chats: Record<string, number>;
+};
 
 let startupMenuState: StartupMenuState = "idle";
 
@@ -53,21 +60,21 @@ export const STARTUP_MENU_CARDS: StartupMenuCard[] = [
     ],
   },
   {
-    title: "🎓 Learning OS",
-    description: "Akses kuliah, roadmap, dan fokus belajar adaptif.",
+    title: "🎓 Akademik",
+    description: "Masuk HEBAT, cek ringkasan kuliah, lalu lanjutkan roadmap.",
     buttons: [
-      { id: "/hebat", label: "HEBAT" },
+      { id: "/hebat-login", label: "Login HEBAT" },
+      { id: "/hebat", label: "Ringkasan HEBAT" },
       { id: "/roadmaps", label: "Roadmap" },
-      { id: "/study-today", label: "Belajar Hari Ini" },
     ],
   },
   {
-    title: "🧠 Knowledge",
-    description: "Buka memori, skill, dan panduan knowledge Xninetzy.",
+    title: "🧠 Belajar & Knowledge",
+    description: "Tentukan fokus belajar dan gunakan memori serta skills bersama.",
     buttons: [
+      { id: "/study-today", label: "Belajar Hari Ini" },
       { id: "/memory", label: "Memory" },
       { id: "/skills", label: "Skills" },
-      { id: "/helper knowledge", label: "Knowledge Help" },
     ],
   },
   {
@@ -87,7 +94,44 @@ function startupMenuOptions(): StartupMenuOptions {
     adminJid: env.ADMIN_JID,
     delayMs: env.WA_STARTUP_MENU_DELAY_MS,
     botName: env.BOT_NAME,
+    statePath: startupMenuStorePath(),
   };
+}
+
+function startupMenuStorePath(): string {
+  return path.resolve(env.WA_PROCESSING_DIR, "startup-menu.json");
+}
+
+function loadStartupMenuManifest(statePath: string): StartupMenuManifest {
+  try {
+    const parsed = JSON.parse(fs.readFileSync(statePath, "utf8")) as StartupMenuManifest;
+    if (parsed.version !== 1 || !parsed.chats || typeof parsed.chats !== "object") {
+      throw new Error("Invalid startup-menu manifest");
+    }
+    return parsed;
+  } catch (error) {
+    if ((error as NodeJS.ErrnoException).code === "ENOENT") {
+      return { version: 1, chats: {} };
+    }
+    throw error;
+  }
+}
+
+function saveStartupMenuManifest(statePath: string, manifest: StartupMenuManifest): void {
+  fs.mkdirSync(path.dirname(statePath), { recursive: true });
+  const temporary = `${statePath}.${process.pid}.${Date.now()}.tmp`;
+  fs.writeFileSync(temporary, JSON.stringify(manifest, null, 2), { mode: 0o600 });
+  fs.renameSync(temporary, statePath);
+}
+
+function hasStartupMenu(statePath: string, chatId: string): boolean {
+  return Boolean(loadStartupMenuManifest(statePath).chats[chatId]);
+}
+
+function markStartupMenuSent(statePath: string, chatId: string): void {
+  const manifest = loadStartupMenuManifest(statePath);
+  manifest.chats[chatId] = Date.now();
+  saveStartupMenuManifest(statePath, manifest);
 }
 
 export function normalizeStartupMenuJid(value: string): string {
@@ -109,7 +153,7 @@ export function startupMenuFallbackText(botName: string): string {
       lines.push(`• ${button.label}: ${button.id}`);
     }
   }
-  lines.push("", "Kirim `/helper` untuk melihat panduan lengkap.");
+  lines.push("", "Kirim `/commands` untuk katalog tool aktif atau `/helper` untuk panduan lengkap.");
   return lines.join("\n");
 }
 
@@ -133,6 +177,12 @@ export async function sendStartupAdminMenuOnce(
       "WhatsApp startup menu skipped",
     );
     return { status: "skipped", messagesSent: 0 };
+  }
+
+  const statePath = options.statePath || startupMenuStorePath();
+  if (hasStartupMenu(statePath, adminJid)) {
+    startupMenuState = "handled";
+    return { status: "already_handled", messagesSent: 0 };
   }
 
   startupMenuState = "sending";
@@ -161,6 +211,7 @@ export async function sendStartupAdminMenuOnce(
       );
       messagesSent += 1;
     }
+    markStartupMenuSent(statePath, adminJid);
     startupMenuState = "handled";
     logger.info(
       {
@@ -191,6 +242,7 @@ export async function sendStartupAdminMenuOnce(
     await sock.sendMessage(adminJid, {
       text: startupMenuFallbackText(options.botName),
     });
+    markStartupMenuSent(statePath, adminJid);
     startupMenuState = "handled";
     return { status: "fallback", messagesSent: messagesSent + 1 };
   } catch (fallbackError) {

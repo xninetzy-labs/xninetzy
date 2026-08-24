@@ -12,7 +12,8 @@ metadata:
 
 * use authorized credentials only;
 * never expose credentials in logs;
-* CAPTCHA and OTP remain manual;
+* CAPTCHA automate;
+* OTP never automate;
 * use short-lived challenge;
 * invalidate expired challenge;
 * do not bypass institutional controls.

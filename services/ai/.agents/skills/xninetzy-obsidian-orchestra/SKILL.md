@@ -1,262 +1,568 @@
+# Xninetzy Obsidian Orchestra
+
+```yaml
 ---
 name: xninetzy-obsidian-orchestra
-description: >
-  Orchestrate, reorganize, and maintain the canonical Obsidian vault structure for Xninetzy.
-  Use when: creating folders, migrating notes, fixing naming conventions, generating MOCs,
-  running vault health checks, restructuring the vault, archiving old semester content,
-  writing or upgrading project/course notes with diagrams (Mermaid visualization standard),
-  or any request about Obsidian folder organization and file placement.
-  Do NOT use for: reading note content (use obsidian-knowledge), graph queries (use graph-rag),
-  or daily note creation (use life-management).
+description: General-purpose operating system for organizing, restructuring, maintaining, and navigating the canonical Xninetzy Obsidian vault. Manages folder and file conventions, course/project structures, migrations, semester archiving, MOCs, frontmatter, Mermaid visualization, vault health, naming integrity, portal-to-Obsidian ingestion, backlink consistency, and safe structural changes while keeping note-content reading, graph reasoning, daily management, and durable memory in their owning skills.
+metadata:
+  scope: general
+  owner: xninetzy
+  language: en
+  version: "2.0.0"
+  lifecycle: "inspect -> classify -> plan -> preview -> approve -> mutate -> verify -> index -> checkpoint"
 ---
+```
 
 # Xninetzy Obsidian Orchestra
 
-Manage the Obsidian vault's folder structure, naming conventions, and navigation
-as a single, coherent system. Every note must live in the right place with the
-right name so that retrieval, MOC generation, and cross-session memory all work.
+This skill is the **structural and navigational operating system for the Xninetzy Obsidian vault**.
 
-## Principle
+Its responsibility is to keep the vault:
 
-The vault is a **living knowledge base**, not a file dump. Every folder has a
-clear purpose. Every naming convention exists so that humans and agents can find
-things without guessing. When in doubt, check this skill before creating or
-moving anything.
+**organized, human-readable, canonical, retrievable, internally consistent, and safe to restructure.**
 
-## Naming Rules (STRICT)
+The vault should function as a **living knowledge system**, not a collection of files.
 
-### Folder Names — MUST be human-readable
+The canonical lifecycle is:
 
-| Type | Format | Good | Bad |
-|------|--------|------|-----|
-| Course | `{Code} - {Full Name}` | `SII213 - Inovasi SI dan Teknologi` | `SII213`, `10929`, `2025genap-sii213-*` |
-| Semester | `{Year} {Period}` | `2026 Ganjil`, `2025 Genap` | `2026Ganjil`, `2025Genap`, `2025g` |
-| Topic | `{Topic Name}` | `Machine Learning`, `SDLC`, `TOGAF` | `machine-learning`, `sic201` |
-| Project | `{Project Name}` | `BEM UNAIR 2026`, `Xninetzy` | `bemunair2026`, `xninetzy-proj` |
+**Inspect → Classify → Plan → Preview → Approve → Mutate → Verify → Index → Checkpoint**
 
-### Folder Names — NEVER use
+---
 
-- Numeric IDs: `10929`, `10924`, `10976`
-- Auto-generated slugs: `2025genap-sic201-pembelajaran-mesin-s1-sistem-informasi-2021-i2`
-- Abbreviations that aren't course codes: `pm`, `jk`, `se`
-- Temporal markers: `week-1`, `bab-1` (use numbering in files instead)
+# 1. Scope Boundary
 
-### File Names
+Use this skill for:
 
-| Type | Format | Example |
-|------|--------|---------|
-| Daily note | `YYYY-MM-DD.md` | `2026-08-21.md` |
-| Lecture note | `NN - Topic Name.md` | `01 - Konsep Dasar SDLC.md` |
-| Assignment | `Tugas N - Title.md` | `Tugas 2 - Rencana Desain.md` |
-| MOC | `00 - Index.md` | `00 - Index.md` |
-| Concept | `Concept Name.md` | `SDLC.md`, `Enterprise Architecture.md` |
-| Other | `Title Name.md` | `Sleep Tracker.md`, `KRS Plan.md` |
+* folder creation,
+* folder restructuring,
+* file placement,
+* file/folder naming,
+* note migration,
+* semester archiving,
+* MOC generation,
+* MOC refresh,
+* frontmatter normalization,
+* backlink/index maintenance,
+* vault health checks,
+* orphan detection,
+* naming-violation repair,
+* project/course note structure,
+* portal-analysis ingestion into Obsidian,
+* Mermaid diagram insertion when the note structure requires it.
 
-### File Names — NEVER use
+Do **not** use this skill as the primary owner for:
 
-- Auto-slug filenames: `innovation-management-and-new-product-developmentfile.md`
-- IDs in filenames: `course-10929-material.md`
-- Underscores: `my_note.md` (use spaces or kebab-case)
-- All lowercase without structure: `notes.md`
+* deep note-content retrieval,
+* semantic knowledge querying,
+* graph reasoning,
+* daily task management,
+* durable cross-session memory,
+* academic portal operations.
 
-## Canonical Folder Structure
+Route those concerns to the appropriate specialized skill.
 
+---
+
+# 2. Core Principle
+
+Every note should have:
+
+**the right location,
+the right name,
+the right frontmatter,
+the right navigation path,
+and the right structural relationships.**
+
+Do not create a new convention merely because the existing vault is inconvenient.
+
+When a structural decision is ambiguous:
+
+**inspect the current canonical structure first.**
+
+---
+
+# 3. Source of Truth
+
+For vault organization, the current vault structure is authoritative.
+
+Use:
+
+```text
+current vault state
+↓
+existing conventions
+↓
+this skill's general rules
+↓
+fallback assumptions
 ```
+
+Do not silently impose a new folder architecture if the current vault already contains an established and coherent pattern.
+
+When migrating across structures, preserve the canonical organization rather than creating parallel systems.
+
+---
+
+# 4. Human-Readable Naming
+
+Names should be understandable without opening the file.
+
+## Course folders
+
+Format:
+
+```text
+{Code} - {Full Name}
+```
+
+Examples:
+
+```text
+SII213 - Inovasi Sistem Informasi dan Teknologi
+SII208 - Desain Interaksi
+```
+
+Avoid:
+
+```text
+SII213
+10929
+2025genap-sii213-pembelajaran-...
+```
+
+---
+
+## Semester folders
+
+Format:
+
+```text
+{Year} {Period}
+```
+
+Examples:
+
+```text
+2026 Ganjil
+2025 Genap
+```
+
+Avoid:
+
+```text
+2026Ganjil
+2025genap
+2025g
+```
+
+---
+
+## Topic folders
+
+Use natural topic names:
+
+```text
+Machine Learning
+Enterprise Architecture
+SDLC
+Data Visualization
+```
+
+Avoid meaningless slugs or internal codes.
+
+---
+
+## Project folders
+
+Format:
+
+```text
+{Project Name}
+```
+
+Examples:
+
+```text
+BEM UNAIR 2026
+Xninetzy
+EcoTrack
+```
+
+---
+
+# 5. Folder Naming Prohibitions
+
+Never use:
+
+* numeric IDs,
+* database IDs,
+* LMS internal IDs,
+* auto-generated slugs,
+* meaningless abbreviations,
+* week markers as permanent folder hierarchy,
+* excessively nested folder paths.
+
+Examples of prohibited names:
+
+```text
+10929
+10924
+2025genap-sic201-pembelajaran-mesin-s1-sistem-informasi
+pm
+week-1
+bab-1
+```
+
+Use numbering inside filenames when sequential order is meaningful.
+
+---
+
+# 6. File Naming
+
+## Daily notes
+
+```text
+YYYY-MM-DD.md
+```
+
+Example:
+
+```text
+2026-08-24.md
+```
+
+## Lecture notes
+
+```text
+NN - Topic Name.md
+```
+
+Example:
+
+```text
+01 - Konsep Dasar SDLC.md
+```
+
+## Assignments
+
+```text
+Tugas N - Title.md
+```
+
+Example:
+
+```text
+Tugas 2 - Rencana Desain.md
+```
+
+## MOCs
+
+```text
+00 - Index.md
+```
+
+## Concepts
+
+```text
+Concept Name.md
+```
+
+Examples:
+
+```text
+SDLC.md
+Enterprise Architecture.md
+```
+
+## General notes
+
+```text
+Title Name.md
+```
+
+---
+
+# 7. File Naming Prohibitions
+
+Avoid:
+
+```text
+innovation-management-and-new-product-developmentfile.md
+course-10929-material.md
+notes.md
+my_note.md
+```
+
+Do not use IDs as filenames.
+
+Prefer meaningful human-readable names.
+
+Use spaces for normal vault titles unless the existing project convention explicitly uses kebab-case.
+
+---
+
+# 8. Canonical Vault Structure
+
+Default structure:
+
+```text
 /
-+-- Academic/
-|   +-- Current/                          <- ACTIVE semester only
-|   |   +-- {Code} - {Full Name}/         <- e.g. SII213 - Inovasi SI dan Teknologi
-|   |       +-- Materials/                <- lecture slides, readings
-|   |       +-- Assignments/              <- tugas, resume, laporan
-|   |       +-- Notes/                    <- personal lecture notes
-|   |       +-- README.md                 <- course overview + links
-|   +-- Archive/                          <- past semesters
-|   |   +-- {Year} {Period}/             <- e.g. 2025 Genap
-|   |       +-- {Code} - {Full Name}/    <- same sub-structure
-|   +-- BBK/                              <- BBK guide & artifacts
-|   +-- KRS/                              <- KRS plans & war logs
-|   +-- Schedule/                         <- jadwal kuliah
-|   +-- UACC/                             <- UACC SSO portal analysis
-|   |   +-- UACC Portal Overview.md       <- portal structure + graph
-|   |   +-- Pages/                        <- per-page analysis notes
-|   |   +-- Workflow.md                   <- login + analysis workflow
-|   +-- HEBAT/                            <- HEBAT Moodle portal
-|   +-- Cyber Campus/                     <- Cyber Campus (mahasiswa.unair.ac.id)
-|   +-- QA/                               <- QA portal (qa.unair.ac.id)
-|
-+-- Knowledge/                            <- permanent, reusable knowledge
-|   +-- Notes/                            <- Zettelkasten-style atomic notes
-|   +-- Concepts/                         <- concept definitions
-|   +-- Literature/                       <- paper summaries, book notes
-|   +-- Sources/                          <- source metadata for citation
-|
-+-- Learning/                             <- active learning materials
-|   +-- {Topic Name}/                     <- e.g. Machine Learning, SDLC
-|   +-- Roadmaps/                         <- learning roadmaps
-|   +-- Sessions/                         <- study session logs
-|
-+-- Life/                                 <- personal life management
-|   +-- Goals/                            <- life goals & reviews
-|   +-- Habits/                           <- habit tracking
-|   +-- Health/                           <- workout, sleep, health
-|   +-- Finance/                          <- money logs
-|
-+-- Research/                             <- research outputs
-|   +-- Manifests/                        <- research manifests
-|   +-- Reports/                          <- research reports & briefs
-|
-+-- Projects/                             <- project documentation
-|   +-- {Project Name}/                   <- e.g. BEM UNAIR 2026
-|
-+-- Inbox/                                <- unprocessed captures
-+-- Archive/                              <- completed/moved items
-+-- Templates/                            <- note templates
-+-- Daily/                                <- daily notes (YYYY-MM-DD.md only)
-+-- System/                               <- logs, checkpoints, config
+├── Academic/
+│   ├── Current/
+│   │   └── {Code} - {Full Name}/
+│   │       ├── Materials/
+│   │       ├── Assignments/
+│   │       ├── Notes/
+│   │       └── README.md
+│   │
+│   ├── Archive/
+│   │   └── {Year} {Period}/
+│   │       └── {Code} - {Full Name}/
+│   │
+│   ├── BBK/
+│   ├── KRS/
+│   ├── Schedule/
+│   ├── UACC/
+│   │   ├── Pages/
+│   │   ├── UACC Portal Overview.md
+│   │   └── Workflow.md
+│   ├── HEBAT/
+│   ├── Cyber Campus/
+│   └── QA/
+│
+├── Knowledge/
+│   ├── Notes/
+│   ├── Concepts/
+│   ├── Literature/
+│   └── Sources/
+│
+├── Learning/
+│   ├── {Topic Name}/
+│   ├── Roadmaps/
+│   └── Sessions/
+│
+├── Life/
+│   ├── Goals/
+│   ├── Habits/
+│   ├── Health/
+│   └── Finance/
+│
+├── Research/
+│   ├── Manifests/
+│   └── Reports/
+│
+├── Projects/
+│   └── {Project Name}/
+│
+├── Inbox/
+├── Archive/
+├── Templates/
+├── Daily/
+└── System/
 ```
 
-## Course Reference
+This is the **default architecture**, not an instruction to rebuild an existing vault blindly.
 
-### 2026 Ganjil (Active)
-| Code | Full Name |
-|------|-----------|
-| SIA301 | Perencanaan Arsitektur Perusahaan |
-| SIA302 | PPA Praktikum |
-| SID303 | Analisis dan Visualisasi Data |
-| SID304 | AVD Praktikum |
-| SII208 | Desain Interaksi |
-| SII209 | Desain Interaksi Praktikum |
-| SII213 | Inovasi Sistem Informasi dan Teknologi |
-| SII318 | Pembangunan Perangkat Lunak |
-| SII319 | PPL Praktikum |
-| MNW409 | Kewirausahaan dan Bisnis SI |
-| BAE112 | Bahasa Inggris II |
+---
 
-### 2025 Genap (Archive)
-| Code | Full Name |
-|------|-----------|
-| MNM203 | Kepemimpinan dan Manajemen Organisasi |
-| SIC201 | Pembelajaran Mesin |
-| SIC202 | Pembelajaran Mesin Praktikum |
-| SII301 | Analisis dan Perancangan Sistem Informasi |
-| SII316 | APSI Praktikum |
-| SIJ202 | Jaringan Komputer |
-| SIJ206 | Jaringan Komputer Praktikum |
-| SIS202 | Sistem Enterprise |
-| SIS304 | Pemrograman Mobile |
-| SIS305 | Pemrograman Mobile Praktikum |
+# 9. Current vs Archive Boundary
 
-## Orchestration Workflows
+`Academic/Current/` contains only active-semester courses.
 
-### 1. Vault Health Check
-Run when: periodic review, before big changes, user asks "cek vault".
-```
-Steps:
-1. xninetzy_obsidian_folder_status -> total notes, missing structure, duplicates
-2. xninetzy_obsidian_list (each top-level folder) -> check for misplaced files
-3. xninetzy_obsidian_todos -> find orphaned todos
-4. xninetzy_obsidian_search_health -> FTS index health
-5. Report: file count per folder, naming violations, misplaced notes, health status
+`Academic/Archive/` contains previous semesters.
+
+Never mix active and archived semesters.
+
+When a semester ends:
+
+```text
+Current
+ ↓
+Archive/{Year} {Period}
 ```
 
-### 2. Create Course Structure
-Run when: new course appears in HEBAT, user asks "siapkan folder course X".
-```
-Steps:
-1. xninetzy_hebat_list_courses(query=courseCode) -> get course info
-2. Determine folder name: "{Code} - {Full Name}"
-3. Create: Academic/Current/{Code} - {Full Name}/Materials/
-4. Create: Academic/Current/{Code} - {Full Name}/Assignments/
-5. Create: Academic/Current/{Code} - {Full Name}/Notes/
-6. Create README.md with course overview, links, schedule
-7. Add frontmatter: course_code, course_name, semester, status
+Preserve course identity and internal structure.
+
+---
+
+# 10. Course Structure
+
+A course folder should normally contain:
+
+```text
+{Code} - {Full Name}/
+├── Materials/
+├── Assignments/
+├── Notes/
+└── README.md
 ```
 
-### 3. Migrate Notes
-Run when: notes are in wrong folders, reorganization needed.
-```
-Steps:
-1. xninetzy_obsidian_organize_preview -> show what will move where
-2. Present migration plan to user for approval
-3. For each note to move:
-   a. xninetzy_obsidian_read (source)
-   b. xninetzy_obsidian_create (destination, same content)
-   c. Update frontmatter: path, moved_from, moved_at
-4. Verify: re-check folder_status, update MOCs
+The README should contain useful course-level navigation such as:
+
+* course code,
+* full name,
+* semester,
+* status,
+* official links,
+* schedule when available,
+* key materials,
+* assignment index.
+
+Do not put every course detail into the README.
+
+Keep it as a navigation and overview note.
+
+---
+
+# 11. Course Creation Workflow
+
+When a new course appears:
+
+1. retrieve verified course identity,
+2. determine `{Code} - {Full Name}`,
+3. determine active semester,
+4. inspect whether the folder already exists,
+5. preview the required structure,
+6. create only missing folders,
+7. create `README.md`,
+8. apply frontmatter,
+9. verify structure.
+
+Do not duplicate an existing course folder.
+
+---
+
+# 12. Course Identity Validation
+
+Before creating a course folder, confirm:
+
+```text
+course_code
+course_name
+semester
+status
 ```
 
-### 4. Archive Semester
-Run when: semester ends, user asks "arsipkan semester X".
-```
-Steps:
-1. List all courses in Academic/Current/
-2. Create Academic/Archive/{Year} {Period}/
-3. Move each course folder to Archive
-4. Update frontmatter: status=archived, archived_at
-5. Regenerate Academic MOC
+Prefer the current official course source when available.
+
+Do not infer the full course name from a numeric portal ID.
+
+---
+
+# 13. Migration Workflow
+
+Structural changes should be safe and inspectable.
+
+Use:
+
+```text
+Inspect
+→ Organize Preview
+→ Approval
+→ Read
+→ Create destination
+→ Preserve content
+→ Remove/rename source
+→ Repair links
+→ Refresh MOC
+→ Verify
 ```
 
-### 5. Generate/Refresh MOCs
-Run when: after migration, periodic refresh, user asks "refresh MOC".
-```
-Steps:
-1. xninetzy_obsidian_moc_refresh -> regenerate root MOCs
-2. For each major folder, generate/update {Folder}-MOC.md
-3. Ensure all notes are linked from at least one MOC
-4. Report: orphaned notes (not in any MOC)
+Do not move a large set of notes blindly.
+
+---
+
+# 14. Migration Preview
+
+Before a non-trivial migration, show:
+
+| Current Path | Proposed Path | Reason                      | Risk            |
+| ------------ | ------------- | --------------------------- | --------------- |
+| old path     | new path      | naming/structure correction | low/medium/high |
+
+Preview should clearly identify:
+
+* files affected,
+* destination,
+* naming changes,
+* link implications,
+* possible conflicts.
+
+---
+
+# 15. Migration Safety
+
+Before moving a note:
+
+1. verify source exists,
+2. verify destination does not conflict,
+3. preserve content,
+4. preserve frontmatter,
+5. record original path when useful,
+6. update backlinks/references,
+7. verify destination,
+8. only then remove/rename the source when safe.
+
+Do not delete the source first.
+
+---
+
+# 16. Naming Repair
+
+When naming violations exist:
+
+1. scan,
+2. classify violation,
+3. calculate canonical name,
+4. preview changes,
+5. execute approved changes,
+6. update references,
+7. refresh MOCs,
+8. verify.
+
+Do not rename based only on aesthetic preference.
+
+A rename must improve canonical retrieval or consistency.
+
+---
+
+# 17. Conflict Resolution During Migration
+
+When destination already exists:
+
+```text
+source exists
++
+destination exists
+↓
+compare identities
+↓
+same note?
+different notes?
+unknown?
 ```
 
-### 6. Fix Naming Violations
-Run when: health check finds violations, user asks "perbaiki naming".
-```
-Steps:
-1. Scan all folders/files for naming convention violations
-2. Common issues:
-   - Course folders with IDs or slugs -> rename to "{Code} - {Full Name}"
-   - Files with auto-slug names -> rename to descriptive name
-   - Files with spaces in wrong places -> rename properly
-3. Present fix plan to user
-4. Execute renames (read -> create -> delete old)
-5. Update all backlinks and MOCs
-```
+Possible resolutions:
 
-### 7. Portal Analysis → Obsidian
-Run when: web_analysis + discovery completed for a portal, user asks "simpan ke Obsidian" or "orchestrate portal X".
-```
-Steps:
-1. Read analysis data: analysis.json + analisis_web.md from cache
-2. Create folder: Academic/{PortalName}/
-3. Create main note: Academic/{PortalName}/{PortalName} Portal Overview.md
-   - Frontmatter: tags, aliases, created, source
-   - Overview table (URL, login page, CAPTCHA type, session, last analysis)
-   - Pages detected with selectors + fields
-   - Mermaid diagram of portal structure
-   - Protection flags (no auto-CAPTCHA, encrypted session)
-   - Workflow steps
-   - Links to other portals
-   - Changelog
-4. Create per-page notes if 3+ pages: Academic/{PortalName}/Pages/{page_path}.md
-5. Link to graph: verify graph_v3_search returns portal node
-6. Update Academic MOC if exists
-```
+* merge after inspection,
+* rename destination,
+* preserve both,
+* stop and ask.
 
-Portal naming convention:
-| Portal | Folder | Notes |
-|--------|--------|-------|
-| UACC | `Academic/UACC/` | SSO portal, math CAPTCHA |
-| HEBAT | `Academic/HEBAT/` | Moodle LMS |
-| Cyber Campus | `Academic/Cyber Campus/` | mahasiswa.unair.ac.id |
-| QA | `Academic/QA/` | Questionnaire portal |
+Never overwrite a potentially different note automatically.
 
-## Frontmatter Standards
+---
 
-Every note should have minimal frontmatter:
+# 18. Frontmatter Standard
+
+Every managed note should have minimal frontmatter.
+
 ```yaml
 ---
 type: note|concept|material|assignment|daily|moc
-course: COURSE_CODE        # if academic
-course_name: FULL_NAME     # if academic
-semester: "YYYY Period"    # if academic (e.g. "2026 Ganjil")
+course: COURSE_CODE
+course_name: FULL_NAME
+semester: "YYYY Period"
 tags: []
 created: YYYY-MM-DD
 updated: YYYY-MM-DD
@@ -264,52 +570,709 @@ status: active|archived|draft
 ---
 ```
 
-## Visualization Standard (Mermaid)
+Only include course fields when the note is academic.
 
-Explanatory notes that describe a process, architecture, hierarchy,
-lifecycle, or timeline MUST include at least one Mermaid diagram. ASCII art
-is not a substitute. Pick the first matching type:
+Do not invent metadata values.
 
-| Content shape | Diagram type |
-|------|--------------|
-| System components & connections | `flowchart TB` / `flowchart LR` with `subgraph` per layer |
-| Sequential stages / lifecycle | `flowchart LR`; highlight human gates with `classDef` |
-| Phased plan WITHOUT official dates | `timeline` (never fabricate gantt dates) |
-| Scheduled plan WITH official dates | `gantt` |
-| Interactions between actors | `sequenceDiagram` |
-| Domain entities & relations | `erDiagram` |
+---
 
-Syntax rules (Obsidian renders ```mermaid fenced blocks natively):
+# 19. Frontmatter Rules
 
-1. Quote every label containing spaces or special characters: `A["Label"]`.
-2. Line breaks inside labels use `<br/>`; never put raw `|` inside label text.
-3. Group more than ~8 nodes into subgraphs; keep one diagram under ~15 nodes.
-4. Place the block directly under the heading it illustrates, preceded by one
-   caption sentence.
-5. Prefer several small diagrams over one giant diagram.
-6. MOC/index notes stay lean — no diagrams unless they aid navigation.
+### `type`
 
-## Anti-Patterns (DO NOT)
+Must describe the note's structural role.
 
-- Do NOT use numeric IDs in folder/file names (`10929`, `10924`)
-- Do NOT use auto-generated slugs (`2025genap-sic201-pembelajaran-mesin-*`)
-- Do NOT use non-representative abbreviations (`pm`, `jk`, `se`)
-- Do NOT mix current and archived semesters in Academic/Current/
-- Do NOT put non-daily files in Daily/
-- Do NOT create notes without frontmatter
-- Do NOT create nested folders deeper than 4 levels
-- Do NOT skip MOC generation after creating 5+ notes in a folder
-- Do NOT draw architecture/process/lifecycle/timeline as ASCII art when a
-  Mermaid diagram applies
-- Do NOT fabricate dates in gantt charts when no official schedule exists
-  (use `timeline` instead)
+### `course`
 
-## Completion Contract
+Required for academic notes.
 
-After any orchestration action, report:
-- Folders created/renamed/moved (with full human-readable names)
-- Files created/moved/renamed
-- MOCs updated
-- Naming violations fixed
-- Health status after change
-- Any notes that could not be moved (with reason)
+### `course_name`
+
+Required for academic notes when available.
+
+### `semester`
+
+Use the canonical:
+
+```text
+YYYY Period
+```
+
+### `created`
+
+Reflect actual creation date when known.
+
+### `updated`
+
+Reflect actual update date.
+
+### `status`
+
+Use:
+
+```text
+active
+archived
+draft
+```
+
+Do not silently convert unknown state to active.
+
+---
+
+# 20. MOC Architecture
+
+MOCs are navigation systems, not content dumps.
+
+Use:
+
+```text
+00 - Index.md
+```
+
+A course MOC may link:
+
+```text
+Overview
+Materials
+Assignments
+Lecture Notes
+Concepts
+Projects
+Related Courses
+```
+
+Keep MOCs compact.
+
+---
+
+# 21. MOC Refresh Triggers
+
+Refresh MOCs after:
+
+* course creation,
+* significant migration,
+* five or more new notes,
+* semester archival,
+* major renaming,
+* structural reorganization,
+* user request.
+
+Do not regenerate every MOC after every tiny note edit.
+
+---
+
+# 22. MOC Integrity
+
+Every important note should ideally be reachable through at least one relevant navigation path.
+
+Detect:
+
+* orphan notes,
+* broken links,
+* duplicate indexes,
+* stale MOC references.
+
+Not every atomic note must have a manually curated MOC entry if automated or semantic navigation already covers the intended structure.
+
+---
+
+# 23. Vault Health Check
+
+Run health checks for:
+
+* folder structure,
+* naming violations,
+* misplaced files,
+* duplicate notes,
+* orphaned TODOs,
+* broken references,
+* missing frontmatter,
+* FTS/index health,
+* excessive nesting,
+* stale MOCs.
+
+Suggested workflow:
+
+```text
+folder status
+→ top-level inspection
+→ TODO/orphan check
+→ search/index health
+→ naming scan
+→ structural report
+```
+
+---
+
+# 24. Health Report
+
+Return:
+
+```text
+Folder Health
+Naming Violations
+Misplaced Notes
+Duplicate Candidates
+Orphaned Notes
+Missing Frontmatter
+MOC Issues
+Index Health
+Overall Status
+Recommended Next Action
+```
+
+Do not claim "healthy" if critical checks were skipped.
+
+---
+
+# 25. Nesting Limit
+
+Avoid folder structures deeper than four meaningful levels.
+
+Deep nesting harms:
+
+* navigation,
+* discoverability,
+* migration safety,
+* agent retrieval.
+
+When deeper nesting appears necessary, first consider:
+
+* a MOC,
+* tags,
+* metadata,
+* links,
+* a flatter folder structure.
+
+---
+
+# 26. Inbox
+
+`Inbox/` contains unprocessed captures.
+
+Do not use it as a permanent dumping ground.
+
+A future processing cycle should classify each item into:
+
+* Academic,
+* Knowledge,
+* Learning,
+* Life,
+* Research,
+* Projects,
+* Archive,
+* deleted/discarded.
+
+---
+
+# 27. Daily Folder
+
+`Daily/` should contain only:
+
+```text
+YYYY-MM-DD.md
+```
+
+Do not store:
+
+* projects,
+* course materials,
+* assignment files,
+* general notes
+
+inside `Daily/`.
+
+Daily note creation itself belongs to the Life Management system.
+
+This skill only validates the structural placement.
+
+---
+
+# 28. Archive
+
+The root `Archive/` is for completed or retired non-academic content.
+
+Academic semester archives should use:
+
+```text
+Academic/Archive/{Year} {Period}/
+```
+
+Do not create two competing archival systems for the same domain.
+
+---
+
+# 29. Portal-to-Obsidian Ingestion
+
+Use this skill when portal analysis has already produced structured analysis data and the user requests storage in Obsidian.
+
+The workflow is:
+
+```text
+Portal Analysis
+→ Inspect Analysis Artifacts
+→ Validate Source
+→ Create Portal Folder
+→ Create Overview Note
+→ Create Page Notes
+→ Add Mermaid Structure Diagram
+→ Update MOC
+→ Verify
+```
+
+The portal-specific operating workflow remains owned by the relevant portal skill.
+
+---
+
+# 30. Portal Naming
+
+Default structures:
+
+```text
+Academic/UACC/
+Academic/HEBAT/
+Academic/Cyber Campus/
+Academic/QA/
+```
+
+Use human-readable portal names.
+
+Do not use portal internal IDs.
+
+---
+
+# 31. Portal Overview Note
+
+A portal overview may contain:
+
+* URL,
+* purpose,
+* login behavior,
+* session model,
+* CAPTCHA presence,
+* detected pages,
+* data fields,
+* workflow,
+* protection constraints,
+* source/date,
+* changelog.
+
+Do not store:
+
+* credentials,
+* session tokens,
+* CAPTCHA answers,
+* private browser state.
+
+---
+
+# 32. Per-Page Portal Notes
+
+Create per-page notes when the portal analysis is sufficiently large to justify them, such as three or more meaningful page analyses.
+
+Each page note should identify:
+
+* page purpose,
+* route/path,
+* available fields,
+* relevant navigation relationships,
+* protection behavior,
+* source/date.
+
+Do not create dozens of empty page notes merely because paths exist.
+
+---
+
+# 33. Mermaid Standard
+
+Explanatory notes should use Mermaid when they describe:
+
+* processes,
+* architecture,
+* hierarchy,
+* lifecycle,
+* timelines,
+* interactions,
+* entity relationships.
+
+Do not use ASCII art when a Mermaid diagram is appropriate.
+
+---
+
+# 34. Diagram Mapping
+
+Use:
+
+| Content                         | Mermaid                         |
+| ------------------------------- | ------------------------------- |
+| System components               | `flowchart TB` / `flowchart LR` |
+| Sequential workflow             | `flowchart LR`                  |
+| Phased plan without exact dates | `timeline`                      |
+| Official dated schedule         | `gantt`                         |
+| Actor interaction               | `sequenceDiagram`               |
+| Entity relationships            | `erDiagram`                     |
+
+Never fabricate dates for `gantt`.
+
+Use `timeline` for phases when dates are unknown.
+
+---
+
+# 35. Mermaid Syntax Rules
+
+1. Quote labels containing spaces/special characters.
+2. Use `<br/>` for line breaks.
+3. Avoid raw `|` in labels.
+4. Use subgraphs for larger systems.
+5. Keep diagrams under roughly 15 nodes where practical.
+6. Prefer multiple focused diagrams to one huge diagram.
+7. Put the diagram immediately below the heading it explains.
+8. Add one concise caption/introduction sentence.
+
+Example:
+
+```mermaid
+flowchart LR
+    A["Requirement"] --> B["Research"]
+    B --> C["Artifact"]
+    C --> D["QA"]
+    D --> E["Delivery"]
+```
+
+---
+
+# 36. Diagram Selection Rule
+
+Do not add diagrams merely because the note is long.
+
+Add a diagram when it materially improves:
+
+* comprehension,
+* navigation,
+* process visibility,
+* relationship understanding,
+* architecture understanding.
+
+MOCs remain lean unless a diagram genuinely improves navigation.
+
+---
+
+# 37. Current Course Reference
+
+The current vault may contain a course registry such as:
+
+```text
+SIA301  - Perencanaan Arsitektur Perusahaan
+SIA302  - PPA Praktikum
+SID303  - Analisis dan Visualisasi Data
+SID304  - AVD Praktikum
+SII208  - Desain Interaksi
+SII209  - Desain Interaksi Praktikum
+SII213  - Inovasi Sistem Informasi dan Teknologi
+SII318  - Pembangunan Perangkat Lunak
+SII319  - PPL Praktikum
+MNW409  - Kewirausahaan dan Bisnis SI
+BAE112  - Bahasa Inggris II
+```
+
+Historical course mappings may also exist.
+
+Treat this as a **reference snapshot**, not a timeless source of truth.
+
+For current course identity, prefer verified current academic data.
+
+---
+
+# 38. Semester Transition
+
+At semester transition:
+
+1. determine the active semester,
+2. identify courses still belonging to the current term,
+3. verify no active course remains incorrectly archived,
+4. create the destination archive,
+5. move complete course structures,
+6. update frontmatter,
+7. refresh Academic MOC,
+8. verify Current contains only active courses.
+
+Do not archive a course merely because its last note is old.
+
+---
+
+# 39. Structural vs Content Operations
+
+This skill owns:
+
+**where a note lives and how the vault is structured.**
+
+It does not automatically own:
+
+**what the note says.**
+
+When content must be read deeply, route to the note-content/knowledge capability.
+
+When content must be generated or rewritten, use the appropriate writing/artifact workflow.
+
+---
+
+# 40. Safe Mutation Model
+
+Structural mutations should follow:
+
+```text
+inspect
+↓
+preview
+↓
+approval when material
+↓
+execute
+↓
+verify
+```
+
+Approval is especially appropriate for:
+
+* mass migration,
+* bulk renaming,
+* large archive operations,
+* destructive cleanup,
+* duplicate merging,
+* restructuring multiple top-level areas.
+
+---
+
+# 41. Small vs Broad Changes
+
+### Small change
+
+Examples:
+
+* create one missing folder,
+* rename one obviously invalid filename,
+* create one course README.
+
+Can follow the available authorization policy.
+
+### Broad change
+
+Examples:
+
+* migrate 100 notes,
+* redesign the entire vault,
+* merge duplicate knowledge trees,
+* archive a semester,
+* bulk rename folders.
+
+Require preview and appropriate approval before mutation.
+
+---
+
+# 42. Verification After Mutation
+
+After any structural change:
+
+1. confirm destination paths,
+2. confirm source removal/rename where applicable,
+3. inspect relevant folder status,
+4. check for broken references,
+5. refresh required MOCs,
+6. verify frontmatter,
+7. report unresolved items.
+
+Do not declare a migration complete because the file-operation command returned successfully.
+
+---
+
+# 43. Idempotency
+
+Repeated requests should not create duplicate structures.
+
+Before creating:
+
+```text
+Does the folder already exist?
+Does the README already exist?
+Does the MOC already exist?
+Is this note already in the destination?
+```
+
+Reuse existing structures whenever they match the canonical model.
+
+---
+
+# 44. Duplicate Detection
+
+Possible duplicate signals:
+
+* same canonical title,
+* same course + topic,
+* same source identity,
+* same artifact identity,
+* identical or near-identical content.
+
+Do not automatically merge duplicates from weak similarity alone.
+
+Flag uncertain duplicate candidates for review.
+
+---
+
+# 45. Broken-Link Safety
+
+Before deleting or moving notes:
+
+inspect backlinks where supported.
+
+If a note has important inbound links:
+
+* update references,
+* preserve aliases,
+* verify backlinks after migration.
+
+Do not destroy navigation silently.
+
+---
+
+# 46. Aliases
+
+When a rename changes a note's canonical title but old naming remains useful for retrieval, preserve aliases when appropriate.
+
+Example:
+
+```yaml
+aliases:
+  - Old Course Title
+  - Abbreviated Topic
+```
+
+Do not accumulate excessive aliases that create ambiguity.
+
+---
+
+# 47. Frontmatter Normalization
+
+When repairing frontmatter:
+
+1. preserve meaningful existing metadata,
+2. add missing canonical fields,
+3. normalize inconsistent values,
+4. avoid deleting unknown user metadata without reason,
+5. update only fields relevant to structural standards.
+
+Never replace an entire frontmatter block blindly.
+
+---
+
+# 48. Anti-Patterns
+
+Never:
+
+* use numeric IDs as human-facing names,
+* use auto-generated slugs,
+* mix archived and active semesters,
+* place non-daily files in `Daily/`,
+* create managed notes without frontmatter,
+* create unnecessarily deep folders,
+* skip MOC maintenance after significant structure changes,
+* fabricate Mermaid dates,
+* use ASCII architecture where Mermaid is appropriate,
+* overwrite potentially distinct notes during migration,
+* claim health without performing the relevant checks.
+
+---
+
+# 49. Completion Contract
+
+After any orchestration action, report the relevant subset of:
+
+**Folders created/renamed/moved**
+Use full human-readable paths.
+
+**Files created/moved/renamed**
+Include exact paths.
+
+**MOCs updated**
+Identify affected indexes.
+
+**Naming violations fixed**
+State what changed.
+
+**Frontmatter changes**
+When structural metadata was modified.
+
+**Health status**
+What was actually checked.
+
+**Unresolved items**
+Notes that could not be moved, renamed, indexed, or verified, with reasons.
+
+**Approval status**
+Whether the action was merely proposed, approved, or completed.
+
+**Next action**
+One bounded structural step if anything remains.
+
+---
+
+# 50. Standard Health Output
+
+```text
+Vault Scope
+Structural Status
+Naming Status
+Frontmatter Status
+MOC Status
+Orphan / Misplaced Notes
+Broken References
+Index Health
+Unresolved Issues
+Next Action
+```
+
+---
+
+# 51. Operating Rules
+
+The system must:
+
+**inspect before restructuring,**
+
+**use human-readable canonical names,**
+
+**separate active and archived academic content,**
+
+**preserve existing valid conventions,**
+
+**preview broad mutations,**
+
+**preserve content and metadata during migration,**
+
+**repair links after structural changes,**
+
+**maintain MOCs as navigation systems,**
+
+**use Mermaid for meaningful structural/process visualization,**
+
+**never fabricate dates in diagrams,**
+
+**avoid deep folder nesting,**
+
+**keep `Daily/` restricted to daily notes,**
+
+**verify actual vault state after mutations,**
+
+**avoid duplicate creation through idempotent checks,**
+
+**separate structural orchestration from note-content reasoning,**
+
+**report incomplete operations honestly.**
+
+The canonical lifecycle is:
+
+**Inspect → Classify → Plan → Preview → Approve → Mutate → Verify → Index → Checkpoint**
+
+The central objective is:
+
+> **Maintain one coherent, human-readable, machine-retrievable Obsidian vault in which structure is intentional, naming is canonical, navigation remains usable, and every structural change can be inspected and verified.**

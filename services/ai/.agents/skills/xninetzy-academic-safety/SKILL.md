@@ -40,9 +40,7 @@ single_use:
 
 ## Prohibited
 
-* CAPTCHA bypass;
 * OTP bypass;
-* graded quiz or exam;
 * grade modification;
 * attendance fabrication;
 * impersonation;

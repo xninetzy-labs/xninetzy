@@ -52,5 +52,4 @@ Then:
 3. verify;
 4. store receipt.
 
-Do not take graded quizzes or examinations.
 Do not silently retry ambiguous submissions.

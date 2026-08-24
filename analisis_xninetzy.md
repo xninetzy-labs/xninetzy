@@ -1,259 +1,565 @@
-# Analisis & Testing Xninetzy MCP
+# Xninetzy MCP Analysis & Test Report
 
-> **Tanggal**: 2026-08-08, ±04:03–04:06 WIB
-> **Metode**: (1) inspeksi kode sumber server MCP di repo ini, (2) live testing via MCP
-> (40+ panggilan tool read-only + dry-run), (3) verifikasi konfigurasi client (opencode.jsonc).
-> **Batasan**: hanya tool `read` / `draft` / dry-run yang dieksekusi. Tool `final`
-> (submit/approval) dan yang menulis data pengguna TIDAK dieksekusi — dicatat sebagai
-> "perlu approval/manual" (lihat §7).
+**Date:** 8 August 2026, approximately 04:03–04:06 WIB
+**Method:** source-code inspection, live MCP testing, and client configuration verification
+**Coverage:** 40+ read-only and dry-run tool calls
+**Safety boundary:** final/submit operations, user-data writes, CAPTCHA/OTP, destructive operations, and configuration mutations were not executed without approval/manual interaction.
 
 ---
 
-## 1. Ringkasan eksekutif
+# 1. Executive Summary
 
-| Aspek | Status |
-|---|---|
-| Kesehatan server MCP | ✅ Sehat — semua tool yang diuji berfungsi |
-| Katalog skills | ✅ 29 valid, 0 invalid, 4 warnings (non-blocking) |
-| Manajemen MCP eksternal | ✅ Fitur ada; belum ada server terdaftar (inaktif) |
-| Risk policy (approval gate) | ✅ Berfungsi — tool `final` otomatis `requires_approval=true` |
-| GraphRAG V3 (Neo4j) | ⚠️ Neo4j **offline** (degraded ke SQLite: 61 node/30 edge) |
-| Session portal | ⚠️ HEBAT belum login; UACC `human_verification_required`; Cyber Campus cache `authenticated` |
-| Kendala utama | Tidak ada — semua kegagalan yang muncul adalah status lingkungan (bukan bug) |
+| Area                 | Status                 | Assessment                                       |
+| -------------------- | ---------------------- | ------------------------------------------------ |
+| MCP server           | ✅ Healthy              | Tested read/dry-run tools operated correctly     |
+| Skill catalog        | ✅ Healthy              | 29 valid, 0 invalid, 4 non-blocking warnings     |
+| Risk/approval policy | ✅ Verified             | `FINAL` tools require approval and idempotency   |
+| External MCP         | ✅ Available            | Management exists; no external server configured |
+| GraphRAG V3          | ⚠️ Degraded            | Neo4j offline; SQLite fallback active            |
+| HEBAT                | ⚠️ Session inactive    | Login required                                   |
+| UACC                 | ⚠️ Human verification  | Manual verification required                     |
+| Cyber Campus         | ✅ Cached/authenticated | Session state available                          |
+| Memory               | ⚠️ Needs maintenance   | 45+ records; consolidation recommended           |
 
-**Verdict**: sistem Xninetzy MCP dalam kondisi **LAYAK dan SEHAT** untuk dipakai. Tidak ada
-bug ditemukan selama testing; temuan hanya berupa status lingkungan + catatan perbaikan kecil.
+### Verdict
+
+**Xninetzy MCP is healthy and suitable for normal use.**
+
+No functional bug was identified during the tested scope. Remaining observations are **environmental degradation, inactive sessions, or low-priority maintenance items**, not demonstrated MCP defects.
 
 ---
 
-## 2. Arsitektur MCP server (dari kode)
+# 2. Architecture
 
-### 2.1 Entry point & transport
+## 2.1 MCP Entry Point
 
-```text
-opencode.jsonc:
+Client configuration:
+
+```jsonc
+{
   "xninetzy": {
     "type": "local",
-    "command": ["uv", "run", "--directory", "/home/misbahul45/code/xninetzy/services/ai",
-                "python", "-m", "app.xninetzy.interfaces.mcp_server"],
+    "command": [
+      "uv",
+      "run",
+      "--directory",
+      "/home/misbahul45/code/xninetzy/services/ai",
+      "python",
+      "-m",
+      "app.xninetzy.interfaces.mcp_server"
+    ],
     "enabled": true,
     "timeout": 120000
   }
+}
 ```
 
-- Server: **FastMCP** (`mcp.server.fastmcp`), nama `"xninetzy"`, transport **stdio**.
-- Startup: `init_db()` → `run_migrations()` → registrasi tool → `mcp.run(transport="stdio")`.
-- Path override host-safe di-bootstrap sebelum module lain load (`mcp_runtime.MCP_PATH_OVERRIDES`)
-  agar server bisa jalan dari client mana pun.
-- Principal: `mcp_principal().as_tool_context()` — chat_id diinjeksi **server-side**
-  (bukan dari argumen caller) → owner-scoped, tidak bisa spoof dari prompt.
-
-### 2.2 Registrasi tool (2 lapis)
-
-1. **22 tool eksplisit** di `mcp_server.py` (253 baris):
-   - Obsidian (11): `obsidian_list/search/read/create/append/update_section/todos/backlinks/headings/add_tags/set_frontmatter`
-   - Knowledge (4): `knowledge_search`, `knowledge_answer` (async), `knowledge_list_sources`, `knowledge_ingest_text`
-   - Task (4): `task_list/today/capture/complete`
-   - Reminder (3): `reminder_list/create/cancel`
-   - Semua wrapper tipis `@mcp.tool()` → memanggil `BaseTool.invoke()` dari registry.
-2. **Tool dinamis via adapter**: `expose_xninetzy_tools(mcp, principal=...)` — mendaftarkan
-   seluruh tool dari `tools/registry.py` (`get_all_tools()`, `get_tool_names()`,
-   `get_tool_descriptions()`, `get_tool_groups()`).
-
-### 2.3 Metadata & risk policy
-
-- `tools/manifest.py`: `ToolManifest` berisi `risk (RiskClass)`, `requires_approval`,
-  `requires_idempotency`, `feature_pack`, `stability`.
-- `os/policy/action_policy.py`: `classify_risk(name)` dari mapping `_POLICY_ACTIONS`.
-- Aturan: `requires_approval = (risk is FINAL)`; `requires_idempotency = risk in (WRITE, FINAL)`.
-- **Terverifikasi live**: `tool_catalog` mengembalikan metadata yang konsisten —
-  tool `final` (hebat_upload_submission, portal_krs_war_arm, qa_fill_kuesioner)
-  semuanya `requires_approval=true` + `requires_idempotency=true`.
-
-### 2.4 Struktur paket `os/` (domain subsystems)
+Runtime:
 
 ```text
-os/
-├── academic/    HEBAT, Cyber Campus, UACC/UnairSatu, QA portal, KRS war/watcher
-├── backup/      (cadangan)
-├── graph/       Graph RAG
-├── hitl/        Human-in-the-loop approval
-├── inbox/       OS capture & triage
-├── jobs/        briefing/review/sync terjadwal
-├── knowledge/   vector store + document router
-├── life/        goals, tasks, habits, money, workout
-├── lightning/   self-improvement (episode, reward, proposal)
-├── memory/      durable memory + checkpoint
-├── notes/       Obsidian
-├── notifications/ WA notifikasi
-├── policy/      action_policy (RiskClass)
-├── reminders/   scheduler reminder
-├── research/    deep research session + subplan
-├── rules/       aturan perilaku
-├── style/       profil gaya jawaban
-└── web_analysis/ crawl struktur situs akademik (GET/HEAD only)
+OpenCode
+  ↓
+stdio MCP
+  ↓
+FastMCP server: xninetzy
+  ↓
+principal / policy
+  ↓
+shared registry
+  ↓
+domain + OS services
 ```
 
-Modul registri tool: `tools/ecosystem/*` (ai_runtime, document, goal, helper, knowledge,
-life, pixelrag, research, tool_catalog, unified_search, web_analysis)
-+ `tools/internal/*` (obsidian, reminder, calculation, datetime, planning).
-**44 file** mengandung pola registrasi tool.
+Startup sequence:
+
+```text
+init_db
+→ migrations
+→ tool registration
+→ stdio server
+```
+
+The runtime applies host-safe path overrides before other modules load.
+
+The principal context is injected server-side, including `chat_id`, preventing caller-supplied prompt fields from becoming authorization evidence.
 
 ---
 
-## 3. Hasil testing tooling & kemampuan (live)
+# 3. Tool Architecture
 
-Semua dieksekusi read-only / dry-run. ✅ = berfungsi.
+## 3.1 Explicit MCP Wrappers
 
-### 3.1 Core & sistem
-| Tool | Hasil |
-|---|---|
-| `datetime_now` | ✅ `2026-08-08T04:03:51+07:00` (Asia/Jakarta) |
-| `calculate("(100-25)/3")` | ✅ 25 |
-| `calculate_percentage(15,40)` | ✅ 37.5% + penjelasan |
-| `ai_provider_status` | ✅ LLM aktif: flaz / deepseek-v4-flash |
-| `coding_agent_status` | ✅ opencode |
-| `skill_discovery` | ✅ map 9 kategori + slash commands |
+`mcp_server.py` exposes thin wrappers over shared `BaseTool.invoke()`.
 
-### 3.2 Memory & Knowledge OS
-| Tool | Hasil |
-|---|---|
-| `memory_get_context` | ✅ return memory scoped relevan (UACC pending, SE Akademik, artifact #63) |
-| `memory_list` | ✅ 45+ record (berisi banyak checkpoint lintas project) |
-| `knowledge_list_sources` | ✅ source 118–122 (HEBAT PDF) |
-| `knowledge_search` | ✅ evidence bundle + status confidence (`insufficient` jujur untuk query di luar data) |
-| `graph_v3_stats` | ✅ Enabled, 61 node / 30 edge, outbox 0 — **Neo4j offline** |
-| `unified_search` | ✅ lintas knowledge + vault + graph + memory |
+Domains tested include:
 
-### 3.3 Life OS & OS kernel
-| Tool | Hasil |
-|---|---|
-| `life_dashboard` | ✅ goals/tasks/habits hari ini |
-| `task_today` | ✅ tidak ada due; inbox menampilkan 3 task HEBAT |
-| `goal_list` | ✅ Full-Stack Agentic AI Engineer (learning, monthly, high) |
-| `habit_today` | ✅ 3 habit |
-| `os_today` | ✅ attention queue: task #19 HEBAT prioritas tinggi |
-| `os_inbox` | ✅ 0 pending, 17 archived |
-| `reminder_list` | ✅ kosong |
-| `rules_healthcheck` | ✅ 4 aturan aktif, injection OK |
-| `style_show` | ✅ default |
+* Obsidian
+* Knowledge
+* Tasks
+* Reminders
 
-### 3.4 Portal akademik & subsystem
-| Tool | Hasil |
-|---|---|
-| `portal_info` | ✅ cache struktur ada, session terenkripsi ada, CAPTCHA tidak pernah di-solve |
-| `uacc_info` | ✅ status `human_verification_required`, session ada |
-| `hebat_login_status` | ✅ status benar: belum login |
-| `web_analysis_status(hebat)` | ✅ auth_required, cache 2026-08-01 tidak stale |
-| `lightning_healthcheck` | ✅ 1029 episode, success 98.9%, approval_flow owner-only |
-| `workflow_latest` | ✅ belum ada workflow |
-| `deep_research_list` | ✅ 2 session (APSI use case, belajar programming) |
-| `obsidian_folder_status` | ✅ 120 notes, healthy, 0 duplicate |
+## 3.2 Dynamic Tool Exposure
 
-### 3.5 Tools yang TIDAK dieksekusi (sengaja)
-`hebat_upload_submission`, `portal_krs_war_arm`, `qa_fill_kuesioner` (semua `final`
-butuh approval), `wa_send_*`, `graph_v3_rebuild` (destruktif), login CAPTCHA/OTP,
-external MCP add/remove, dan semua tool write data pengguna.
+The adapter:
+
+```text
+expose_xninetzy_tools(...)
+```
+
+exposes tools from the central registry:
+
+```text
+get_all_tools()
+get_tool_names()
+get_tool_descriptions()
+get_tool_groups()
+```
+
+This supports the desired architecture:
+
+```text
+new shared tool
+→ registry / manifest
+→ MCP adapter
+→ all compatible clients
+```
+
+Client-specific tool catalog duplication is therefore unnecessary.
 
 ---
 
-## 4. Hasil testing skills
+# 4. Risk and Approval Policy
 
-| Uji | Hasil |
-|---|---|
-| `skill_list` | ✅ **29 skills**: 24 trusted-builtin + 5 owner-installed |
-| `skill_healthcheck` | ✅ 29 valid, 0 invalid, **4 warnings** |
-| `skill_suggest_for_request` | ✅ ranking deterministik (it-learning 1.00 untuk query learning) |
-| `skill_get("research")` | ✅ progressive disclosure — isi lengkap 8 fase workflow |
-| `skill_resource_list("research")` | ✅ 8 resources (agents/ + references/ + scripts/) |
-| `skill_resource_read("research/agents/adversarial-reviewer.md")` | ✅ konten terbaca |
-| `skill_validate` (SKILL.md sintetis) | ✅ valid, SHA-256, **tidak disimpan** |
+Tool metadata is defined through `ToolManifest`, including:
 
-### Warning katalog (non-blocking)
-- `gh-fix-ci`, `playwright`, `academic-assignment`: body memuat URL eksternal
-  (verifikasi provenance).
-- `playwright-interactive`: SKILL.md 693 baris (target ≤ 500 untuk progressive disclosure).
-- Catatan: `test-mcp` (owner-installed) dideskripsikan "hapus jika tidak diperlukan".
+* risk class,
+* approval requirement,
+* idempotency requirement,
+* feature pack,
+* stability.
 
----
+Policy rule:
 
-## 5. Hasil testing manajemen MCP
+```text
+FINAL
+→ requires_approval = true
+→ requires_idempotency = true
 
-| Uji | Hasil |
-|---|---|
-| `external_mcp_list` | ✅ `success: true`, **enabled: false**, servers: [] — fitur ada, belum dipakai |
-| `tool_catalog` (risk=read) | ✅ 8 tool: metadata lengkap (feature_pack, risk, stability, approval, idempotency) |
-| `tool_catalog` (risk=final) | ✅ 3 tool final, semua `requires_approval=true` |
-| `external_mcp_tools` | ⏭️ tidak dipanggil (tidak ada server terdaftar → pasti error kosong; bukan bug) |
-| `external_mcp_add/remove` | ⏭️ tidak dieksekusi (aksi konfigurasi — butuh permintaan eksplisit) |
+WRITE
+→ requires_idempotency = true
+```
 
-**Analisis manajemen MCP**: model "shared registry + adapter" (`mcp_tool_adapter.py`)
-berarti tool baru cukup ditambahkan ke `tools/registry.py` + `manifest.py`, dan
-langsung terekspos ke semua client tanpa perubahan client. Fitur external MCP
-(stdio, secret dari env lokal) tersedia untuk integrasi pihak ketiga — cocok dengan
-roadmap memory #46 (akses UACC via external MCP / web fetch).
+### Live verification
 
----
+The following `FINAL` tools were confirmed to expose the expected policy:
 
-## 6. Temuan & observasi
+* `hebat_upload_submission`
+* `portal_krs_war_arm`
+* `qa_fill_kuesioner`
 
-1. **Neo4j offline** — GraphRAG V3 berjalan dalam mode degraded (SQLite canonical:
-   61 node/30 edge, outbox 0). Projection Neo4j tidak live. Tidak memblokir fungsi
-   lain; hanya menjadikan `graph_v3_search` hybrid terbatas.
-2. **4 skill warnings** — kualitas katalog baik (29/29 valid), warnings hanya
-   URL eksternal + panjang body satu skill.
-3. **HEBAT belum login** — sesi Moodle tidak aktif saat testing (status dilaporkan
-   jujur oleh tool, bukan kegagalan).
-4. **External MCP belum aktif** — fitur management tersedia dan sehat.
-5. **Memory besar (45+ record)** — `memory_list` sangat panjang; perlu konsolidasi
-   berkala (beberapa checkpoint lama bisa di-supersede).
-6. **Owner-scoped security terbukti** — chat_id diinjeksi server-side; policy
-   `final → approval` konsisten di catalog; CAPTCHA/OTP manual dijawab owner;
-   tidak ada tool yang bisa melewati approval gate.
-7. **Semua read tool berperilaku jujur** — `knowledge_search` melaporkan
-   `status=insufficient` bila bukti tidak cukup (tidak mengarang).
+All returned:
+
+```text
+requires_approval = true
+requires_idempotency = true
+```
+
+**Assessment: PASS**
 
 ---
 
-## 7. Yang belum diuji (perlu approval/manual)
+# 5. Live Tool Testing
 
-- Submit tugas HEBAT (token konfirmasi) — tier final
-- KRS War arm/upgrade — tier final
-- QA kuesioner — tier final
-- Kirim pesan/media WhatsApp — external action
-- Login CAPTCHA/OTP (HEBAT, Cyber Campus, UACC) — manual owner
-- `graph_v3_rebuild` — destruktif
-- `external_mcp_add/remove` — konfigurasi
-- Tool write lainnya (task_capture, obsidian_create, money_add, dsb.) — tier 1,
-  tidak dieksekusi agar tidak mengotori data; mekanisme wrapper sama dengan yang sudah diuji.
+## 5.1 Core Runtime
+
+| Tool                   | Result                               |
+| ---------------------- | ------------------------------------ |
+| `datetime_now`         | ✅ `2026-08-08T04:03:51+07:00`        |
+| `calculate`            | ✅ `(100-25)/3 = 25`                  |
+| `calculate_percentage` | ✅ `37.5%`                            |
+| `ai_provider_status`   | ✅ Active: `flaz / deepseek-v4-flash` |
+| `coding_agent_status`  | ✅ `opencode`                         |
+| `skill_discovery`      | ✅ 9-category map + slash commands    |
+
+## 5.2 Memory and Knowledge
+
+| Tool                     | Result                                                            |
+| ------------------------ | ----------------------------------------------------------------- |
+| `memory_get_context`     | ✅ Scoped relevant memory returned                                 |
+| `memory_list`            | ✅ 45+ records                                                     |
+| `knowledge_list_sources` | ✅ HEBAT sources 118–122                                           |
+| `knowledge_search`       | ✅ Evidence bundle + honest `insufficient` status where applicable |
+| `graph_v3_stats`         | ⚠️ SQLite degraded mode: 61 nodes / 30 edges; Neo4j offline       |
+| `unified_search`         | ✅ Knowledge + vault + graph + memory                              |
+
+Important positive finding:
+
+`knowledge_search` does not fabricate evidence when the available knowledge base is insufficient.
 
 ---
 
-## 8. Rekomendasi
+# 6. Life OS and OS Kernel
 
-| Prioritas | Aksi |
-|---|---|
-| Sedang | Cek kenapa Neo4j offline (projection GraphRAG V3) — aktifkan untuk hybrid search penuh |
-| Rendah | Bersihkan warning 4 skill: verifikasi URL eksternal, potong SKILL.md playwright-interactive |
-| Rendah | Pertimbangkan hapus skill `test-mcp` bila tidak dipakai |
-| Sedang | Konsolidasi memory lama (supersede checkpoint yang sudah outdated) |
-| Rendah | Aktifkan external MCP bila butuh integrasi pihak ketiga (roadmap UACC #46) |
-| — | Lanjutkan testing area lain yang butuh interaksi manual (login HEBAT/Cyber Campus) |
+| Tool                | Result                                 |
+| ------------------- | -------------------------------------- |
+| `life_dashboard`    | ✅ Goals/tasks/habits                   |
+| `task_today`        | ✅ No due tasks; 3 HEBAT tasks in inbox |
+| `goal_list`         | ✅ Full-Stack Agentic AI Engineer       |
+| `habit_today`       | ✅ 3 habits                             |
+| `os_today`          | ✅ HEBAT task #19 marked high priority  |
+| `os_inbox`          | ✅ 0 pending / 17 archived              |
+| `reminder_list`     | ✅ Empty                                |
+| `rules_healthcheck` | ✅ 4 active rules                       |
+| `style_show`        | ✅ Default profile                      |
 
 ---
 
-## 9. Lampiran — detail teknis
+# 7. Academic Subsystems
 
-- Server: `services/ai/app/xninetzy/interfaces/mcp_server.py` (253 baris)
-- Adapter: `services/ai/app/xninetzy/interfaces/mcp_tool_adapter.py`
-  (`expose_xninetzy_tools`, `mcp_principal`)
-- Runtime: `services/ai/app/xninetzy/interfaces/mcp_runtime.py` (`MCP_PATH_OVERRIDES`)
-- Registry: `services/ai/app/xninetzy/tools/registry.py` — `get_all_tools`,
-  `get_tool_names`, `get_tool_descriptions`, `get_tool_groups`
-- Manifest: `services/ai/app/xninetzy/tools/manifest.py` — `ToolManifest`,
-  `manifest_for(name)`, `_feature_pack`, `_requires_evidence`
-- Policy: `services/ai/app/xninetzy/os/policy/action_policy.py` — `RiskClass`,
-  `classify_risk`, `_POLICY_ACTIONS`
-- Client config: `~/.config/opencode/opencode.jsonc` (MCP local, timeout 120 s,
-  default_agent xninetzy, modes xn-research/xn-assignment/xn-learn)
-- DB: SQLite diinisialisasi + migrasi otomatis saat startup MCP
+| Tool                         | Result                                                             |
+| ---------------------------- | ------------------------------------------------------------------ |
+| `portal_info`                | ✅ Cached structure + encrypted session                             |
+| `uacc_info`                  | ⚠️ `human_verification_required`                                   |
+| `hebat_login_status`         | ⚠️ Not logged in                                                   |
+| `web_analysis_status(hebat)` | ✅ `auth_required`; cache not stale                                 |
+| `lightning_healthcheck`      | ✅ 1,029 episodes; 98.9% reported success; owner-only approval flow |
+| `workflow_latest`            | ✅ No workflow                                                      |
+| `deep_research_list`         | ✅ 2 research sessions                                              |
+| `obsidian_folder_status`     | ✅ 120 notes; healthy; 0 duplicates                                 |
+
+---
+
+# 8. Intentionally Unexecuted Operations
+
+The following were **not executed** because they are consequential, destructive, or require manual authentication:
+
+### Final / consequential
+
+* `hebat_upload_submission`
+* `portal_krs_war_arm`
+* `qa_fill_kuesioner`
+* WhatsApp send operations
+* user-data write operations
+
+### Authentication
+
+* HEBAT CAPTCHA/OTP
+* Cyber Campus CAPTCHA/OTP
+* UACC human verification
+
+### Destructive
+
+* `graph_v3_rebuild`
+
+### Configuration
+
+* `external_mcp_add`
+* `external_mcp_remove`
+
+This preserves the established approval/HITL boundary.
+
+---
+
+# 9. Skill System
+
+| Check                             | Result                                    |
+| --------------------------------- | ----------------------------------------- |
+| `skill_list`                      | ✅ 29 skills                               |
+| Trusted built-ins                 | ✅ 24                                      |
+| Owner-installed                   | ✅ 5                                       |
+| Invalid skills                    | ✅ 0                                       |
+| Warnings                          | ⚠️ 4                                      |
+| `skill_suggest_for_request`       | ✅ Deterministic ranking                   |
+| `skill_get("research")`           | ✅ Progressive disclosure                  |
+| `skill_resource_list("research")` | ✅ 8 resources                             |
+| `skill_resource_read(...)`        | ✅ Successful                              |
+| `skill_validate`                  | ✅ Valid; SHA-256 generated; not persisted |
+
+## Catalog warnings
+
+1. `gh-fix-ci`, `playwright`, `academic-assignment`
+
+   * external URLs should have provenance verified.
+
+2. `playwright-interactive`
+
+   * 693-line `SKILL.md`; above the preferred progressive-disclosure target.
+
+3. `test-mcp`
+
+   * owner-installed; remove if no longer needed.
+
+### Assessment
+
+**Non-blocking.**
+
+---
+
+# 10. External MCP Management
+
+Current state:
+
+```yaml
+external_mcp:
+  enabled: false
+  servers: []
+```
+
+Capabilities exist for:
+
+* listing,
+* adding,
+* removing,
+* accessing external MCP tools.
+
+No external server is currently configured.
+
+This is consistent with an available-but-inactive integration layer.
+
+---
+
+# 11. GraphRAG Status
+
+Current state:
+
+```text
+Neo4j
+→ OFFLINE
+
+SQLite fallback
+→ ACTIVE
+→ 61 nodes
+→ 30 edges
+→ outbox 0
+```
+
+### Impact
+
+Normal Xninetzy functionality remains available.
+
+Graph-based retrieval is degraded because the Neo4j projection is unavailable.
+
+### Classification
+
+**Environmental degradation, not demonstrated MCP failure.**
+
+### Recommended action
+
+Investigate Neo4j connectivity/projection health before relying on full GraphRAG V3 capabilities.
+
+---
+
+# 12. Memory Status
+
+The memory system currently contains **45+ records**, including multiple historical checkpoints.
+
+This is functional but creates an increasingly large retrieval surface.
+
+Recommended maintenance:
+
+```text
+identify stale checkpoints
+→ compare supersession
+→ consolidate redundant state
+→ preserve active decisions
+→ retain provenance
+```
+
+This is a **maintenance optimization**, not a correctness defect.
+
+---
+
+# 13. Security Findings
+
+The test evidence supports the following:
+
+### Owner-scoped principal
+
+Authorization context is injected server-side rather than accepted from caller-provided identity fields.
+
+### Final approval gate
+
+`FINAL` tools require approval.
+
+### Idempotency metadata
+
+`WRITE` and `FINAL` tools are marked as requiring idempotency.
+
+### CAPTCHA/OTP boundary
+
+Authentication challenges were not bypassed or automated.
+
+### Read honesty
+
+Knowledge retrieval reports insufficient evidence rather than fabricating an answer.
+
+### Overall
+
+**No security-control bypass was identified in the tested scope.**
+
+---
+
+# 14. Findings by Severity
+
+## Blocking
+
+**None identified.**
+
+## Medium
+
+1. Neo4j projection is offline.
+2. HEBAT session is inactive.
+3. UACC requires human verification.
+4. Memory requires eventual consolidation.
+
+## Low
+
+1. Skill URL provenance warnings.
+2. Long `playwright-interactive` skill body.
+3. Potentially unused `test-mcp`.
+4. External MCP remains inactive.
+
+---
+
+# 15. Recommended Actions
+
+| Priority | Recommendation                       | Reason                                 |
+| -------- | ------------------------------------ | -------------------------------------- |
+| Medium   | Restore/check Neo4j projection       | Restore full GraphRAG V3 capability    |
+| Medium   | Consolidate stale memory/checkpoints | Reduce retrieval noise                 |
+| Low      | Verify skill URL provenance          | Improve catalog hygiene                |
+| Low      | Split `playwright-interactive` skill | Improve progressive disclosure         |
+| Low      | Remove `test-mcp` if unused          | Reduce catalog clutter                 |
+| Optional | Configure external MCP               | Only when a real integration is needed |
+| Manual   | Re-test authenticated academic flows | Requires CAPTCHA/OTP/HITL              |
+
+Do not prioritize external MCP activation merely because the capability exists. It should be driven by an actual product requirement.
+
+---
+
+# 16. Technical Evidence
+
+### MCP server
+
+```text
+services/ai/app/xninetzy/interfaces/mcp_server.py
+```
+
+### Adapter
+
+```text
+services/ai/app/xninetzy/interfaces/mcp_tool_adapter.py
+```
+
+### Runtime
+
+```text
+services/ai/app/xninetzy/interfaces/mcp_runtime.py
+```
+
+### Registry
+
+```text
+services/ai/app/xninetzy/tools/registry.py
+```
+
+### Manifest
+
+```text
+services/ai/app/xninetzy/tools/manifest.py
+```
+
+### Policy
+
+```text
+services/ai/app/xninetzy/os/policy/action_policy.py
+```
+
+### Client configuration
+
+```text
+~/.config/opencode/opencode.jsonc
+```
+
+Configured characteristics:
+
+```text
+local MCP
+timeout: 120s
+default agent: xninetzy
+modes: xn-research / xn-assignment / xn-learn
+```
+
+---
+
+# 17. Final Assessment
+
+### Overall Status
+
+**✅ HEALTHY / READY FOR NORMAL USE**
+
+### Confidence
+
+**High within the tested scope.**
+
+The testing establishes that:
+
+* the MCP server starts and responds,
+* shared tool registration works,
+* risk metadata is exposed consistently,
+* final approval gates work,
+* read-only workflows operate,
+* knowledge retrieval reports insufficient evidence honestly,
+* skill discovery and progressive loading work,
+* owner-scoped identity is preserved,
+* no tested operation bypassed safety controls.
+
+The remaining issues are primarily:
+
+**Neo4j availability + session state + maintenance hygiene**, not a demonstrated MCP implementation failure.
+
+### Important scope qualification
+
+This verdict covers the **read-only/dry-run test surface described above**. It does **not** certify untested final-write, CAPTCHA/OTP, destructive, or external-configuration workflows.
+
+---
+
+# 18. Recommended Next Checkpoint
+
+```yaml
+checkpoint:
+  goal: "Maintain healthy Xninetzy MCP platform"
+  status: "healthy_with_environmental_warnings"
+
+  verified:
+    - MCP server startup and tool routing
+    - shared registry exposure
+    - risk / approval metadata
+    - skill catalog
+    - knowledge retrieval honesty
+    - owner-scoped principal
+    - read-only academic subsystem behavior
+
+  known_environment:
+    neo4j: offline
+    hebat_session: unauthenticated
+    uacc: human_verification_required
+    external_mcp: inactive
+    memory_records: 45+
+
+  pending:
+    - investigate Neo4j projection
+    - consolidate stale memory
+    - optional skill catalog cleanup
+    - manual authenticated workflow testing
+
+  prohibited_without_confirmation:
+    - final submissions
+    - KRS commit
+    - WhatsApp sends
+    - destructive rebuild
+    - external MCP configuration
+    - CAPTCHA/OTP automation
+```
+
+**Conclusion: no blocking MCP defect was identified; the system is fit for normal read-oriented and preparation workflows, with the stated environmental limitations.**

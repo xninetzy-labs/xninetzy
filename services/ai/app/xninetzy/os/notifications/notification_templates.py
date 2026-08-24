@@ -30,6 +30,8 @@ def format_admin_notification(event_type: str, payload: dict) -> str:
             "• buat banyak task\n"
             "• link ke Graph RAG"
         )
+    if event_type == "academic_session_watchdog":
+        return str(payload.get("text") or "Session portal akademik perlu login ulang.")
     if event_type == "krs_watcher_change":
         opened = payload.get("kprs_opened")
         status = (

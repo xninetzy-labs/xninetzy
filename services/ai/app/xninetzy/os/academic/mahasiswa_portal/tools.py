@@ -41,6 +41,9 @@ from app.xninetzy.os.academic.mahasiswa_portal.reader import (
 from app.xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
     PortalRuntimeAnalyzer,
 )
+from app.xninetzy.os.academic.mahasiswa_portal.session_watchdog import (
+    format_session_age,
+)
 from app.xninetzy.os.hitl.approval_service import request_approval, validate_approval
 from app.xninetzy.os.notifications.admin_notifier import admin_jid, notify_admin_approval
 from app.xninetzy.os.research.permissions import is_owner_admin
@@ -300,14 +303,20 @@ async def uacc_login_cancel(
 
 @tool
 def uacc_session_status() -> str:
-    """Cek keberadaan session UACC terenkripsi di instalasi lokal."""
+    """Cek keberadaan dan umur session UACC terenkripsi di instalasi lokal."""
     try:
-        has, session_error = _session_present("uacc")
+        manager = SessionManager()
+        has = manager.has_session("uacc")
+        info = manager.session_info("uacc")
     except SessionEncryptionUnavailable as exc:
         return f"Session belum siap: {exc}"
-    if has:
-        return "Session UACC tersedia secara lokal; validasi portal via web_analysis_refresh(\"uacc\", authenticated=True)."
-    return "Session UACC belum tersedia. Jalankan /uacc-login untuk CAPTCHA manual."
+    if not has:
+        return "Session UACC belum tersedia. Jalankan /uacc-login untuk CAPTCHA manual."
+    age = format_session_age(info.get("age_seconds"))
+    return (
+        f"Session UACC tersedia secara lokal (disimpan {age} lalu); "
+        'validasi portal via web_analysis_refresh("uacc", authenticated=True).'
+    )
 
 
 @tool
@@ -329,6 +338,7 @@ def uacc_info() -> str:
     lines.append(f"• Cache struktur: {'ada' if analysis else 'belum ada'}")
     lines.append(f"• Status struktur: {analysis.auth_status if analysis else '-'}")
     lines.append(f"• Session terenkripsi: {'ada' if has_session else 'belum ada'}")
+    lines.append(f"• Umur session: {format_session_age(_session_age('uacc'))}")
     if session_error:
         lines.append("• Setup: isi WEB_ANALYSIS_ENCRYPTION_KEY lalu jalankan login manual lokal.")
     lines.append("• CAPTCHA/OTP tidak pernah disolve oleh agent.")
@@ -343,6 +353,13 @@ def _session_present(site_slug: str = "mahasiswa") -> tuple[bool, str | None]:
         return False, str(exc)
 
 
+def _session_age(site_slug: str) -> int | None:
+    try:
+        return SessionManager().session_info(site_slug).get("age_seconds")
+    except SessionEncryptionUnavailable:
+        return None
+
+
 @tool
 def portal_info() -> str:
     """Lihat kesiapan cache dan session portal mahasiswa local-owner."""
@@ -352,6 +369,7 @@ def portal_info() -> str:
     lines.append(f"• Cache struktur: {'ada' if analysis else 'belum ada'}")
     lines.append(f"• Status struktur: {analysis.auth_status if analysis else '-'}")
     lines.append(f"• Session terenkripsi: {'ada' if has_session else 'belum ada'}")
+    lines.append(f"• Umur session: {format_session_age(_session_age('mahasiswa'))}")
     if session_error:
         lines.append("• Setup: isi WEB_ANALYSIS_ENCRYPTION_KEY lalu jalankan login manual lokal.")
     lines.append("• CAPTCHA/OTP tidak pernah disolve oleh agent.")

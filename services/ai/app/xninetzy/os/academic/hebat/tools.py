@@ -9,6 +9,7 @@ from zoneinfo import ZoneInfo
 from langchain_core.tools import tool
 
 from app.xninetzy.core.config import get_settings
+from app.xninetzy.core.identity import configured_owner_jids, normalize_whatsapp_jid
 from app.xninetzy.core.logging import logging
 from app.xninetzy.os.academic.hebat.browser_session import (
     check_session_valid,
@@ -37,6 +38,7 @@ from app.xninetzy.os.academic.hebat.storage import (
     list_activities,
     list_assignments,
     list_courses,
+    resolve_activity_by_identifier,
     update_submission_status,
     upsert_activity,
     upsert_assignment,
@@ -55,8 +57,38 @@ from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     resolve_campus_credentials,
 )
 from app.xninetzy.os.policy.action_policy import evaluate_action
+from app.xninetzy.tools.errors import ToolErrorCode, tool_error
 
 logger = logging.getLogger(__name__)
+
+
+def _resolve_activity_cmid(
+    identifier: str, activity_type: str | None = None
+) -> tuple[str, str] | None:
+    s = get_settings()
+    if identifier.startswith("http"):
+        m = re.search(r"id=(\d+)", identifier)
+        cmid = m.group(1) if m else "0"
+        return cmid, identifier
+    if identifier.isdigit():
+        return identifier, (
+            f"{s.HEBAT_BASE_URL}/mod/{activity_type or 'resource'}/view.php?id={identifier}"
+        )
+    activity = resolve_activity_by_identifier(identifier, activity_type=activity_type)
+    if not activity:
+        return None
+    cmid = activity["cmid"]
+    url = activity.get("activity_url") or (
+        f"{s.HEBAT_BASE_URL}/mod/{activity['type']}/view.php?id={cmid}"
+    )
+    return cmid, url
+
+
+def _is_owner_chat(*chat_ids: str | None) -> bool:
+    owners = configured_owner_jids()
+    return any(
+        normalize_whatsapp_jid(value) in owners for value in chat_ids if value
+    )
 
 
 def _now(s=None) -> datetime:
@@ -338,15 +370,14 @@ async def hebat_download_material(
 
     s = get_settings()
 
-    # Resolve URL
-    if activity_id_or_url.startswith("http"):
-        url = activity_id_or_url
-        # Extract cmid from URL
-        m = re.search(r"id=(\d+)", url)
-        cmid = m.group(1) if m else "0"
-    else:
-        cmid = activity_id_or_url
-        url = f"{s.HEBAT_BASE_URL}/mod/resource/view.php?id={cmid}"
+    resolved = _resolve_activity_cmid(activity_id_or_url, activity_type="resource")
+    if not resolved:
+        return tool_error(
+            ToolErrorCode.NOT_FOUND,
+            "Tidak bisa menemukan materi dengan nama/cmid tersebut. "
+            "Coba dengan cmid atau URL lengkap, atau sync course dulu.",
+        )
+    cmid, url = resolved
 
     activity = get_activity_by_cmid(cmid)
     title = activity["title"] if activity else f"Activity {cmid}"
@@ -591,15 +622,14 @@ async def hebat_get_assignment_detail(chat_id: str, assignment_id_or_url: str) -
         chat_id: WhatsApp chat ID (dari context)
         assignment_id_or_url: cmid assignment atau URL lengkap
     """
-    s = get_settings()
-
-    if assignment_id_or_url.startswith("http"):
-        url = assignment_id_or_url
-        m = re.search(r"id=(\d+)", url)
-        cmid = m.group(1) if m else "0"
-    else:
-        cmid = assignment_id_or_url
-        url = f"{s.HEBAT_BASE_URL}/mod/assign/view.php?id={cmid}"
+    resolved = _resolve_activity_cmid(assignment_id_or_url, activity_type="assign")
+    if not resolved:
+        return tool_error(
+            ToolErrorCode.NOT_FOUND,
+            "Tidak bisa menemukan tugas dengan nama/cmid tersebut. "
+            "Coba dengan cmid atau URL lengkap, atau sync tugas dulu.",
+        )
+    cmid, url = resolved
 
     detail = await fetch_assignment_detail(chat_id, cmid)
     if not detail:
@@ -649,21 +679,33 @@ async def hebat_prepare_submission_from_whatsapp_file(
     # Validate file
     warnings: list[str] = []
     if not path.exists():
-        return f"File tidak ditemukan: `{local_file_path}`"
+        return tool_error(
+            ToolErrorCode.NOT_FOUND, f"File tidak ditemukan: `{local_file_path}`"
+        )
 
     mime = path.suffix.lower()
     if mime not in [".pdf"]:
-        return f"File harus PDF. File kamu: `{path.suffix}`"
+        return tool_error(
+            ToolErrorCode.INVALID_INPUT,
+            f"File harus PDF. File kamu: `{path.suffix}`",
+            valid_values=[".pdf"],
+        )
 
     size = path.stat().st_size
     if size > s.HEBAT_MAX_UPLOAD_BYTES:
-        return (
+        return tool_error(
+            ToolErrorCode.INVALID_INPUT,
             f"File terlalu besar: {size // 1024} KB. "
-            f"Maksimal {s.HEBAT_MAX_UPLOAD_BYTES // 1024 // 1024} MB."
+            f"Maksimal {s.HEBAT_MAX_UPLOAD_BYTES // 1024 // 1024} MB.",
         )
 
-    # Search assignment
     all_assignments = list_assignments()
+    if not all_assignments:
+        return tool_error(
+            ToolErrorCode.NOT_CONFIGURED,
+            "Belum ada data tugas tersimpan. Jalankan 'sync tugas hebat' dulu, "
+            "lalu ulangi persiapan upload ini.",
+        )
     candidates = [
         a
         for a in all_assignments
@@ -672,9 +714,10 @@ async def hebat_prepare_submission_from_whatsapp_file(
     ]
 
     if not candidates:
-        return (
+        return tool_error(
+            ToolErrorCode.NOT_FOUND,
             f"Tidak ada tugas yang cocok dengan '{assignment_query}'.\n"
-            "Ketik 'sync tugas hebat' dulu untuk memperbarui data."
+            "Ketik 'sync tugas hebat' dulu untuk memperbarui data.",
         )
 
     if len(candidates) > 1:
@@ -743,13 +786,21 @@ async def hebat_upload_submission(
     s = get_settings()
     sub = get_submission_by_token(confirmation_token)
     if not sub:
-        return f"Token `{confirmation_token}` tidak valid atau sudah digunakan."
+        return tool_error(
+            ToolErrorCode.NOT_FOUND,
+            f"Token `{confirmation_token}` tidak valid atau sudah digunakan.",
+        )
 
-    if sub["upload_status"] not in ("pending_confirmation",):
-        return f"Submission ini sudah dalam status: *{sub['upload_status']}*"
+    if sub["upload_status"] not in ("pending_confirmation", "failed"):
+        return tool_error(
+            ToolErrorCode.INVALID_INPUT,
+            f"Submission ini sudah dalam status: *{sub['upload_status']}*",
+        )
 
     if sub["source_chat_id"] != chat_id:
-        return "Token ini bukan milik chat kamu."
+        return tool_error(
+            ToolErrorCode.POLICY_HELD, "Token ini bukan milik chat kamu."
+        )
 
     payload = {
         "submission_id": sub["id"],
@@ -759,8 +810,10 @@ async def hebat_upload_submission(
     }
     policy = evaluate_action("hebat_submit_submission", payload)
     if not policy.allowed:
-        return f"Upload ditahan policy: {policy.reason}"
-    if policy.requires_approval:
+        return tool_error(
+            ToolErrorCode.POLICY_HELD, f"Upload ditahan policy: {policy.reason}"
+        )
+    if policy.requires_approval and not _is_owner_chat(chat_id, sub["source_chat_id"]):
         if approval_id is None:
             requested_id = request_approval(
                 chat_id,
@@ -781,14 +834,18 @@ async def hebat_upload_submission(
         try:
             validate_approval(approval_id, "hebat_submit_submission", policy.action_hash)
         except ValueError as exc:
-            return f"Upload HEBAT ditahan approval: {exc}"
-    # Find assignment URL
+            return tool_error(
+                ToolErrorCode.POLICY_HELD, f"Upload HEBAT ditahan approval: {exc}"
+            )
     all_assigns = list_assignments()
     assign = next(
         (a for a in all_assigns if a.get("activity_id") == sub["assignment_id"]), None
     )
     if not assign:
-        return "Data tugas tidak ditemukan."
+        return tool_error(
+            ToolErrorCode.NOT_FOUND,
+            "Data tugas tidak ditemukan. Jalankan 'sync tugas hebat' lalu siapkan ulang upload.",
+        )
 
     assignment_url = (
         assign.get("activity_url")
@@ -831,9 +888,13 @@ def hebat_cancel_submission(chat_id: str, confirmation_token: str) -> str:
     """
     sub = get_submission_by_token(confirmation_token)
     if not sub:
-        return f"Token `{confirmation_token}` tidak ditemukan."
+        return tool_error(
+            ToolErrorCode.NOT_FOUND, f"Token `{confirmation_token}` tidak ditemukan."
+        )
     if sub["source_chat_id"] != chat_id:
-        return "Token ini bukan milik chat kamu."
+        return tool_error(
+            ToolErrorCode.POLICY_HELD, "Token ini bukan milik chat kamu."
+        )
     update_submission_status(confirmation_token, UploadStatus.CANCELLED)
     return (
         f"✅ Upload dibatalkan. Token `{confirmation_token}` tidak bisa dipakai lagi."
@@ -855,15 +916,14 @@ async def hebat_remove_submission(chat_id: str, assignment_id_or_url: str, confi
         assignment_id_or_url: cmid assignment atau URL lengkap
         confirm: True untuk mengeksekusi penghapusan (default False = dry-run)
     """
-    s = get_settings()
-
-    if assignment_id_or_url.startswith("http"):
-        url = assignment_id_or_url
-        m = re.search(r"id=(\d+)", url)
-        cmid = m.group(1) if m else "0"
-    else:
-        cmid = assignment_id_or_url
-        url = f"{s.HEBAT_BASE_URL}/mod/assign/view.php?id={cmid}"
+    resolved = _resolve_activity_cmid(assignment_id_or_url, activity_type="assign")
+    if not resolved:
+        return tool_error(
+            ToolErrorCode.NOT_FOUND,
+            "Tidak bisa menemukan tugas dengan nama/cmid tersebut. "
+            "Coba dengan cmid atau URL lengkap, atau sync tugas dulu.",
+        )
+    cmid, url = resolved
 
     err = _ensure_session_or_msg(chat_id)
     if err:

@@ -136,6 +136,37 @@ class SessionManager:
     def has_session(self, site_slug: str, profile_id: str | None = None) -> bool:
         return self.store.exists(profile_id, site_slug, "storage-state")
 
+    def session_info(self, site_slug: str, profile_id: str | None = None) -> dict[str, Any]:
+        envelope = self.store.load(profile_id, site_slug, "storage-state")
+        if not envelope:
+            return {
+                "exists": False,
+                "saved_at": None,
+                "age_seconds": None,
+                "landing_url": None,
+            }
+        saved_at_raw = envelope.get("saved_at")
+        saved_at: datetime | None = None
+        if isinstance(saved_at_raw, str):
+            try:
+                saved_at = datetime.fromisoformat(saved_at_raw)
+            except ValueError:
+                saved_at = None
+        age_seconds: int | None = None
+        if saved_at is not None:
+            if saved_at.tzinfo is None:
+                saved_at = saved_at.replace(tzinfo=timezone.utc)
+            age_seconds = max(
+                0, int((datetime.now(timezone.utc) - saved_at).total_seconds())
+            )
+        landing_url = envelope.get("landing_url")
+        return {
+            "exists": True,
+            "saved_at": saved_at_raw if isinstance(saved_at_raw, str) else None,
+            "age_seconds": age_seconds,
+            "landing_url": landing_url if isinstance(landing_url, str) else None,
+        }
+
     def load_landing_url(
         self,
         site_slug: str,

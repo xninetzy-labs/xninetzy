@@ -1,5 +1,9 @@
 from __future__ import annotations
 
+from app.xninetzy.db.idempotency import (
+    IDEMPOTENCY_INDEX_DDL,
+    IDEMPOTENCY_TABLE_DDL,
+)
 from app.xninetzy.db.sqlite import connect
 
 
@@ -788,6 +792,8 @@ def run_migrations() -> None:
         )
         """,
         "CREATE VIRTUAL TABLE IF NOT EXISTS obsidian_notes_fts USING fts5(path UNINDEXED, content)",
+        IDEMPOTENCY_TABLE_DDL,
+        IDEMPOTENCY_INDEX_DDL,
     ]
     with connect() as conn:
         for statement in statements:

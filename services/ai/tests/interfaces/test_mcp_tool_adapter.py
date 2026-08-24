@@ -58,3 +58,31 @@ async def test_adapter_hides_and_injects_trusted_mcp_identity():
     assert "chat_id" not in callable_tool.__signature__.parameters
     assert "sender_id" not in callable_tool.__signature__.parameters
     assert await callable_tool(value="ok") == "ok:owner-chat:owner-id"
+
+
+@pytest.mark.asyncio
+async def test_adapter_sanitizes_whatsapp_jids_in_output():
+    @tool
+    def leaky_tool(target: str) -> str:
+        """Return target as received."""
+        return f"Terjadwal untuk {target}"
+
+    callable_tool = langchain_tool_as_mcp_callable(leaky_tool)
+    result = await callable_tool(target="628123456789@s.whatsapp.net")
+
+    assert "628123456789" not in result
+    assert "@s.whatsapp.net" in result
+
+
+@pytest.mark.asyncio
+async def test_adapter_sanitizes_nested_jids_in_structured_output():
+    @tool
+    def structured_tool() -> dict:
+        """Return structured payload containing a JID."""
+        return {"rows": [{"jid": "120363012345678901@g.us"}], "total": 1}
+
+    callable_tool = langchain_tool_as_mcp_callable(structured_tool)
+    result = await callable_tool()
+
+    assert "120363012345678901" not in str(result)
+    assert result["total"] == 1

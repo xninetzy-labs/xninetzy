@@ -17,6 +17,7 @@ def task_capture(
     due_at: str | None = None,
     goal_id: int | None = None,
     chat_id: str = "system",
+    idempotency_key: str = "",
 ) -> str:
     """Catat task baru.
 
@@ -27,15 +28,29 @@ def task_capture(
         due_at: Deadline ISO string atau tanggal (opsional)
         goal_id: ID goal terkait (opsional)
         chat_id: WhatsApp chat ID (dari context)
+        idempotency_key: Kunci opsional agar retry tidak membuat task duplikat
     """
+    from app.xninetzy.db.idempotency import idempotent_call
     from app.xninetzy.os.life.task_manager import create_task
 
-    t = create_task(title, description, priority, due_at, goal_id)
-    record_event(
-        chat_id, "task_created", "whatsapp", "task", str(t["id"]), {"title": title}
-    )
-    due = f"\nDeadline: {due_at}" if due_at else ""
-    return f"✅ Task dicatat!\n*{title}*\nPriority: {priority} | ID: `{t['id']}`{due}"
+    payload = {
+        "title": title,
+        "description": description,
+        "priority": priority,
+        "due_at": due_at,
+        "goal_id": goal_id,
+    }
+
+    def _create() -> str:
+        t = create_task(title, description, priority, due_at, goal_id)
+        record_event(
+            chat_id, "task_created", "whatsapp", "task", str(t["id"]), {"title": title}
+        )
+        due = f"\nDeadline: {due_at}" if due_at else ""
+        return f"✅ Task dicatat!\n*{title}*\nPriority: {priority} | ID: `{t['id']}`{due}"
+
+    result, _created = idempotent_call("task_capture", idempotency_key, payload, _create)
+    return result
 
 
 @tool

@@ -31,5 +31,7 @@ def format_sources_block(sources: list[dict]) -> str:
         url = source.get("url") or ""
         level = source.get("evidence_level") or "snippet"
         tail = f" — {url}" if url else ""
-        lines.append(f"{sid} [{level}] {title}{tail}")
+        collected = source.get("collected_at") or ""
+        stamp = f" · diambil {collected}" if collected else ""
+        lines.append(f"{sid} [{level}] {title}{tail}{stamp}")
     return "\n".join(lines)

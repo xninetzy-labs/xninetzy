@@ -165,7 +165,11 @@ def knowledge_list_sources(source_type: str = "", limit: int = 20) -> str:
 
 @mcp.tool()
 def knowledge_ingest_text(
-    title: str, text: str, source_type: str = "manual_note", uri: str = ""
+    title: str,
+    text: str,
+    source_type: str = "manual_note",
+    uri: str = "",
+    idempotency_key: str = "",
 ) -> str:
     """Ingest teks ke knowledge base."""
     return str(
@@ -176,6 +180,7 @@ def knowledge_ingest_text(
                 "source_type": source_type,
                 "uri": uri or None,
                 "chat_id": _MCP_CONTEXT["chat_id"],
+                "idempotency_key": idempotency_key,
             }
         )
     )
@@ -195,7 +200,11 @@ def task_today() -> str:
 
 @mcp.tool()
 def task_capture(
-    title: str, description: str = "", priority: str = "medium", due_at: str = ""
+    title: str,
+    description: str = "",
+    priority: str = "medium",
+    due_at: str = "",
+    idempotency_key: str = "",
 ) -> str:
     """Buat task baru."""
     return str(
@@ -207,6 +216,7 @@ def task_capture(
                 "due_at": due_at or None,
                 "goal_id": None,
                 "chat_id": _MCP_CONTEXT["chat_id"],
+                "idempotency_key": idempotency_key,
             }
         )
     )

@@ -10,6 +10,7 @@ from mcp.server.fastmcp import FastMCP
 from pydantic_core import PydanticUndefined
 
 from app.xninetzy.core.config import Settings, get_settings
+from app.xninetzy.core.security import sanitize_tool_output
 
 
 TRUSTED_CONTEXT_FIELDS = frozenset(
@@ -98,6 +99,7 @@ def langchain_tool_as_mcp_callable(
                 )
                 episode_id = episode["episode_id"]
             result = await tool.ainvoke(arguments)
+            result = sanitize_tool_output(result)
             if episode_id:
                 from app.xninetzy.os.lightning.rl import record_action, record_outcome
 

@@ -59,22 +59,47 @@ async def youtube_search(query: str, limit: int = 5) -> str:
 
 @tool
 async def research_light(topic: str, limit: int = 3) -> str:
-    """Search ringan yang boleh dipakai semua user."""
-    from app.xninetzy.os.research.web_search import web_search as _web
-    results = await _web(topic, limit=limit)
+    """Search ringan yang boleh dipakai semua user.
+
+    Menggabungkan web, YouTube, dan paper akademik dalam satu panggilan cepat.
+    """
+    from app.xninetzy.os.research.light_pipeline import (
+        collect_quick_sources,
+        group_sources_by_type,
+    )
+
+    sources = await collect_quick_sources(topic, limit=int(limit))
     lines = [f"*Research Ringan: {topic}*\n", "*Ringkasan*"]
-    if results:
-        lines.append("Aku menemukan beberapa sumber awal. Gunakan ini untuk orientasi cepat, bukan riset final.\n")
-        lines.append("*Sumber Singkat*")
-        for i, result in enumerate(results[:limit], 1):
-            lines.append(f"{i}. {result.get('title') or 'Untitled'}")
-            if result.get("url"):
-                lines.append(f"   {result['url']}")
-            if result.get("snippet"):
-                lines.append(f"   {result['snippet'][:180]}")
+    if sources:
+        lines.append(
+            "Sumber awal lintas web, video, dan paper akademik. "
+            "Gunakan untuk orientasi cepat, bukan riset final.\n"
+        )
+        grouped = group_sources_by_type(sources)
+        labels = {
+            "web": "🌐 *Web*",
+            "academic": "🎓 *Paper Akademik*",
+            "youtube": "📺 *YouTube*",
+        }
+        for kind in ("web", "academic", "youtube"):
+            items = grouped.get(kind) or []
+            if not items:
+                continue
+            lines.append(labels[kind])
+            for i, result in enumerate(items[:limit], 1):
+                lines.append(f"{i}. {result.get('title') or 'Untitled'}")
+                if result.get("url"):
+                    lines.append(f"   {result['url']}")
+                snippet = result.get("snippet") or result.get("description") or ""
+                if snippet:
+                    lines.append(f"   {snippet[:180]}")
+            lines.append("")
     else:
-        lines.append("Provider web search belum aktif atau tidak ada hasil. Set TAVILY_API_KEY/SERPER_API_KEY untuk hasil web.")
-    lines.append("\nKalau butuh riset mendalam, minta admin menjalankan:")
+        lines.append(
+            "Tidak ada sumber yang berhasil dikumpulkan. "
+            "Coba ulangi atau gunakan kata kunci lain."
+        )
+    lines.append("Kalau butuh riset mendalam, minta admin menjalankan:")
     lines.append(f"`/deep-research {topic}`")
     return "\n".join(lines)
 
@@ -115,11 +140,22 @@ async def research_rank_sources(topic: str, sources: list[dict] | None = None) -
 
 @tool
 async def research_generate_brief(topic: str) -> str:
-    """Buat brief riset kerangka tanpa menyimpan apa pun."""
-    from app.xninetzy.os.research.subplanner import generate_research_subplans
+    """Buat brief riset kerangka dengan sumber nyata (web + paper + video)."""
     from app.xninetzy.os.research.deep_research import generate_research_brief
+    from app.xninetzy.os.research.light_pipeline import collect_quick_sources
+    from app.xninetzy.os.research.subplanner import generate_research_subplans
+
     subplans = await generate_research_subplans(topic, None, "balanced")
-    return generate_research_brief(topic, subplans, [])
+    sources = await collect_quick_sources(topic, limit=3)
+    for subplan in subplans[:2]:
+        query = (subplan.search_queries or [None])[0]
+        if query and query != topic:
+            sources.extend(
+                await collect_quick_sources(
+                    query, limit=2, include_youtube=False, include_academic=True
+                )
+            )
+    return generate_research_brief(topic, subplans, sources)
 
 
 @tool
@@ -267,3 +303,103 @@ async def deep_research_list(limit: int = 5, chat_id: str = "system") -> str:
             f"({row.get('mode')})"
         )
     return "\n".join(lines)
+
+
+@tool
+async def research_search_papers(
+    query: str, sources: str = "arxiv,crossref", max_results: int = 5
+) -> str:
+    """Cari paper akademik via arXiv dan CrossRef (gratis, tanpa API key).
+
+    Args:
+        query: Topik atau kata kunci penelitian
+        sources: Sumber dipisah koma: arxiv, crossref
+        max_results: Jumlah hasil per sumber (default: 5)
+    """
+    from app.xninetzy.os.research.academic_search import search_papers
+
+    results = await search_papers(query, sources=sources, max_results=int(max_results))
+    if not results:
+        return f"Tidak ada paper ditemukan untuk '{query}'."
+
+    lines = [f"🎓 *Paper Search:* `{query}`\n"]
+    for i, r in enumerate(results, 1):
+        authors = ", ".join(r.get("authors", [])[:3])
+        year = r.get("year") or "?"
+        ident = r.get("identifier", "")
+        lines.append(
+            f"*[{i}] {r['title']}* ({r['identifier_kind']}: `{ident}`, {year})\n"
+            f"{authors}\n{r['url']}\n{r['snippet']}\n"
+        )
+    return "\n".join(lines)
+
+
+@tool
+async def research_get_paper(
+    identifier: str,
+    source: str = "auto",
+    ingest: bool = False,
+    chat_id: str = "system",
+) -> str:
+    """Ambil detail satu paper dari DOI atau ID/URL arXiv.
+
+    Args:
+        identifier: DOI (10.xxxx/...), ID arXiv (2401.12345), atau URL keduanya
+        source: auto|doi|arxiv (default: auto-deteksi)
+        ingest: True untuk menyimpan metadata+abstrak ke knowledge base
+        chat_id: WhatsApp chat ID (dari context)
+    """
+    from app.xninetzy.os.research.academic_search import get_paper
+
+    paper = await get_paper(identifier, source=source)
+    if paper.get("status") != "ok":
+        return f"❌ {paper.get('error', 'Paper gagal diambil.')}"
+
+    authors = ", ".join(paper.get("authors", [])[:6])
+    lines = [
+        f"📄 *{paper['title']}*\n"
+        f"Penulis: {authors}\n"
+        f"Tahun: {paper.get('year') or '?'} | Jenis: {paper.get('identifier_kind')}\n"
+        f"ID: `{paper.get('identifier')}`\n"
+        f"URL: {paper.get('url')}"
+    ]
+    if paper.get("container"):
+        lines.append(f"Publikasi: {paper['container']}")
+    abstract = paper.get("abstract") or paper.get("snippet") or ""
+    if abstract:
+        lines.append(f"\nAbstrak: {abstract[:800]}")
+
+    if ingest and abstract:
+        from app.xninetzy.os.knowledge.ingestion import ingest_text
+
+        result = ingest_text(
+            title=paper["title"],
+            text=f"{paper['title']}\n\n{abstract}",
+            source_type="web_article",
+            uri=paper.get("url"),
+        )
+        lines.append(f"\n📚 Knowledge base: {result.get('status')} (ID `{result.get('source_id', '?')}`)")
+
+    return "\n".join(lines)
+
+
+@tool
+async def research_download_paper(identifier: str, source: str = "auto") -> str:
+    """Unduh PDF paper yang open-access secara legal (arXiv / tautan OA CrossRef).
+
+    Sci-Hub sengaja tidak didukung.
+
+    Args:
+        identifier: DOI, ID arXiv, atau URL keduanya
+        source: auto|doi|arxiv (default: auto-deteksi)
+    """
+    from app.xninetzy.os.research.academic_search import download_paper_pdf
+
+    result = await download_paper_pdf(identifier, source=source)
+    if result["status"] == "downloaded":
+        return (
+            f"✅ PDF tersimpan: `{result['path']}`\n"
+            f"*{result.get('title', '')}* ({result['bytes'] // 1024} KB)\n"
+            f"Sumber: {result.get('source_url')}"
+        )
+    return f"❌ {result.get('error', 'Unduhan gagal.')}"

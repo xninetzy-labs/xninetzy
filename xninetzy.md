@@ -110,7 +110,7 @@ Ada dua kelompok: **skills agent lokal** (di `~/.config/opencode/skills/`) dan *
 | `xninetzy-os` | trusted-builtin | Koordinasi Xninetzy sebagai Learning OS & Life OS single-owner lintas interface (capture → understanding → planning → execution → review → adaptation) |
 | `it-learning` | trusted-builtin | Roadmap & evidence-backed learning plan: programming, backend, DB, Docker, system design, AI agents, RAG, data analytics, ML |
 | `hebat-academic` | trusted-builtin | Course HEBAT/Moodle, aktivitas, deadline, materi, PDF, persiapan submission (approval sebelum upload) |
-| `academic-assignment` | owner-installed | Mengerjakan assignment end-to-end: instruksi → riset brief → dokumen (PDF/DOCX) → siap upload HEBAT |
+| `academic-assignment` | owner-installed | Assignment end-to-end: kontrak tugas → riset berbukti → DOCX/PDF dengan standar cover dan TOC akademik UNAIR → validasi visual → siap upload HEBAT |
 | `cyber-campus` | trusted-builtin | Portal akademik: session, navigasi, profile, status, jadwal, nilai, penawaran MK, KRS planning |
 | `krs-war` | owner-installed | Operasi KRS War (auto-commit) mahasiswa.unair.ac.id: plan Obsidian, ambil MK, upgrade kelas goal, verifikasi |
 | `life-management` | trusted-builtin | Goal, task, reminder, habit, workout, money log, daily check-in, weekly review |
@@ -132,8 +132,6 @@ Ada dua kelompok: **skills agent lokal** (di `~/.config/opencode/skills/`) dan *
 | `security-ownership-map` | trusted-builtin | Topologi kepemilikan kode (people-to-file), bus factor, export CSV/JSON |
 | `xninetzy-tdd-impl` | owner-installed | Implementasi kode dari plan yang disetujui: inline TDD, per-task ledger, baseline-vs-delta, commit gate (umum, lintas bahasa) |
 | `xninetzy-inmemory-db-test` | owner-installed | Pola test dengan in-memory DB (SQLite) di belakang ORM; fix error tipe-scan `time.Time` |
-| `xninetzy-go-tdd-impl` | owner-installed | **DEPRECATED** → pakai `xninetzy-tdd-impl` |
-| `xninetzy-go-sqlite-test` | owner-installed | **DEPRECATED** → pakai `xninetzy-inmemory-db-test` |
 | `test-mcp` | owner-installed | Skill uji coba MCP session testing — hapus jika tidak diperlukan |
 
 ---

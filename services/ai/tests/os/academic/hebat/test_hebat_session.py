@@ -7,6 +7,7 @@ no live HEBAT account or browser is required.
 from __future__ import annotations
 
 from collections import deque
+from types import SimpleNamespace
 
 import httpx
 import pytest
@@ -98,6 +99,14 @@ def patched(monkeypatch):
     monkeypatch.setattr(moodle_client, "get_cookies_for_httpx", fake_cookies)
     monkeypatch.setattr(moodle_client, "relogin_hebat", fake_relogin)
     monkeypatch.setattr(moodle_client.asyncio, "sleep", no_sleep)
+    monkeypatch.setattr(
+        moodle_client,
+        "get_settings",
+        lambda: SimpleNamespace(
+            HEBAT_SESSION_MAX_RELOGIN=2,
+            HEBAT_RATE_LIMIT_SECONDS=0,
+        ),
+    )
     return relogin_counter
 
 
@@ -140,7 +149,6 @@ async def test_relogin_capped_no_infinite_loop(patched):
     _FakeClient.queue = deque()  # empty → fake serves login redirect forever
     html = await moodle_client._get("628xxx", "https://h/mod/assign/view.php?id=1")
     assert html is None
-    # HEBAT_SESSION_MAX_RELOGIN defaults to 2 → at most 2 relogin attempts.
     assert patched["n"] == 2
 
 

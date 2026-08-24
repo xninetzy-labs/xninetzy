@@ -12,6 +12,7 @@ def knowledge_ingest_text(
     source_type: str = "manual_note",
     uri: str | None = None,
     chat_id: str = "system",
+    idempotency_key: str = "",
 ) -> str:
     """Simpan teks ke knowledge base untuk pencarian semantik di masa depan.
 
@@ -21,25 +22,35 @@ def knowledge_ingest_text(
         source_type: hebat_pdf|obsidian_note|web_article|youtube_video|manual_note
         uri: URL atau referensi sumber (opsional)
         chat_id: WhatsApp chat ID (dari context)
+        idempotency_key: Kunci opsional agar retry tidak menggandakan ingest
     """
+    from app.xninetzy.db.idempotency import idempotent_call
     from app.xninetzy.os.knowledge.ingestion import ingest_text
 
-    result = ingest_text(title, text, source_type, uri)
-    record_event(
-        chat_id,
-        "pdf_ingested",
-        "manual",
-        "note",
-        result.get("source_id", ""),
-        {"title": title, "chunks": result.get("chunks", 0)},
+    payload = {"title": title, "source_type": source_type, "uri": uri}
+
+    def _ingest() -> str:
+        result = ingest_text(title, text, source_type, uri)
+        record_event(
+            chat_id,
+            "pdf_ingested",
+            "manual",
+            "note",
+            result.get("source_id", ""),
+            {"title": title, "chunks": result.get("chunks", 0)},
+        )
+
+        if result["status"] == "already_exists":
+            return f"ℹ️ Sumber *{title}* sudah ada di knowledge base."
+        if result["status"] == "empty":
+            return "⚠️ Teks kosong, tidak ada yang diingest."
+
+        return f"✅ Diingest ke knowledge:\n*{title}*\n{result['chunks']} chunk | ID: `{result.get('source_id', '?')}`"
+
+    result, _created = idempotent_call(
+        "knowledge_ingest_text", idempotency_key, payload, _ingest
     )
-
-    if result["status"] == "already_exists":
-        return f"ℹ️ Sumber *{title}* sudah ada di knowledge base."
-    if result["status"] == "empty":
-        return "⚠️ Teks kosong, tidak ada yang diingest."
-
-    return f"✅ Diingest ke knowledge:\n*{title}*\n{result['chunks']} chunk | ID: `{result.get('source_id', '?')}`"
+    return result
 
 
 @tool

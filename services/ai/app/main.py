@@ -16,6 +16,9 @@ from app.xninetzy.db.migrations import run_migrations
 from app.xninetzy.os.reminders.scheduler import reminder_loop
 from app.xninetzy.os.jobs.service import os_job_loop
 from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import krs_watcher_loop
+from app.xninetzy.os.academic.mahasiswa_portal.session_watchdog import (
+    session_watchdog_loop,
+)
 from app.xninetzy.os.web_analysis.background import web_analysis_loop
 
 _configure_mcp_runtime_paths()
@@ -51,6 +54,7 @@ async def startup() -> None:
     asyncio.create_task(reminder_loop())
     asyncio.create_task(os_job_loop())
     asyncio.create_task(krs_watcher_loop())
+    asyncio.create_task(session_watchdog_loop())
     if settings.WEB_ANALYSIS_BACKGROUND_ENABLED:
         asyncio.create_task(web_analysis_loop())
     if settings.GRAPHRAG_V3_ENABLED:

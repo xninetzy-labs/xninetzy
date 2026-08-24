@@ -3,24 +3,15 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 from app.xninetzy.core.config import Settings, get_settings
-from app.xninetzy.core.identity import normalize_whatsapp_jid
+from app.xninetzy.core.identity import configured_owner_jids, normalize_whatsapp_jid
+
+__all__ = ["OwnerDecision", "authorize_owner", "configured_owner_jids"]
 
 
 @dataclass(frozen=True)
 class OwnerDecision:
     allowed: bool
     reason: str
-
-
-def configured_owner_jids(settings: Settings | None = None) -> frozenset[str]:
-    current = settings or get_settings()
-    values = [
-        current.OWNER_PHONE_NUMBER,
-        current.ADMIN_JID,
-        *current.OWNER_ALLOWED_JIDS.split(","),
-    ]
-    normalized = (normalize_whatsapp_jid(value) for value in values)
-    return frozenset(value for value in normalized if value)
 
 
 def authorize_owner(

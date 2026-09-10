@@ -1,7 +1,0 @@
-node_modules
-dist
-sessions
-session
-auth
-baileys_auth
-.env

@@ -21,13 +21,14 @@ metadata:
 ## Fast-path login pipeline & session watchdog
 
 * `/cyber-login` is one-shot: credentials are auto-filled from server config,
-  the CAPTCHA is delivered to WhatsApp automatically, and a wrong answer
-  triggers an automatic retry with a fresh CAPTCHA image up to
-  `CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS`;
+  the CAPTCHA is delivered to the owner through the supported image channel
+  automatically, and a wrong answer triggers an automatic retry with a
+  fresh CAPTCHA image up to `CYBER_CAMPUS_LOGIN_MAX_ATTEMPTS`;
 * `portal_session_status` validates the stored session against the portal;
   `portal_info` reports its local age;
-* the shared session watchdog notifies the owner on WhatsApp when this
-  portal's session is missing or older than `ACADEMIC_SESSION_STALE_HOURS`;
+* the shared session watchdog notifies the owner through the configured
+  channel when this portal's session is missing or older than
+  `ACADEMIC_SESSION_STALE_HOURS`;
 * the owner still reads and answers every CAPTCHA manually; OCR, auto-solving,
   and unattended submission remain prohibited.
 

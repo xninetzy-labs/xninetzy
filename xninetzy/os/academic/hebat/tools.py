@@ -421,9 +421,17 @@ async def hebat_download_material(
     title = activity["title"] if activity else f"Activity {cmid}"
     course_id = activity["course_id"] if activity else "unknown"
 
+    course = get_course_by_id(course_id) if course_id != "unknown" else None
+    course_label = (
+        course["fullname"]
+        if course and course.get("fullname")
+        else (course["shortname"] if course and course.get("shortname") else f"course-{course_id}")
+    )
+    course_slug = re.sub(r"[^\w\s-]", "", course_label).strip().replace(" ", "_")[:80]
+
     # Resolve the Moodle activity page to a concrete pluginfile/resource URL.
     safe_title = re.sub(r"[^\w\s-]", "", title).strip().replace(" ", "_")[:50]
-    dest_dir = Path(s.HEBAT_DOWNLOAD_DIR) / course_id / safe_title
+    dest_dir = Path(s.HEBAT_DOWNLOAD_DIR).expanduser() / course_slug / safe_title
     dest_dir.mkdir(parents=True, exist_ok=True)
 
     from xninetzy.os.academic.hebat.download_resolver import (

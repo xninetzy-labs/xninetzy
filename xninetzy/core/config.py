@@ -1,6 +1,7 @@
 from functools import lru_cache
 from pathlib import Path
 
+from pydantic import field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from xninetzy.interfaces.mcp_runtime import configure_mcp_runtime_paths
@@ -126,19 +127,19 @@ class Settings(BaseSettings):
     OWNER_ALLOWED_IDS: str = ""
     OWNER_ALLOWED_JIDS: str = ""  # legacy alias retained for installs predating MCP-only pivot
 
-    DATA_DIR: str = "/app/data"
-    SQLITE_PATH: str = "/app/data/xninetzy.sqlite3"
-    BACKUP_DIR: str = "/app/data/backups"
+    DATA_DIR: str = "~/.local/share/xninetzy"
+    SQLITE_PATH: str = "~/.local/share/xninetzy/xninetzy.sqlite3"
+    BACKUP_DIR: str = "~/.local/share/xninetzy/backups"
     BACKUP_RETENTION: int = 14
 
     # ---------------- AI-generated artifact paths (env-configurable) ----------------
     # Owners can point these to anywhere (home, /tmp, external drive).
-    # Defaults live under the project root and are gitignored.
-    OUTPUT_DIR: str = "./output"
-    GENERATED_DOCUMENTS_DIR: str = "./generated/documents"
-    RESEARCH_OUTPUT_DIR: str = "./generated/research"
-    UNTRACKED_OUTPUT_DIR: str = "./generated/untracked"
-    # Allow runtime to write ONLY into these directories (no arbitrary paths).
+    # `~` is expanded by the OS at runtime, so defaults work on every platform.
+    # When ARTIFACT_ALLOWLIST=true, writes outside these four roots are rejected.
+    OUTPUT_DIR: str = "~/Documents/xninetzy/output"
+    GENERATED_DOCUMENTS_DIR: str = "~/Documents/xninetzy/generated/documents"
+    RESEARCH_OUTPUT_DIR: str = "~/Documents/xninetzy/generated/research"
+    UNTRACKED_OUTPUT_DIR: str = "~/Documents/xninetzy/generated/untracked"
     ARTIFACT_ALLOWLIST: bool = True
 
     AGENT_MAX_ITERATIONS: int = 10
@@ -146,7 +147,7 @@ class Settings(BaseSettings):
     AGENT_DEBUG_ENDPOINTS: bool = False
 
     OBSIDIAN_ENABLED: bool = True
-    OBSIDIAN_VAULT_HOST_PATH: str = "~/Documents/xninetzy"
+    OBSIDIAN_VAULT_HOST_PATH: str = "~/Documents/xninetzy-vault"
     OBSIDIAN_VAULT_PATH: str = "/app/obsidian-vault"
     OBSIDIAN_ALLOW_WRITE: bool = True
     OBSIDIAN_ALLOW_DELETE: bool = False
@@ -269,8 +270,8 @@ class Settings(BaseSettings):
     # HEBAT / Moodle integration
     HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"
     HEBAT_LOGIN_URL: str = "https://hebat.elearning.unair.ac.id/login/index.php"
-    HEBAT_DATA_DIR: str = "/app/data/hebat"
-    HEBAT_DOWNLOAD_DIR: str = "/app/data/hebat/downloads"
+    HEBAT_DATA_DIR: str = "~/.local/share/xninetzy/hebat"
+    HEBAT_DOWNLOAD_DIR: str = "~/Documents"
     HEBAT_BROWSER_HEADLESS: bool = True
     HEBAT_ALLOW_AUTO_SUBMIT: bool = False
     HEBAT_REQUIRE_CONFIRMATION: bool = True
@@ -471,3 +472,34 @@ class Settings(BaseSettings):
 @lru_cache
 def get_settings() -> Settings:
     return Settings()
+
+
+_PATH_KEYS = frozenset({
+    "DATA_DIR",
+    "SQLITE_PATH",
+    "BACKUP_DIR",
+    "OUTPUT_DIR",
+    "GENERATED_DOCUMENTS_DIR",
+    "RESEARCH_OUTPUT_DIR",
+    "UNTRACKED_OUTPUT_DIR",
+    "HEBAT_DATA_DIR",
+    "HEBAT_DOWNLOAD_DIR",
+    "OBSIDIAN_VAULT_HOST_PATH",
+    "WEB_ANALYSIS_DATA_DIR",
+    "VECTOR_DATA_DIR",
+    "GRAPH_VECTOR_DATA_DIR",
+})
+
+
+def expand_path(value: str) -> str:
+    if not value:
+        return value
+    return str(Path(value).expanduser().resolve()) if value.startswith("~") else value
+
+
+def expand_paths(settings: Settings) -> Settings:
+    for key in _PATH_KEYS:
+        raw = getattr(settings, key, None)
+        if isinstance(raw, str):
+            setattr(settings, key, expand_path(raw))
+    return settings

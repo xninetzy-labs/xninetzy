@@ -1,9 +1,6 @@
-# Xninetzy Memory OS
-
-```yaml
 ---
 name: xninetzy-memory
-description: General-purpose durable memory operating system for retrieving, writing, consolidating, checkpointing, validating, and resuming scoped Xninetzy context across sessions. Preserves durable decisions, requirements, constraints, progress, sources, artifacts, blockers, and next actions while minimizing noise, maintaining provenance, detecting conflicts, preventing stale-state errors, and protecting sensitive information.
+description: Durable memory operating system for retrieving, writing, consolidating, checkpointing, validating, and resuming scoped Xninetzy context across sessions. Use to preserve durable decisions, requirements, constraints, progress, sources, artifacts, blockers, and next actions while minimizing noise, maintaining provenance, detecting conflicts, preventing stale-state errors, and protecting sensitive information.
 metadata:
   scope: general
   owner: xninetzy
@@ -11,22 +8,19 @@ metadata:
   version: "2.0.0"
   lifecycle: "scope -> retrieve -> rank -> validate -> resume -> execute -> checkpoint -> consolidate -> persist -> verify"
 ---
-```
 
 # Xninetzy Memory OS
 
-This skill is the **durable continuity layer** for Xninetzy workflows.
-
-Its purpose is to preserve only the information that materially helps a future session continue work correctly.
+This skill is the **durable continuity layer** for Xninetzy workflows. Its purpose is to preserve only the information that materially helps a future session continue work correctly.
 
 The system should answer:
 
-**What should I remember?**
-**Which memory is relevant now?**
-**Which memory is still valid?**
-**What changed?**
-**What must not be repeated?**
-**What is the exact next action?**
+* What should I remember?
+* Which memory is relevant now?
+* Which memory is still valid?
+* What changed?
+* What must not be repeated?
+* What is the exact next action?
 
 The core principle is:
 
@@ -36,15 +30,9 @@ The canonical lifecycle is:
 
 **Scope → Retrieve → Rank → Validate → Resume → Execute → Checkpoint → Consolidate → Persist → Verify**
 
----
+## Memory philosophy
 
-# 1. Memory Philosophy
-
-Memory is not a transcript archive.
-
-It is a **durable state layer**.
-
-Store information when it has future utility, especially:
+Memory is not a transcript archive. It is a **durable state layer**. Store information when it has future utility, especially:
 
 * official requirements,
 * explicit user decisions,
@@ -59,49 +47,43 @@ Store information when it has future utility, especially:
 
 Avoid storing conversational noise.
 
----
+## When to use
 
-# 2. Memory State Hierarchy
+* retrieving relevant memory before continuing meaningful work;
+* persisting durable state, decisions, checkpoints, artifacts, or corrections;
+* consolidating or compressing accumulated memory;
+* resolving stale or conflicting memory against current verified evidence.
 
-Treat information according to its durability.
+## When NOT to use
 
-### Durable
+* ephemeral reasoning without future utility;
+* secrets, credentials, session tokens, or private personal data;
+* every conversational turn — checkpoint only on state transitions.
 
-Likely to remain relevant across sessions.
+## Memory state hierarchy
 
-Examples:
+Treat information according to its durability:
 
-* approved design decision,
-* project architecture,
-* stable formatting preference,
-* official requirement,
-* canonical artifact location.
-
-### Transitional
-
-Relevant to an active project or milestone.
-
-Examples:
-
-* current research state,
-* pending review,
-* current implementation stage.
-
-### Ephemeral
-
-Useful only for the current interaction.
-
-Examples:
-
-* temporary reasoning,
-* intermediate wording,
-* transient tool output.
+* **Durable** — likely to remain relevant across sessions (approved design decisions, project architecture, stable formatting preferences, official requirements, canonical artifact locations).
+* **Transitional** — relevant to an active project or milestone.
+* **Ephemeral** — useful only for the current interaction.
 
 Do not automatically persist ephemeral information.
 
----
+## Core workflow
 
-# 3. Scoped Retrieval
+1. **Scope.** Build a scoped retrieval context from the current request, workspace, project, course, artifact, and active goal. Use the smallest relevant scope.
+2. **Retrieve.** Pull the smallest relevant memory set using project, course, task, milestone, date range, or distinctive decision filters.
+3. **Rank.** Prefer the latest verified checkpoint, then explicit user decisions, official requirements, stable constraints, current project state, selected sources, recent relevant progress, and older contextual memories.
+4. **Validate.** Inspect provenance, timestamp, scope, supersession, and freshness. Determine whether current validation against external sources is required before relying on the memory.
+5. **Resume.** Load the matching checkpoint, restore the manifest, inspect completed work, inspect unresolved items, revalidate stale current facts, reopen relevant local artifacts, compare actual vs remembered state, and continue from next actions.
+6. **Execute.** Do the bounded next action from the resume hint.
+7. **Checkpoint.** Persist a compact, self-contained summary using the canonical checkpoint structure.
+8. **Consolidate.** When multiple memories contain overlapping information, deduplicate, preserve strongest provenance, merge compatible facts, mark older duplicates superseded, and retain important historical corrections.
+9. **Persist.** Submit through the memory tool with a stable identity. Capture the returned memory ID only when actually returned.
+10. **Verify.** After persistence, confirm the persistence result. Never invent a memory ID or successful write.
+
+## Scoped retrieval
 
 Before beginning meaningful work, construct a scoped retrieval context using:
 
@@ -112,57 +94,9 @@ Before beginning meaningful work, construct a scoped retrieval context using:
 * artifact,
 * active goal.
 
-Use the smallest relevant scope.
+Use the smallest relevant scope. Do not load full historical memory unless explicitly required.
 
-Do not load full historical memory unless explicitly required.
-
----
-
-# 4. Retrieval Priority
-
-Prefer memory in this order:
-
-```text
- id="f1h1sd"
-latest verified checkpoint
-↓
-explicit user decisions
-↓
-official requirements
-↓
-stable constraints
-↓
-current project state
-↓
-selected sources
-↓
-recent relevant progress
-↓
-older contextual memories
-```
-
-When a newer verified memory conflicts with older information, the newer state generally wins.
-
----
-
-# 5. Relevance Filtering
-
-A memory is relevant when it materially affects:
-
-* current decisions,
-* current constraints,
-* next action,
-* artifact state,
-* deadline,
-* architecture,
-* learning state,
-* external action state.
-
-Do not retrieve memories merely because they share keywords.
-
----
-
-# 6. Memory Record
+## Memory record structure
 
 A durable memory record should contain:
 
@@ -176,25 +110,11 @@ timestamp:
 supersedes:
 ```
 
-Recommended additional fields when supported:
+Recommended additional fields when supported: `status`, `project`, `course`, `artifact`, `goal`, `source_id`, `expires_at`. Do not add unsupported fields to a persistence tool schema.
 
-```yaml
-status:
-project:
-course:
-artifact:
-goal:
-source_id:
-expires_at:
-```
+## Memory types
 
-Do not add unsupported fields to a persistence tool schema.
-
----
-
-# 7. Memory Types
-
-Useful `type` values include:
+Useful `type` values:
 
 ```text
 decision
@@ -211,98 +131,21 @@ checkpoint
 
 A type should describe the role of the information.
 
----
+## Provenance and confidence
 
-# 8. Provenance
+Every meaningful memory should answer: **Where did this information come from?**
 
-Every meaningful memory should answer:
+Possible provenance: `user`, `official_portal`, `assignment_brief`, `course_material`, `research_source`, `artifact_inspection`, `tool_verified`, `derived`. When provenance is unavailable, set `provenance: unknown` rather than inventing an origin.
 
-**Where did this information come from?**
+Confidence states: `high`, `moderate`, `low`, `unknown`. Do not use confidence to hide missing evidence. A memory with unknown provenance may need revalidation before being used for consequential work.
 
-Possible provenance:
+## Timestamps and supersession
 
-```text
-user
-official_portal
-assignment_brief
-course_material
-research_source
-artifact_inspection
-tool_verified
-derived
-```
+Timestamp durable state when timing matters: deadlines, portal status, quota, software versions, financial records, project state, research findings, external actions. A historical fact should not be presented as current merely because it exists in memory.
 
-When provenance is unavailable:
+When a durable fact changes, mark the previous record superseded rather than silently overwriting history. Record previous state, what superseded it, and the reason. This is especially useful for deadlines, filenames, architectural decisions, requirements, submission state, and roadmap decisions.
 
-**provenance = unknown**
-
-Do not invent an origin.
-
----
-
-# 9. Confidence
-
-Confidence describes how strongly the memory is supported.
-
-Suggested states:
-
-```text
-high
-moderate
-low
-unknown
-```
-
-Do not use confidence to hide missing evidence.
-
-A memory with unknown provenance may need revalidation before being used for consequential work.
-
----
-
-# 10. Timestamp
-
-Timestamp durable state when timing matters.
-
-Especially important for:
-
-* deadlines,
-* portal status,
-* quota,
-* software versions,
-* financial records,
-* project state,
-* research findings,
-* external actions.
-
-A historical fact should not be presented as current merely because it exists in memory.
-
----
-
-# 11. Supersession
-
-When a durable fact changes:
-
-```text
-old record
-   ↓
-new verified record
-   ↓
-old record marked superseded
-```
-
-Example:
-
-```yaml
-supersedes:
-  - memory_id: "<verified id>"
-    reason: "official portal deadline changed"
-```
-
-Never silently overwrite history when knowing the previous state matters.
-
----
-
-# 12. Conflict Handling
+## Conflict handling
 
 When two memories conflict:
 
@@ -317,45 +160,18 @@ When two memories conflict:
 Example:
 
 ```text
-Memory A:
-Deadline = Friday
-Source = old conversation
-
-Memory B:
-Deadline = Monday
-Source = current official portal
-
-Result:
-Use Monday.
-Mark Friday as superseded.
+Memory A: Deadline = Friday (source = old conversation)
+Memory B: Deadline = Monday (source = current official portal)
+Result: Use Monday. Mark Friday as superseded.
 ```
 
----
+## Current external state overrides memory
 
-# 13. Current External State Overrides Memory
-
-Memory is historical context.
-
-Current external systems are authoritative for volatile state.
-
-Examples:
-
-```text
-HEBAT deadline
-Cyber Campus KRS
-course quota
-submission status
-software version
-current API behavior
-```
+Memory is historical context. Current external systems are authoritative for volatile state: HEBAT deadline, Cyber Campus KRS, course quota, submission status, software version, current API behavior.
 
 Before consequential work, revalidate these facts.
 
----
-
-# 14. Resume Workflow
-
-A resume should follow:
+## Resume workflow
 
 ```text
 retrieve latest matching checkpoint
@@ -369,16 +185,9 @@ compare actual vs remembered state
 continue from next_actions
 ```
 
-Do not repeat completed work unless:
+Do not repeat completed work unless validation shows it is no longer valid, the artifact changed, the user explicitly requests repetition, or the previous result was defective.
 
-* validation shows it is no longer valid,
-* the artifact changed,
-* the user explicitly requests repetition,
-* the previous result was defective.
-
----
-
-# 15. Checkpoint Structure
+## Checkpoint structure
 
 For active work:
 
@@ -396,649 +205,77 @@ next_actions:
 resume_hint:
 ```
 
-A checkpoint should be:
+A checkpoint should be self-contained, compact, current, and actionable.
 
-* self-contained,
-* compact,
-* current,
-* actionable.
+## Checkpoint timing
 
----
+Create checkpoints at milestones, before context compaction, before long generation, after consequential external actions, and at session end. Do not checkpoint every conversational turn.
 
-# 16. Checkpoint Timing
+## Failed attempts
 
-Create checkpoints:
+Failed attempts are valuable when they prevent repeated mistakes. Record `attempt`, `result`, `reason`, `lesson`, and `safe alternative`. Do not record secret data associated with the failed attempt.
 
-### Milestones
+## Decision, requirement, constraint, and source memory
 
-After meaningful progress.
+Persist important decisions with `decision`, `scope`, `reason`, `status`, and `what it supersedes`. Persist official requirements with the exact meaning, official source, course/activity, version/date when relevant, and known exceptions. Persist stable constraints such as required artifact format, fixed page size, submission channel, environment restriction, project architecture boundary, and allowed resource restriction. Persist selected sources that materially influence future work.
 
-### Before context compaction
+## Next action and resume hint
 
-When the active working context is becoming large.
-
-### Before long generation
-
-When a long artifact or analysis is about to begin.
-
-### After consequential external actions
-
-Examples:
-
-* upload,
-* submission,
-* portal mutation,
-* artifact publication.
-
-### Session end
-
-When unfinished work may need to continue later.
-
-Do not checkpoint every conversational turn.
-
----
-
-# 17. Checkpoint Content Standard
-
-A useful checkpoint should capture:
-
-### Goal
-
-What the work is trying to achieve.
-
-### Scope
-
-What is included/excluded.
-
-### Completed
-
-What is definitely finished.
-
-### Decisions
-
-What was deliberately chosen.
-
-### Constraints
-
-What must remain true.
-
-### Sources
-
-What authoritative material is currently relevant.
-
-### Artifacts
-
-Exact files, identifiers, or locations.
-
-### Failed attempts
-
-What was tried and should not be repeated unnecessarily.
-
-### Open questions
-
-What remains unresolved.
-
-### Next actions
-
-The smallest useful next steps.
-
-### Resume hint
-
-The exact place to continue.
-
----
-
-# 18. Failed Attempts
-
-Failed attempts are valuable when they prevent repeated mistakes.
-
-Record:
-
-```text
-attempt
-result
-reason
-lesson
-safe alternative
-```
-
-Example:
-
-> Attempted automatic upload; portal required an additional confirmation step. No submission occurred. Do not retry the same route; re-enter through the staged submission workflow.
-
-Do not record secret data associated with the failed attempt.
-
----
-
-# 19. Artifact Memory
-
-When a meaningful artifact exists, store:
-
-* artifact type,
-* exact path,
-* version,
-* associated project,
-* QA state,
-* status,
-* next action.
-
-Example:
-
-```text
-Artifact:
-`/mnt/data/final_report.pdf`
-
-Status:
-visual QA passed
-
-Version:
-qa-final
-
-Next:
-prepare submission preview
-```
-
-Never claim an artifact exists without verifying its path or persistent record.
-
----
-
-# 20. Source Memory
-
-Persist selected sources that materially influence future work.
-
-Useful fields:
-
-```text
-source
-why_selected
-relevant_claim
-access_status
-date
-research_scope
-```
-
-Do not turn memory into a duplicate literature database.
-
----
-
-# 21. Decision Memory
-
-An important decision should capture:
-
-**decision**
-
-**scope**
-
-**reason**
-
-**status**
-
-**what it supersedes**
-
-Example:
-
-> Decision: Use PostgreSQL for the project datastore.
-> Scope: Current backend prototype.
-> Reason: Existing team familiarity and relational workload.
-> Status: Approved.
-
----
-
-# 22. Requirement Memory
-
-Official requirements are especially valuable for cross-session continuity.
-
-Store:
-
-* exact requirement meaning,
-* official source,
-* course/activity,
-* version/date when relevant,
-* known exceptions.
-
-Do not store an interpretation as an official requirement unless the source explicitly supports it.
-
----
-
-# 23. Constraint Memory
-
-Persist stable constraints such as:
-
-* required artifact format,
-* fixed page size,
-* submission channel,
-* environment restriction,
-* project architecture boundary,
-* allowed resource restriction.
-
-Do not persist temporary constraints without context.
-
----
-
-# 24. Next-Action Memory
-
-The next action should be:
-
-**concrete + bounded + observable**
-
-Good:
+The next action should be concrete, bounded, and observable:
 
 > Inspect the final PDF pages 1–8 for overflow and verify the references section.
 
-Weak:
+Avoid:
 
 > Continue working on the report.
 
----
-
-# 25. Resume Hint
-
-A resume hint should prevent duplicate work.
-
-Good:
+A resume hint should prevent duplicate work:
 
 > Resume from visual QA. The report content and references are already integrated. Do not regenerate the document unless QA identifies a source-level defect.
 
-Weak:
+## Consolidation
 
-> Continue the report.
+When multiple memories contain overlapping information, identify duplicates, preserve the strongest provenance, merge only compatible facts, mark older duplicates superseded, retain important historical corrections, and avoid creating a larger, noisier memory than necessary.
 
----
+Good consolidation should transform ten fragmented progress notes into one current checkpoint plus important decisions plus open blocker plus next action. Do not discard a historical correction when it explains why the current state differs from earlier assumptions.
 
-# 26. Consolidation
+## Expiration
 
-When multiple memories contain overlapping information:
+Some memories should be treated as time-sensitive: deadlines, quotas, schedules, current provider availability, current software versions, portal states. When supported, use an expiration or freshness marker. If expired, revalidate before use. Do not automatically delete historical information simply because it expired.
 
-1. identify duplicates,
-2. preserve the strongest provenance,
-3. merge only compatible facts,
-4. mark older duplicates superseded,
-5. retain important historical corrections,
-6. avoid creating a larger, noisier memory than necessary.
+## Sensitive information
 
-Consolidation should reduce entropy rather than accumulate summaries forever.
+Do not persist passwords, authentication cookies, access tokens, CAPTCHA answers, private verification tokens, API secrets, unnecessary browser state, or unnecessary sensitive personal data. Store only the minimum information needed to resume safely.
 
----
+## Routing
 
-# 27. Memory Compression
+* Specialized persistence (research state, learning state, etc.) → `xninetzy-research-memory` and `xninetzy-learning-coach`.
+* Domain systems remain the authoritative owner of their state: HEBAT, Cyber Campus, Learning, Graph RAG, Deep Research, Artifact Orchestrator, Life Management.
+* Memory stores the continuity state necessary to resume.
 
-Good consolidation should transform:
+## Reference map
 
-```text
-10 fragmented progress notes
-```
+* `references/state-and-records.md` — memory philosophy, durability tiers, record structure, types, provenance, confidence, timestamps, supersession, conflict handling, and current-state overrides.
+* `references/checkpoints-and-resume.md` — checkpoint structure, timing, content standard, failed attempts, artifact memory, source memory, decision memory, requirement memory, constraint memory, next-action memory, resume hint, consolidation, memory compression, retention, and expiration.
+* `references/integration-and-safety.md` — integration with other Xninetzy skills, graph integration, learning integration, academic integration, artifact integration, memory search strategy, retrieval safety, memory quality test, standard memory record, standard checkpoint, completion contract, and operating rules.
 
-into:
-
-```text
-1 current checkpoint
-+
-important decisions
-+
-open blocker
-+
-next action
-```
-
-Do not discard a historical correction when it explains why the current state differs from earlier assumptions.
-
----
-
-# 28. Memory Retention
-
-Prefer retaining information that has one or more of these properties:
-
-* future decision impact,
-* durable requirement,
-* current project state,
-* reusable knowledge,
-* important correction,
-* artifact reference,
-* unresolved blocker,
-* explicit user decision.
-
-Avoid retaining:
-
-* small-talk,
-* temporary phrasing,
-* redundant explanations,
-* failed irrelevant searches,
-* unimportant intermediate calculations.
-
----
-
-# 29. Expiration
-
-Some memories should be treated as time-sensitive.
-
-Examples:
-
-* deadlines,
-* quotas,
-* schedules,
-* current provider availability,
-* current software versions,
-* portal states.
-
-When supported, use an expiration or freshness marker.
-
-If expired:
-
-**revalidate before use.**
-
-Do not automatically delete historical information simply because it expired.
-
----
-
-# 30. Sensitive Information
-
-Do not persist:
-
-* passwords,
-* authentication cookies,
-* access tokens,
-* CAPTCHA answers,
-* private verification tokens,
-* API secrets,
-* unnecessary browser state,
-* unnecessary sensitive personal data.
-
-Store only the minimum information needed to resume safely.
-
----
-
-# 31. Memory as Context, Not Authority
-
-Retrieved memory may be:
-
-* incomplete,
-* stale,
-* incorrectly scoped,
-* superseded.
-
-Therefore:
-
-**memory informs decisions; verified current evidence determines current reality.**
-
-Never let a remembered instruction override:
-
-* current user instructions,
-* system/developer constraints,
-* safety policy,
-* current official portal state.
-
----
-
-# 32. Integration With Other Xninetzy Skills
-
-Memory should remain the continuity layer, while specialized systems remain domain owners.
-
-Examples:
-
-```text id="d6nqlv"
-HEBAT Academic
-→ course state
-
-Cyber Campus
-→ academic portal state
-
-Learning OS
-→ learning state
-
-Graph RAG
-→ relationship state
-
-Deep Research
-→ research state
-
-Artifact Orchestrator
-→ artifact state
-
-Life Management
-→ personal task/routine state
-
-Memory
-→ continuity across all of them
-```
-
-Do not duplicate domain databases inside memory.
-
----
-
-# 33. Graph Integration
-
-Graph relationships can reference memory-backed states:
-
-```text
-Research
- → informs →
-Decision
- → affects →
-Project
-```
-
-But the graph remains the structured relationship layer.
-
-Memory should store the context needed to resume graph work.
-
----
-
-# 34. Learning Integration
-
-A learning checkpoint can preserve:
-
-```text
-target
-current_mastery
-evidence
-weak_concept
-next_practice
-review_due
-```
-
-The Learning OS remains the authoritative learning-state system when available.
-
-Memory stores the continuity state necessary to resume.
-
----
-
-# 35. Academic Integration
-
-For academic work, memory may preserve:
-
-```text
-course
-assignment
-deadline
-requirements
-artifacts
-submission_state
-next_action
-```
-
-Current HEBAT/Cyber Campus state should be revalidated before consequential actions.
-
----
-
-# 36. Artifact Integration
-
-For artifact work, preserve:
-
-```text
-artifact
-version
-path
-qa_state
-open_defects
-next_action
-```
-
-The artifact file itself remains the authoritative deliverable.
-
----
-
-# 37. Memory Search Strategy
-
-Search by a combination of:
-
-* current task,
-* project,
-* course,
-* artifact,
-* goal,
-* distinctive decision,
-* checkpoint label.
-
-Prefer semantic relevance over simple keyword overlap where supported.
-
----
-
-# 38. Retrieval Safety
-
-Before using retrieved memory:
-
-1. inspect provenance,
-2. inspect timestamp,
-3. inspect scope,
-4. check supersession,
-5. determine whether current validation is needed.
-
-A memory with no provenance or unknown scope should not silently become a hard constraint.
-
----
-
-# 39. Memory Quality Test
-
-Before writing a memory, ask:
-
-### Durability
-
-Will this matter later?
-
-### Specificity
-
-Is it concrete enough to be useful?
-
-### Provenance
-
-Do we know where it came from?
-
-### Freshness
-
-Could it become stale?
-
-### Resume value
-
-Would another session make fewer mistakes because this exists?
-
-### Noise
-
-Could this be removed without harming continuity?
-
-Persist only when the answer is sufficiently strong.
-
----
-
-# 40. Standard Memory Record
-
-```yaml
-scope: <project/course/workspace>
-type: <decision|requirement|constraint|progress|source|artifact|blocker|next_action|correction|checkpoint>
-content: <durable fact>
-provenance: <source>
-confidence: <high|moderate|low|unknown>
-timestamp: <time>
-supersedes: <previous record, if any>
-```
-
----
-
-# 41. Standard Checkpoint
-
-```yaml
-goal:
-scope:
-completed:
-decisions:
-constraints:
-sources:
-artifacts:
-failed_attempts:
-open_questions:
-next_actions:
-resume_hint:
-```
-
-Keep checkpoint content self-contained.
-
----
-
-# 42. Completion Contract
-
-Every meaningful memory operation should return the relevant subset of:
-
-**Retrieved context**
-What memory was used.
-
-**Persistence status**
-What was written, updated, consolidated, or skipped.
-
-**Memory ID**
-Only when actually returned by the persistence system.
-
-**Provenance**
-Where important information came from.
-
-**Supersession status**
-Which earlier records were replaced.
-
-**Verification status**
-Whether current state was checked against external sources.
-
-**Resume state**
-The exact next action.
-
-If persistence is not confirmed:
-
-> **Memory status: unverified.**
-
-Never fabricate memory IDs, successful writes, or current-state verification.
-
----
-
-# 43. Operating Rules
+## Operating rules
 
 The system must:
 
-**retrieve scoped context before meaningful continuation,**
-
-**prefer the latest verified checkpoint,**
-
-**prioritize explicit user decisions and official requirements,**
-
-**persist only durable information,**
-
-**preserve provenance and confidence,**
-
-**mark superseded records rather than silently merging incompatible facts,**
-
-**revalidate stale external state,**
-
-**reopen local artifacts before resuming artifact work,**
-
-**preserve failed attempts when they prevent repetition,**
-
-**keep sensitive secrets out of memory,**
-
-**avoid full-history retrieval by default,**
-
-**avoid duplicate memories through consolidation,**
-
-**continue from `next_actions` rather than repeating completed work.**
-
-The canonical lifecycle is:
-
-**Scope → Retrieve → Rank → Validate → Resume → Execute → Checkpoint → Consolidate → Persist → Verify**
+* retrieve scoped context before meaningful continuation,
+* prefer the latest verified checkpoint,
+* prioritize explicit user decisions and official requirements,
+* persist only durable information,
+* preserve provenance and confidence,
+* mark superseded records rather than silently merging incompatible facts,
+* revalidate stale external state,
+* reopen local artifacts before resuming artifact work,
+* preserve failed attempts when they prevent repetition,
+* keep sensitive secrets out of memory,
+* avoid full-history retrieval by default,
+* avoid duplicate memories through consolidation,
+* continue from `next_actions` rather than repeating completed work.
 
 The central objective is:
 

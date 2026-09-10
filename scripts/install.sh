@@ -41,16 +41,11 @@ set_env() {
   chmod 600 .env
 }
 
-default_vault="$HOME/Documents/Xninetzy Vault"
+default_vault="$HOME/Documents/xninetzy-vault"
 printf 'Lokasi Obsidian vault [%s]: ' "$default_vault"
 read -r vault_path </dev/tty
 vault_path="${vault_path:-$default_vault}"
 mkdir -p "$vault_path"
-
-printf 'Nomor WhatsApp admin (contoh 62812...): '
-read -r admin_number </dev/tty
-admin_number="${admin_number%%@*}"
-[ -n "$admin_number" ] || { echo "Nomor WhatsApp admin wajib diisi."; exit 1; }
 
 printf 'Masukkan FLAZ API Key: '
 read -rs flaz_key </dev/tty
@@ -58,41 +53,34 @@ printf '\n'
 [ -n "$flaz_key" ] || { echo "FLAZ API Key wajib diisi."; exit 1; }
 
 ai_key="$(openssl rand -hex 32)"
-mcp_key="$(openssl rand -hex 32)"
 fernet_key="$(openssl rand -base64 32 | tr '+/' '-_' | tr -d '\n')"
-bridge_token="$(openssl rand -hex 32)"
 
 set_env HOST_UID "$(id -u)"
 set_env HOST_GID "$(id -g)"
 set_env OBSIDIAN_VAULT_HOST_PATH "$vault_path"
-set_env ADMIN_JID "$admin_number@s.whatsapp.net"
+set_env OWNER_PHONE_NUMBER ""
 set_env FLAZ_API_KEY "$flaz_key"
 set_env AI_API_KEY "$ai_key"
-set_env MCP_API_KEY "$mcp_key"
-set_env WA_MCP_API_KEY "$mcp_key"
 set_env WEB_ANALYSIS_ENCRYPTION_KEY "$fernet_key"
-set_env CODING_AGENT_HOST_BRIDGE_TOKEN "$bridge_token"
-set_env CODING_AGENT_ENABLED true
-set_env CODING_AGENT_EXECUTION_MODE host_bridge
-set_env WA_LOGIN_MODE qr
+set_env CYBER_CAMPUS_ENABLED true
+set_env HEBAT_AUTO_LOGIN false
 
 flaz_key=""
 ai_key=""
-mcp_key=""
 fernet_key=""
-bridge_token=""
 
 docker compose config -q
-docker compose up --build -d ai wa-enggine
+docker compose up --build -d ai
 docker compose ps
 
-if command -v uv >/dev/null 2>&1 && command -v systemctl >/dev/null 2>&1; then
-  bash scripts/install_host_agent_bridge.sh
-else
-  echo "Host bridge belum diaktifkan otomatis: install uv dan systemd user, lalu jalankan bash scripts/install_host_agent_bridge.sh."
+if command -v uv >/dev/null 2>&1; then
+  if [ -f "scripts/install_skills.py" ]; then
+    echo
+    echo "Menginstal skill ke harness yang didukung (opencode, claude, codex)..."
+    uv run --with "" python scripts/install_skills.py || echo "Skill installer dilewati (periksa manual)."
+  fi
 fi
 
 echo
 echo "Xninetzy terpasang di $INSTALL_DIR"
-echo "Buka log untuk scan QR:"
-echo "cd \"$INSTALL_DIR\" && docker compose logs -f wa-enggine"
+echo "Skill tersedia di: ~/.config/opencode/skills, ~/.claude/skills, ~/.codex/skills"

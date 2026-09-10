@@ -7,9 +7,9 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Iterator
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.web_analysis.models import ModuleRecord, SiteAnalysis
-from app.xninetzy.os.web_analysis.sites import get_site
+from xninetzy.core.config import get_settings
+from xninetzy.os.web_analysis.models import ModuleRecord, SiteAnalysis
+from xninetzy.os.web_analysis.sites import get_site
 
 
 class AnalysisBusyError(RuntimeError):

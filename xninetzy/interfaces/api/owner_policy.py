@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from app.xninetzy.core.config import Settings, get_settings
-from app.xninetzy.core.identity import configured_owner_jids, normalize_whatsapp_jid
+from xninetzy.core.config import Settings, get_settings
+from xninetzy.core.identity import configured_owner_jids, normalize_whatsapp_jid
 
 __all__ = ["OwnerDecision", "authorize_owner", "configured_owner_jids"]
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 import pytest
 from langchain_openai import ChatOpenAI
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.llm import get_llm_flash, get_llm_pro
+from xninetzy.core.config import get_settings
+from xninetzy.core.llm import get_llm_flash, get_llm_pro
 
 
 def _clear_llm_caches() -> None:

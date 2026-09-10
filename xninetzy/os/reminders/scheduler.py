@@ -8,10 +8,10 @@ from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 from typing import Awaitable, Callable
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.reminders.reminder_content import ReminderContentNormalizer
-from app.xninetzy.os.reminders.reminder_store import ReminderStore
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.reminders.reminder_content import ReminderContentNormalizer
+from xninetzy.os.reminders.reminder_store import ReminderStore
 
 logger = logging.getLogger(__name__)
 

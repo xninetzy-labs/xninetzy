@@ -1,10 +1,10 @@
-from app.xninetzy.ecosystem.command_router import parse_command
-from app.xninetzy.interfaces.mcp_tool_adapter import (
+from xninetzy.ecosystem.command_router import parse_command
+from xninetzy.interfaces.mcp_tool_adapter import (
     MCPPrincipal,
     langchain_tool_as_mcp_callable,
 )
-from app.xninetzy.os.inbox.tools import os_capture
-from app.xninetzy.tools.registry import get_tool_groups, get_tool_names
+from xninetzy.os.inbox.tools import os_capture
+from xninetzy.tools.registry import get_tool_groups, get_tool_names
 
 
 def test_os_commands_route_to_shared_tools():

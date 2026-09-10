@@ -5,18 +5,18 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.ecosystem.event_bus import record_event
-from app.xninetzy.os.jobs.service import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.ecosystem.event_bus import record_event
+from xninetzy.os.jobs.service import (
     build_scheduled_message,
     build_weekly_review,
     due_job_specs,
     get_data_freshness,
     run_os_job_tick,
 )
-from app.xninetzy.os.jobs.store import JobStore
+from xninetzy.os.jobs.store import JobStore
 
 NOW = datetime(2026, 7, 29, 8, 0, tzinfo=ZoneInfo("Asia/Jakarta"))
 

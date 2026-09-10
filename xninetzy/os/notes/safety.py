@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.notes.obsidian_config import vault_path
+from xninetzy.core.config import get_settings
+from xninetzy.os.notes.obsidian_config import vault_path
 
 BLOCKED_PARTS = {
     ".env",

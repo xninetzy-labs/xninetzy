@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.os.knowledge.vector_store import semantic_search
+from xninetzy.os.knowledge.vector_store import semantic_search
 
 
 def quick_search(query: str, limit: int = 5) -> list[dict]:
@@ -21,7 +21,7 @@ def quick_search(query: str, limit: int = 5) -> list[dict]:
 
 def build_rag_context(query: str, top_k: int | None = None) -> str:
     """Backward-compatible evidence context; never returns unlabelled raw chunks."""
-    from app.xninetzy.os.knowledge.retrieval import (
+    from xninetzy.os.knowledge.retrieval import (
         render_evidence_bundle,
         retrieve_evidence,
     )

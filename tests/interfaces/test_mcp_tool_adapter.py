@@ -4,7 +4,7 @@ import pytest
 from langchain_core.tools import tool
 from mcp.server.fastmcp import FastMCP
 
-from app.xninetzy.interfaces.mcp_tool_adapter import (
+from xninetzy.interfaces.mcp_tool_adapter import (
     MCPPrincipal,
     expose_xninetzy_tools,
     langchain_tool_as_mcp_callable,

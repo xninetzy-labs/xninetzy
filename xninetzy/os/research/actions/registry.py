@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.os.research.actions.base import ResearchAction
+from xninetzy.os.research.actions.base import ResearchAction
 
 
 class ResearchActionRegistry:
@@ -20,13 +20,13 @@ class ResearchActionRegistry:
 
 
 def register_default_actions() -> None:
-    from app.xninetzy.os.research.actions.done import DoneResearchAction
-    from app.xninetzy.os.research.actions.plan import PlanResearchAction
-    from app.xninetzy.os.research.actions.search.academic import AcademicSearchAction
-    from app.xninetzy.os.research.actions.search.uploads import UploadsSearchAction
-    from app.xninetzy.os.research.actions.search.web import WebSearchAction
-    from app.xninetzy.os.research.actions.search.youtube import YoutubeSearchAction
-    from app.xninetzy.os.research.actions.subplan import SubPlanResearchAction
+    from xninetzy.os.research.actions.done import DoneResearchAction
+    from xninetzy.os.research.actions.plan import PlanResearchAction
+    from xninetzy.os.research.actions.search.academic import AcademicSearchAction
+    from xninetzy.os.research.actions.search.uploads import UploadsSearchAction
+    from xninetzy.os.research.actions.search.web import WebSearchAction
+    from xninetzy.os.research.actions.search.youtube import YoutubeSearchAction
+    from xninetzy.os.research.actions.subplan import SubPlanResearchAction
 
     for action in [
         PlanResearchAction(),

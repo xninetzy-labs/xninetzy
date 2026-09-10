@@ -8,12 +8,12 @@ from zoneinfo import ZoneInfo
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.domains.it_learning.concept_graph import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.domains.it_learning.concept_graph import (
     record_evidence_in_transaction,
 )
-from app.xninetzy.ecosystem.event_bus import (
+from xninetzy.ecosystem.event_bus import (
     dispatch_recorded_event,
     record_event_in_transaction,
 )

@@ -1,4 +1,4 @@
-from app.xninetzy.skills.registry import (
+from xninetzy.skills.registry import (
     discover_skills,
     get_skill,
     install_skill,

@@ -5,7 +5,7 @@ import json
 from datetime import datetime, timezone
 from typing import Any, Callable, Mapping
 
-from app.xninetzy.db.sqlite import connect
+from xninetzy.db.sqlite import connect
 
 IDEMPOTENCY_TABLE_DDL = """
 CREATE TABLE IF NOT EXISTS idempotency_keys (

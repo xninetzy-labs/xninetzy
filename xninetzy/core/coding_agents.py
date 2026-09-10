@@ -11,9 +11,9 @@ from uuid import uuid4
 
 import httpx
 
-from app.xninetzy.core.config import Settings, get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import Settings, get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
 
 
 @dataclass(frozen=True)

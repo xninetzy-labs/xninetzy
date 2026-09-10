@@ -2,10 +2,10 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.academic.mahasiswa_portal.krs_watcher import (
     KrsAnnouncement,
     KrsWatchSignal,
     KrsWatcherStore,
@@ -131,11 +131,11 @@ async def test_tick_notifies_once_on_change(monkeypatch, store):
         )
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
         fake_notify,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
         fake_capture,
     )
     result = await krs_watcher_tick()
@@ -150,7 +150,7 @@ async def test_tick_notifies_once_on_change(monkeypatch, store):
 
 @pytest.mark.asyncio
 async def test_tick_session_expired_triggers_login_captcha_once(monkeypatch, store):
-    from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+    from xninetzy.os.academic.mahasiswa_portal.reader import (
         AcademicPortalReadError,
     )
 
@@ -171,15 +171,15 @@ async def test_tick_session_expired_triggers_login_captcha_once(monkeypatch, sto
         login_calls.append(1)
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
         fake_notify,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
         fake_capture,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher._request_login_captcha",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher._request_login_captcha",
         fake_login_request,
     )
     result = await krs_watcher_tick()
@@ -195,7 +195,7 @@ async def test_tick_session_expired_triggers_login_captcha_once(monkeypatch, sto
 
 @pytest.mark.asyncio
 async def test_tick_session_expired_retriggers_after_recovery(monkeypatch, store):
-    from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+    from xninetzy.os.academic.mahasiswa_portal.reader import (
         AcademicPortalReadError,
     )
 
@@ -223,15 +223,15 @@ async def test_tick_session_expired_retriggers_after_recovery(monkeypatch, store
         login_calls.append(1)
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
         fake_notify,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
         fake_capture,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher._request_login_captcha",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher._request_login_captcha",
         fake_login_request,
     )
     result = await krs_watcher_tick()
@@ -252,10 +252,10 @@ async def test_tick_session_expired_retriggers_after_recovery(monkeypatch, store
 
 @pytest.mark.asyncio
 async def test_tick_session_expired_falls_back_to_notify(monkeypatch, store):
-    from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
+    from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
         CampusLoginError,
     )
-    from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+    from xninetzy.os.academic.mahasiswa_portal.reader import (
         AcademicPortalReadError,
     )
 
@@ -275,15 +275,15 @@ async def test_tick_session_expired_falls_back_to_notify(monkeypatch, store):
         raise CampusLoginError("Gagal membuat challenge.")
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.notify_admin",
         fake_notify,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.capture_krs_signal",
         fake_capture,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher._request_login_captcha",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher._request_login_captcha",
         fake_login_request,
     )
     result = await krs_watcher_tick()
@@ -296,12 +296,13 @@ async def test_tick_session_expired_falls_back_to_notify(monkeypatch, store):
 
 
 @pytest.mark.asyncio
-async def test_request_login_captcha_sends_image(monkeypatch):
-    sent = {}
+async def test_request_login_captcha_persists_to_inbox(monkeypatch):
+    from xninetzy.os.inbox import service as inbox_service
 
-    async def fake_send_image(tool_name, input_data):
-        sent.update(input_data)
-        return {"ok": True}
+    captured: list[dict] = []
+
+    def fake_capture_item(text, *, kind="auto", chat_id="system", idempotency_key=None):
+        captured.append({"text": text, "kind": kind, "chat_id": chat_id})
 
     class FakeCoordinator:
         def __init__(self):
@@ -322,34 +323,36 @@ async def test_request_login_captcha_sends_image(monkeypatch):
 
     fake_coordinator = FakeCoordinator()
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.LOGIN_COORDINATOR",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.LOGIN_COORDINATOR",
         fake_coordinator,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.admin_jid",
-        lambda: "62812345678@s.whatsapp.net",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.owner_chat_id",
+        lambda: "62812345678",
     )
-    monkeypatch.setattr(
-        "app.xninetzy.interfaces.whatsapp.client.call_wa_tool",
-        fake_send_image,
-    )
+    monkeypatch.setattr(inbox_service, "capture_item", fake_capture_item)
+
     await _request_login_captcha()
-    assert fake_coordinator.started == ["62812345678@s.whatsapp.net"]
-    assert sent["jid"] == "62812345678@s.whatsapp.net"
-    assert "ch-abc123" in sent["caption"]
+
+    assert fake_coordinator.started == ["62812345678"]
+    assert captured, "capture_item should have been called"
+    record = captured[0]
+    assert record["chat_id"] == "62812345678"
+    assert record["kind"] == "note"
+    assert "ch-abc123" in record["text"]
 
 
 @pytest.mark.asyncio
-async def test_request_login_captcha_cancels_on_send_failure(monkeypatch):
-    from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
+async def test_request_login_captcha_cancels_on_inbox_failure(monkeypatch):
+    from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
         CampusLoginError,
     )
-    from app.xninetzy.interfaces.whatsapp.client import WaToolError
+    from xninetzy.os.inbox import service as inbox_service
 
     cancelled = []
 
-    async def fake_send_image(tool_name, input_data):
-        raise WaToolError("WA down")
+    def fake_capture_item(text, *, kind="auto", chat_id="system", idempotency_key=None):
+        raise RuntimeError("inbox unavailable")
 
     class FakeCoordinator:
         async def start(self, owner_id):
@@ -366,17 +369,28 @@ async def test_request_login_captcha_cancels_on_send_failure(monkeypatch):
             return True
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.LOGIN_COORDINATOR",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.LOGIN_COORDINATOR",
         FakeCoordinator(),
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_watcher.admin_jid",
-        lambda: "62812345678@s.whatsapp.net",
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.owner_chat_id",
+        lambda: "62812345678",
     )
-    monkeypatch.setattr(
-        "app.xninetzy.interfaces.whatsapp.client.call_wa_tool",
-        fake_send_image,
-    )
+    monkeypatch.setattr(inbox_service, "capture_item", fake_capture_item)
     with pytest.raises(CampusLoginError):
         await _request_login_captcha()
     assert cancelled == ["ch-fail"]
+
+
+@pytest.mark.asyncio
+async def test_request_login_captcha_requires_owner_chat_id(monkeypatch):
+    from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
+        CampusLoginError,
+    )
+
+    monkeypatch.setattr(
+        "xninetzy.os.academic.mahasiswa_portal.krs_watcher.owner_chat_id",
+        lambda: "",
+    )
+    with pytest.raises(CampusLoginError):
+        await _request_login_captcha()

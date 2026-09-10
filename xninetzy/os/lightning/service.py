@@ -3,9 +3,9 @@ from __future__ import annotations
 from collections import Counter
 from datetime import UTC, datetime
 
-from app.xninetzy.os.lightning.feedback_parser import classify_feedback
-from app.xninetzy.os.lightning.rl import record_feedback_event
-from app.xninetzy.os.lightning.store import (
+from xninetzy.os.lightning.feedback_parser import classify_feedback
+from xninetzy.os.lightning.rl import record_feedback_event
+from xninetzy.os.lightning.store import (
     create_proposal,
     get_proposal,
     list_proposals,
@@ -14,7 +14,7 @@ from app.xninetzy.os.lightning.store import (
     set_proposal_status,
     trace_for_message,
 )
-from app.xninetzy.os.research.permissions import is_owner_admin
+from xninetzy.os.research.permissions import is_owner_admin
 
 
 def submit_feedback(
@@ -166,7 +166,7 @@ def apply_proposal(
     applied_note = "status diperbarui; area ini memerlukan implementasi manual."
     rollout_state = "approved"
     if proposal["target_area"] == "rule" and patch.get("rule_content"):
-        from app.xninetzy.os.rules.store import add_rule
+        from xninetzy.os.rules.store import add_rule
 
         rule_user = patch.get("user_id") or proposal.get("user_id") or "default"
         rule = add_rule(rule_user, patch["rule_content"], priority=60)

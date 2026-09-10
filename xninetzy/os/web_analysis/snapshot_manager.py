@@ -4,7 +4,7 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any
 
-from app.xninetzy.os.web_analysis.session_manager import EncryptedProfileStore
+from xninetzy.os.web_analysis.session_manager import EncryptedProfileStore
 
 
 class SnapshotManager:

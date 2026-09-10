@@ -3,8 +3,8 @@ from __future__ import annotations
 import asyncio
 import base64
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+from xninetzy.core.config import get_settings
+from xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     resolve_campus_credentials,
 )
 

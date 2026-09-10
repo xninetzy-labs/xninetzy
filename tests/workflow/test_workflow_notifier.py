@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.workflow import notifier as wn
-from app.xninetzy.workflow.notifier import WorkflowNotifier
-from app.xninetzy.workflow.models import WorkflowAction, WorkflowActionType, WorkflowPlan
+from xninetzy.workflow import notifier as wn
+from xninetzy.workflow.notifier import WorkflowNotifier
+from xninetzy.workflow.models import WorkflowAction, WorkflowActionType, WorkflowPlan
 
 
 @pytest.fixture(autouse=True)

@@ -1,6 +1,6 @@
 """Analyze a downloaded HEBAT file into text + lightweight summary metadata.
 
-Reuses the shared ``app.xninetzy.interfaces.media.document_parser`` (PDF/DOCX/PPTX/XLSX/TXT/MD/CSV)
+Reuses the shared ``xninetzy.interfaces.media.document_parser`` (PDF/DOCX/PPTX/XLSX/TXT/MD/CSV)
 so there is one parsing implementation across HEBAT and WhatsApp media. Adds
 HTML handling and a cheap extractive preview; heavy summarization is left to the
 LLM layer. Works on real files — unit-tested with temp files.
@@ -10,8 +10,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.xninetzy.interfaces.media.document_parser import parse_document
-from app.xninetzy.os.academic.hebat.html_cleaner import html_to_readable_text
+from xninetzy.interfaces.media.document_parser import parse_document
+from xninetzy.os.academic.hebat.html_cleaner import html_to_readable_text
 
 # Above this many characters, callers should chunk + push to knowledge/RAG
 # rather than inlining the whole thing into a prompt.

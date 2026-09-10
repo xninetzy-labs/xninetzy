@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 PAST_DUE = "2000-01-01T09:00:00"
 
@@ -14,10 +14,10 @@ def db(tmp_path, monkeypatch):
     monkeypatch.setenv("OBSIDIAN_VAULT_HOST_PATH", str(tmp_path / "vault"))
     monkeypatch.setenv("OBSIDIAN_ALLOW_WRITE", "true")
     get_settings.cache_clear()
-    from app.xninetzy.db.sqlite import init_db
+    from xninetzy.db.sqlite import init_db
 
     init_db()
-    from app.xninetzy.db.migrations import run_migrations
+    from xninetzy.db.migrations import run_migrations
 
     run_migrations()
     yield
@@ -28,7 +28,7 @@ def db(tmp_path, monkeypatch):
 
 
 def test_task_flow_capture_list_today_complete(db):
-    from app.xninetzy.tools.ecosystem.life_tools import (
+    from xninetzy.tools.ecosystem.life_tools import (
         task_capture,
         task_complete,
         task_list,
@@ -65,14 +65,14 @@ def test_task_flow_capture_list_today_complete(db):
 
 
 def test_task_list_empty(db):
-    from app.xninetzy.tools.ecosystem.life_tools import task_list
+    from xninetzy.tools.ecosystem.life_tools import task_list
 
     result = task_list.invoke({})
     assert "Tidak ada task" in result
 
 
 def test_task_complete_missing_task(db):
-    from app.xninetzy.tools.ecosystem.life_tools import task_complete
+    from xninetzy.tools.ecosystem.life_tools import task_complete
 
     result = task_complete.invoke({"task_id": 999})
     assert "tidak ditemukan" in result
@@ -82,7 +82,7 @@ def test_task_complete_missing_task(db):
 
 
 def test_habit_flow_log_and_today(db):
-    from app.xninetzy.tools.ecosystem.life_tools import habit_log, habit_today
+    from xninetzy.tools.ecosystem.life_tools import habit_log, habit_today
 
     logged = habit_log.invoke(
         {"name": "belajar", "value": 1, "notes": "pagi", "chat_id": "test-user"}
@@ -96,7 +96,7 @@ def test_habit_flow_log_and_today(db):
 
 
 def test_habit_today_empty(db):
-    from app.xninetzy.tools.ecosystem.life_tools import habit_today
+    from xninetzy.tools.ecosystem.life_tools import habit_today
 
     result = habit_today.invoke({})
     assert "Belum ada habit" in result
@@ -106,7 +106,7 @@ def test_habit_today_empty(db):
 
 
 def test_money_flow_transactions_and_summary(db):
-    from app.xninetzy.tools.ecosystem.life_tools import (
+    from xninetzy.tools.ecosystem.life_tools import (
         money_add_transaction,
         money_summary,
     )
@@ -141,7 +141,7 @@ def test_money_flow_transactions_and_summary(db):
 
 
 def test_money_summary_empty(db):
-    from app.xninetzy.tools.ecosystem.life_tools import money_summary
+    from xninetzy.tools.ecosystem.life_tools import money_summary
 
     summary = money_summary.invoke({"period": "month"})
     assert "Pemasukan: Rp 0" in summary
@@ -152,7 +152,7 @@ def test_money_summary_empty(db):
 
 
 def test_workout_flow_log_and_summary(db):
-    from app.xninetzy.tools.ecosystem.life_tools import workout_log, workout_summary
+    from xninetzy.tools.ecosystem.life_tools import workout_log, workout_summary
 
     logged = workout_log.invoke(
         {
@@ -174,7 +174,7 @@ def test_workout_flow_log_and_summary(db):
 
 
 def test_workout_summary_empty(db):
-    from app.xninetzy.tools.ecosystem.life_tools import workout_summary
+    from xninetzy.tools.ecosystem.life_tools import workout_summary
 
     result = workout_summary.invoke({"period": "week"})
     assert "Belum ada workout" in result
@@ -184,8 +184,8 @@ def test_workout_summary_empty(db):
 
 
 def test_daily_checkin_stores_mood_energy_focus(db):
-    from app.xninetzy.os.life.journal_manager import get_review
-    from app.xninetzy.tools.ecosystem.life_tools import daily_checkin
+    from xninetzy.os.life.journal_manager import get_review
+    from xninetzy.tools.ecosystem.life_tools import daily_checkin
 
     result = daily_checkin.invoke(
         {
@@ -209,7 +209,7 @@ def test_daily_checkin_stores_mood_energy_focus(db):
 
 
 def test_daily_review_generate_uses_checkin_and_tasks(db):
-    from app.xninetzy.tools.ecosystem.life_tools import (
+    from xninetzy.tools.ecosystem.life_tools import (
         daily_checkin,
         daily_review_generate,
         task_capture,
@@ -233,7 +233,7 @@ def test_daily_review_generate_uses_checkin_and_tasks(db):
 
 
 def test_daily_review_generate_empty(db):
-    from app.xninetzy.tools.ecosystem.life_tools import daily_review_generate
+    from xninetzy.tools.ecosystem.life_tools import daily_review_generate
 
     result = daily_review_generate.invoke({"chat_id": "test-user"})
     assert "Belum ada task selesai dicatat" in result
@@ -244,8 +244,8 @@ def test_daily_review_generate_empty(db):
 
 
 def test_life_dashboard_combines_goal_task_habit(db):
-    from app.xninetzy.tools.ecosystem.goal_tools import goal_create
-    from app.xninetzy.tools.ecosystem.life_tools import (
+    from xninetzy.tools.ecosystem.goal_tools import goal_create
+    from xninetzy.tools.ecosystem.life_tools import (
         habit_log,
         life_dashboard,
         task_capture,
@@ -266,7 +266,7 @@ def test_life_dashboard_combines_goal_task_habit(db):
 
 
 def test_life_dashboard_empty(db):
-    from app.xninetzy.tools.ecosystem.life_tools import life_dashboard
+    from xninetzy.tools.ecosystem.life_tools import life_dashboard
 
     result = life_dashboard.invoke({"chat_id": "test-user"})
     assert "Dashboard" in result
@@ -277,7 +277,7 @@ def test_life_dashboard_empty(db):
 
 
 def test_life_tools_registered_in_registry():
-    from app.xninetzy.tools.registry import get_all_tools
+    from xninetzy.tools.registry import get_all_tools
 
     names = {t.name for t in get_all_tools()}
     expected = {

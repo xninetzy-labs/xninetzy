@@ -1,4 +1,4 @@
-from app.xninetzy.skills.registry import get_skill, rank_skills
+from xninetzy.skills.registry import get_skill, rank_skills
 
 
 def test_mcp_lightning_skill_is_discoverable_and_valid():

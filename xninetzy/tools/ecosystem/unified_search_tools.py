@@ -29,7 +29,7 @@ def unified_search(
     sections: list[str] = [f"🔎 *Unified Search*: {query}"]
 
     try:
-        from app.xninetzy.os.knowledge.retrieval import retrieve_evidence
+        from xninetzy.os.knowledge.retrieval import retrieve_evidence
 
         bundle = retrieve_evidence(query, limit=per_source)
         items = [e for e in bundle.evidence]
@@ -42,7 +42,7 @@ def unified_search(
         sections.append(f"📚 Knowledge: error ({e})")
 
     try:
-        from app.xninetzy.os.notes.vault_service import ObsidianVaultService
+        from xninetzy.os.notes.vault_service import ObsidianVaultService
 
         notes = ObsidianVaultService().search_notes(query, limit=per_source)
         if notes:
@@ -54,7 +54,7 @@ def unified_search(
         sections.append(f"🗂️ Vault: error ({e})")
 
     try:
-        from app.xninetzy.os.graph.graph_store import search_nodes
+        from xninetzy.os.graph.graph_store import search_nodes
 
         nodes = search_nodes(query, limit=per_source)
         if nodes:
@@ -66,7 +66,7 @@ def unified_search(
         sections.append(f"🕸️ Graph: error ({e})")
 
     try:
-        from app.xninetzy.os.memory.memory_store import search_memories
+        from xninetzy.os.memory.memory_store import search_memories
 
         memories = search_memories(_uid(sender_id, chat_id), query, limit=per_source)
         if memories:

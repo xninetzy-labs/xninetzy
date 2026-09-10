@@ -3,14 +3,14 @@ from __future__ import annotations
 import asyncio
 import secrets
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.academic.hebat.models import UploadStatus
-from app.xninetzy.os.academic.hebat.parsers import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.academic.hebat.models import UploadStatus
+from xninetzy.os.academic.hebat.parsers import (
     is_logged_out,
     parse_assignment_page,
 )
-from app.xninetzy.os.academic.hebat.storage import (
+from xninetzy.os.academic.hebat.storage import (
     audit_log,
     update_submission_status,
 )
@@ -31,7 +31,7 @@ def generate_token() -> str:
 
 async def _open_healed_page(browser, chat_id: str, url: str) -> tuple[object, str | None]:
     """Open ``url`` with stored cookies, healing an expired session once."""
-    from app.xninetzy.os.academic.hebat.browser_session import (
+    from xninetzy.os.academic.hebat.browser_session import (
         _storage_state_path,
         relogin_hebat,
     )

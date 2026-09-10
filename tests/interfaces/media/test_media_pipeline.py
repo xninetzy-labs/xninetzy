@@ -1,64 +1,94 @@
 from __future__ import annotations
 
-import base64
-import hashlib
-from pathlib import Path
-
 import pytest
 
-from app.xninetzy.interfaces.media import media_tools
-from app.xninetzy.interfaces.whatsapp.client import WaToolError
+from xninetzy.interfaces.media import media_tools
 
 
 @pytest.mark.asyncio
-async def test_download_media_falls_back_to_mcp_content(monkeypatch, tmp_path):
-    raw = b"isi dokumen dari whatsapp"
+async def test_resolve_local_uses_media_store(monkeypatch, tmp_path):
+    payload_path = tmp_path / "doc.txt"
+    payload_path.write_text("isi dokumen", encoding="utf-8")
+    stored = {
+        "media_id": "MSG-1",
+        "local_path": str(payload_path),
+        "mime_type": "text/plain",
+        "file_name": "doc.txt",
+    }
 
-    async def fake_download(chat_id, message_id):
-        return {
-            "ok": True,
-            "local_path": "/path/tidak/terlihat/file.txt",
-            "filename": "catatan.txt",
+    monkeypatch.setattr(media_tools, "get_media_item", lambda message_id: stored)
+
+    resolved = media_tools._resolve_local("62800", "MSG-1")
+    assert resolved["local_path"] == str(payload_path)
+    assert resolved["mime_type"] == "text/plain"
+    assert resolved["file_name"] == "doc.txt"
+
+
+def test_resolve_local_raises_when_missing(monkeypatch):
+    monkeypatch.setattr(media_tools, "get_media_item", lambda message_id: None)
+
+    with pytest.raises(media_tools.MediaUnavailableError, match="belum tersedia"):
+        media_tools._resolve_local("62800", "MSG-1")
+
+
+def test_resolve_local_raises_when_file_missing(monkeypatch, tmp_path):
+    monkeypatch.setattr(
+        media_tools,
+        "get_media_item",
+        lambda message_id: {
+            "media_id": "MSG-1",
+            "local_path": str(tmp_path / "absent.bin"),
+            "mime_type": None,
+            "file_name": "absent.bin",
+        },
+    )
+
+    with pytest.raises(media_tools.MediaUnavailableError, match="tidak ada di disk"):
+        media_tools._resolve_local("62800", "MSG-1")
+
+
+def test_resolve_local_requires_message_id(monkeypatch):
+    with pytest.raises(media_tools.MediaUnavailableError, match="message_id"):
+        media_tools._resolve_local("62800", "")
+
+
+@pytest.mark.asyncio
+async def test_read_document_uses_stored_local_path(monkeypatch, tmp_path):
+    payload_path = tmp_path / "doc.txt"
+    payload_path.write_text("hello world", encoding="utf-8")
+    parsed = {
+        "text": "hello world",
+        "kind": "text",
+        "char_count": 11,
+        "error": None,
+    }
+
+    monkeypatch.setattr(
+        media_tools,
+        "_resolve_local",
+        lambda chat_id, message_id: {
+            "media_id": message_id,
+            "local_path": str(payload_path),
             "mime_type": "text/plain",
-        }
+            "file_name": "doc.txt",
+        },
+    )
+    monkeypatch.setattr(
+        media_tools, "parse_document", lambda *args, **kwargs: dict(parsed)
+    )
 
-    async def fake_content(chat_id, message_id):
-        return {
-            "ok": True,
-            "content_base64": base64.b64encode(raw).decode("ascii"),
-            "filename": "../../catatan.txt",
-            "mime_type": "text/plain",
-            "size_bytes": len(raw),
-            "sha256": hashlib.sha256(raw).hexdigest(),
-        }
+    saved: list[dict] = []
 
-    monkeypatch.setattr(media_tools, "download_media_message", fake_download)
-    monkeypatch.setattr(media_tools, "get_media_content", fake_content)
-    monkeypatch.setattr(media_tools, "_media_cache_root", lambda: tmp_path)
+    def fake_save(**kwargs):
+        saved.append(kwargs)
 
-    downloaded = await media_tools._download_media("628@s.whatsapp.net", "MSG-1")
-    local_path = Path(downloaded["local_path"])
-    assert local_path.is_file()
-    assert local_path.read_bytes() == raw
-    assert tmp_path in local_path.parents
-    assert "content_base64" not in downloaded
+    monkeypatch.setattr(media_tools, "save_media_item", fake_save)
 
-
-def test_materialize_rejects_wrong_checksum(tmp_path, monkeypatch):
-    raw = b"trusted bytes"
-    monkeypatch.setattr(media_tools, "_media_cache_root", lambda: tmp_path)
-
-    with pytest.raises(WaToolError, match="Checksum"):
-        media_tools._materialize_media_content(
-            "chat",
-            "message",
-            {
-                "content_base64": base64.b64encode(raw).decode("ascii"),
-                "filename": "file.txt",
-                "size_bytes": len(raw),
-                "sha256": "0" * 64,
-            },
-        )
+    result = await media_tools._read_document("62800", "MSG-1")
+    assert result["text"] == "hello world"
+    assert result["_meta"]["local_path"] == str(payload_path)
+    assert saved and saved[0]["local_path"] == str(payload_path)
+    assert saved[0]["media_type"] == "document"
 
 
 @pytest.mark.asyncio
@@ -66,7 +96,7 @@ async def test_build_media_prompt_context_reads_quoted_document(monkeypatch):
     async def fake_read(chat_id, message_id):
         assert chat_id == "group@g.us"
         assert message_id == "QUOTED-1"
-        return {"text": "Isi penting dari PDF.", "error": None}
+        return {"text": "Isi penting dari PDF.", "error": None, "_meta": {}}
 
     monkeypatch.setattr(media_tools, "_read_document", fake_read)
     context = await media_tools.build_media_prompt_context(

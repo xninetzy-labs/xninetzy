@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import asdict, dataclass
 from enum import StrEnum
 
-from app.xninetzy.os.policy.action_policy import RiskClass, classify_risk
+from xninetzy.os.policy.action_policy import RiskClass, classify_risk
 
 
 class ToolStability(StrEnum):

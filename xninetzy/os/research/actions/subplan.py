@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
-from app.xninetzy.os.research.subplanner import generate_research_subplans
+from xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
+from xninetzy.os.research.subplanner import generate_research_subplans
 
 
 class SubPlanResearchAction(ResearchAction):

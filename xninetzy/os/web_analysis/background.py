@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import asyncio
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
-from app.xninetzy.os.web_analysis.sites import get_site
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.web_analysis.analyzer_service import AnalyzerService
+from xninetzy.os.web_analysis.sites import get_site
 
 logger = logging.getLogger(__name__)
 

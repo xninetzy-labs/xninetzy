@@ -4,23 +4,23 @@ import asyncio
 from datetime import datetime, timezone
 from urllib.parse import urlsplit, urlunsplit
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.web_analysis.cache_manager import AnalysisBusyError, AnalysisCacheManager
-from app.xninetzy.os.web_analysis.models import AnalysisResult, EndpointRecord, ModuleRecord, SiteAnalysis
-from app.xninetzy.os.web_analysis.security import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.web_analysis.cache_manager import AnalysisBusyError, AnalysisCacheManager
+from xninetzy.os.web_analysis.models import AnalysisResult, EndpointRecord, ModuleRecord, SiteAnalysis
+from xninetzy.os.web_analysis.security import (
     detect_human_verification,
     has_sensitive_query,
     is_safe_request_method,
     looks_like_login,
     sanitize_endpoint,
 )
-from app.xninetzy.os.web_analysis.selectors_registry import extract_module_structure
-from app.xninetzy.os.web_analysis.session_manager import (
+from xninetzy.os.web_analysis.selectors_registry import extract_module_structure
+from xninetzy.os.web_analysis.session_manager import (
     SessionEncryptionUnavailable,
     SessionManager,
 )
-from app.xninetzy.os.web_analysis.sites import SiteDefinition, get_site, is_allowed_url
+from xninetzy.os.web_analysis.sites import SiteDefinition, get_site, is_allowed_url
 
 logger = logging.getLogger(__name__)
 

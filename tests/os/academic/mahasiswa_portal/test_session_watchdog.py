@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.os.academic.mahasiswa_portal.session_watchdog import (
+from xninetzy.os.academic.mahasiswa_portal.session_watchdog import (
     build_watchdog_message,
     evaluate_session_health,
     format_session_age,

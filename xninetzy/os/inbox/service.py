@@ -8,9 +8,9 @@ from datetime import datetime
 from enum import StrEnum
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.ecosystem.event_bus import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.ecosystem.event_bus import (
     dispatch_recorded_event,
     record_event_in_transaction,
 )
@@ -373,7 +373,7 @@ def build_attention_queue(limit: int = 5, now: datetime | None = None) -> list[d
             }
         )
     try:
-        from app.xninetzy.domains.it_learning.progress_tracker import build_today_plan
+        from xninetzy.domains.it_learning.progress_tracker import build_today_plan
 
         plan = build_today_plan(now=current)
     except Exception:

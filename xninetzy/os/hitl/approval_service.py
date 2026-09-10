@@ -4,10 +4,10 @@ import json
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.os.policy.action_policy import action_hash
-from app.xninetzy.os.research.permissions import is_owner_admin
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect
+from xninetzy.os.policy.action_policy import action_hash
+from xninetzy.os.research.permissions import is_owner_admin
 
 
 def _now() -> str:
@@ -65,7 +65,7 @@ def list_pending() -> list[dict]:
 def _execute_approved_action(row: dict) -> str:
     payload = json.loads(row.get("payload_json") or "{}")
     if row.get("action_type") == "obsidian_organize_apply":
-        from app.xninetzy.os.notes.organization_service import ObsidianOrganizationService
+        from xninetzy.os.notes.organization_service import ObsidianOrganizationService
 
         result = ObsidianOrganizationService().apply(payload.get("plan") or {})
         return (
@@ -73,14 +73,14 @@ def _execute_approved_action(row: dict) -> str:
             f"{len(result['skipped'])} dilewati, {result['links_updated']} file link diperbarui."
         )
     if row.get("action_type") == "activate_learning_roadmap":
-        from app.xninetzy.domains.it_learning.roadmap_store import activate_roadmap
+        from xninetzy.domains.it_learning.roadmap_store import activate_roadmap
 
         roadmap_id = int(payload["roadmap_id"])
         if not activate_roadmap(roadmap_id):
             raise ValueError(f"Roadmap #{roadmap_id} tidak ditemukan.")
         return f" Roadmap #{roadmap_id} diaktifkan dan task belajar disiapkan."
     if row.get("action_type") == "graph_rebuild":
-        from app.xninetzy.os.graph.v3 import graph_service
+        from xninetzy.os.graph.v3 import graph_service
 
         result = graph_service.rebuild_projection()
         return (

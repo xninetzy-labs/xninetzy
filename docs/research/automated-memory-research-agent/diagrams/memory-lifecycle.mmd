@@ -1,0 +1,15 @@
+flowchart LR
+    A["Capture"] --> B["Normalize"]
+    B --> C["Classify"]
+    C --> D["Embed"]
+    D --> E["Link"]
+    E --> F["Retrieve"]
+    F --> G["Use"]
+    G --> H["Reflect"]
+    H --> I["Consolidate"]
+    I --> J["Review"]
+    J --> K["Update"]
+    K --> L{"Forget / Archive?"}
+    L -->|Ya| M["Archive / Delete"]
+    L -->|Tidak| E
+    L -->|Skor penting| I

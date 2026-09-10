@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.db.idempotency import (
+from xninetzy.db.idempotency import (
     IDEMPOTENCY_INDEX_DDL,
     IDEMPOTENCY_TABLE_DDL,
     idempotent_call,
     storage_key,
 )
-from app.xninetzy.db.sqlite import connect
+from xninetzy.db.sqlite import connect
 
 
 @pytest.fixture(autouse=True)
@@ -89,7 +89,7 @@ def test_failed_execution_releases_reservation_for_retry():
 
 @pytest.mark.asyncio
 async def test_task_capture_with_idempotency_key_does_not_duplicate(monkeypatch):
-    from app.xninetzy.tools.ecosystem import life_tools
+    from xninetzy.tools.ecosystem import life_tools
 
     monkeypatch.setattr(life_tools, "record_event", lambda *args, **kwargs: None)
 
@@ -119,8 +119,8 @@ async def test_task_capture_with_idempotency_key_does_not_duplicate(monkeypatch)
 
 
 def test_knowledge_ingest_text_idempotent_via_key(monkeypatch):
-    from app.xninetzy.os.knowledge import ingestion as knowledge_ingestion
-    from app.xninetzy.tools.ecosystem import knowledge_tools
+    from xninetzy.os.knowledge import ingestion as knowledge_ingestion
+    from xninetzy.tools.ecosystem import knowledge_tools
 
     calls = {"n": 0}
 

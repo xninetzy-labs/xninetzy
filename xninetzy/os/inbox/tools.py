@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.inbox.service import (
+from xninetzy.os.inbox.service import (
     build_attention_queue,
     capture_item,
     capture_summary,

@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from app.xninetzy.interfaces.mcp_runtime import configure_mcp_runtime_paths
+from xninetzy.interfaces.mcp_runtime import configure_mcp_runtime_paths
 
 
 def test_host_runtime_maps_container_paths_into_service_data(tmp_path: Path) -> None:

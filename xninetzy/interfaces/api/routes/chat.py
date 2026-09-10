@@ -9,22 +9,21 @@ from fastapi import APIRouter, Depends
 from fastapi.responses import StreamingResponse
 from langchain_core.messages import AIMessage, HumanMessage
 
-from app.xninetzy.agent.graph import get_compiled_graph
-from app.xninetzy.ecosystem.command_router import (
+from xninetzy.ecosystem.command_router import (
     parse_captcha_reply,
     parse_command,
 )
-from app.xninetzy.os.memory.chat_store import ChatStore
-from app.xninetzy.os.ai_preferences import resolve_user_profile
-from app.xninetzy.schemas.chat import ChatRequest, ChatResponse
-from app.xninetzy.interfaces.api.deps.auth import require_api_key
-from app.xninetzy.interfaces.api.chat_events import bind_chat_event_queue, emit_chat_event
-from app.xninetzy.interfaces.api.owner_policy import (
+from xninetzy.os.memory.chat_store import ChatStore
+from xninetzy.os.ai_preferences import resolve_user_profile
+from xninetzy.schemas.chat import ChatRequest, ChatResponse
+from xninetzy.interfaces.api.deps.auth import require_api_key
+from xninetzy.interfaces.api.chat_events import bind_chat_event_queue, emit_chat_event
+from xninetzy.interfaces.api.owner_policy import (
     authorize_owner,
     owner_denied_message,
 )
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +43,7 @@ async def _prepare_media_metadata(request: ChatRequest) -> dict:
     if not _has_media(metadata):
         return metadata
     try:
-        from app.xninetzy.interfaces.media.media_tools import build_media_prompt_context
+        from xninetzy.interfaces.media.media_tools import build_media_prompt_context
 
         context = await build_media_prompt_context(request.chat_id, metadata)
     except Exception as exc:
@@ -61,8 +60,12 @@ def _format_direct_tool_result(tool_name: str, result: object) -> str:
             if not isinstance(item, dict):
                 continue
             name = str(item.get("name") or "unknown")
-            pack = str(getattr(item.get("feature_pack"), "value", item.get("feature_pack") or "core"))
-            risk = str(getattr(item.get("risk"), "value", item.get("risk") or "read"))
+            pack = str(
+                getattr(item.get("feature_pack"), "value", item.get("feature_pack") or "core")
+            )
+            risk = str(
+                getattr(item.get("risk"), "value", item.get("risk") or "read")
+            )
             description = str(item.get("description") or "").strip()
             lines.append(f"- {name} · {pack} · {risk}\n  {description}")
         return "\n".join(lines)
@@ -74,11 +77,16 @@ def _format_direct_tool_result(tool_name: str, result: object) -> str:
 async def _invoke_tool_directly(
     tool_name: str, kwargs: dict, request: ChatRequest
 ) -> str:
-    """Invoke a single tool directly, bypassing LangGraph (for slash commands)."""
-    from app.xninetzy.tools.registry import get_all_tools
+    """Invoke a single MCP tool directly.
+
+    The pivot to MCP-only removed the LangGraph agent loop; HTTP clients
+    (Codex, Claude Code, OpenCode) now route requests straight through
+    the canonical MCP tool registry.
+    """
+    from xninetzy.tools.registry import get_all_tools
 
     if tool_name == "__portal_grade_token_submit":
-        from app.xninetzy.os.academic.mahasiswa_portal.tools import (
+        from xninetzy.os.academic.mahasiswa_portal.tools import (
             submit_grade_token,
         )
 
@@ -116,7 +124,7 @@ def _lightning_episode_start(request: ChatRequest) -> tuple[str | None, float]:
     if not get_settings().LIGHTNING_ENABLED:
         return None, started
     try:
-        from app.xninetzy.os.lightning.rl import start_episode
+        from xninetzy.os.lightning.rl import start_episode
 
         episode = start_episode(
             owner_scope=request.sender_id or request.chat_id,
@@ -151,7 +159,7 @@ def _lightning_episode_finish(
     if not episode_id:
         return
     try:
-        from app.xninetzy.os.lightning.rl import (
+        from xninetzy.os.lightning.rl import (
             finish_episode,
             record_action,
             record_outcome,
@@ -190,30 +198,26 @@ def _lightning_episode_finish(
 async def _maybe_run_workflow(request: ChatRequest) -> str | None:
     """Run the multi-action workflow engine for compound requests, else None.
 
-    Best-effort: any failure falls through to the normal LangGraph flow so a
+    Best-effort: any failure falls through to the direct-tool path so a
     workflow bug can never take down regular chat.
     """
     if _has_media(request.metadata):
         return None
     try:
-        from app.xninetzy.core.config import get_settings
+        from xninetzy.core.config import get_settings
 
         if not get_settings().WORKFLOW_ENABLED:
             return None
-        from app.xninetzy.workflow.plan import is_multi_action_request
+        from xninetzy.workflow.plan import is_multi_action_request
 
         if not is_multi_action_request(request.message):
             return None
-        from app.xninetzy.workflow.executor import run_workflow
+        from xninetzy.workflow.executor import run_workflow
 
-        from_wa = bool(
-            (request.metadata or {}).get("messageId")
-        ) or request.chat_type in ("private", "group")
         return await run_workflow(
             request.chat_id,
             request.message,
             context={"chat_type": request.chat_type},
-            from_whatsapp=from_wa,
         )
     except Exception:
         return None
@@ -221,17 +225,28 @@ async def _maybe_run_workflow(request: ChatRequest) -> str | None:
 
 @router.post("/chat", response_model=ChatResponse)
 async def chat(request: ChatRequest) -> ChatResponse:
-    owner = authorize_owner(
-        request.sender_id,
-        local_client=(request.metadata or {}).get("client") == "cli",
-    ) if (request.metadata or {}).get("channel") == "whatsapp" else None
+    """HTTP MCP bridge endpoint.
+
+    Receives a chat request, parses slash commands and CAPTCHA replies,
+    routes compound requests through the workflow engine, and otherwise
+    dispatches to a single canonical MCP tool. Direct conversational
+    agent loops have been removed in the MCP-only pivot; clients that
+    need multi-turn reasoning should call MCP tools directly.
+    """
+    owner = (
+        authorize_owner(
+            request.sender_id,
+            local_client=False,
+        )
+        if (request.metadata or {}).get("channel") == "whatsapp"
+        else None
+    )
     if owner is not None and not owner.allowed:
         return ChatResponse(reply=owner_denied_message(owner.reason))
 
     episode_id, episode_started = _lightning_episode_start(request)
     emit_chat_event("phase", "Routing request")
 
-    # 1. Check for slash command (deterministic routing, skip LangGraph)
     tool_name, kwargs = parse_command(request.message)
     if not tool_name:
         tool_name, kwargs = parse_captcha_reply(
@@ -252,7 +267,6 @@ async def chat(request: ChatRequest) -> ChatResponse:
         )
         return ChatResponse(reply=reply)
 
-    # 1b. Multi-action workflow (compound request → staged execution + WA progress)
     emit_chat_event("phase", "Checking workflow")
     workflow_reply = await _maybe_run_workflow(request)
     if workflow_reply is not None:
@@ -266,127 +280,41 @@ async def chat(request: ChatRequest) -> ChatResponse:
         )
         return ChatResponse(reply=workflow_reply)
 
-    # 2. Normal LangGraph flow
-    prepared_metadata = await _prepare_media_metadata(request)
+    # No slash command, no workflow: in MCP-only mode we acknowledge and
+    # recommend direct tool invocation rather than running a hidden agent
+    # loop on the server side.
+    settings = get_settings()
     user_key = request.sender_id or request.chat_id
-    prepared_metadata["_llm_profile"] = resolve_user_profile(user_key).as_dict()
-
     store = ChatStore()
     history = store.get_recent(request.chat_id)
-
-    initial_state = {
-        "chat_id": request.chat_id,
-        "sender_id": request.sender_id,
-        "sender_name": request.sender_name,
-        "message": request.message,
-        "chat_type": request.chat_type,
-        "group_name": request.group_name,
-        "metadata": prepared_metadata,
-        "messages": history,
-        "route": "",
-        "clarification_question": None,
-        "response": "",
-    }
-
-    emit_chat_event("phase", "Running LangGraph workflow")
-    graph = get_compiled_graph()
-    try:
-        result = await graph.ainvoke(initial_state)
-    except Exception as exc:
-        logger.exception("LangGraph request failed")
-        _log_trace(
-            request,
-            {"response": "", "route": "langgraph"},
-            [],
-            status="failed",
-            error_type=type(exc).__name__,
-            error_message=str(exc)[:500],
-        )
-        _lightning_episode_finish(
-            episode_id,
-            request,
-            route="langgraph",
-            status="failed",
-            response="",
-            started=episode_started,
-            error_type=type(exc).__name__,
-        )
-        settings = get_settings()
-        from_whatsapp = bool((request.metadata or {}).get("messageId"))
-        should_failover = settings.CHAT_FAILOVER_ENABLED and (
-            from_whatsapp or not settings.CHAT_FAILOVER_WHATSAPP_ONLY
-        )
-        if should_failover:
-            from app.xninetzy.core.chat_failover import run_chat_failover
-
-            fallback = await run_chat_failover(
-                request.message,
-                user_id=user_key,
-                chat_id=request.chat_id,
-                history=history,
-                metadata=prepared_metadata,
-            )
-            if fallback.status == "completed" and fallback.output:
-                reply = fallback.output
-                if settings.CHAT_FAILOVER_SHOW_NOTICE:
-                    reply = "_OpenCode failover aktif._\n\n" + reply
-                fallback_messages = [
-                    HumanMessage(content=request.message),
-                    AIMessage(content=reply),
-                ]
-                store.save_messages(request.chat_id, fallback_messages)
-                _log_trace(
-                    request,
-                    {"response": reply, "route": "opencode_failover"},
-                    fallback_messages,
-                    status="failover",
-                    error_type=type(exc).__name__,
-                )
-                _lightning_episode_finish(
-                    episode_id,
-                    request,
-                    route="opencode_failover",
-                    status="failover",
-                    response=reply,
-                    started=episode_started,
-                    error_type=type(exc).__name__,
-                )
-                return ChatResponse(reply=reply)
-            logger.error(
-                "OpenCode chat failover failed: status=%s error=%s",
-                fallback.status,
-                fallback.error,
-            )
-        error_reply = (
-            "Maaf, agent utama sedang tidak tersedia dan failover aman belum "
-            "berhasil. Coba ulangi sebentar lagi atau gunakan slash command."
-        )
-        _lightning_episode_finish(
-            episode_id,
-            request,
-            route="langgraph",
-            status="failed",
-            response=error_reply,
-            started=episode_started,
-            error_type=type(exc).__name__,
-        )
-        return ChatResponse(reply=error_reply)
-
-    new_messages = result["messages"][len(history) :]
-    if new_messages:
-        store.save_messages(request.chat_id, new_messages)
-
-    _log_trace(request, result, new_messages, status="ok")
+    fallback_reply = (
+        "Xninetzy MCP tidak lagi menjalankan agent loop server-side. "
+        "Gunakan slash command (mis. /today, /helper, /tasks, /hebat) atau "
+        "panggil MCP tool langsung dari klien MCP-aware (Codex/Claude Code/OpenCode)."
+    )
+    fallback_messages = [
+        HumanMessage(content=request.message),
+        AIMessage(content=fallback_reply),
+    ]
+    store.save_messages(request.chat_id, fallback_messages)
     _lightning_episode_finish(
         episode_id,
         request,
-        route=result.get("route") or "langgraph",
+        route="mcp_only_acknowledgement",
         status="completed",
-        response=result.get("response", ""),
+        response=fallback_reply,
         started=episode_started,
     )
-
-    return ChatResponse(reply=result["response"])
+    _log_trace(
+        request,
+        {"response": fallback_reply, "route": "mcp_only_acknowledgement"},
+        fallback_messages,
+        status="ok",
+    )
+    if not settings.LIGHTNING_ENABLED:
+        # Stay quiet — placeholder for future hookups.
+        pass
+    return ChatResponse(reply=fallback_reply)
 
 
 def _sse(event_type: str, payload: dict) -> str:
@@ -403,14 +331,14 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
         queue: asyncio.Queue[dict[str, str]] = asyncio.Queue()
         with bind_chat_event_queue(queue):
             task = asyncio.create_task(chat(request))
-            last_heartbeat = time.monotonic()
+            last_heartbeat = time.perf_counter()
             try:
                 yield _sse("run_started", {"requestId": request_id})
                 while not task.done() or not queue.empty():
                     try:
                         event = await asyncio.wait_for(queue.get(), timeout=0.1)
                     except asyncio.TimeoutError:
-                        now = time.monotonic()
+                        now = time.perf_counter()
                         if now - last_heartbeat >= CHAT_STREAM_HEARTBEAT_SECONDS:
                             yield _sse("heartbeat", {})
                             last_heartbeat = now
@@ -418,12 +346,17 @@ async def chat_stream(request: ChatRequest) -> StreamingResponse:
                     event_type = event.pop("type", "activity")
                     yield _sse(event_type, event)
                 response = await task
-                yield _sse("phase", {"label": "Rendering response", "status": "active"})
+                yield _sse(
+                    "phase",
+                    {"label": "Rendering response", "status": "active"},
+                )
                 for offset in range(0, len(response.reply), 96):
                     payload = {"delta": response.reply[offset : offset + 96]}
                     yield _sse("delta", payload)
                     await asyncio.sleep(0.015)
-                yield _sse("phase", {"label": "Response completed", "status": "completed"})
+                yield _sse(
+                    "phase", {"label": "Response completed", "status": "completed"}
+                )
                 yield _sse("done", {})
             except asyncio.CancelledError:
                 task.cancel()
@@ -450,7 +383,7 @@ def _log_trace(
 ) -> None:
     """Best-effort Lightning trace logging — must never break the chat flow."""
     try:
-        from app.xninetzy.os.lightning.store import log_trace
+        from xninetzy.os.lightning.store import log_trace
 
         tools_used: list[str] = []
         for m in new_messages or []:

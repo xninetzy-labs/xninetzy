@@ -1,8 +1,8 @@
 import pytest
 from types import SimpleNamespace
 
-from app.xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
-from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+from xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
+from xninetzy.os.academic.mahasiswa_portal.reader import (
     AcademicProfile,
     AcademicStatusEntry,
     CurrentKrsEntry,

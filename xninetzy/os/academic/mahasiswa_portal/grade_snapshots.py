@@ -6,8 +6,8 @@ import re
 from dataclasses import dataclass
 from datetime import UTC, datetime
 
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.os.academic.mahasiswa_portal.reader import GradeEntry, GradeResult
+from xninetzy.db.sqlite import connect
+from xninetzy.os.academic.mahasiswa_portal.reader import GradeEntry, GradeResult
 
 
 @dataclass(frozen=True, slots=True)

@@ -16,7 +16,7 @@ import pytest
 
 import torch
 
-from app.xninetzy.runtime.cpu_guard import validate_cpu_only_runtime
+from xninetzy.runtime.cpu_guard import validate_cpu_only_runtime
 
 
 def _installed() -> set[str]:
@@ -67,7 +67,7 @@ def test_cpu_runtime_guard() -> None:
 
 
 def test_embeddings_runtime_info_reports_cpu() -> None:
-    from app.xninetzy.os.knowledge import embeddings
+    from xninetzy.os.knowledge import embeddings
 
     info = embeddings.runtime_info()
     assert info["device"] == "cpu"
@@ -77,7 +77,7 @@ def test_embeddings_runtime_info_reports_cpu() -> None:
 
 @pytest.mark.integration
 def test_embed_texts_runs_on_cpu() -> None:
-    from app.xninetzy.os.knowledge.embeddings import embed_texts
+    from xninetzy.os.knowledge.embeddings import embed_texts
 
     vecs = embed_texts(
         [

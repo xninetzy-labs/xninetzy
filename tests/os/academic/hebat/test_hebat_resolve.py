@@ -4,14 +4,14 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.academic.hebat.models import ActivityType, HebatActivity
-from app.xninetzy.os.academic.hebat.storage import (
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.academic.hebat.models import ActivityType, HebatActivity
+from xninetzy.os.academic.hebat.storage import (
     resolve_activity_by_identifier,
     upsert_activity,
 )
-from app.xninetzy.os.academic.hebat.tools import _resolve_activity_cmid
+from xninetzy.os.academic.hebat.tools import _resolve_activity_cmid
 
 
 def _seed_activity(cmid: str, title: str, activity_type: ActivityType) -> int:

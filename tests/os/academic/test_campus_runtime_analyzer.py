@@ -1,4 +1,4 @@
-from app.xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
+from xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
     classify_navigation,
     extract_php_targets,
 )

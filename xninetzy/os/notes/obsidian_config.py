@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 
 def vault_path() -> Path:

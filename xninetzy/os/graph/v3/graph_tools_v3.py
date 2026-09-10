@@ -13,8 +13,8 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.graph.v3 import graph_service
-from app.xninetzy.os.graph.v3.identity import node_key
+from xninetzy.os.graph.v3 import graph_service
+from xninetzy.os.graph.v3.identity import node_key
 
 
 def _disabled_msg() -> str:
@@ -131,8 +131,8 @@ async def graph_v3_rebuild(chat_id: str = "system", sender_id: str | None = None
     """Rebuild projeksi GraphRAG V3 (Neo4j+FAISS) dari SQLite. DESTRUKTIF → HITL."""
     if not graph_service.enabled():
         return _disabled_msg()
-    from app.xninetzy.os.hitl.approval_service import request_approval
-    from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
+    from xninetzy.os.hitl.approval_service import request_approval
+    from xninetzy.os.notifications.admin_notifier import notify_admin_approval
 
     title = "Rebuild projeksi GraphRAG V3"
     summary = (

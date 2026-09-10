@@ -23,9 +23,9 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -116,7 +116,7 @@ def replay_unconsumed_events(limit: int = 200) -> int:
 # --- projection ------------------------------------------------------------
 
 def _project(event: dict) -> None:
-    from app.xninetzy.os.graph.v3 import graph_service
+    from xninetzy.os.graph.v3 import graph_service
 
     etype = event["event_type"]
     entity_id = event.get("entity_id")
@@ -189,7 +189,7 @@ def _link_task_to_goal(graph_service, task_entity_id, task_title: str, prov: dic
     except Exception:
         return
 
-    from app.xninetzy.os.graph.v3.identity import node_key
+    from xninetzy.os.graph.v3.identity import node_key
 
     src = node_key("task", task_title)
     tgt = node_key("goal", goal["title"])

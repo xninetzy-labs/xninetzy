@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
-from app.xninetzy.os.graph.graph_context import get_graph_context
-from app.xninetzy.os.graph.graph_store import add_edge, add_node, search_nodes
+from xninetzy.os.graph.graph_context import get_graph_context
+from xninetzy.os.graph.graph_store import add_edge, add_node, search_nodes
 
 
 @tool
@@ -26,7 +26,7 @@ def graph_add_edge(source_node_id: int, target_node_id: int, edge_type: str, met
 def graph_search(query: str, limit: int = 10) -> str:
     """Search node Graph RAG."""
     if get_settings().GRAPHRAG_V3_ENABLED:
-        from app.xninetzy.os.graph.v3 import graph_service
+        from xninetzy.os.graph.v3 import graph_service
 
         pack = graph_service.search(query, top_k=limit, expand_depth=1)
         return pack.to_markdown()
@@ -43,7 +43,7 @@ def graph_search(query: str, limit: int = 10) -> str:
 def graph_get_context(query: str) -> str:
     """Ambil konteks graph terkait query."""
     if get_settings().GRAPHRAG_V3_ENABLED:
-        from app.xninetzy.os.graph.v3 import graph_service
+        from xninetzy.os.graph.v3 import graph_service
 
         return graph_service.search(query, top_k=10, expand_depth=1).to_markdown()
     return get_graph_context(query)

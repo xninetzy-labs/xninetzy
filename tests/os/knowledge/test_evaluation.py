@@ -1,5 +1,5 @@
-from app.xninetzy.os.knowledge.evaluation import evaluate_retrieval
-from app.xninetzy.os.knowledge.retrieval import Evidence, EvidenceBundle
+from xninetzy.os.knowledge.evaluation import evaluate_retrieval
+from xninetzy.os.knowledge.retrieval import Evidence, EvidenceBundle
 
 
 def test_retrieval_evaluation_checks_sources_terms_and_citations():

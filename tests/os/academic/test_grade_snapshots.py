@@ -1,12 +1,12 @@
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.academic.mahasiswa_portal.grade_snapshots import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.academic.mahasiswa_portal.grade_snapshots import (
     GradeSnapshotRepository,
     compare_grade_records,
     normalize_grade_result,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+from xninetzy.os.academic.mahasiswa_portal.reader import (
     GradeEntry,
     GradeResult,
 )

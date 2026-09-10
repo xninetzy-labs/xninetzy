@@ -1,6 +1,6 @@
 """One-shot migration: legacy V1 graph (graph_nodes/graph_edges) → GraphRAG V3.
 
-The V1 store (``app.xninetzy.os.graph.graph_store``) writes flat integer-keyed
+The V1 store (``xninetzy.os.graph.graph_store``) writes flat integer-keyed
 rows with no idempotency, provenance, or projection. This backfill replays those
 rows through ``graph_service`` so they gain canonical keys, content hashing,
 provenance, and outbox-driven projection into Neo4j/FAISS — without touching or
@@ -16,8 +16,8 @@ from __future__ import annotations
 
 import json
 
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +39,7 @@ def backfill_legacy_graph(*, limit: int | None = None) -> dict:
     canonical SQLite is safe even when GRAPHRAG_V3_ENABLED is off — the rows just
     wait in the outbox until the projection worker is turned on.
     """
-    from app.xninetzy.os.graph.v3 import graph_service
+    from xninetzy.os.graph.v3 import graph_service
 
     init_db()
     stats = {"nodes": 0, "edges": 0, "nodes_skipped": 0, "edges_skipped": 0}

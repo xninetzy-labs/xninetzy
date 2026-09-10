@@ -1,4 +1,4 @@
-from app.xninetzy.os.policy.action_policy import (
+from xninetzy.os.policy.action_policy import (
     ActionMode,
     ActionPolicyDecision,
     RiskClass,

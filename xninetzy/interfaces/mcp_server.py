@@ -3,29 +3,29 @@ from __future__ import annotations
 from mcp.server.fastmcp import FastMCP
 
 # Bootstrap host-safe paths before modules below can load get_settings().
-from app.xninetzy.interfaces.mcp_runtime import (
+from xninetzy.interfaces.mcp_runtime import (
     MCP_PATH_OVERRIDES as _MCP_PATH_OVERRIDES,
 )
-from app.xninetzy.interfaces.mcp_tool_adapter import (
+from xninetzy.interfaces.mcp_tool_adapter import (
     expose_xninetzy_tools,
     mcp_principal,
 )
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
 
-from app.xninetzy.tools.ecosystem.knowledge_tools import (
+from xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_answer as _knowledge_answer,
     knowledge_ingest_text as _knowledge_ingest_text,
     knowledge_list_sources as _knowledge_list_sources,
     knowledge_search as _knowledge_search,
 )
-from app.xninetzy.tools.ecosystem.life_tools import (
+from xninetzy.tools.ecosystem.life_tools import (
     task_capture as _task_capture,
     task_complete as _task_complete,
     task_list as _task_list,
     task_today as _task_today,
 )
-from app.xninetzy.tools.internal.obsidian import (
+from xninetzy.tools.internal.obsidian import (
     obsidian_add_tags as _obsidian_add_tags,
     obsidian_append as _obsidian_append,
     obsidian_backlinks as _obsidian_backlinks,
@@ -38,7 +38,7 @@ from app.xninetzy.tools.internal.obsidian import (
     obsidian_todos as _obsidian_todos,
     obsidian_update_section as _obsidian_update_section,
 )
-from app.xninetzy.tools.internal.reminder import (
+from xninetzy.tools.internal.reminder import (
     reminder_cancel as _reminder_cancel,
     reminder_create as _reminder_create,
     reminder_list as _reminder_list,

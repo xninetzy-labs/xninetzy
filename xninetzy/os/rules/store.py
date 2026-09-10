@@ -4,8 +4,8 @@ import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect, init_db
 
 
 def _now() -> str:

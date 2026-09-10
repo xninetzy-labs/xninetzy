@@ -5,11 +5,11 @@ import json
 from datetime import datetime
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.os.knowledge.chunking import chunk_text
-from app.xninetzy.os.knowledge.vector_store import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.os.knowledge.chunking import chunk_text
+from xninetzy.os.knowledge.vector_store import (
     add_chunks_to_index,
     add_structured_chunks_to_index,
 )
@@ -135,12 +135,12 @@ def ingest_document(
     if source_exists_by_hash(sha):
         return {"status": "already_exists", "title": title or path.name, "chunks": 0}
 
-    from app.xninetzy.os.knowledge.extraction import (
+    from xninetzy.os.knowledge.extraction import (
         build_document_chunks,
         build_overview,
         extract_document,
     )
-    from app.xninetzy.os.knowledge.extraction.schemas import DocumentManifest
+    from xninetzy.os.knowledge.extraction.schemas import DocumentManifest
 
     try:
         doc, plan = extract_document(file_path, mime_type=mime_type, filename=path.name)
@@ -208,7 +208,7 @@ def ingest_pdf(
         return {"status": "already_exists", "title": title or path.name, "chunks": 0}
 
     try:
-        from app.xninetzy.os.academic.hebat.pdf_reader import read_pdf_text
+        from xninetzy.os.academic.hebat.pdf_reader import read_pdf_text
 
         result = read_pdf_text(file_path)
         text = result.get("text", "")

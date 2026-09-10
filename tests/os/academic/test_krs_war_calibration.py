@@ -5,10 +5,10 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.academic.mahasiswa_portal.krs_war import (
     KrsPlan,
     KrsPlanCourse,
     KrsWarCalibrationStore,
@@ -19,12 +19,12 @@ from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
     parse_krs_plan_markdown,
     run_krs_war_if_armed,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsAnnouncement
-from app.xninetzy.os.notifications.notification_policy import (
+from xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsAnnouncement
+from xninetzy.os.notifications.notification_policy import (
     ADMIN_EVENTS,
     should_notify_admin,
 )
-from app.xninetzy.os.notifications.notification_templates import (
+from xninetzy.os.notifications.notification_templates import (
     format_admin_notification,
 )
 
@@ -105,7 +105,7 @@ async def test_auto_calibrate_skips_already_calibrated(store, monkeypatch):
             raise AssertionError("browser must not be opened")
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.SessionManager",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.SessionManager",
         FakeSessionManager,
     )
     result = await auto_calibrate_if_needed(announcement=ANNOUNCEMENT, store=cal)
@@ -125,7 +125,7 @@ async def test_auto_calibrate_skips_at_max_attempts(store, monkeypatch):
             raise AssertionError("browser must not be opened")
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.SessionManager",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.SessionManager",
         FakeSessionManager,
     )
     result = await auto_calibrate_if_needed(announcement=ANNOUNCEMENT, store=cal)
@@ -175,11 +175,11 @@ async def test_auto_calibrate_ok_via_fragment_path(store, monkeypatch):
         return True
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._open_krs_page",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._open_krs_page",
         fake_open,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
         fake_notify,
     )
     result = await auto_calibrate_if_needed(
@@ -212,11 +212,11 @@ async def test_auto_calibrate_empty_no_notification(store, monkeypatch):
         return True
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._open_krs_page",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._open_krs_page",
         fake_open,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
         fake_notify,
     )
     result = await auto_calibrate_if_needed(
@@ -253,11 +253,11 @@ async def test_auto_calibrate_retries_after_empty(store, monkeypatch):
     cal = KrsWarCalibrationStore()
     cal.save(WINDOW, {}, "none", "empty", 3)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._open_krs_page",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._open_krs_page",
         fake_open,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
         fake_notify,
     )
     result = await auto_calibrate_if_needed(announcement=ANNOUNCEMENT, store=cal)
@@ -312,15 +312,15 @@ async def test_run_war_partial_retries_then_done(monkeypatch, store):
         }
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
         fake_notify,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log",
         fake_append,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan",
         partial_take,
     )
     first = await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)
@@ -331,7 +331,7 @@ async def test_run_war_partial_retries_then_done(monkeypatch, store):
     assert second["war"]["status"] == "done"
     assert calls == [WINDOW, WINDOW]
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan",
         ok_take,
     )
     third = await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)
@@ -366,15 +366,15 @@ async def test_run_war_verify_failed_is_partial(monkeypatch, store):
         }
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin",
         fake_notify,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log",
         fake_append,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan",
         partial_take,
     )
     await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)

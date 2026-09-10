@@ -6,11 +6,11 @@ from zoneinfo import ZoneInfo
 from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 
-from app.xninetzy.interfaces.api.deps.auth import require_api_key
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.reminders.reminder_service import ReminderService
-from app.xninetzy.os.reminders.reminder_store import ReminderStore
-from app.xninetzy.os.reminders.scheduler import run_scheduler_tick
+from xninetzy.interfaces.api.deps.auth import require_api_key
+from xninetzy.core.config import get_settings
+from xninetzy.os.reminders.reminder_service import ReminderService
+from xninetzy.os.reminders.reminder_store import ReminderStore
+from xninetzy.os.reminders.scheduler import run_scheduler_tick
 
 router = APIRouter(prefix="/reminders", tags=["reminders"], dependencies=[Depends(require_api_key)])
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.notes.organization_service import ObsidianOrganizationService
-from app.xninetzy.os.notes.template_service import TemplateService
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.notes.organization_service import ObsidianOrganizationService
+from xninetzy.os.notes.template_service import TemplateService
 
 
 def _configure(monkeypatch, tmp_path):

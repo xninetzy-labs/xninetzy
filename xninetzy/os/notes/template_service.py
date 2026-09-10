@@ -3,8 +3,8 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.notes.folder_policy import canonical_path
+from xninetzy.core.config import get_settings
+from xninetzy.os.notes.folder_policy import canonical_path
 
 
 class TemplateService:

@@ -1,4 +1,4 @@
-from app.xninetzy.ecosystem.command_router import parse_command
+from xninetzy.ecosystem.command_router import parse_command
 
 
 def test_research_command_allowed_parse():

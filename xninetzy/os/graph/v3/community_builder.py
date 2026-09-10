@@ -26,9 +26,9 @@ from __future__ import annotations
 
 import asyncio
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.graph.v3 import sqlite_store
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.graph.v3 import sqlite_store
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ def _project_community(members: set[str], title_by_key: dict[str, str], run_mark
 
     Skips trivial communities (<2 members) — a lone node is not a cluster.
     """
-    from app.xninetzy.os.graph.v3 import graph_service
+    from xninetzy.os.graph.v3 import graph_service
     if len(members) < 2:
         return False
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.hitl.approval_service import get_approval_status, list_pending, request_approval, set_approval_status
-from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
-from app.xninetzy.os.policy.action_policy import evaluate_action
+from xninetzy.os.hitl.approval_service import get_approval_status, list_pending, request_approval, set_approval_status
+from xninetzy.os.notifications.admin_notifier import notify_admin_approval
+from xninetzy.os.policy.action_policy import evaluate_action
 
 
 @tool

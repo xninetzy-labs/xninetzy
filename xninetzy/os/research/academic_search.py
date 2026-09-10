@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from app.xninetzy.core.logging import logging
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 
@@ -241,7 +241,7 @@ async def get_paper(identifier: str, source: str = "auto") -> dict:
 
 
 def default_papers_dir() -> Path:
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.core.config import get_settings
 
     path = Path(get_settings().DATA_DIR) / "research" / "papers"
     path.mkdir(parents=True, exist_ok=True)

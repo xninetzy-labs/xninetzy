@@ -4,9 +4,9 @@ import uuid
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect, init_db
 
 logger = logging.getLogger(__name__)
 
@@ -108,7 +108,7 @@ def search_memories(user_id: str, query: str, limit: int = 5) -> list[dict]:
     if not rows:
         return []
     try:
-        from app.xninetzy.os.knowledge.embeddings import embed_query, embed_texts
+        from xninetzy.os.knowledge.embeddings import embed_query, embed_texts
 
         q = embed_query(query)
         embs = embed_texts([r["content"] for r in rows])

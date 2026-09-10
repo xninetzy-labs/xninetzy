@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.xninetzy.os.academic.hebat import tools
-from app.xninetzy.os.academic.hebat.tools import _is_owner_chat
+from xninetzy.os.academic.hebat import tools
+from xninetzy.os.academic.hebat.tools import _is_owner_chat
 
 
 def _patch_owners(monkeypatch, jids: tuple[str, ...]) -> None:

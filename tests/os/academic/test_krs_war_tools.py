@@ -4,29 +4,29 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.ecosystem.command_router import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.ecosystem.command_router import (
     KRS_WAR_PATTERN,
     SLASH_COMMANDS,
     parse_command,
 )
-from app.xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
-from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
+from xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
+from xninetzy.os.academic.mahasiswa_portal.krs_war import (
     KrsPlan,
     KrsPlanCourse,
     KrsWarStore,
     parse_krs_plan_markdown,
 )
-from app.xninetzy.os.notifications.notification_policy import (
+from xninetzy.os.notifications.notification_policy import (
     ADMIN_EVENTS,
     should_notify_admin,
 )
-from app.xninetzy.os.notifications.notification_templates import (
+from xninetzy.os.notifications.notification_templates import (
     format_admin_notification,
 )
-from app.xninetzy.tools.registry import get_all_tools, get_tool_groups
+from xninetzy.tools.registry import get_all_tools, get_tool_groups
 
 PLAN_TEXT = """# KRS Plan Semester 5
 

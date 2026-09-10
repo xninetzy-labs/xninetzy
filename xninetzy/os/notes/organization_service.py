@@ -8,15 +8,15 @@ from pathlib import Path
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.notes.folder_policy import (
+from xninetzy.core.config import get_settings
+from xninetzy.os.notes.folder_policy import (
     CANONICAL_FOLDERS,
     canonical_path,
     note_type_from_path,
 )
-from app.xninetzy.os.notes.markdown_service import MarkdownService
-from app.xninetzy.os.notes.obsidian_config import vault_path
-from app.xninetzy.os.notes.safety import ensure_readable_file, ensure_write_allowed, resolve_vault_path
+from xninetzy.os.notes.markdown_service import MarkdownService
+from xninetzy.os.notes.obsidian_config import vault_path
+from xninetzy.os.notes.safety import ensure_readable_file, ensure_write_allowed, resolve_vault_path
 
 
 class ObsidianOrganizationError(RuntimeError):

@@ -10,9 +10,9 @@ from uuid import uuid4
 
 import yaml
 
-from app.xninetzy.core.config import Settings, get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.skills.models import SkillDefinition, SkillMatch
+from xninetzy.core.config import Settings, get_settings
+from xninetzy.core.logging import logging
+from xninetzy.skills.models import SkillDefinition, SkillMatch
 
 logger = logging.getLogger(__name__)
 

@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.identity import redact_whatsapp_jid
-from app.xninetzy.os.jobs.service import get_data_freshness, owner_notification_jid
-from app.xninetzy.os.jobs.store import JobStore
+from xninetzy.core.identity import redact_whatsapp_jid
+from xninetzy.os.jobs.service import get_data_freshness, owner_notification_jid
+from xninetzy.os.jobs.store import JobStore
 
 
 @tool

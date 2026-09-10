@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
+from xninetzy.core.logging import logging
+from xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
 
 logger = logging.getLogger(__name__)
 

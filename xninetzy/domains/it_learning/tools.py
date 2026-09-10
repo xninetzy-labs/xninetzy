@@ -6,14 +6,14 @@ have a single domain-level import. No new tool logic here.
 
 from __future__ import annotations
 
-from app.xninetzy.domains.it_learning.roadmap_tools import (
+from xninetzy.domains.it_learning.roadmap_tools import (
     learning_create_roadmap,
     learning_generate_today_plan,
     learning_get_study_progress,
     learning_list_roadmaps,
     learning_review_week,
 )
-from app.xninetzy.domains.it_learning.study_session import (
+from xninetzy.domains.it_learning.study_session import (
     learning_complete_study_session,
     learning_list_study_sessions,
     learning_start_study_session,

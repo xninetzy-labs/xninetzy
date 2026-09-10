@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from collections.abc import Iterable
 
-from app.xninetzy.domains.it_learning.roadmap_models import (
+from xninetzy.domains.it_learning.roadmap_models import (
     RoadmapDraft,
     RoadmapPhase,
     RoadmapSource,

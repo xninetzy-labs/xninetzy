@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.xninetzy.os.research.academic_search import academic_search
-from app.xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
+from xninetzy.os.research.academic_search import academic_search
+from xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
 
 
 class AcademicSearchAction(ResearchAction):

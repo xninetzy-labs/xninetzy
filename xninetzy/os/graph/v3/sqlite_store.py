@@ -21,9 +21,9 @@ from dataclasses import dataclass, field
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import get_db_path
-from app.xninetzy.os.graph.v3.identity import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import get_db_path
+from xninetzy.os.graph.v3.identity import (
     edge_content_hash,
     edge_key,
     node_content_hash,

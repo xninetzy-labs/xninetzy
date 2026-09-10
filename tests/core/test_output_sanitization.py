@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.core.security import redact_jids_in_text, sanitize_tool_output
+from xninetzy.core.security import redact_jids_in_text, sanitize_tool_output
 
 
 def test_masks_user_jid_keeping_domain():

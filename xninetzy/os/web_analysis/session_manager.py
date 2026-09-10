@@ -12,8 +12,8 @@ from urllib.parse import urlsplit, urlunsplit
 
 from cryptography.fernet import Fernet, InvalidToken
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.web_analysis.sites import get_site, is_allowed_url
+from xninetzy.core.config import get_settings
+from xninetzy.os.web_analysis.sites import get_site, is_allowed_url
 
 
 class SessionEncryptionUnavailable(RuntimeError):

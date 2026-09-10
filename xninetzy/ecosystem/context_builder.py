@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.core.logging import logging
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +26,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
     }
 
     try:
-        from app.xninetzy.os.life.goal_manager import list_goals
+        from xninetzy.os.life.goal_manager import list_goals
 
         goals = list_goals(status="active", limit=3)
         context["active_goals"] = [
@@ -37,7 +37,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: goals fetch failed: %s", e)
 
     try:
-        from app.xninetzy.os.life.task_manager import list_tasks_today
+        from xninetzy.os.life.task_manager import list_tasks_today
 
         tasks = list_tasks_today()[:5]
         context["today_tasks"] = [
@@ -47,7 +47,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: tasks fetch failed: %s", e)
 
     try:
-        from app.xninetzy.os.inbox.service import (
+        from xninetzy.os.inbox.service import (
             build_attention_queue,
             capture_summary,
         )
@@ -61,7 +61,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: OS inbox fetch failed: %s", e)
 
     try:
-        from app.xninetzy.os.academic.hebat.storage import list_assignments
+        from xninetzy.os.academic.hebat.storage import list_assignments
 
         assigns = [
             a
@@ -77,10 +77,10 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: HEBAT deadlines fetch failed: %s", e)
 
     try:
-        from app.xninetzy.core.config import get_settings
+        from xninetzy.core.config import get_settings
 
         if get_settings().WEB_ANALYSIS_ENCRYPTION_KEY:
-            from app.xninetzy.os.web_analysis.snapshot_manager import SnapshotManager
+            from xninetzy.os.web_analysis.snapshot_manager import SnapshotManager
 
             snapshot = SnapshotManager().load("mahasiswa", "schedule")
             items = (snapshot or {}).get("items") or []
@@ -93,7 +93,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: local portal schedule fetch failed: %s", e)
 
     try:
-        from app.xninetzy.os.life.journal_manager import get_latest_review
+        from xninetzy.os.life.journal_manager import get_latest_review
 
         review = get_latest_review()
         if review:
@@ -102,7 +102,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: daily review fetch failed: %s", e)
 
     try:
-        from app.xninetzy.domains.it_learning.roadmap_store import (
+        from xninetzy.domains.it_learning.roadmap_store import (
             list_roadmaps_with_progress,
         )
 
@@ -115,7 +115,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: roadmap fetch failed: %s", e)
 
     try:
-        from app.xninetzy.domains.it_learning.progress_tracker import build_today_plan
+        from xninetzy.domains.it_learning.progress_tracker import build_today_plan
 
         plan = build_today_plan()
         if plan:
@@ -126,7 +126,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: learning focus fetch failed: %s", e)
 
     try:
-        from app.xninetzy.domains.it_learning.concept_graph import mastery_focus
+        from xninetzy.domains.it_learning.concept_graph import mastery_focus
 
         context["learning_mastery"] = [
             f"{item['title']} {float(item['mastery']):.0%} "
@@ -137,7 +137,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: learning mastery fetch failed: %s", e)
 
     try:
-        from app.xninetzy.domains.it_learning.recall import due_recall_cards
+        from xninetzy.domains.it_learning.recall import due_recall_cards
 
         context["due_recall"] = [
             f"#{item['id']} {item['question']}"
@@ -147,7 +147,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: due recall fetch failed: %s", e)
 
     try:
-        from app.xninetzy.os.life.habit_manager import get_habit_today
+        from xninetzy.os.life.habit_manager import get_habit_today
 
         context["habit_status"] = [
             f"{h['name']} {h['done_today']}/{h['target_count']}"
@@ -157,7 +157,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: habit fetch failed: %s", e)
 
     try:
-        from app.xninetzy.os.life.workout_manager import get_workout_summary
+        from xninetzy.os.life.workout_manager import get_workout_summary
 
         workout = get_workout_summary("week")
         context["workout_summary"] = (
@@ -167,7 +167,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
         logger.debug("Context: workout fetch failed: %s", e)
 
     try:
-        from app.xninetzy.ecosystem.event_bus import recent_events
+        from xninetzy.ecosystem.event_bus import recent_events
 
         context["recent_events"] = [
             f"{event['event_type']}:{event.get('entity_type') or 'system'}"
@@ -181,7 +181,7 @@ def build_personal_context(chat_id: str, message: str) -> dict:
             kw in message.lower()
             for kw in ["belajar", "materi", "konsep", "jelaskan", "apa itu"]
         ):
-            from app.xninetzy.os.knowledge.rag import quick_search
+            from xninetzy.os.knowledge.rag import quick_search
 
             hits = quick_search(message, limit=3)
             context["relevant_knowledge"] = [h.get("title", "?") for h in hits]

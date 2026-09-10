@@ -6,7 +6,7 @@ import socket
 from dataclasses import dataclass
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
-from app.xninetzy.os.web_analysis.security import has_sensitive_query
+from xninetzy.os.web_analysis.security import has_sensitive_query
 
 
 @dataclass(frozen=True)

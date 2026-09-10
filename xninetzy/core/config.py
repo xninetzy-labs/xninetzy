@@ -3,7 +3,7 @@ from pathlib import Path
 
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from app.xninetzy.interfaces.mcp_runtime import configure_mcp_runtime_paths
+from xninetzy.interfaces.mcp_runtime import configure_mcp_runtime_paths
 
 
 configure_mcp_runtime_paths()
@@ -122,12 +122,24 @@ class Settings(BaseSettings):
     SINGLE_OWNER_MODE: bool = True
     OWNER_PHONE_NUMBER: str = ""
     OWNER_ALIAS: str = "owner"
-    OWNER_ALLOWED_JIDS: str = ""
+    OWNER_CHAT_ID: str = ""
+    OWNER_ALLOWED_IDS: str = ""
+    OWNER_ALLOWED_JIDS: str = ""  # legacy alias retained for installs predating MCP-only pivot
 
     DATA_DIR: str = "/app/data"
     SQLITE_PATH: str = "/app/data/xninetzy.sqlite3"
     BACKUP_DIR: str = "/app/data/backups"
     BACKUP_RETENTION: int = 14
+
+    # ---------------- AI-generated artifact paths (env-configurable) ----------------
+    # Owners can point these to anywhere (home, /tmp, external drive).
+    # Defaults live under the project root and are gitignored.
+    OUTPUT_DIR: str = "./output"
+    GENERATED_DOCUMENTS_DIR: str = "./generated/documents"
+    RESEARCH_OUTPUT_DIR: str = "./generated/research"
+    UNTRACKED_OUTPUT_DIR: str = "./generated/untracked"
+    # Allow runtime to write ONLY into these directories (no arbitrary paths).
+    ARTIFACT_ALLOWLIST: bool = True
 
     AGENT_MAX_ITERATIONS: int = 10
     CHAT_HISTORY_LIMIT: int = 20
@@ -346,7 +358,7 @@ class Settings(BaseSettings):
     # CPU-only AI runtime. Xninetzy runs all inference on CPU exclusively.
     # These knobs pin Sentence Transformers / PyTorch to CPU and cap the thread
     # pools for a personal single-owner workload. A GPU-enabled build is
-    # rejected at startup by app.xninetzy.runtime.cpu_guard.
+    # rejected at startup by xninetzy.runtime.cpu_guard.
     XNINETZY_DEVICE: str = "cpu"
     EMBEDDING_DEVICE: str = "cpu"
     EMBEDDING_BACKEND: str = "torch"  # torch | onnx (onnx reserved, not yet wired)

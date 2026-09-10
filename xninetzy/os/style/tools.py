@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.style.store import get_style_text, reset_style, set_style
+from xninetzy.os.style.store import get_style_text, reset_style, set_style
 
 
 def _uid(sender_id: str | None, chat_id: str | None) -> str:

@@ -15,9 +15,9 @@ from __future__ import annotations
 
 import asyncio
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.graph.v3 import faiss_store, neo4j_store, sqlite_store
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.graph.v3 import faiss_store, neo4j_store, sqlite_store
 
 logger = logging.getLogger(__name__)
 

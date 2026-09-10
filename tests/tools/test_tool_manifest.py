@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-from app.xninetzy.os.policy.action_policy import RiskClass
-from app.xninetzy.tools.ecosystem.tool_catalog_tools import tool_catalog
-from app.xninetzy.tools.manifest import FeaturePack, manifest_for
-from app.xninetzy.tools.registry import get_tool_names
+from xninetzy.os.policy.action_policy import RiskClass
+from xninetzy.tools.ecosystem.tool_catalog_tools import tool_catalog
+from xninetzy.tools.manifest import FeaturePack, manifest_for
+from xninetzy.tools.registry import get_tool_names
 
 
 def test_manifest_marks_final_academic_actions_as_approval_bound():

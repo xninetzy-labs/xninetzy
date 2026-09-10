@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.helper.command_docs import get_help
+from xninetzy.helper.command_docs import get_help
 
 
 @tool
@@ -26,8 +26,8 @@ def helper_generate_obsidian_docs() -> str:
     - Helper/Examples.md — contoh percakapan
     """
     try:
-        from app.xninetzy.os.notes.vault_service import ObsidianVaultService
-        from app.xninetzy.helper.command_docs import FULL_OVERVIEW, CATEGORIES
+        from xninetzy.os.notes.vault_service import ObsidianVaultService
+        from xninetzy.helper.command_docs import FULL_OVERVIEW, CATEGORIES
         vault = ObsidianVaultService()
 
         readme = (

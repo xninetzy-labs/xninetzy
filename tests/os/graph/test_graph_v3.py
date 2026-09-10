@@ -11,9 +11,9 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
 
 
 @pytest.fixture(autouse=True)
@@ -28,7 +28,7 @@ def isolated_graph(monkeypatch, tmp_path):
     run_migrations()
     # Neo4j store keeps a process-sticky "_unavailable" flag; reset it so a prior
     # test's failed connectivity attempt doesn't mask this test's config.
-    from app.xninetzy.os.graph.v3 import neo4j_store
+    from xninetzy.os.graph.v3 import neo4j_store
 
     monkeypatch.setattr(neo4j_store, "_unavailable", False, raising=False)
     monkeypatch.setattr(neo4j_store, "_driver", None, raising=False)
@@ -53,7 +53,7 @@ def _active_node_count(node_type: str | None = None) -> int:
 # --- canonical write path + idempotency ------------------------------------
 
 def test_upsert_node_is_idempotent_and_enqueues_outbox():
-    from app.xninetzy.os.graph.v3 import graph_service
+    from xninetzy.os.graph.v3 import graph_service
 
     first = graph_service.upsert_node(node_type="topic", title="LangGraph")
     assert first.created is True
@@ -73,7 +73,7 @@ def test_upsert_node_is_idempotent_and_enqueues_outbox():
 
 
 def test_content_change_bumps_version_and_outbox():
-    from app.xninetzy.os.graph.v3 import graph_service
+    from xninetzy.os.graph.v3 import graph_service
 
     r1 = graph_service.upsert_node(node_type="topic", title="StateGraph", content="v1")
     r2 = graph_service.upsert_node(node_type="topic", title="StateGraph", content="v2")
@@ -91,8 +91,8 @@ def test_content_change_bumps_version_and_outbox():
 
 
 def test_edge_upsert_and_soft_delete():
-    from app.xninetzy.os.graph.v3 import graph_service
-    from app.xninetzy.os.graph.v3.identity import node_key
+    from xninetzy.os.graph.v3 import graph_service
+    from xninetzy.os.graph.v3.identity import node_key
 
     a = graph_service.upsert_node(node_type="topic", title="Neo4j")
     b = graph_service.upsert_node(node_type="concept", title="Cypher")
@@ -113,7 +113,7 @@ def test_edge_upsert_and_soft_delete():
 # --- retrieval (FTS leg) ----------------------------------------------------
 
 def test_search_returns_pack_via_fts():
-    from app.xninetzy.os.graph.v3 import graph_service
+    from xninetzy.os.graph.v3 import graph_service
 
     graph_service.upsert_node(
         node_type="topic", title="Reciprocal Rank Fusion",
@@ -129,9 +129,9 @@ def test_search_returns_pack_via_fts():
 # --- populator (ecosystem event → graph) -----------------------------------
 
 def test_populator_projects_goal_and_task_with_edge():
-    from app.xninetzy.ecosystem.event_bus import record_event
-    from app.xninetzy.os.graph.v3 import graph_populator
-    from app.xninetzy.os.graph.v3.identity import node_key
+    from xninetzy.ecosystem.event_bus import record_event
+    from xninetzy.os.graph.v3 import graph_populator
+    from xninetzy.os.graph.v3.identity import node_key
 
     now = "2026-08-01T09:00:00+07:00"
     with connect() as conn:
@@ -180,8 +180,8 @@ def test_populator_projects_goal_and_task_with_edge():
 def test_populator_left_unconsumed_when_disabled(monkeypatch):
     monkeypatch.setenv("GRAPHRAG_V3_ENABLED", "false")
     get_settings.cache_clear()
-    from app.xninetzy.ecosystem.event_bus import record_event
-    from app.xninetzy.os.graph.v3 import graph_populator
+    from xninetzy.ecosystem.event_bus import record_event
+    from xninetzy.os.graph.v3 import graph_populator
 
     event_id = record_event(
         "system", "goal_created", "test", entity_type="goal",
@@ -199,7 +199,7 @@ def test_populator_left_unconsumed_when_disabled(monkeypatch):
 
 def test_community_builder_clusters_connected_nodes():
     pytest.importorskip("networkx")
-    from app.xninetzy.os.graph.v3 import community_builder, graph_service
+    from xninetzy.os.graph.v3 import community_builder, graph_service
 
     # Two triangles sharing no edge → two communities.
     triangles = [("a", "b", "c"), ("x", "y", "z")]
@@ -224,7 +224,7 @@ def test_community_builder_clusters_connected_nodes():
 
 def test_community_builder_noop_when_no_edges():
     pytest.importorskip("networkx")
-    from app.xninetzy.os.graph.v3 import community_builder, graph_service
+    from xninetzy.os.graph.v3 import community_builder, graph_service
 
     graph_service.upsert_node(node_type="topic", title="Lonely")
     stats = community_builder._run()
@@ -234,9 +234,9 @@ def test_community_builder_noop_when_no_edges():
 # --- V1 → V3 backfill -------------------------------------------------------
 
 def test_backfill_v1_migrates_nodes_and_edges():
-    from app.xninetzy.os.graph.graph_store import add_edge, add_node
-    from app.xninetzy.os.graph.v3 import backfill_v1
-    from app.xninetzy.os.graph.v3.identity import node_key
+    from xninetzy.os.graph.graph_store import add_edge, add_node
+    from xninetzy.os.graph.v3 import backfill_v1
+    from xninetzy.os.graph.v3.identity import node_key
 
     a = add_node("topic", "LangChain")
     b = add_node("concept", "Runnable")
@@ -265,7 +265,7 @@ def test_backfill_v1_migrates_nodes_and_edges():
 
 
 def test_stats_is_passive_when_neo4j_is_disabled(monkeypatch):
-    from app.xninetzy.os.graph.v3 import graph_service, neo4j_store
+    from xninetzy.os.graph.v3 import graph_service, neo4j_store
 
     def fail_if_called():
         raise AssertionError("stats must not connect to Neo4j")

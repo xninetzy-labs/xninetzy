@@ -2,20 +2,20 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.os.research.sources import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.os.research.sources import (
     ResearchSource,
     assign_sids,
     selected_sids,
     to_source_model,
 )
-from app.xninetzy.os.research import safe_fetch, web_search
-from app.xninetzy.os.research import academic_search as academic_mod
-from app.xninetzy.os.research import guards as guards_mod
-from app.xninetzy.os.research.citations import format_sources_block, validate_citations
-from app.xninetzy.os.research.safe_fetch import UnsafeUrlError, _validate_url
+from xninetzy.os.research import safe_fetch, web_search
+from xninetzy.os.research import academic_search as academic_mod
+from xninetzy.os.research import guards as guards_mod
+from xninetzy.os.research.citations import format_sources_block, validate_citations
+from xninetzy.os.research.safe_fetch import UnsafeUrlError, _validate_url
 
 
 @pytest.fixture(autouse=True)

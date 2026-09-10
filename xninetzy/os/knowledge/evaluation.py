@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import Callable
 
-from app.xninetzy.os.knowledge.retrieval import EvidenceBundle, retrieve_evidence
+from xninetzy.os.knowledge.retrieval import EvidenceBundle, retrieve_evidence
 
 
 @dataclass(frozen=True, slots=True)

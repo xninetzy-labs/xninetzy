@@ -1,10 +1,10 @@
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
+from xninetzy.core.config import get_settings
+from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
     CampusLoginCoordinator,
 )
-from app.xninetzy.os.web_analysis.sites import get_site
+from xninetzy.os.web_analysis.sites import get_site
 
 
 @pytest.mark.parametrize("answer", ["ABC9", "A1-2", "12+7", "token_value"])
@@ -185,15 +185,15 @@ async def test_try_direct_login_saves_session_on_success(monkeypatch):
 
     monkeypatch.setattr(coordinator, "_first_visible", fake_first_visible)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.login_coordinator.looks_like_login",
+        "xninetzy.os.academic.mahasiswa_portal.login_coordinator.looks_like_login",
         lambda html, url: False,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.login_coordinator.is_allowed_url",
+        "xninetzy.os.academic.mahasiswa_portal.login_coordinator.is_allowed_url",
         lambda site, url: True,
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.login_coordinator.SessionManager",
+        "xninetzy.os.academic.mahasiswa_portal.login_coordinator.SessionManager",
         FakeSessionManager,
     )
 
@@ -233,7 +233,7 @@ async def test_try_direct_login_returns_none_when_still_login_page(monkeypatch):
 
     monkeypatch.setattr(coordinator, "_first_visible", fake_first_visible)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.login_coordinator.looks_like_login",
+        "xninetzy.os.academic.mahasiswa_portal.login_coordinator.looks_like_login",
         lambda html, url: True,
     )
 
@@ -247,7 +247,7 @@ def _uacc_settings(monkeypatch):
     settings = get_settings()
     monkeypatch.setattr(settings, "UACC_ENABLED", True)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.login_coordinator.get_settings",
+        "xninetzy.os.academic.mahasiswa_portal.login_coordinator.get_settings",
         lambda: settings,
     )
     return settings
@@ -309,7 +309,7 @@ async def test_start_direct_login_when_no_captcha(monkeypatch):
     monkeypatch.setattr(coordinator, "_find_captcha_optional", fake_no_captcha)
     monkeypatch.setattr(coordinator, "_try_direct_login", fake_direct)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.login_coordinator.SessionManager",
+        "xninetzy.os.academic.mahasiswa_portal.login_coordinator.SessionManager",
         type("SM", (), {}),
     )
     monkeypatch.setattr(
@@ -345,7 +345,7 @@ async def test_start_keeps_captcha_challenge_when_captcha_present(monkeypatch):
     monkeypatch.setattr(coordinator, "_find_captcha_optional", fake_captcha)
     monkeypatch.setattr(coordinator, "_capture_captcha", fake_capture)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.login_coordinator.SessionManager",
+        "xninetzy.os.academic.mahasiswa_portal.login_coordinator.SessionManager",
         type("SM", (), {}),
     )
     monkeypatch.setattr(

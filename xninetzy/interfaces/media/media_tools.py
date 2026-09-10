@@ -1,23 +1,15 @@
 from __future__ import annotations
 
-import base64
-import binascii
-import hashlib
-import re
-import tempfile
 from pathlib import Path
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.interfaces.media.document_parser import parse_document
-from app.xninetzy.interfaces.media.image_parser import parse_image
-from app.xninetzy.interfaces.media.media_store import save_media_item
-from app.xninetzy.interfaces.whatsapp.client import (
-    WaToolError,
-    download_media_message,
-    get_media_content,
+from xninetzy.core.logging import logging
+from xninetzy.interfaces.media.document_parser import parse_document
+from xninetzy.interfaces.media.image_parser import parse_image
+from xninetzy.interfaces.media.media_store import (
+    get_media_item,
+    save_media_item,
 )
 
 logger = logging.getLogger(__name__)
@@ -26,58 +18,13 @@ _PREVIEW_CHARS = 4000
 _PROMPT_MEDIA_CHARS = 12000
 
 
-def _safe_segment(value: str | None, fallback: str) -> str:
-    segment = re.sub(r"[^a-zA-Z0-9_.-]", "_", value or "").strip("._")
-    return segment[:160] or fallback
+class MediaUnavailableError(RuntimeError):
+    """Raised when media_store does not have the requested media item.
 
-
-def _media_cache_root() -> Path:
-    preferred = Path(get_settings().DATA_DIR).expanduser() / "wa-media-cache"
-    try:
-        preferred.mkdir(parents=True, exist_ok=True)
-        return preferred
-    except OSError:
-        fallback = Path(tempfile.gettempdir()) / "xninetzy-wa-media-cache"
-        fallback.mkdir(parents=True, exist_ok=True)
-        return fallback
-
-
-def _materialize_media_content(chat_id: str, message_id: str, payload: dict) -> dict:
-    encoded = payload.get("content_base64")
-    if not isinstance(encoded, str) or not encoded:
-        raise WaToolError("WA MCP tidak mengembalikan konten media.")
-    try:
-        raw = base64.b64decode(encoded, validate=True)
-    except (ValueError, binascii.Error) as exc:
-        raise WaToolError("Konten media dari WA MCP bukan base64 yang valid.") from exc
-
-    max_bytes = get_settings().WA_MEDIA_MAX_BYTES
-    if len(raw) > max_bytes:
-        raise WaToolError(f"Media melebihi batas {max_bytes} byte.")
-    declared_size = payload.get("size_bytes")
-    if declared_size is not None and int(declared_size) != len(raw):
-        raise WaToolError("Ukuran konten media tidak cocok dengan metadata WA.")
-    expected_hash = str(payload.get("sha256") or "").lower()
-    actual_hash = hashlib.sha256(raw).hexdigest()
-    if expected_hash and expected_hash != actual_hash:
-        raise WaToolError("Checksum konten media dari WA tidak cocok.")
-
-    folder = (
-        _media_cache_root()
-        / _safe_segment(chat_id, "chat")
-        / _safe_segment(message_id, "message")
-    )
-    folder.mkdir(parents=True, exist_ok=True)
-    filename = _safe_segment(payload.get("filename"), f"{actual_hash[:16]}.bin")
-    target = folder / filename
-    temporary = target.with_suffix(target.suffix + ".tmp")
-    temporary.write_bytes(raw)
-    temporary.replace(target)
-    result = {key: value for key, value in payload.items() if key != "content_base64"}
-    result["local_path"] = str(target)
-    result["size_bytes"] = len(raw)
-    result["sha256"] = actual_hash
-    return result
+    Replaces the legacy ``WaToolError`` raised when the WhatsApp MCP could not
+    download media. With the MCP-only pivot the local file must already exist
+    in :mod:`media_store` (populated by the MCP client that uploaded it).
+    """
 
 
 def _effective_media(metadata: dict | None) -> dict:
@@ -89,35 +36,47 @@ def _effective_media(metadata: dict | None) -> dict:
     return quoted if quoted.get("hasMedia") else {}
 
 
-async def _download_media(chat_id: str, message_id: str) -> dict:
-    """Ask wa-enggine (MCP) to download the media and return its local metadata."""
-    dl = await download_media_message(chat_id, message_id)
-    if not dl.get("ok"):
-        raise WaToolError(
-            dl.get("error")
-            or "Media tidak bisa diunduh (mungkin sudah kedaluwarsa di cache WA)."
-        )
-    local_path = dl.get("local_path")
-    if local_path and Path(local_path).is_file():
-        return dl
+def _resolve_local(chat_id: str, message_id: str) -> dict:
+    """Resolve ``(chat_id, message_id)`` to a media_store row.
 
-    content = await get_media_content(chat_id, message_id)
-    if not content.get("ok"):
-        reason = content.get("error") or "konten media tidak tersedia"
-        raise WaToolError(
-            "Media ditemukan di WA, tetapi file tidak dapat diakses oleh service AI: "
-            f"{reason}"
+    Returns the stored metadata dict (including ``local_path`` and
+    ``mime_type``) so callers can run the appropriate parser. Raises
+    :class:`MediaUnavailableError` when the lookup misses — the MCP client is
+    responsible for populating ``media_store`` before invoking these tools.
+    """
+    if not message_id:
+        raise MediaUnavailableError(
+            "Pesan tidak memiliki message_id; media tidak bisa ditemukan."
         )
-    return _materialize_media_content(chat_id, message_id, content)
+    stored = get_media_item(message_id)
+    if not stored or not stored.get("local_path"):
+        raise MediaUnavailableError(
+            f"Media untuk message_id={message_id} belum tersedia di media_store. "
+            "Upload file via MCP dulu, lalu panggil ulang."
+        )
+    local = Path(stored["local_path"])
+    if not local.is_file():
+        raise MediaUnavailableError(
+            f"File media {local} tidak ada di disk; minta upload ulang."
+        )
+    stored.setdefault("chat_id", chat_id)
+    stored.setdefault("message_id", message_id)
+    return stored
 
 
 async def _read_document(chat_id: str, message_id: str) -> dict:
-    """Download + parse a document message. Returns parse_document() result + meta."""
-    dl = await _download_media(chat_id, message_id)
+    """Parse a document already present in media_store.
+
+    The pivot removed WhatsApp download: the MCP client uploads the file and
+    populates ``media_store`` with a ``local_path``. This helper only reads.
+    """
+    stored = _resolve_local(chat_id, message_id)
     parsed = parse_document(
-        dl["local_path"], mime_type=dl.get("mime_type"), filename=dl.get("filename")
+        stored["local_path"],
+        mime_type=stored.get("mime_type"),
+        filename=stored.get("file_name"),
     )
-    parsed["_meta"] = dl
+    parsed["_meta"] = stored
     if not parsed.get("error"):
         try:
             save_media_item(
@@ -125,9 +84,9 @@ async def _read_document(chat_id: str, message_id: str) -> dict:
                 message_id=message_id,
                 sender_id=None,
                 media_type="document",
-                mime_type=dl.get("mime_type"),
-                file_name=dl.get("filename"),
-                local_path=dl["local_path"],
+                mime_type=stored.get("mime_type"),
+                file_name=stored.get("file_name"),
+                local_path=stored["local_path"],
                 extracted_text=parsed["text"][:20000],
             )
         except Exception as exc:  # pragma: no cover - persistence is best-effort
@@ -136,14 +95,14 @@ async def _read_document(chat_id: str, message_id: str) -> dict:
 
 
 async def _read_image(chat_id: str, message_id: str) -> dict:
-    """Download an image and extract text through deterministic OCR."""
-    downloaded = await _download_media(chat_id, message_id)
+    """Run OCR over an image already present in media_store."""
+    stored = _resolve_local(chat_id, message_id)
     parsed = parse_image(
-        downloaded["local_path"],
-        mime_type=downloaded.get("mime_type"),
-        filename=downloaded.get("filename"),
+        stored["local_path"],
+        mime_type=stored.get("mime_type"),
+        filename=stored.get("file_name"),
     )
-    parsed["_meta"] = downloaded
+    parsed["_meta"] = stored
     if not parsed.get("error"):
         try:
             save_media_item(
@@ -151,9 +110,9 @@ async def _read_image(chat_id: str, message_id: str) -> dict:
                 message_id=message_id,
                 sender_id=None,
                 media_type="image",
-                mime_type=downloaded.get("mime_type"),
-                file_name=downloaded.get("filename"),
-                local_path=downloaded["local_path"],
+                mime_type=stored.get("mime_type"),
+                file_name=stored.get("file_name"),
+                local_path=stored["local_path"],
                 extracted_text=parsed["text"][:20000],
             )
         except Exception as exc:  # pragma: no cover - persistence is best-effort
@@ -162,16 +121,16 @@ async def _read_image(chat_id: str, message_id: str) -> dict:
 
 
 async def _read_audio(chat_id: str, message_id: str) -> dict:
-    """Download an audio message and transcribe it to text."""
-    downloaded = await _download_media(chat_id, message_id)
-    from app.xninetzy.interfaces.media.audio_transcriber import transcribe_audio
+    """Transcribe an audio file already present in media_store."""
+    stored = _resolve_local(chat_id, message_id)
+    from xninetzy.interfaces.media.audio_transcriber import transcribe_audio
 
     parsed = await transcribe_audio(
-        downloaded["local_path"],
-        mime_type=downloaded.get("mime_type"),
-        filename=downloaded.get("filename"),
+        stored["local_path"],
+        mime_type=stored.get("mime_type"),
+        filename=stored.get("file_name"),
     )
-    parsed["_meta"] = downloaded
+    parsed["_meta"] = stored
     if not parsed.get("error"):
         try:
             save_media_item(
@@ -179,9 +138,9 @@ async def _read_audio(chat_id: str, message_id: str) -> dict:
                 message_id=message_id,
                 sender_id=None,
                 media_type="audio",
-                mime_type=downloaded.get("mime_type"),
-                file_name=downloaded.get("filename"),
-                local_path=downloaded["local_path"],
+                mime_type=stored.get("mime_type"),
+                file_name=stored.get("file_name"),
+                local_path=stored["local_path"],
                 extracted_text=parsed["text"][:20000],
             )
         except Exception as exc:  # pragma: no cover - persistence is best-effort
@@ -215,7 +174,7 @@ async def build_media_prompt_context(
             parsed = await _read_image(chat_id, message_id)
         else:
             parsed = await _read_audio(chat_id, message_id)
-    except WaToolError as exc:
+    except MediaUnavailableError as exc:
         return f"\n[Media Extraction Error]\nNama: {filename}\nError: {exc}\n"
     if parsed.get("error"):
         return (
@@ -247,19 +206,19 @@ async def build_media_prompt_context(
 async def media_read_document(
     chat_id: str, message_id: str, max_chars: int = _PREVIEW_CHARS
 ) -> str:
-    """Baca isi dokumen (pdf/docx/txt/md/csv/json/xlsx/pptx) yang dikirim user di WhatsApp.
+    """Baca isi dokumen (pdf/docx/txt/md/csv/json/xlsx/pptx) yang sudah ada di media_store.
 
     Panggil ini SEBELUM menjawab kalau user mengirim file dan bertanya tentang isinya.
-    Gunakan chat_id dari konteks dan message_id dari media yang dikirim.
+    Gunakan chat_id dari konteks dan message_id dari media context.
 
     Args:
-        chat_id: Chat WhatsApp (dari context).
-        message_id: ID pesan yang berisi file (dari media context).
+        chat_id: Chat identifier (dari context).
+        message_id: ID pesan berisi file (lihat media_store).
         max_chars: Batas panjang teks yang dikembalikan.
     """
     try:
         parsed = await _read_document(chat_id, message_id)
-    except WaToolError as exc:
+    except MediaUnavailableError as exc:
         return f"⚠️ {exc}"
     if parsed.get("error"):
         return f"⚠️ {parsed['error']}"
@@ -274,16 +233,16 @@ async def media_read_document(
 async def media_read_image(
     chat_id: str, message_id: str, max_chars: int = _PREVIEW_CHARS
 ) -> str:
-    """Baca teks pada image/screenshot WhatsApp menggunakan OCR.
+    """Baca teks pada image/screenshot yang sudah ada di media_store (OCR).
 
     Args:
-        chat_id: Chat WhatsApp dari context.
-        message_id: ID pesan image dari media context.
+        chat_id: Chat identifier (dari context).
+        message_id: ID pesan image (lihat media_store).
         max_chars: Batas panjang hasil OCR.
     """
     try:
         parsed = await _read_image(chat_id, message_id)
-    except WaToolError as exc:
+    except MediaUnavailableError as exc:
         return f"⚠️ {exc}"
     if parsed.get("error"):
         return f"⚠️ {parsed['error']}"
@@ -301,19 +260,19 @@ async def media_read_image(
 async def media_read_audio(
     chat_id: str, message_id: str, max_chars: int = _PREVIEW_CHARS
 ) -> str:
-    """Baca transkripsi audio/voice note WhatsApp.
+    """Baca transkripsi audio/voice note yang sudah ada di media_store.
 
     Panggil ini SEBELUM menjawab kalau user mengirim audio dan bertanya
     tentang isinya. Gunakan chat_id dari konteks dan message_id dari media.
 
     Args:
-        chat_id: Chat WhatsApp dari context.
-        message_id: ID pesan audio dari media context.
+        chat_id: Chat identifier (dari context).
+        message_id: ID pesan audio (lihat media_store).
         max_chars: Batas panjang teks yang dikembalikan.
     """
     try:
         parsed = await _read_audio(chat_id, message_id)
-    except WaToolError as exc:
+    except MediaUnavailableError as exc:
         return f"⚠️ {exc}"
     if parsed.get("error"):
         return f"⚠️ {parsed['error']}"
@@ -362,7 +321,7 @@ async def analyze_media(chat_id: str = "system", metadata: dict | None = None) -
             parsed = await _read_image(chat_id, message_id)
         else:
             parsed = await _read_audio(chat_id, message_id)
-    except WaToolError as exc:
+    except MediaUnavailableError as exc:
         return f"⚠️ {exc}"
     if parsed.get("error"):
         return f"⚠️ {parsed['error']}"
@@ -388,25 +347,25 @@ async def analyze_media(chat_id: str = "system", metadata: dict | None = None) -
 async def media_ingest_to_knowledge(
     chat_id: str, message_id: str, title: str = ""
 ) -> str:
-    """Simpan isi dokumen WhatsApp ke knowledge base (FAISS).
+    """Simpan isi dokumen yang sudah ada di media_store ke knowledge base (FAISS).
 
     Catatan: untuk file besar/privat, minta approval admin dulu via HITL.
 
     Args:
-        chat_id: Chat WhatsApp (dari context).
-        message_id: ID pesan berisi file.
+        chat_id: Chat identifier (dari context).
+        message_id: ID pesan berisi file (lihat media_store).
         title: Judul sumber (default: nama file).
     """
     try:
         parsed = await _read_document(chat_id, message_id)
-    except WaToolError as exc:
+    except MediaUnavailableError as exc:
         return f"⚠️ {exc}"
     if parsed.get("error"):
         return f"⚠️ {parsed['error']}"
-    from app.xninetzy.os.knowledge.ingestion import ingest_text
+    from xninetzy.os.knowledge.ingestion import ingest_text
 
-    source_title = title or parsed["_meta"].get("filename") or "Dokumen WhatsApp"
-    result = ingest_text(source_title, parsed["text"], source_type="whatsapp_document")
+    source_title = title or parsed["_meta"].get("filename") or "Dokumen"
+    result = ingest_text(source_title, parsed["text"], source_type="document")
     if result.get("status") == "already_exists":
         return f"ℹ️ *{source_title}* sudah ada di knowledge base."
     return (

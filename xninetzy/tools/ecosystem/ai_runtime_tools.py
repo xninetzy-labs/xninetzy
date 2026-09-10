@@ -2,19 +2,19 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.coding_agents import (
+from xninetzy.core.coding_agents import (
     run_coding_agent,
     runtime_catalog,
     validate_runtime,
 )
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.providers import provider_catalog, resolve_profile
-from app.xninetzy.os.ai_preferences import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.providers import provider_catalog, resolve_profile
+from xninetzy.os.ai_preferences import (
     get_preference,
     resolve_user_profile,
     save_preference,
 )
-from app.xninetzy.os.research.permissions import is_owner_admin
+from xninetzy.os.research.permissions import is_owner_admin
 
 
 def _user_key(sender_id: str, chat_id: str) -> str:

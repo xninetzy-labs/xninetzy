@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.ecosystem.event_bus import record_event
+from xninetzy.ecosystem.event_bus import record_event
 
 
 @tool
@@ -24,8 +24,8 @@ def knowledge_ingest_text(
         chat_id: WhatsApp chat ID (dari context)
         idempotency_key: Kunci opsional agar retry tidak menggandakan ingest
     """
-    from app.xninetzy.db.idempotency import idempotent_call
-    from app.xninetzy.os.knowledge.ingestion import ingest_text
+    from xninetzy.db.idempotency import idempotent_call
+    from xninetzy.os.knowledge.ingestion import ingest_text
 
     payload = {"title": title, "source_type": source_type, "uri": uri}
 
@@ -70,7 +70,7 @@ def knowledge_ingest_file(
     """
     from pathlib import Path
 
-    from app.xninetzy.os.knowledge.ingestion import (
+    from xninetzy.os.knowledge.ingestion import (
         ingest_document,
         ingest_pdf,
         ingest_text,
@@ -124,7 +124,7 @@ def knowledge_search(query: str, limit: int = 5) -> str:
         query: Pertanyaan atau kata kunci
         limit: Jumlah hasil (default: 5)
     """
-    from app.xninetzy.os.knowledge.retrieval import (
+    from xninetzy.os.knowledge.retrieval import (
         render_evidence_bundle,
         retrieve_evidence,
     )
@@ -143,7 +143,7 @@ async def knowledge_answer(query: str, chat_id: str = "system") -> str:
         query: Pertanyaan yang ingin dijawab
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.knowledge.retrieval import answer_from_knowledge
+    from xninetzy.os.knowledge.retrieval import answer_from_knowledge
 
     answer = await answer_from_knowledge(query)
     record_event(
@@ -165,7 +165,7 @@ def knowledge_list_sources(source_type: str | None = None, limit: int = 20) -> s
         source_type: Filter by type (opsional)
         limit: Jumlah maksimal
     """
-    from app.xninetzy.os.knowledge.ingestion import list_sources
+    from xninetzy.os.knowledge.ingestion import list_sources
 
     sources = list_sources(source_type, limit)
     if not sources:
@@ -182,7 +182,7 @@ def knowledge_list_sources(source_type: str | None = None, limit: int = 20) -> s
 @tool
 def knowledge_rebuild_index() -> str:
     """Rebuild FAISS vector index dari semua knowledge chunks yang ada di database."""
-    from app.xninetzy.os.knowledge.vector_store import rebuild_index
+    from xninetzy.os.knowledge.vector_store import rebuild_index
 
     count = rebuild_index()
     return f"✅ Knowledge index di-rebuild: {count} vectors"

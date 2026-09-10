@@ -4,8 +4,8 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.logging import logging
-from app.xninetzy.workflow.models import WorkflowPlan
+from xninetzy.core.logging import logging
+from xninetzy.workflow.models import WorkflowPlan
 
 logger = logging.getLogger(__name__)
 
@@ -38,7 +38,7 @@ async def workflow_status(chat_id: str, workflow_id: str | None = None) -> str:
         chat_id: Chat WhatsApp (dari context).
         workflow_id: ID workflow tertentu (opsional).
     """
-    from app.xninetzy.workflow.store import WorkflowStore
+    from xninetzy.workflow.store import WorkflowStore
     store = WorkflowStore()
     row = store.get(workflow_id) if workflow_id else store.get_latest(chat_id)
     if not row or row.get("chat_id") != chat_id:
@@ -60,8 +60,8 @@ async def workflow_resume(chat_id: str, workflow_id: str) -> str:
         chat_id: Chat WhatsApp (dari context).
         workflow_id: ID workflow yang mau dilanjutkan.
     """
-    from app.xninetzy.workflow.store import WorkflowStore
-    from app.xninetzy.workflow.executor import run_workflow
+    from xninetzy.workflow.store import WorkflowStore
+    from xninetzy.workflow.executor import run_workflow
     store = WorkflowStore()
     row = store.get(workflow_id)
     if not row or row.get("chat_id") != chat_id:
@@ -74,7 +74,7 @@ async def workflow_resume(chat_id: str, workflow_id: str) -> str:
 @tool
 async def workflow_cancel(chat_id: str, workflow_id: str) -> str:
     """Batalkan workflow yang masih berjalan/pending (mark cancelled)."""
-    from app.xninetzy.workflow.store import WorkflowStore
+    from xninetzy.workflow.store import WorkflowStore
     store = WorkflowStore()
     ok = store.mark_cancelled(chat_id, workflow_id)
     return (

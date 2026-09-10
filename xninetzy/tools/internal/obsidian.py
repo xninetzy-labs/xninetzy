@@ -5,8 +5,8 @@ from datetime import datetime
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.notes.template_service import TemplateService
-from app.xninetzy.os.notes.vault_service import ObsidianVaultService
+from xninetzy.os.notes.template_service import TemplateService
+from xninetzy.os.notes.vault_service import ObsidianVaultService
 
 
 def _vault() -> ObsidianVaultService:

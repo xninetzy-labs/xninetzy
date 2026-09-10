@@ -4,11 +4,11 @@ import json
 
 import pytest
 
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.notes.obsidian_config import vault_path
-from app.xninetzy.tools.internal.obsidian import (
+from xninetzy.db.sqlite import connect
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.notes.obsidian_config import vault_path
+from xninetzy.tools.internal.obsidian import (
     obsidian_add_tags,
     obsidian_backlinks,
     obsidian_create,

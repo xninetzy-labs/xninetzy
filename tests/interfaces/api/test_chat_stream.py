@@ -4,8 +4,8 @@ import asyncio
 
 import pytest
 
-from app.xninetzy.interfaces.api.routes import chat as chat_route
-from app.xninetzy.schemas.chat import ChatRequest, ChatResponse
+from xninetzy.interfaces.api.routes import chat as chat_route
+from xninetzy.schemas.chat import ChatRequest, ChatResponse
 
 
 @pytest.mark.asyncio

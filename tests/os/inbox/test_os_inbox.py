@@ -3,11 +3,11 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.ecosystem.context_builder import build_personal_context
-from app.xninetzy.os.inbox.service import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.ecosystem.context_builder import build_personal_context
+from xninetzy.os.inbox.service import (
     build_attention_queue,
     capture_item,
     capture_summary,
@@ -15,7 +15,7 @@ from app.xninetzy.os.inbox.service import (
     list_captures,
     triage_capture,
 )
-from app.xninetzy.os.life.task_manager import create_task
+from xninetzy.os.life.task_manager import create_task
 
 
 def _prepare(monkeypatch, tmp_path):

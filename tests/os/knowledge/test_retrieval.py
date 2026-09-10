@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.xninetzy.os.knowledge.retrieval import (
+from xninetzy.os.knowledge.retrieval import (
     _apply_reference_penalty,
     _is_reference_chunk,
     finalize_grounded_answer,
@@ -62,7 +62,7 @@ def test_auto_grounding_is_limited_to_knowledge_seeking_requests():
 
 @pytest.mark.asyncio
 async def test_answer_from_knowledge_synthesizes_and_validates_citations(monkeypatch):
-    from app.xninetzy.os.knowledge import retrieval
+    from xninetzy.os.knowledge import retrieval
 
     bundle = select_evidence(
         "query",
@@ -78,7 +78,7 @@ async def test_answer_from_knowledge_synthesizes_and_validates_citations(monkeyp
 
     monkeypatch.setattr(retrieval, "retrieve_evidence", lambda query: bundle)
     monkeypatch.setattr(
-        "app.xninetzy.core.llm.get_llm_pro", lambda profile=None: FakeLLM()
+        "xninetzy.core.llm.get_llm_pro", lambda profile=None: FakeLLM()
     )
 
     result = await retrieval.answer_from_knowledge("query")
@@ -90,7 +90,7 @@ async def test_answer_from_knowledge_synthesizes_and_validates_citations(monkeyp
 
 @pytest.mark.asyncio
 async def test_answer_from_knowledge_reports_provider_misconfig(monkeypatch):
-    from app.xninetzy.os.knowledge import retrieval
+    from xninetzy.os.knowledge import retrieval
 
     bundle = select_evidence(
         "query",
@@ -103,7 +103,7 @@ async def test_answer_from_knowledge_reports_provider_misconfig(monkeypatch):
         raise RuntimeError("Provider 'flaz' belum siap: FLAZ_API_KEY.")
 
     monkeypatch.setattr(retrieval, "retrieve_evidence", lambda query: bundle)
-    monkeypatch.setattr("app.xninetzy.core.llm.get_llm_pro", raise_misconfig)
+    monkeypatch.setattr("xninetzy.core.llm.get_llm_pro", raise_misconfig)
 
     result = await retrieval.answer_from_knowledge("query")
 
@@ -114,7 +114,7 @@ async def test_answer_from_knowledge_reports_provider_misconfig(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_answer_from_knowledge_reports_transient_failure(monkeypatch):
-    from app.xninetzy.os.knowledge import retrieval
+    from xninetzy.os.knowledge import retrieval
 
     bundle = select_evidence(
         "query",
@@ -129,7 +129,7 @@ async def test_answer_from_knowledge_reports_transient_failure(monkeypatch):
 
     monkeypatch.setattr(retrieval, "retrieve_evidence", lambda query: bundle)
     monkeypatch.setattr(
-        "app.xninetzy.core.llm.get_llm_pro", lambda profile=None: FailingLLM()
+        "xninetzy.core.llm.get_llm_pro", lambda profile=None: FailingLLM()
     )
 
     result = await retrieval.answer_from_knowledge("query")

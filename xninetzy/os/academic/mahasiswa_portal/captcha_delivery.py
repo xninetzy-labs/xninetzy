@@ -2,17 +2,18 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import json
 import subprocess
-import urllib.request
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
 from mcp.types import ImageContent, TextContent
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.interfaces.whatsapp.client import WaToolError, call_wa_tool
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass(frozen=True)
@@ -55,34 +56,6 @@ def build_envelope(
     )
 
 
-def _wa_healthcheck(timeout_seconds: float) -> bool:
-    settings = get_settings()
-    base = settings.WA_MCP_BASE_URL.rstrip("/")
-    headers = {}
-    if settings.WA_MCP_API_KEY:
-        headers["Authorization"] = f"Bearer {settings.WA_MCP_API_KEY}"
-    request = urllib.request.Request(f"{base}/health", headers=headers, method="GET")
-    try:
-        with urllib.request.urlopen(request, timeout=timeout_seconds) as response:
-            data = json.loads(response.read().decode("utf-8"))
-    except Exception:
-        return False
-    return bool(data.get("status") == "ok" and data.get("socket_ready"))
-
-
-async def _wa_send_image(jid: str, envelope: CaptchaEnvelope) -> None:
-    source = base64.b64encode(envelope.png_bytes).decode("ascii")
-    caption = (
-        f"Login {envelope.label}\n\n"
-        f"Balas: {envelope.reply_command}\n"
-        f"Berlaku sampai: {envelope.expires_at}\n\n"
-        "CAPTCHA harus dijawab manual oleh owner."
-    )
-    await call_wa_tool(
-        "send_image", {"jid": jid, "source": source, "caption": caption}
-    )
-
-
 def _save_png(envelope: CaptchaEnvelope, captcha_dir: str) -> str:
     directory = Path(captcha_dir)
     directory.mkdir(parents=True, exist_ok=True)
@@ -118,47 +91,62 @@ def build_mcp_blocks(
     return blocks
 
 
+async def _persist_captcha_inbox(
+    envelope: CaptchaEnvelope, text: str, owner_chat_id: str
+) -> bool:
+    """Persist a CAPTCHA notification to the owner inbox (best-effort)."""
+    try:
+        from xninetzy.os.inbox.service import capture_item
+
+        full_text = (
+            f"{text}\n\n"
+            f"Challenge ID: {envelope.challenge_id}\n"
+            f"Reply: {envelope.reply_command}\n"
+            f"PNG saved at: see event metadata"
+        )
+        capture_item(full_text, kind="note", chat_id=owner_chat_id)
+        return True
+    except Exception as exc:
+        logger.warning("CAPTCHA inbox notification failed: %s", exc)
+        return False
+
+
 async def deliver_captcha(
     envelope: CaptchaEnvelope,
     *,
-    wa_jid: str | None,
-    wa_preferred: bool = True,
-    auto_open: bool = True,
+    owner_chat_id: str | None = None,
     captcha_dir: str = "/tmp/opencode",
-    wa_timeout_seconds: float = 8.0,
 ) -> CaptchaDeliveryResult:
+    """Deliver a CAPTCHA challenge to the owner.
+
+    The pivot to MCP-only removed WhatsApp delivery: the envelope is now
+    persisted to the owner inbox (with image data attached in MCP blocks
+    when available). The CAPTCHA PNG is also saved locally so an interactive
+    client can render it.
+    """
     text = (
         f"CAPTCHA {envelope.label} untuk challenge `{envelope.challenge_id}`.\n"
         f"Balas: {envelope.reply_command}\n"
         f"Berlaku sampai: {envelope.expires_at}\n\n"
         "CAPTCHA harus dijawab manual oleh owner."
     )
-    wa_error: str | None = None
-    if wa_preferred and wa_jid:
-        healthy = await asyncio.to_thread(_wa_healthcheck, wa_timeout_seconds)
-        if healthy:
-            try:
-                await _wa_send_image(wa_jid, envelope)
-                return CaptchaDeliveryResult(
-                    delivered_via="whatsapp",
-                    text=text,
-                    error=None,
-                )
-            except WaToolError as exc:
-                wa_error = str(exc)
-        else:
-            wa_error = "WA MCP tidak siap (healthcheck gagal)"
-    else:
-        wa_error = "WA tidak dipilih atau target owner belum dikonfigurasi"
+
+    owner_id = owner_chat_id or get_settings().OWNER_CHAT_ID.strip() or "owner"
     png_path = _save_png(envelope, captcha_dir)
-    if auto_open:
-        _open_local(png_path)
+    try:
+        await asyncio.to_thread(_open_local, png_path)
+    except Exception:
+        pass
+
     local_hint = f"\n\nPNG lokal: {png_path}"
-    blocks = build_mcp_blocks(envelope, text + local_hint)
+    full_text = text + local_hint
+    inbox_ok = await _persist_captcha_inbox(envelope, full_text, owner_id)
+    blocks = build_mcp_blocks(envelope, full_text)
+
     return CaptchaDeliveryResult(
-        delivered_via="mcp_image",
-        text=text + local_hint,
+        delivered_via="owner_inbox" if inbox_ok else "mcp_image",
+        text=full_text,
         blocks=blocks,
         png_path=png_path,
-        error=wa_error,
+        error=None if inbox_ok else "owner_inbox unavailable; PNG saved locally",
     )

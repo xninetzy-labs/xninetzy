@@ -12,13 +12,13 @@ from uuid import uuid4
 import httpx
 from langchain_core.messages import BaseMessage
 
-from app.xninetzy.core.coding_agents import (
+from xninetzy.core.coding_agents import (
     _extract_output,
     _record_finish,
     _record_start,
 )
-from app.xninetzy.core.config import Settings, get_settings
-from app.xninetzy.skills.registry import user_skill_dir
+from xninetzy.core.config import Settings, get_settings
+from xninetzy.skills.registry import user_skill_dir
 
 READ_ONLY_MCP_TOOLS = (
     "skill_list",
@@ -171,10 +171,10 @@ def build_failover_config(settings: Settings | None = None) -> dict:
             "/app",
             "python",
             "-m",
-            "app.xninetzy.interfaces.mcp_server",
+            "xninetzy.interfaces.mcp_server",
         ]
         if Path("/app").is_dir()
-        else [sys.executable, "-m", "app.xninetzy.interfaces.mcp_server"]
+        else [sys.executable, "-m", "xninetzy.interfaces.mcp_server"]
     )
     config: dict = {
         "$schema": "https://opencode.ai/config.json",

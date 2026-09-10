@@ -1,54 +1,27 @@
-# =========================
-# Xninetzy AI - Root Gitignore
-# =========================
+# ============================================
+# Xninetzy MCP — Root Gitignore
+# ============================================
 
-# =========================
-# Environment files
-# =========================
+# ---------------------------
+# Environment & secrets
+# ---------------------------
 .env
 .env.*
 !.env.example
 
-# =========================
-# Node.js / TypeScript
-# =========================
-node_modules/
-**/node_modules/
+.secrets/
+**/.secrets/
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
 
-dist/
-**/dist/
-
-build/
-**/build/
-
-coverage/
-**/coverage/
-
-.npm/
-.pnpm-store/
-.yarn/
-.yarn-cache/
-.turbo/
-.cache/
-.astro/
-**/.astro/
-
-*.tsbuildinfo
-
-# Logs
-logs/
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-
-# =========================
-# Python / FastAPI / uv
-# =========================
+# ---------------------------
+# Python — runtime, caches, build artifacts
+# ---------------------------
 __pycache__/
 **/__pycache__/
-
 *.py[cod]
 *$py.class
 
@@ -61,41 +34,85 @@ ENV/
 **/.venv/
 **/venv/
 
-# uv cache / local artifacts
+# uv caches
 .uv-cache/
 **/.uv-cache/
 
 # boleh commit uv.lock untuk reproducible build
-# kalau kamu TIDAK mau commit uv.lock, uncomment ini:
-# uv.lock
-# **/uv.lock
+uv.lock
 
+# pytest / mypy / ruff caches
 .pytest_cache/
 .mypy_cache/
 .ruff_cache/
 .coverage
 htmlcov/
+.tox/
 
-# =========================
-# WhatsApp Baileys session
-# =========================
-sessions/
-**/sessions/
+# ---------------------------
+# Node.js / TypeScript (apps/docs only)
+# ---------------------------
+node_modules/
+**/node_modules/
 
-auth_info_baileys/
-**/auth_info_baileys/
+dist/
+**/dist/
 
-creds.json
-**/creds.json
+build/
+**/build/
 
-# =========================
-# Docker
-# =========================
-docker-compose.override.yml
+.yarn/
+.yarn-cache/
+.npm/
+.turbo/
 
-# =========================
+.astro/
+**/.astro/
+
+*.tsbuildinfo
+
+# Astro docs node-specific
+apps/docs/dist/
+apps/docs/node_modules/
+apps/docs/.astro/
+
+# ---------------------------
+# AI-generated artifact paths (env-configurable)
+# see xninetzy.core.config (GENERATED_DOCUMENTS_DIR, OUTPUT_DIR, etc.)
+# keep defaults at the project root, never in git
+# ---------------------------
+generated/
+**/generated/
+
+research-output/
+**/research-output/
+
+untracked-output/
+**/untracked-output/
+
+# ---------------------------
+# Runtime data directories
+# ---------------------------
+data/
+**/data/
+
+# Allow a non-secret README to live inside data/ if you commit one
+!data/README.md
+
+# ---------------------------
+# Local caches (linter, formatter, tooling)
+# ---------------------------
+.cache/
+.playwright/
+.playwright-cli/
+.xninetzy/checkpoints/*.tmp
+.openclaude/
+.codex/
+.claude/
+
+# ---------------------------
 # OS / Editor
-# =========================
+# ---------------------------
 .DS_Store
 Thumbs.db
 
@@ -105,58 +122,63 @@ Thumbs.db
 
 .idea/
 
-# =========================
-# Temporary files
-# =========================
-tmp/
-temp/
-.tmp/
-*.tmp
-*.bak
+# Editor swap / backup
 *.swp
 *.swo
+*.bak
+*.tmp
 
-# =========================
-# Local database files
-# =========================
+# Project-root directory literally named "~" (some editors create this)
+~
+
+# ---------------------------
+# Logs
+# ---------------------------
+logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---------------------------
+# Database files (every install owns its own SQLite)
+# ---------------------------
 *.sqlite
 *.sqlite3
 *.db
+*.sqlite-journal
+*.sqlite-shm
+*.sqlite-wal
 
-# Every installation owns private runtime state. Keep only the policy README.
-services/ai/data/**
-!services/ai/data/README.md
+# ---------------------------
+# WhatsApp / Baileys / CLI artifacts (legacy)
+# Removed in MCP-only pivot; entries remain so a stale worktree
+# never accidentally re-commits them.
+# ---------------------------
+auth_info_baileys/
+**/auth_info_baileys/
+creds.json
+**/creds.json
+sessions/
+**/sessions/
 
-# Runtime output leaked into the repo when the service runs on the host
-# instead of inside the container (cwd-relative + unexpanded ~ paths).
-# Private per-install artifacts — never commit.
-/downloads/
-/generated_documents/
-/~/
+# ---------------------------
+# Docker / Compose
+# ---------------------------
+docker-compose.override.yml
 
-/docs/
+# ---------------------------
+# CI/CD generated / vendor
+# ---------------------------
+repomix-output.xml
+**/repomix-output.xml
 
-# =========================
-# Secrets / keys
-# =========================
-*.pem
-*.key
-*.crt
-*.p12
-*.pfx
-
-# Docker secrets — mounted credential files (e.g. Neo4j password). Never commit.
-.secrets/
-**/.secrets/
-
-# =========================
-# Scraping / debug scratch (root)
-# =========================
-/abstract.json
-/article.json
-/*-headers.txt
-/sciencedirect.html
+# ---------------------------
+# Scratch / stray research files
+# ---------------------------
+abstract.json
+article.json
+*-headers.txt
+sciencedirect.html
 .backup/
-.playwright-cli/
-.xninetzy/checkpoints/*.tmp
-output/*.tmp

@@ -8,11 +8,11 @@ from __future__ import annotations
 
 import re
 
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.knowledge.extraction.extractors.images import ocr_pdf_pages
-from app.xninetzy.os.knowledge.extraction.extractors.pdf_text import extract_pdf_text
-from app.xninetzy.os.knowledge.extraction.extractors.tables import extract_pdf_tables
-from app.xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
+from xninetzy.core.logging import logging
+from xninetzy.os.knowledge.extraction.extractors.images import ocr_pdf_pages
+from xninetzy.os.knowledge.extraction.extractors.pdf_text import extract_pdf_text
+from xninetzy.os.knowledge.extraction.extractors.tables import extract_pdf_tables
+from xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
 
 logger = logging.getLogger(__name__)
 

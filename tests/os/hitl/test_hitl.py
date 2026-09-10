@@ -1,13 +1,13 @@
 from uuid import uuid4
 
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
-from app.xninetzy.domains.it_learning.roadmap_store import (
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
+from xninetzy.domains.it_learning.roadmap_store import (
     get_roadmap,
     save_roadmap_draft,
 )
-from app.xninetzy.os.hitl.approval_service import request_approval, set_approval_status
+from xninetzy.os.hitl.approval_service import request_approval, set_approval_status
 
 
 def test_approval_only_admin(monkeypatch):

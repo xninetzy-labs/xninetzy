@@ -1,4 +1,4 @@
-from app.xninetzy.os.knowledge.vector_store import (
+from xninetzy.os.knowledge.vector_store import (
     _deduplicate_results,
     _rrf_fuse_results,
 )

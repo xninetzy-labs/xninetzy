@@ -5,7 +5,7 @@ from zoneinfo import ZoneInfo
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 _DAY_ID = {
     "Monday": "Senin", "Tuesday": "Selasa", "Wednesday": "Rabu",

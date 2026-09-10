@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.policy.action_policy import evaluate_action
+from xninetzy.os.policy.action_policy import evaluate_action
 
 
 @tool

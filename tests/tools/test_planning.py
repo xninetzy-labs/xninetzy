@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.tools.internal.planning import (
+from xninetzy.tools.internal.planning import (
     draft_workflow,
     generate_plan,
     idea_analysis,
@@ -75,7 +75,7 @@ def test_skill_discovery_lists_capabilities():
 
 
 def test_planning_tools_registered_in_registry():
-    from app.xninetzy.tools.registry import get_all_tools
+    from xninetzy.tools.registry import get_all_tools
 
     names = {t.name for t in get_all_tools()}
     for name in (

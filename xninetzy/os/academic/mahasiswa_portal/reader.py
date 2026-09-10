@@ -8,9 +8,9 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.web_analysis.security import looks_like_login
-from app.xninetzy.os.web_analysis.session_manager import SessionManager
+from xninetzy.core.config import get_settings
+from xninetzy.os.web_analysis.security import looks_like_login
+from xninetzy.os.web_analysis.session_manager import SessionManager
 
 
 class AcademicPortalReadError(RuntimeError):
@@ -486,7 +486,7 @@ class AcademicPortalReader:
         if 2000 <= configured <= 2100:
             return configured
         try:
-            from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+            from xninetzy.os.academic.mahasiswa_portal.credential_provider import (
                 resolve_campus_credentials,
             )
 

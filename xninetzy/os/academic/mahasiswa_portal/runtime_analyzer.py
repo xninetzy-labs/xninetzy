@@ -6,9 +6,9 @@ import re
 from dataclasses import dataclass, field
 from urllib.parse import urljoin, urlsplit, urlunsplit
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.web_analysis.session_manager import SessionManager
-from app.xninetzy.os.web_analysis.sites import get_site, is_allowed_url
+from xninetzy.core.config import get_settings
+from xninetzy.os.web_analysis.session_manager import SessionManager
+from xninetzy.os.web_analysis.sites import get_site, is_allowed_url
 
 
 _PHP_TARGET = re.compile(r"(?:[A-Za-z0-9_./-]+/)?[A-Za-z0-9_-]+\.php", re.I)

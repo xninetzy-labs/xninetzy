@@ -6,8 +6,8 @@ import secrets
 from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.identity import normalize_whatsapp_jid
+from xninetzy.core.config import get_settings
+from xninetzy.core.identity import normalize_whatsapp_jid
 
 
 class GradeChallengeError(RuntimeError):

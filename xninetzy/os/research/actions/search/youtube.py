@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
-from app.xninetzy.os.research.youtube_search import youtube_search
+from xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
+from xninetzy.os.research.youtube_search import youtube_search
 
 
 class YoutubeSearchAction(ResearchAction):

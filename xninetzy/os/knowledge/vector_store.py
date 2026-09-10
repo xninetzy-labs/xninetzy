@@ -3,10 +3,10 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.os.knowledge.embeddings import embed_query, embed_texts, embedding_dim
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.os.knowledge.embeddings import embed_query, embed_texts, embedding_dim
 
 logger = logging.getLogger(__name__)
 

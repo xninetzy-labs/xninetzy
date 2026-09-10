@@ -4,7 +4,7 @@ import sqlite3
 
 import pytest
 
-from app.xninetzy.os.backup.service import (
+from xninetzy.os.backup.service import (
     BackupError,
     create_backup,
     restore_backup,

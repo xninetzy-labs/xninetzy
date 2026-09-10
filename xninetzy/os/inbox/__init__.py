@@ -1,4 +1,4 @@
-from app.xninetzy.os.inbox.service import (
+from xninetzy.os.inbox.service import (
     build_attention_queue,
     capture_item,
     capture_summary,

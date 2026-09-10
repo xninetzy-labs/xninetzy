@@ -1,13 +1,13 @@
-from app.xninetzy.domains.it_learning.prompts import (
+from xninetzy.domains.it_learning.prompts import (
     IT_LEARNING_IDENTITY,
     IT_LEARNING_ROADMAP_PROMPT,
 )
-from app.xninetzy.domains.it_learning.skill_tree import IT_SKILL_TREE
-from app.xninetzy.domains.it_learning.tools import (
+from xninetzy.domains.it_learning.skill_tree import IT_SKILL_TREE
+from xninetzy.domains.it_learning.tools import (
     IT_LEARNING_TOOL_NAMES,
     get_it_learning_tools,
 )
-from app.xninetzy.domains.it_learning.workflows import (
+from xninetzy.domains.it_learning.workflows import (
     infer_it_learning_intent,
     is_it_learning_topic,
 )

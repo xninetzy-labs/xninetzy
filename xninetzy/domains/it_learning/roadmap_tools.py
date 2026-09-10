@@ -2,22 +2,22 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.hitl.approval_service import request_approval
-from app.xninetzy.domains.it_learning.roadmap_planner import (
+from xninetzy.os.hitl.approval_service import request_approval
+from xninetzy.domains.it_learning.roadmap_planner import (
     create_roadmap_draft,
     format_roadmap_draft,
 )
-from app.xninetzy.domains.it_learning.roadmap_store import (
+from xninetzy.domains.it_learning.roadmap_store import (
     get_roadmap,
     list_roadmaps,
     save_roadmap_draft,
 )
-from app.xninetzy.domains.it_learning.progress_tracker import (
+from xninetzy.domains.it_learning.progress_tracker import (
     build_today_plan,
     get_roadmap_progress,
     get_weekly_learning_summary,
 )
-from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
+from xninetzy.os.notifications.admin_notifier import notify_admin_approval
 
 
 @tool
@@ -55,7 +55,7 @@ async def learning_create_roadmap(
 
 def _resolve_planning_sources(topic: str, source_ids: list[int] | None) -> list[dict]:
     if source_ids:
-        from app.xninetzy.db.sqlite import connect
+        from xninetzy.db.sqlite import connect
 
         placeholders = ",".join("?" for _ in source_ids[:5])
         with connect() as conn:
@@ -65,7 +65,7 @@ def _resolve_planning_sources(topic: str, source_ids: list[int] | None) -> list[
             ).fetchall()
         return [dict(row) for row in rows]
     try:
-        from app.xninetzy.os.knowledge.rag import quick_search
+        from xninetzy.os.knowledge.rag import quick_search
 
         return quick_search(topic, limit=3)
     except Exception:
@@ -96,10 +96,10 @@ def learning_get_roadmap(roadmap_id: int) -> str:
 @tool
 def learning_update_progress(roadmap_id: int, progress_note: str) -> str:
     """Catat progress roadmap."""
-    from app.xninetzy.db.sqlite import connect
+    from xninetzy.db.sqlite import connect
     from datetime import datetime
     from zoneinfo import ZoneInfo
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.core.config import get_settings
 
     now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).isoformat()
     with connect() as conn:
@@ -149,7 +149,7 @@ def learning_review_week(chat_id: str = "system", roadmap_id: int | None = None)
             )
     else:
         lines.append("Belum ada sesi selesai dalam 7 hari terakhir.")
-    from app.xninetzy.domains.it_learning.concept_graph import mastery_focus
+    from xninetzy.domains.it_learning.concept_graph import mastery_focus
 
     concepts = mastery_focus(roadmap_id, limit=3)
     if concepts:
@@ -159,7 +159,7 @@ def learning_review_week(chat_id: str = "system", roadmap_id: int | None = None)
                 f"• {concept['title']} — {float(concept['mastery']):.0%}, "
                 f"{concept['evidence_count']} evidence"
             )
-    from app.xninetzy.domains.it_learning.recall import recall_summary
+    from xninetzy.domains.it_learning.recall import recall_summary
 
     recall = recall_summary(roadmap_id)
     coverage = recall["average_coverage"]
@@ -201,10 +201,10 @@ def learning_attach_resource(
     roadmap_id: int, title: str, url: str = "", resource_type: str = "web"
 ) -> str:
     """Lampirkan resource ke roadmap."""
-    from app.xninetzy.db.sqlite import connect
+    from xninetzy.db.sqlite import connect
     from datetime import datetime
     from zoneinfo import ZoneInfo
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.core.config import get_settings
 
     now = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE)).isoformat()
     with connect() as conn:

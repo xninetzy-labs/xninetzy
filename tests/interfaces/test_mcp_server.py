@@ -5,8 +5,8 @@ import pytest
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from app.xninetzy.interfaces.mcp_server import mcp
-from app.xninetzy.tools.registry import get_all_tools
+from xninetzy.interfaces.mcp_server import mcp
+from xninetzy.tools.registry import get_all_tools
 
 
 def test_mcp_server_exposes_all_registered_xninetzy_tools():
@@ -71,7 +71,7 @@ async def test_mcp_stdio_transport_lists_tools():
             str(ai_root),
             "python",
             "-m",
-            "app.xninetzy.interfaces.mcp_server",
+            "xninetzy.interfaces.mcp_server",
         ],
     )
     async with stdio_client(parameters) as (read_stream, write_stream):
@@ -111,7 +111,7 @@ async def test_mcp_stdio_host_mode_can_read_tasks_without_app_path(
             str(ai_root),
             "python",
             "-m",
-            "app.xninetzy.interfaces.mcp_server",
+            "xninetzy.interfaces.mcp_server",
         ],
         env=child_env,
     )

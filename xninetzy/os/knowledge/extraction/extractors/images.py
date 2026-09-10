@@ -5,9 +5,9 @@ by both ``OCR_ENABLED`` and ``DOC_IMAGE_OCR_ENABLED``.
 """
 from __future__ import annotations
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.knowledge.extraction.schemas import DocBlock
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.knowledge.extraction.schemas import DocBlock
 
 logger = logging.getLogger(__name__)
 
@@ -23,7 +23,7 @@ def ocr_pdf_pages(path: str, max_pages: int | None = None) -> list[DocBlock]:
         logger.warning("pypdfium2 missing — skipping OCR pass")
         return []
 
-    from app.xninetzy.interfaces.media.image_parser import ocr_pil_image
+    from xninetzy.interfaces.media.image_parser import ocr_pil_image
 
     cap = max_pages if max_pages is not None else s.OCR_MAX_PDF_PAGES
     blocks: list[DocBlock] = []

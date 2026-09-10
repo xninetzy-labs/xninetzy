@@ -3,9 +3,9 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.domains.it_learning.concept_graph import next_ready_concept
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect
+from xninetzy.domains.it_learning.concept_graph import next_ready_concept
 
 
 def get_roadmap_progress(roadmap_id: int) -> dict | None:

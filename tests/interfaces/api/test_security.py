@@ -5,12 +5,12 @@ from types import SimpleNamespace
 import pytest
 from fastapi import HTTPException
 
-from app.xninetzy.core.config import Settings
-from app.xninetzy.interfaces.api.deps import auth
-from app.xninetzy.interfaces.api.deps.auth import require_api_key
-from app.xninetzy.interfaces.api.owner_policy import authorize_owner
-from app.xninetzy.interfaces.api.routes.chat import router as chat_router
-from app.xninetzy.interfaces.api.routes.debug import router as debug_router
+from xninetzy.core.config import Settings
+from xninetzy.interfaces.api.deps import auth
+from xninetzy.interfaces.api.deps.auth import require_api_key
+from xninetzy.interfaces.api.owner_policy import authorize_owner
+from xninetzy.interfaces.api.routes.chat import router as chat_router
+from xninetzy.interfaces.api.routes.debug import router as debug_router
 
 
 @pytest.mark.asyncio

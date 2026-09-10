@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.os.academic.qa_portal.automation import _fresh_captcha_token
+from xninetzy.os.academic.qa_portal.automation import _fresh_captcha_token
 
 
 @pytest.mark.asyncio
@@ -25,7 +25,7 @@ async def test_qa_captcha_waits_for_stable_page_token():
 
 @pytest.mark.asyncio
 async def test_qa_captcha_failure_requires_human_verification():
-    from app.xninetzy.os.academic.qa_portal.automation import (
+    from xninetzy.os.academic.qa_portal.automation import (
         QaHumanVerificationRequired,
     )
 

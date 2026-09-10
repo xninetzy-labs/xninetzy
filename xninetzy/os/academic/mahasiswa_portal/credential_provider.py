@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pydantic import BaseModel, SecretStr
 
-from app.xninetzy.core.config import Settings, get_settings
+from xninetzy.core.config import Settings, get_settings
 
 
 class CampusCredentialError(RuntimeError):

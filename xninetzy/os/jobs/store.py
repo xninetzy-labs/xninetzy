@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.db.sqlite import connect, init_db
 
 TERMINAL_STATUSES = {"delivered", "succeeded", "delivery_uncertain"}
 

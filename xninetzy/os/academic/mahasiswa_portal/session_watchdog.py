@@ -3,10 +3,10 @@ from __future__ import annotations
 import asyncio
 import time
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.notifications.admin_notifier import notify_admin
-from app.xninetzy.os.web_analysis.session_manager import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.notifications.admin_notifier import notify_admin
+from xninetzy.os.web_analysis.session_manager import (
     SessionEncryptionUnavailable,
     SessionManager,
 )

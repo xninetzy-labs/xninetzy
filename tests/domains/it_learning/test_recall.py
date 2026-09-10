@@ -5,11 +5,11 @@ from zoneinfo import ZoneInfo
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.domains.it_learning.concept_graph import concept_map
-from app.xninetzy.domains.it_learning.recall import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.domains.it_learning.concept_graph import concept_map
+from xninetzy.domains.it_learning.recall import (
     create_recall_card,
     due_recall_cards,
     keyword_coverage,
@@ -19,17 +19,17 @@ from app.xninetzy.domains.it_learning.recall import (
     recall_summary,
     submit_recall_answer,
 )
-from app.xninetzy.domains.it_learning.progress_tracker import build_today_plan
-from app.xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
-from app.xninetzy.domains.it_learning.roadmap_store import (
+from xninetzy.domains.it_learning.progress_tracker import build_today_plan
+from xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
+from xninetzy.domains.it_learning.roadmap_store import (
     activate_roadmap,
     save_roadmap_draft,
 )
-from app.xninetzy.interfaces.mcp_tool_adapter import (
+from xninetzy.interfaces.mcp_tool_adapter import (
     MCPPrincipal,
     langchain_tool_as_mcp_callable,
 )
-from app.xninetzy.os.inbox.service import build_attention_queue
+from xninetzy.os.inbox.service import build_attention_queue
 
 
 @pytest.fixture(autouse=True)

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import re
 
-from app.xninetzy.os.research.sources import selected_sids
+from xninetzy.os.research.sources import selected_sids
 
 _CITATION = re.compile(r"\[S(\d+)\]")
 

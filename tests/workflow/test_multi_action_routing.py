@@ -4,9 +4,9 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.workflow.plan import build_workflow_plan, is_multi_action_request
-from app.xninetzy.workflow.store import WorkflowStore
-from app.xninetzy.workflow.models import WorkflowActionStatus, WorkflowExecutionResult
+from xninetzy.workflow.plan import build_workflow_plan, is_multi_action_request
+from xninetzy.workflow.store import WorkflowStore
+from xninetzy.workflow.models import WorkflowActionStatus, WorkflowExecutionResult
 
 
 def test_simple_message_does_not_route_to_workflow():

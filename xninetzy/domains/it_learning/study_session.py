@@ -8,10 +8,10 @@ from zoneinfo import ZoneInfo
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.domains.it_learning.concept_graph import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.domains.it_learning.concept_graph import (
     concept_for_task,
     link_session_concept,
     next_ready_concept,
@@ -262,7 +262,7 @@ def complete_study_session(
             )
     if event_id is not None:
         try:
-            from app.xninetzy.ecosystem.reducers import consume_event
+            from xninetzy.ecosystem.reducers import consume_event
 
             consume_event(event_id)
         except Exception:

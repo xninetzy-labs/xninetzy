@@ -4,7 +4,7 @@ import asyncio
 
 import pytest
 
-from app.xninetzy.interfaces.api.chat_events import (
+from xninetzy.interfaces.api.chat_events import (
     bind_chat_event_queue,
     emit_chat_event,
 )

@@ -21,8 +21,8 @@ import threading
 import time
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def _resolve_password(settings) -> str:
 def _resolve_uri(settings) -> str:
     """Host MCP cannot resolve the docker-DNS hostname ``neo4j``; swap to the
     published loopback bolt port. Inside the container we keep the compose URI."""
-    from app.xninetzy.os.graph.v3 import neo4j_lifecycle
+    from xninetzy.os.graph.v3 import neo4j_lifecycle
 
     if neo4j_lifecycle.is_host_runtime():
         return settings.NEO4J_HOST_URI or settings.NEO4J_URI
@@ -84,7 +84,7 @@ def _latch_unavailable(settings) -> None:
 
 def _touch_access() -> None:
     try:
-        from app.xninetzy.os.graph.v3 import neo4j_lifecycle
+        from xninetzy.os.graph.v3 import neo4j_lifecycle
 
         neo4j_lifecycle.touch_access()
     except Exception:
@@ -111,7 +111,7 @@ def _get_driver():
             return None
         if settings.NEO4J_AUTOSTART_ENABLED:
             try:
-                from app.xninetzy.os.graph.v3 import neo4j_lifecycle
+                from xninetzy.os.graph.v3 import neo4j_lifecycle
 
                 neo4j_lifecycle.ensure_running()
             except Exception as e:

@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.xninetzy.interfaces.media.document_parser import _MissingLib, _resolve_ext
-from app.xninetzy.os.knowledge.extraction.extractors.tables import rows_to_markdown
-from app.xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
+from xninetzy.interfaces.media.document_parser import _MissingLib, _resolve_ext
+from xninetzy.os.knowledge.extraction.extractors.tables import rows_to_markdown
+from xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
 
 
 def extract_office(path: str, extract_tables: bool = True) -> StructuredDocument:

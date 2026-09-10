@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
+from xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
 
 
 class DoneResearchAction(ResearchAction):

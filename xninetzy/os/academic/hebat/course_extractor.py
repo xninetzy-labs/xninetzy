@@ -12,8 +12,8 @@ from urllib.parse import urljoin
 
 from bs4 import BeautifulSoup, Tag
 
-from app.xninetzy.os.academic.hebat.link_extractor import classify_mod_type
-from app.xninetzy.os.academic.hebat.models import CourseOutline, OutlineActivity, OutlineSection
+from xninetzy.os.academic.hebat.link_extractor import classify_mod_type
+from xninetzy.os.academic.hebat.models import CourseOutline, OutlineActivity, OutlineSection
 
 _COURSE_RE = re.compile(r"/course/view\.php\?id=(\d+)")
 _MOD_RE = re.compile(r"/mod/([a-z]+)/view\.php\?id=(\d+)", re.I)

@@ -21,9 +21,9 @@ import threading
 import time
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.interfaces import mcp_runtime
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.interfaces import mcp_runtime
 
 logger = logging.getLogger(__name__)
 
@@ -192,7 +192,7 @@ def _reset_store() -> None:
     """Drop the cached driver and clear the sticky-unavailable flag so the next
     access can boot and reconnect."""
     try:
-        from app.xninetzy.os.graph.v3 import neo4j_store
+        from xninetzy.os.graph.v3 import neo4j_store
 
         neo4j_store.close_driver()
         neo4j_store.clear_unavailable()

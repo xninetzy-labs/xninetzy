@@ -7,12 +7,13 @@ from datetime import datetime, timedelta
 from typing import Awaitable, Callable
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import Settings, get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.ecosystem.context_builder import build_personal_context
-from app.xninetzy.interfaces.whatsapp.client import call_wa_tool
-from app.xninetzy.os.jobs.store import JobStore
+from xninetzy.core.config import Settings, get_settings
+from xninetzy.core.identity import normalize_chat_id
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect
+from xninetzy.ecosystem.context_builder import build_personal_context
+from xninetzy.os.inbox.service import capture_item as _jobs_capture_item
+from xninetzy.os.jobs.store import JobStore
 
 logger = logging.getLogger(__name__)
 
@@ -38,9 +39,7 @@ def owner_notification_jid(settings: Settings | None = None) -> str | None:
     ).strip()
     if not raw:
         return None
-    if "@" not in raw:
-        return f"{raw}@s.whatsapp.net"
-    return raw
+    return normalize_chat_id(raw) or raw
 
 
 def due_job_specs(now: datetime, settings: Settings | None = None) -> list[JobSpec]:
@@ -211,7 +210,7 @@ async def run_os_job_tick(
                 )
                 stats["failed"] += 1
                 continue
-            jobs.mark_delivered(claimed["id"], "WhatsApp delivery accepted", current)
+            jobs.mark_delivered(claimed["id"], "Owner inbox delivery accepted", current)
             stats["delivered"] += 1
         except Exception as error:
             logger.exception("OS scheduled job failed: %s", spec.key)
@@ -234,7 +233,7 @@ async def os_job_loop() -> None:
     reconciled = JobStore().reconcile_orphaned_deliveries(_local_time(None, settings))
     if reconciled:
         logger.warning(
-            "Marked %d interrupted WA deliveries as delivery_uncertain", reconciled
+            "Marked %d interrupted inbox deliveries as delivery_uncertain", reconciled
         )
     while True:
         try:
@@ -292,8 +291,8 @@ def get_data_freshness(now: datetime | None = None) -> dict:
 
 
 def build_lightning_review(chat_id: str, now: datetime) -> str:
-    from app.xninetzy.os.lightning.rl import reward_summary
-    from app.xninetzy.os.lightning.service import review_recent
+    from xninetzy.os.lightning.rl import reward_summary
+    from xninetzy.os.lightning.service import review_recent
 
     summary = reward_summary(owner_scope=chat_id, window_days=1)
     review = review_recent(chat_id)
@@ -440,11 +439,11 @@ def _local_time(now: datetime | None, settings: Settings) -> datetime:
 
 
 async def _send_message(chat_id: str, message: str) -> None:
-    await call_wa_tool("send_text_message", {"jid": chat_id, "text": message})
+    await asyncio.to_thread(_jobs_capture_item, message, "note", chat_id)
 
 
 async def _run_hebat_sync(chat_id: str) -> str:
-    from app.xninetzy.os.academic.hebat.tools import hebat_sync_assignments
+    from xninetzy.os.academic.hebat.tools import hebat_sync_assignments
 
     result = str(
         await hebat_sync_assignments.ainvoke({"chat_id": chat_id, "course_id": None})

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.ecosystem.event_bus import record_event
-from app.xninetzy.os.life.goal_manager import (
+from xninetzy.ecosystem.event_bus import record_event
+from xninetzy.os.life.goal_manager import (
     create_goal,
     get_goal,
     get_goal_logs,
@@ -32,8 +32,8 @@ def goal_create(title: str, description: str = "", domain: str = "personal",
                  {"title": title, "domain": domain})
 
     try:
-        from app.xninetzy.os.notes.vault_service import ObsidianVaultService
-        from app.xninetzy.os.notes.folder_policy import canonical_path
+        from xninetzy.os.notes.vault_service import ObsidianVaultService
+        from xninetzy.os.notes.folder_policy import canonical_path
         path = canonical_path("goal", title=title, domain=domain)
         note = (
             f"---\nschema_version: 1\ntype: goal\ntitle: \"{title}\"\ncanonical_path: {path}\ndomain: {domain}\nstatus: active\n"
@@ -99,9 +99,9 @@ def goal_update_progress(goal_id: int, log_text: str, delta: float = 0,
 
     # Append to Obsidian daily note
     try:
-        from app.xninetzy.os.notes.vault_service import ObsidianVaultService
-        from app.xninetzy.tools.internal.datetime_info import get_now_info
-        from app.xninetzy.os.notes.folder_policy import canonical_path
+        from xninetzy.os.notes.vault_service import ObsidianVaultService
+        from xninetzy.tools.internal.datetime_info import get_now_info
+        from xninetzy.os.notes.folder_policy import canonical_path
         now = get_now_info()
         ObsidianVaultService().append_note(
             canonical_path("daily", date_value=now["date"], title="daily"),

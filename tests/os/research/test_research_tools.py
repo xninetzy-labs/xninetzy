@@ -2,7 +2,7 @@ import asyncio
 
 import pytest
 
-from app.xninetzy.tools.ecosystem.research_tools import research_light
+from xninetzy.tools.ecosystem.research_tools import research_light
 
 
 @pytest.mark.asyncio
@@ -13,7 +13,7 @@ async def test_research_light_works_without_provider(monkeypatch):
 
 
 def test_deep_research_denied_does_not_claim_save():
-    from app.xninetzy.os.research.permissions import deep_research_denied_message
+    from xninetzy.os.research.permissions import deep_research_denied_message
 
     msg = deep_research_denied_message()
     assert "simpan ke Obsidian" not in msg
@@ -24,7 +24,7 @@ def test_deep_research_denied_does_not_claim_save():
 async def test_deep_research_timeout_preserves_partial_session(monkeypatch):
     from types import SimpleNamespace
 
-    from app.xninetzy.os.research import deep_research
+    from xninetzy.os.research import deep_research
 
     async def slow_research(**kwargs):
         await asyncio.sleep(0.05)

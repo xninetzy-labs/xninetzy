@@ -2,14 +2,14 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.os.academic.hebat.models import (
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.os.academic.hebat.models import (
     ActivityType,
     HebatActivity,
     HebatAssignment,
 )
-from app.xninetzy.os.academic.hebat.storage import (
+from xninetzy.os.academic.hebat.storage import (
     sync_assignment_task,
     upsert_activity,
     upsert_assignment,

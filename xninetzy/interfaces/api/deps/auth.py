@@ -4,7 +4,7 @@ import secrets
 
 from fastapi import Header, HTTPException
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 
 async def require_api_key(authorization: str | None = Header(default=None)) -> None:

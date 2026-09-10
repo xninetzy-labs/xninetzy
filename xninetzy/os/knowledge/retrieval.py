@@ -6,10 +6,10 @@ from typing import Iterable
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.core.providers import LLMProfile
-from app.xninetzy.os.knowledge.vector_store import semantic_search
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.core.providers import LLMProfile
+from xninetzy.os.knowledge.vector_store import semantic_search
 
 logger = logging.getLogger(__name__)
 
@@ -359,7 +359,7 @@ async def answer_from_knowledge(
             "Tambahkan atau ingest sumber yang relevan, lalu coba lagi."
         )
 
-    from app.xninetzy.core.llm import get_llm_pro
+    from xninetzy.core.llm import get_llm_pro
 
     try:
         model = get_llm_pro(profile)

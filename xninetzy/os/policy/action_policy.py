@@ -5,7 +5,7 @@ import json
 from dataclasses import dataclass
 from enum import StrEnum
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 
 class ActionMode(StrEnum):

@@ -3,7 +3,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-from app.xninetzy.skills.registry import (
+from xninetzy.skills.registry import (
     get_skill,
     rank_skills,
     read_skill_resource,

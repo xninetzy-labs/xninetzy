@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.providers import LLMProfile, resolve_profile
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import get_settings
+from xninetzy.core.providers import LLMProfile, resolve_profile
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
 
 
 def _ensure_tables() -> None:

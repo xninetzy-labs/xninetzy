@@ -19,8 +19,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.graph.v3 import faiss_store, neo4j_store, sqlite_store
+from xninetzy.core.config import get_settings
+from xninetzy.os.graph.v3 import faiss_store, neo4j_store, sqlite_store
 
 
 @dataclass

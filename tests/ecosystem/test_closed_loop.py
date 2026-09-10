@@ -2,21 +2,21 @@ from __future__ import annotations
 
 from uuid import uuid4
 
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
-from app.xninetzy.domains.it_learning.roadmap_store import (
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
+from xninetzy.domains.it_learning.roadmap_store import (
     activate_roadmap,
     get_roadmap,
     save_roadmap_draft,
 )
-from app.xninetzy.ecosystem.context_builder import build_personal_context
-from app.xninetzy.ecosystem.event_bus import record_event
-from app.xninetzy.os.life.goal_manager import create_goal, get_goal, get_goal_logs
-from app.xninetzy.os.life.habit_manager import log_habit
-from app.xninetzy.os.life.task_manager import create_task
-from app.xninetzy.os.life.workout_manager import log_workout
-from app.xninetzy.tools.ecosystem.life_tools import task_complete
+from xninetzy.ecosystem.context_builder import build_personal_context
+from xninetzy.ecosystem.event_bus import record_event
+from xninetzy.os.life.goal_manager import create_goal, get_goal, get_goal_logs
+from xninetzy.os.life.habit_manager import log_habit
+from xninetzy.os.life.task_manager import create_task
+from xninetzy.os.life.workout_manager import log_workout
+from xninetzy.tools.ecosystem.life_tools import task_complete
 
 
 def _prepare_database() -> None:

@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-from app.xninetzy.db.idempotency import (
+from xninetzy.db.idempotency import (
     IDEMPOTENCY_INDEX_DDL,
     IDEMPOTENCY_TABLE_DDL,
 )
-from app.xninetzy.db.sqlite import connect
+from xninetzy.db.sqlite import connect
 
 
 def run_migrations() -> None:
@@ -872,7 +872,7 @@ def _migrate_approval_requests(conn) -> None:
     conn.execute("CREATE INDEX IF NOT EXISTS idx_approval_status_created ON approval_requests(status, created_at)")
 
 def _backfill_learning_concepts(conn) -> None:
-    from app.xninetzy.domains.it_learning.concept_graph import seed_roadmap_concepts
+    from xninetzy.domains.it_learning.concept_graph import seed_roadmap_concepts
 
     roadmaps = conn.execute(
         """

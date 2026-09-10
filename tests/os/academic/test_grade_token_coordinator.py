@@ -2,7 +2,7 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 
-from app.xninetzy.os.academic.mahasiswa_portal.grade_token import (
+from xninetzy.os.academic.mahasiswa_portal.grade_token import (
     GradeChallengeError,
     GradeTokenCoordinator,
 )

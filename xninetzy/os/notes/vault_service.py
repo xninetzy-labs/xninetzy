@@ -7,12 +7,12 @@ from datetime import datetime
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.os.notes.obsidian_config import vault_path
-from app.xninetzy.os.notes.markdown_service import MarkdownService
-from app.xninetzy.os.notes.vault_index import VaultIndexHealth, VaultSearchIndex
-from app.xninetzy.os.notes.safety import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect
+from xninetzy.os.notes.obsidian_config import vault_path
+from xninetzy.os.notes.markdown_service import MarkdownService
+from xninetzy.os.notes.vault_index import VaultIndexHealth, VaultSearchIndex
+from xninetzy.os.notes.safety import (
     ensure_readable_file,
     ensure_write_allowed,
     resolve_vault_path,

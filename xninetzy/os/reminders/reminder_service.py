@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.reminders.reminder_content import ReminderContentNormalizer
-from app.xninetzy.os.reminders.reminder_parser import parse_reminder, infer_deadline
-from app.xninetzy.os.reminders.reminder_policy import ReminderPolicy
-from app.xninetzy.os.reminders.reminder_store import ReminderStore
+from xninetzy.core.config import get_settings
+from xninetzy.os.reminders.reminder_content import ReminderContentNormalizer
+from xninetzy.os.reminders.reminder_parser import parse_reminder, infer_deadline
+from xninetzy.os.reminders.reminder_policy import ReminderPolicy
+from xninetzy.os.reminders.reminder_store import ReminderStore
 
 
 class ReminderService:

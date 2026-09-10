@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.ecosystem.event_bus import record_event
+from xninetzy.ecosystem.event_bus import record_event
 
 
 # ─── Tasks ────────────────────────────────────────────────────────────────────
@@ -30,8 +30,8 @@ def task_capture(
         chat_id: WhatsApp chat ID (dari context)
         idempotency_key: Kunci opsional agar retry tidak membuat task duplikat
     """
-    from app.xninetzy.db.idempotency import idempotent_call
-    from app.xninetzy.os.life.task_manager import create_task
+    from xninetzy.db.idempotency import idempotent_call
+    from xninetzy.os.life.task_manager import create_task
 
     payload = {
         "title": title,
@@ -60,7 +60,7 @@ def task_list(status: str | None = None) -> str:
     Args:
         status: inbox|next|done|all (opsional, default: semua yang aktif)
     """
-    from app.xninetzy.os.life.task_manager import list_tasks
+    from xninetzy.os.life.task_manager import list_tasks
 
     tasks = list_tasks(status=status)
     if not tasks:
@@ -78,7 +78,7 @@ def task_list(status: str | None = None) -> str:
 @tool
 def task_today() -> str:
     """Tampilkan task yang harus dikerjakan hari ini (due today atau overdue)."""
-    from app.xninetzy.os.life.task_manager import list_tasks_today, list_tasks
+    from xninetzy.os.life.task_manager import list_tasks_today, list_tasks
 
     tasks = list_tasks_today()
     all_active = list_tasks()
@@ -109,7 +109,7 @@ def task_complete(task_id: int, chat_id: str = "system") -> str:
         task_id: ID task
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.life.task_manager import complete_task, get_task
+    from xninetzy.os.life.task_manager import complete_task, get_task
 
     t = get_task(task_id)
     if not t:
@@ -147,7 +147,7 @@ def money_add_transaction(
         description: Deskripsi singkat
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.life.money_manager import add_transaction
+    from xninetzy.os.life.money_manager import add_transaction
 
     result = add_transaction(amount, tx_type, category, description)
     record_event(
@@ -169,7 +169,7 @@ def money_summary(period: str = "month") -> str:
     Args:
         period: day|week|month|year (default: month)
     """
-    from app.xninetzy.os.life.money_manager import (
+    from xninetzy.os.life.money_manager import (
         get_summary,
         category_breakdown,
         get_account_balances,
@@ -221,7 +221,7 @@ def workout_log(
         notes: Catatan tambahan
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.life.workout_manager import log_workout
+    from xninetzy.os.life.workout_manager import log_workout
 
     exercises_data = [{"exercise": exercises}] if exercises else []
     result = log_workout(workout_type, exercises_data, duration, intensity, notes)
@@ -245,7 +245,7 @@ def workout_summary(period: str = "week") -> str:
     Args:
         period: week|month (default: week)
     """
-    from app.xninetzy.os.life.workout_manager import get_workout_summary
+    from xninetzy.os.life.workout_manager import get_workout_summary
 
     s = get_workout_summary(period)
     sessions = s["sessions"]
@@ -283,7 +283,7 @@ def habit_log(
         notes: Catatan (opsional)
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.life.habit_manager import log_habit
+    from xninetzy.os.life.habit_manager import log_habit
 
     log_habit(name, value, notes)
     record_event(chat_id, "habit_logged", "whatsapp", "habit", name, {"value": value})
@@ -293,7 +293,7 @@ def habit_log(
 @tool
 def habit_today() -> str:
     """Tampilkan status semua habit hari ini."""
-    from app.xninetzy.os.life.habit_manager import get_habit_today
+    from xninetzy.os.life.habit_manager import get_habit_today
 
     habits = get_habit_today()
     if not habits:
@@ -322,7 +322,7 @@ def daily_checkin(
         summary: Ringkasan hari ini dalam 1-2 kalimat
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.life.journal_manager import checkin
+    from xninetzy.os.life.journal_manager import checkin
 
     result = checkin(mood, energy, focus, summary)
     record_event(
@@ -336,8 +336,8 @@ def daily_checkin(
 
     # Auto-append ke daily note
     try:
-        from app.xninetzy.os.notes.vault_service import ObsidianVaultService
-        from app.xninetzy.os.notes.folder_policy import canonical_path
+        from xninetzy.os.notes.vault_service import ObsidianVaultService
+        from xninetzy.os.notes.folder_policy import canonical_path
 
         ObsidianVaultService().append_note(
             canonical_path("daily", date_value=result["date"], title="daily"),
@@ -352,10 +352,10 @@ def daily_checkin(
 @tool
 def daily_review_generate(chat_id: str = "system") -> str:
     """Generate review harian: lihat task selesai, goal progress, dan beri saran."""
-    from app.xninetzy.os.life.journal_manager import get_review, save_review
-    from app.xninetzy.os.life.task_manager import list_tasks
-    from app.xninetzy.os.life.goal_manager import list_goals
-    from app.xninetzy.tools.internal.datetime_info import get_now_info
+    from xninetzy.os.life.journal_manager import get_review, save_review
+    from xninetzy.os.life.task_manager import list_tasks
+    from xninetzy.os.life.goal_manager import list_goals
+    from xninetzy.tools.internal.datetime_info import get_now_info
 
     now = get_now_info()
     today = now["date"]
@@ -405,11 +405,11 @@ def daily_review_generate(chat_id: str = "system") -> str:
 @tool
 def life_dashboard(chat_id: str = "system") -> str:
     """Tampilkan dashboard lengkap hari ini: goals, tasks, habits, dan deadlines."""
-    from app.xninetzy.os.life.task_manager import list_tasks_today
-    from app.xninetzy.os.life.goal_manager import list_goals
-    from app.xninetzy.os.life.habit_manager import get_habit_today
-    from app.xninetzy.os.academic.hebat.storage import list_assignments
-    from app.xninetzy.tools.internal.datetime_info import get_now_info
+    from xninetzy.os.life.task_manager import list_tasks_today
+    from xninetzy.os.life.goal_manager import list_goals
+    from xninetzy.os.life.habit_manager import get_habit_today
+    from xninetzy.os.academic.hebat.storage import list_assignments
+    from xninetzy.tools.internal.datetime_info import get_now_info
 
     now = get_now_info()
     lines = [f"🌅 *Dashboard {now['human_date']}*\n"]

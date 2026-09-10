@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.os.academic.hebat import browser_session, submission
-from app.xninetzy.os.academic.hebat.submission import (
+from xninetzy.os.academic.hebat import browser_session, submission
+from xninetzy.os.academic.hebat.submission import (
     _classify_removal,
     _classify_upload,
     _open_healed_page,
@@ -155,7 +155,7 @@ async def test_open_page_without_storage_state(monkeypatch, tmp_path):
 
 @pytest.mark.asyncio
 async def test_failed_submission_token_can_retry_upload(monkeypatch):
-    from app.xninetzy.os.academic.hebat import tools as hebat_tools
+    from xninetzy.os.academic.hebat import tools as hebat_tools
 
     submission_row = {
         "id": 9,

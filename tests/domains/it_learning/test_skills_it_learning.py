@@ -1,14 +1,14 @@
 import importlib
 
-from app.xninetzy.skills.registry import get_skill, list_skills
+from xninetzy.skills.registry import get_skill, list_skills
 
 
 def test_it_learning_skill_package_importable():
-    assert importlib.import_module("app.xninetzy.skills.it_learning")
+    assert importlib.import_module("xninetzy.skills.it_learning")
 
 
 def test_it_learning_skill_tools_importable():
-    mod = importlib.import_module("app.xninetzy.skills.it_learning.tools")
+    mod = importlib.import_module("xninetzy.skills.it_learning.tools")
     assert hasattr(mod, "learning_create_roadmap")
 
 

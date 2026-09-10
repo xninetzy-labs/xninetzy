@@ -1,6 +1,6 @@
 from PIL import Image
 
-from app.xninetzy.interfaces.media import image_parser
+from xninetzy.interfaces.media import image_parser
 
 
 def test_parse_image_returns_ocr_text(tmp_path, monkeypatch):

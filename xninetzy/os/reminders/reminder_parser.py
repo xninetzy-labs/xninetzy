@@ -6,8 +6,8 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.reminders.reminder_policy import Offset, ReminderPolicy
+from xninetzy.core.config import get_settings
+from xninetzy.os.reminders.reminder_policy import Offset, ReminderPolicy
 
 
 class ReminderParseError(ValueError):

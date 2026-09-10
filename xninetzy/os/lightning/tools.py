@@ -4,7 +4,7 @@ import json
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.lightning.rl import (
+from xninetzy.os.lightning.rl import (
     finish_episode,
     list_recent_errors,
     record_action,
@@ -14,13 +14,13 @@ from app.xninetzy.os.lightning.rl import (
     strategy_rank,
     regression_check,
 )
-from app.xninetzy.os.lightning.service import (
+from xninetzy.os.lightning.service import (
     apply_proposal,
     reject_proposal,
     review_recent,
     submit_feedback,
 )
-from app.xninetzy.os.lightning.store import (
+from xninetzy.os.lightning.store import (
     create_proposal,
     list_proposals,
 )
@@ -301,8 +301,8 @@ def lightning_healthcheck(
     chat_id: str = "",
 ) -> str:
     """Periksa kesehatan Lightning."""
-    from app.xninetzy.db.sqlite import connect, init_db
-    from app.xninetzy.db.migrations import run_migrations
+    from xninetzy.db.sqlite import connect, init_db
+    from xninetzy.db.migrations import run_migrations
 
     init_db()
     run_migrations()

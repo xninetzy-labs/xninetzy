@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from fastapi import APIRouter, Depends
 
-from app.xninetzy.os.memory.chat_store import ChatStore
-from app.xninetzy.schemas.routing import ToolInvokeRequest
-from app.xninetzy.tools.registry import get_tool_descriptions, get_all_tools
-from app.xninetzy.interfaces.api.deps.auth import require_api_key
+from xninetzy.os.memory.chat_store import ChatStore
+from xninetzy.schemas.routing import ToolInvokeRequest
+from xninetzy.tools.registry import get_tool_descriptions, get_all_tools
+from xninetzy.interfaces.api.deps.auth import require_api_key
 
 router = APIRouter(
     prefix="/debug",

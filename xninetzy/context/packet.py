@@ -1,7 +1,7 @@
 """ContextPacket — deterministic routing metadata for one user turn.
 
 Rule-based input-preprocessing layer (no LLM calls). Built by
-``app.xninetzy.context.builder.build_context_packet`` and injected into the
+``xninetzy.context.builder.build_context_packet`` and injected into the
 agent/orchestrator as a lightweight routing hint.
 """
 from __future__ import annotations

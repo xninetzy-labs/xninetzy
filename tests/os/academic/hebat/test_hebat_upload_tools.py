@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.os.academic.hebat import tools as hebat_tools
+from xninetzy.os.academic.hebat import tools as hebat_tools
 
 
 @pytest.mark.asyncio

@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from app.xninetzy.core.logging import logging
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 

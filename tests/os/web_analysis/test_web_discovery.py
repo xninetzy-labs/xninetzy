@@ -2,12 +2,12 @@ from contextlib import contextmanager
 
 import pytest
 
-from app.xninetzy.os.web_analysis.discovery import (
+from xninetzy.os.web_analysis.discovery import (
     DiscoveredPage,
     WebDiscoveryResult,
     WebDiscoveryService,
 )
-from app.xninetzy.os.web_analysis.sites import SiteDefinition
+from xninetzy.os.web_analysis.sites import SiteDefinition
 
 
 class DummyCache:
@@ -30,7 +30,7 @@ async def test_discovery_orchestration_is_bounded(monkeypatch):
     )
 
     monkeypatch.setattr(
-        "app.xninetzy.os.web_analysis.discovery.get_site",
+        "xninetzy.os.web_analysis.discovery.get_site",
         lambda value: site,
     )
     expected = WebDiscoveryResult(
@@ -60,7 +60,7 @@ async def test_discovery_orchestration_is_bounded(monkeypatch):
 @pytest.mark.asyncio
 async def test_discovery_rejects_depth_above_config(monkeypatch):
     monkeypatch.setenv("WEB_ANALYSIS_DISCOVERY_MAX_DEPTH", "1")
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.core.config import get_settings
 
     get_settings.cache_clear()
     with pytest.raises(ValueError, match="depth"):

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.research.permissions import is_owner_admin
-from app.xninetzy.skills.registry import (
+from xninetzy.os.research.permissions import is_owner_admin
+from xninetzy.skills.registry import (
     SkillValidationError,
     install_skill,
     list_skill_resources,

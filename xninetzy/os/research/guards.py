@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect
 
 _ACTIVE_STATUSES = ("planned", "planning", "subplanning", "web_searching", "source_ranking", "brief_writing")
 

@@ -1,6 +1,6 @@
 import pytest
 
-from app.xninetzy.os.research.subplanner import generate_research_subplans
+from xninetzy.os.research.subplanner import generate_research_subplans
 
 
 @pytest.mark.asyncio

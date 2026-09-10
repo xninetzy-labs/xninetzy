@@ -8,22 +8,22 @@ the plan. No heavy/vision libraries are ever imported here.
 """
 from __future__ import annotations
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.knowledge.chunking import chunk_text
-from app.xninetzy.os.knowledge.extraction.extractors import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.knowledge.chunking import chunk_text
+from xninetzy.os.knowledge.extraction.extractors import (
     extract_office,
     extract_pdf_structured,
     extract_pdf_text,
     extract_plain_text,
 )
-from app.xninetzy.os.knowledge.extraction.router import analyze_document
-from app.xninetzy.os.knowledge.extraction.schemas import (
+from xninetzy.os.knowledge.extraction.router import analyze_document
+from xninetzy.os.knowledge.extraction.schemas import (
     ContextualChunk,
     ExtractionPlan,
     StructuredDocument,
 )
-from app.xninetzy.os.knowledge.extraction.structure_chunker import chunk_structured
+from xninetzy.os.knowledge.extraction.structure_chunker import chunk_structured
 
 logger = logging.getLogger(__name__)
 

@@ -14,11 +14,11 @@ only, never dual-write) and gives callers a small stable surface:
 
 from __future__ import annotations
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.graph.v3 import faiss_store, neo4j_store, sqlite_store
-from app.xninetzy.os.graph.v3.hybrid_retriever import GraphContextPack, retrieve
-from app.xninetzy.os.graph.v3.sqlite_store import EdgeUpsert, NodeUpsert, UpsertResult
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.graph.v3 import faiss_store, neo4j_store, sqlite_store
+from xninetzy.os.graph.v3.hybrid_retriever import GraphContextPack, retrieve
+from xninetzy.os.graph.v3.sqlite_store import EdgeUpsert, NodeUpsert, UpsertResult
 
 logger = logging.getLogger(__name__)
 

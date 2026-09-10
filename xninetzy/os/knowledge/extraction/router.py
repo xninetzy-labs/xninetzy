@@ -10,10 +10,10 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.interfaces.media.document_parser import _resolve_ext
-from app.xninetzy.os.knowledge.extraction.schemas import ExtractionPlan
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.interfaces.media.document_parser import _resolve_ext
+from xninetzy.os.knowledge.extraction.schemas import ExtractionPlan
 
 logger = logging.getLogger(__name__)
 

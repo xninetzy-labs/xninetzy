@@ -4,9 +4,9 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.os.academic.hebat.models import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.os.academic.hebat.models import (
     AuthMode,
     HebatActivity,
     HebatAssignment,
@@ -414,7 +414,7 @@ def list_assignments(course_id: str | None = None) -> list[dict]:
         if course_id:
             rows = conn.execute(
                 """
-                SELECT ha.*, act.course_id, act.cmid, act.activity_url, act.section_title
+                SELECT DISTINCT ha.*, act.course_id, act.cmid, act.activity_url, act.section_title
                 FROM hebat_assignments ha
                 JOIN hebat_activities act ON (act.id = ha.activity_id OR act.cmid = CAST(ha.activity_id AS TEXT))
                 WHERE act.course_id=?
@@ -425,7 +425,7 @@ def list_assignments(course_id: str | None = None) -> list[dict]:
         else:
             rows = conn.execute(
                 """
-                SELECT ha.*, act.course_id, act.cmid, act.activity_url, act.section_title
+                SELECT DISTINCT ha.*, act.course_id, act.cmid, act.activity_url, act.section_title
                 FROM hebat_assignments ha
                 JOIN hebat_activities act ON (act.id = ha.activity_id OR act.cmid = CAST(ha.activity_id AS TEXT))
                 ORDER BY ha.due_at ASC NULLS LAST

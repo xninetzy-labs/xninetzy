@@ -4,10 +4,10 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.domains.it_learning.concept_graph import seed_roadmap_concepts
-from app.xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect
+from xninetzy.domains.it_learning.concept_graph import seed_roadmap_concepts
+from xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
 
 
 def _now() -> str:

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.os.graph.graph_store import edges_for_node, search_nodes
+from xninetzy.os.graph.graph_store import edges_for_node, search_nodes
 
 
 def get_graph_context(query: str) -> str:

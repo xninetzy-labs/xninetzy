@@ -1,4 +1,4 @@
-from app.xninetzy.tools.registry import get_all_tools, get_tool_groups
+from xninetzy.tools.registry import get_all_tools, get_tool_groups
 
 
 def test_get_all_tools_not_empty():

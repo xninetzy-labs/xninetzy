@@ -8,28 +8,28 @@ from zoneinfo import ZoneInfo
 
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.identity import configured_owner_jids, normalize_whatsapp_jid
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.academic.hebat.browser_session import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.identity import configured_owner_jids, normalize_whatsapp_jid
+from xninetzy.core.logging import logging
+from xninetzy.os.academic.hebat.browser_session import (
     check_session_valid,
     debug_login_with_credentials,
     login_with_credentials,
 )
-from app.xninetzy.os.academic.hebat.models import (
+from xninetzy.os.academic.hebat.models import (
     HebatActivity,
     HebatAssignment,
     HebatCourse,
     UploadStatus,
 )
-from app.xninetzy.os.academic.hebat.moodle_client import (
+from xninetzy.os.academic.hebat.moodle_client import (
     download_file,
     fetch_assignment_detail,
     fetch_course_activities,
     fetch_courses,
 )
-from app.xninetzy.os.academic.hebat.pdf_reader import summarize_pdf
-from app.xninetzy.os.academic.hebat.storage import (
+from xninetzy.os.academic.hebat.pdf_reader import summarize_pdf
+from xninetzy.os.academic.hebat.storage import (
     create_submission,
     get_activity_by_cmid,
     get_session,
@@ -45,19 +45,19 @@ from app.xninetzy.os.academic.hebat.storage import (
     sync_assignment_task,
     upsert_course,
 )
-from app.xninetzy.os.academic.hebat.submission import (
+from xninetzy.os.academic.hebat.submission import (
     generate_token,
     remove_submission_via_playwright,
     upload_submission_via_playwright,
 )
-from app.xninetzy.os.hitl.approval_service import request_approval, validate_approval
-from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
-from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+from xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from xninetzy.os.notifications.admin_notifier import notify_admin_approval
+from xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     CampusCredentialError,
     resolve_campus_credentials,
 )
-from app.xninetzy.os.policy.action_policy import evaluate_action
-from app.xninetzy.tools.errors import ToolErrorCode, tool_error
+from xninetzy.os.policy.action_policy import evaluate_action
+from xninetzy.tools.errors import ToolErrorCode, tool_error
 
 logger = logging.getLogger(__name__)
 
@@ -99,17 +99,55 @@ def _now(s=None) -> datetime:
 def _parse_due_dt(due_str: str | None) -> datetime | None:
     if not due_str:
         return None
-    for fmt in [
-        "%d %B %Y, %I:%M %p",
-        "%d %B %Y %H:%M",
-        "%Y-%m-%dT%H:%M:%S%z",
-        "%d %B %Y",
-        "%A, %d %B %Y, %I:%M %p",
-    ]:
-        try:
-            return datetime.strptime(due_str.strip(), fmt)
-        except ValueError:
-            continue
+    s_clean = due_str.strip()
+    # Indonesian month map to English for strptime
+    id_months = {
+        "Januari": "January",
+        "Februari": "February",
+        "Maret": "March",
+        "April": "April",
+        "Mei": "May",
+        "Juni": "June",
+        "Juli": "July",
+        "Agustus": "August",
+        "September": "September",
+        "Oktober": "October",
+        "November": "November",
+        "Desember": "December",
+    }
+    for idm, enm in id_months.items():
+        # replace both capitalized and lower variants
+        s_clean = s_clean.replace(idm, enm).replace(idm.lower(), enm.lower())
+        s_clean = s_clean.replace(idm.upper(), enm.upper())
+    # Normalize Indonesian time wording
+    s_clean = s_clean.replace("pukul", "").replace("WIB", "").replace("WITA", "").replace("WIT", "")
+    s_clean = re.sub(r"\s+", " ", s_clean).strip()
+    # Remove trailing dot in time like 17.00 -> 17:00 for strptime
+    # Handle dotted time: replace '.' between digits with ':'
+    s_clean = re.sub(r"(\d)\.(\d)", r"\1:\2", s_clean)
+    # Strip weekday prefix handling is via formats, but also try without it
+    s_clean_no_weekday = re.sub(r"^\w+,\s*", "", s_clean) if "," in s_clean and s_clean.split(",")[0].strip().isalpha() else s_clean
+    candidates = [s_clean, s_clean_no_weekday] if s_clean_no_weekday != s_clean else [s_clean]
+    for candidate in candidates:
+        for fmt in [
+            "%A, %d %B %Y, %I:%M %p",
+            "%A, %d %B %Y, %H:%M",
+            "%d %B %Y, %I:%M %p",
+            "%d %B %Y %H:%M",
+            "%d %B %Y, %H:%M",
+            "%d %B %Y %H:%M",
+            "%d %B %Y",
+            "%Y-%m-%dT%H:%M:%S%z",
+            "%Y-%m-%dT%H:%M:%S",
+            "%d %B %Y %H:%M",
+        ]:
+            try:
+                dt = datetime.strptime(candidate.strip(), fmt)
+                if dt.tzinfo is None:
+                    dt = dt.replace(tzinfo=ZoneInfo(get_settings().APP_TIMEZONE))
+                return dt
+            except ValueError:
+                continue
     return None
 
 
@@ -191,7 +229,7 @@ async def hebat_debug_login(chat_id: str = "system") -> str:
         lines.append(f"• Error parser: {result['parser_error'][:180]}")
     lines.append(f"• Dugaan masalah: {result.get('problem_guess') or '-'}")
     try:
-        from app.xninetzy.os.notifications.admin_notifier import notify_admin
+        from xninetzy.os.notifications.admin_notifier import notify_admin
 
         event = (
             "hebat_login_debug_done"
@@ -388,7 +426,7 @@ async def hebat_download_material(
     dest_dir = Path(s.HEBAT_DOWNLOAD_DIR) / course_id / safe_title
     dest_dir.mkdir(parents=True, exist_ok=True)
 
-    from app.xninetzy.os.academic.hebat.download_resolver import (
+    from xninetzy.os.academic.hebat.download_resolver import (
         resolve_download_links,
     )
 
@@ -422,8 +460,8 @@ async def hebat_download_material(
     obsidian_path = None
     if save_to_obsidian and preview:
         try:
-            from app.xninetzy.os.notes.vault_service import ObsidianVaultService
-            from app.xninetzy.os.notes.folder_policy import canonical_path
+            from xninetzy.os.notes.vault_service import ObsidianVaultService
+            from xninetzy.os.notes.folder_policy import canonical_path
 
             note_content = (
                 f"---\nschema_version: 1\ntype: hebat_material\ntitle: \"{title}\"\ncanonical_path: {canonical_path('hebat_material', title=title, course=str(course_id))}\ncourse_id: {course_id}\nsource: HEBAT\n---\n\n"
@@ -523,84 +561,103 @@ async def hebat_sync_assignments(chat_id: str, course_id: str | None = None) -> 
     reminders_created = 0
     tasks_created = 0
     now = _now(s)
+    # Concurrency fix: avoid MCP 120s timeout by processing with semaphore and per-item timeout
+    sem = asyncio.Semaphore(5)
+    counters_lock = asyncio.Lock()
 
-    for act in assign_activities:
-        cmid = act["cmid"]
-        detail = await fetch_assignment_detail(chat_id, cmid)
-        if not detail:
-            continue
+    async def _process_one(act: dict):
+        nonlocal synced, reminders_created, tasks_created
+        async with sem:
+            cmid = act["cmid"]
+            try:
+                detail = await asyncio.wait_for(
+                    fetch_assignment_detail(chat_id, cmid), timeout=25
+                )
+            except asyncio.TimeoutError:
+                logger.warning("hebat_sync_timeout cmid=%s", cmid)
+                return
+            except Exception as e:
+                logger.warning("hebat_sync_fetch_failed cmid=%s err=%s", cmid, e)
+                return
+            if not detail:
+                return
 
-        activity_id = act["id"]
-        assign = HebatAssignment(
-            activity_id=activity_id,
-            title=detail.get("title") or act["title"],
-            instruction_text=detail.get("instruction"),
-            opened_at=detail.get("opened_at"),
-            due_at=detail.get("due_at"),
-            time_remaining_text=detail.get("time_remaining"),
-            submission_status=detail.get("submission_status"),
-            grading_status=detail.get("grading_status"),
-            last_modified_text=detail.get("last_modified"),
-        )
-        assignment_id = upsert_assignment(assign)
-        synced += 1
+            activity_id = act["id"]
+            assign = HebatAssignment(
+                activity_id=activity_id,
+                title=detail.get("title") or act["title"],
+                instruction_text=detail.get("instruction"),
+                opened_at=detail.get("opened_at"),
+                due_at=detail.get("due_at"),
+                time_remaining_text=detail.get("time_remaining"),
+                submission_status=detail.get("submission_status"),
+                grading_status=detail.get("grading_status"),
+                last_modified_text=detail.get("last_modified"),
+            )
+            assignment_id = upsert_assignment(assign)
+            async with counters_lock:
+                synced += 1
 
-        # Auto-create reminders for upcoming deadlines
-        due_dt = _parse_due_dt(detail.get("due_at"))
-        task_id, task_created = sync_assignment_task(
-            chat_id,
-            assignment_id,
-            normalized_due_at=due_dt.isoformat() if due_dt else None,
-        )
-        tasks_created += int(task_created)
-        if due_dt and detail.get("submission_status", "").lower() not in (
-            "submitted for grading",
-        ):
-            for hours in s.hebat_reminder_hours():
-                remind_at = due_dt - timedelta(hours=hours)
-                if remind_at > now and not has_reminder_for_assignment(
-                    assignment_id, hours
-                ):
-                    try:
-                        from app.xninetzy.os.reminders.reminder_store import (
-                            ReminderStore,
-                        )
+            due_dt = _parse_due_dt(detail.get("due_at"))
+            task_id, task_created = sync_assignment_task(
+                chat_id,
+                assignment_id,
+                normalized_due_at=due_dt.isoformat() if due_dt else None,
+            )
+            if task_created:
+                async with counters_lock:
+                    tasks_created += 1
+            if due_dt and detail.get("submission_status", "").lower() not in (
+                "submitted for grading",
+            ):
+                for hours in s.hebat_reminder_hours():
+                    remind_at = due_dt - timedelta(hours=hours)
+                    if remind_at > now and not has_reminder_for_assignment(
+                        assignment_id, hours
+                    ):
+                        try:
+                            from xninetzy.os.reminders.reminder_store import (
+                                ReminderStore,
+                            )
 
-                        store = ReminderStore()
-                        reminder = store.create(
-                            chat_id=chat_id,
-                            sender_id=None,
-                            title=f"⏰ Deadline HEBAT: {assign.title}",
-                            description=f"hebat_assign_{activity_id}_h{hours}",
-                            remind_at=remind_at.isoformat(),
-                            source="hebat",
-                            source_ref_id=f"assignment:{assignment_id}:h{hours}",
-                            deadline_at=due_dt.isoformat(),
-                            reminder_type="deadline",
-                            offset_value=hours,
-                            offset_unit="hours",
-                        )
-                        from app.xninetzy.ecosystem.entity_links import (
-                            ensure_entity_link,
-                        )
+                            store = ReminderStore()
+                            reminder = store.create(
+                                chat_id=chat_id,
+                                sender_id=None,
+                                title=f"⏰ Deadline HEBAT: {assign.title}",
+                                description=f"hebat_assign_{activity_id}_h{hours}",
+                                remind_at=remind_at.isoformat(),
+                                source="hebat",
+                                source_ref_id=f"assignment:{assignment_id}:h{hours}",
+                                deadline_at=due_dt.isoformat(),
+                                reminder_type="deadline",
+                                offset_value=hours,
+                                offset_unit="hours",
+                            )
+                            from xninetzy.ecosystem.entity_links import (
+                                ensure_entity_link,
+                            )
 
-                        ensure_entity_link(
-                            source_type="task",
-                            source_id=task_id,
-                            relation="reminded_by",
-                            target_type="reminder",
-                            target_id=reminder["id"],
-                            chat_id=chat_id,
-                            metadata={
-                                "assignment_id": assignment_id,
-                                "hours_before": hours,
-                            },
-                        )
-                        reminders_created += 1
-                    except Exception as e:
-                        logger.warning("Failed to create reminder: %s", e)
+                            ensure_entity_link(
+                                source_type="task",
+                                source_id=task_id,
+                                relation="reminded_by",
+                                target_type="reminder",
+                                target_id=reminder["id"],
+                                chat_id=chat_id,
+                                metadata={
+                                    "assignment_id": assignment_id,
+                                    "hours_before": hours,
+                                },
+                            )
+                            async with counters_lock:
+                                reminders_created += 1
+                        except Exception as e:
+                            logger.warning("Failed to create reminder: %s", e)
+            # Respect rate limit but distribute across concurrency: sleep a fraction
+            await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS / 5 if s.HEBAT_RATE_LIMIT_SECONDS else 0.2)
 
-        await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
+    await asyncio.gather(*(_process_one(act) for act in assign_activities))
 
     return (
         f"✅ Sync assignment selesai.\n"

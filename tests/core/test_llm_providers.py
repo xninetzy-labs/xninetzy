@@ -3,10 +3,10 @@ from __future__ import annotations
 import pytest
 from langchain_openai import ChatOpenAI
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.llm import get_llm_flash, get_llm_pro
-from app.xninetzy.core.providers import provider_catalog, resolve_profile
-from app.xninetzy.os.ai_preferences import resolve_user_profile, save_preference
+from xninetzy.core.config import get_settings
+from xninetzy.core.llm import get_llm_flash, get_llm_pro
+from xninetzy.core.providers import provider_catalog, resolve_profile
+from xninetzy.os.ai_preferences import resolve_user_profile, save_preference
 
 
 def _clear_caches() -> None:

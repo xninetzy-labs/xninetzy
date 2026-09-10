@@ -7,13 +7,13 @@ aware structured chunks with real per-chunk metadata that flows into the
 existing FAISS knowledge store.
 """
 
-from app.xninetzy.os.knowledge.extraction.overview import build_overview
-from app.xninetzy.os.knowledge.extraction.pipeline import (
+from xninetzy.os.knowledge.extraction.overview import build_overview
+from xninetzy.os.knowledge.extraction.pipeline import (
     build_document_chunks,
     extract_document,
 )
-from app.xninetzy.os.knowledge.extraction.router import analyze_document
-from app.xninetzy.os.knowledge.extraction.schemas import (
+from xninetzy.os.knowledge.extraction.router import analyze_document
+from xninetzy.os.knowledge.extraction.schemas import (
     ContextualChunk,
     DocBlock,
     DocumentManifest,
@@ -21,7 +21,7 @@ from app.xninetzy.os.knowledge.extraction.schemas import (
     ExtractionPlan,
     StructuredDocument,
 )
-from app.xninetzy.os.knowledge.extraction.structure_chunker import chunk_structured
+from xninetzy.os.knowledge.extraction.structure_chunker import chunk_structured
 
 __all__ = [
     "extract_document",

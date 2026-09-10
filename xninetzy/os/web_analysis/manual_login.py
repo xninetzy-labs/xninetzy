@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import asyncio
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.web_analysis.security import detect_human_verification, looks_like_login
-from app.xninetzy.os.web_analysis.session_manager import (
+from xninetzy.core.config import get_settings
+from xninetzy.os.web_analysis.security import detect_human_verification, looks_like_login
+from xninetzy.os.web_analysis.session_manager import (
     SessionEncryptionUnavailable,
     SessionManager,
 )
-from app.xninetzy.os.web_analysis.sites import get_site, is_allowed_url
+from xninetzy.os.web_analysis.sites import get_site, is_allowed_url
 
 
 async def capture_manual_session(
@@ -39,7 +39,7 @@ async def capture_manual_session(
                 timeout=settings.WEB_ANALYSIS_TIMEOUT_MS,
             )
             if credential_source:
-                from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+                from xninetzy.os.academic.mahasiswa_portal.credential_provider import (
                     resolve_campus_credentials,
                 )
 

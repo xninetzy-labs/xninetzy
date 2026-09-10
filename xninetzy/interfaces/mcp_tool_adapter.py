@@ -9,8 +9,8 @@ from langchain_core.tools import BaseTool
 from mcp.server.fastmcp import FastMCP
 from pydantic_core import PydanticUndefined
 
-from app.xninetzy.core.config import Settings, get_settings
-from app.xninetzy.core.security import sanitize_tool_output
+from xninetzy.core.config import Settings, get_settings
+from xninetzy.core.security import sanitize_tool_output
 
 
 TRUSTED_CONTEXT_FIELDS = frozenset(
@@ -76,8 +76,8 @@ def langchain_tool_as_mcp_callable(
         try:
             settings = get_settings()
             if settings.LIGHTNING_ENABLED and not tool.name.startswith("lightning_episode_"):
-                from app.xninetzy.os.lightning.rl import start_episode
-                from app.xninetzy.tools.manifest import manifest_for
+                from xninetzy.os.lightning.rl import start_episode
+                from xninetzy.tools.manifest import manifest_for
 
                 manifest = manifest_for(tool.name)
                 episode = start_episode(
@@ -101,7 +101,7 @@ def langchain_tool_as_mcp_callable(
             result = await tool.ainvoke(arguments)
             result = sanitize_tool_output(result)
             if episode_id:
-                from app.xninetzy.os.lightning.rl import record_action, record_outcome
+                from xninetzy.os.lightning.rl import record_action, record_outcome
 
                 record_action(
                     episode_id=episode_id,
@@ -123,7 +123,7 @@ def langchain_tool_as_mcp_callable(
         except Exception as exc:
             if episode_id:
                 try:
-                    from app.xninetzy.os.lightning.rl import record_action, record_outcome
+                    from xninetzy.os.lightning.rl import record_action, record_outcome
 
                     record_action(
                         episode_id=episode_id,
@@ -170,7 +170,7 @@ def expose_xninetzy_tools(
     """Expose every tool from the central Xninetzy registry through MCP."""
 
     if tools is None:
-        from app.xninetzy.tools.registry import get_all_tools
+        from xninetzy.tools.registry import get_all_tools
 
         tools = get_all_tools()
 

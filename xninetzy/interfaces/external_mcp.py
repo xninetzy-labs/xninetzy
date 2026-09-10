@@ -13,8 +13,8 @@ from langchain_core.tools import tool
 from mcp import ClientSession, StdioServerParameters
 from mcp.client.stdio import stdio_client
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.research.permissions import is_owner_admin
+from xninetzy.core.config import get_settings
+from xninetzy.os.research.permissions import is_owner_admin
 
 
 _NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")

@@ -1,13 +1,13 @@
 """Offline tests for the router-based extraction ecosystem (no LLM, no network)."""
 from __future__ import annotations
 
-from app.xninetzy.os.knowledge.extraction.router import analyze_document
-from app.xninetzy.os.knowledge.extraction.schemas import (
+from xninetzy.os.knowledge.extraction.router import analyze_document
+from xninetzy.os.knowledge.extraction.schemas import (
     DocBlock,
     StructuredDocument,
 )
-from app.xninetzy.os.knowledge.extraction.structure_chunker import chunk_structured
-from app.xninetzy.os.knowledge.extraction.extractors.tables import rows_to_markdown
+from xninetzy.os.knowledge.extraction.structure_chunker import chunk_structured
+from xninetzy.os.knowledge.extraction.extractors.tables import rows_to_markdown
 
 
 def test_router_plain_text_is_simple(tmp_path):

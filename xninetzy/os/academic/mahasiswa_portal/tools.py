@@ -1,36 +1,37 @@
 from __future__ import annotations
 
+import asyncio
 from datetime import UTC, datetime
 
 from langchain_core.tools import tool
 from mcp.types import ImageContent, TextContent
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.identity import normalize_whatsapp_jid
-from app.xninetzy.interfaces.whatsapp.client import WaToolError, call_wa_tool
-from app.xninetzy.os.academic.mahasiswa_portal.captcha_delivery import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.identity import normalize_chat_id
+from xninetzy.os.inbox.service import capture_item as _inbox_capture_item
+from xninetzy.os.academic.mahasiswa_portal.captcha_delivery import (
     build_envelope,
     deliver_captcha,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
+from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
     LOGIN_COORDINATOR,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.grade_token import (
+from xninetzy.os.academic.mahasiswa_portal.grade_token import (
     GRADE_TOKEN_COORDINATOR,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.grade_snapshots import (
+from xninetzy.os.academic.mahasiswa_portal.grade_snapshots import (
     GRADE_SNAPSHOT_REPOSITORY,
     GradeSnapshotOutcome,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
+from xninetzy.os.academic.mahasiswa_portal.krs_war import (
     KrsPlan,
     KrsWarStore,
     krs_war_status_text,
     load_krs_plan,
     take_krs_plan,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsWatcherStore
-from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+from xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsWatcherStore
+from xninetzy.os.academic.mahasiswa_portal.reader import (
     ACADEMIC_PORTAL_READER,
     AcademicProfile,
     AcademicStatusEntry,
@@ -38,18 +39,18 @@ from app.xninetzy.os.academic.mahasiswa_portal.reader import (
     GradeResult,
     ScheduleResult,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
+from xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
     PortalRuntimeAnalyzer,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.session_watchdog import (
+from xninetzy.os.academic.mahasiswa_portal.session_watchdog import (
     format_session_age,
 )
-from app.xninetzy.os.hitl.approval_service import request_approval, validate_approval
-from app.xninetzy.os.notifications.admin_notifier import admin_jid, notify_admin_approval
-from app.xninetzy.os.research.permissions import is_owner_admin
-from app.xninetzy.os.policy.action_policy import evaluate_action
-from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
-from app.xninetzy.os.web_analysis.session_manager import (
+from xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from xninetzy.os.notifications.admin_notifier import owner_chat_id as _notification_jid, notify_admin_approval
+from xninetzy.os.research.permissions import is_owner_admin
+from xninetzy.os.policy.action_policy import evaluate_action
+from xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
+from xninetzy.os.web_analysis.session_manager import (
     SessionEncryptionUnavailable,
     SessionManager,
 )
@@ -57,11 +58,7 @@ from app.xninetzy.os.web_analysis.session_manager import (
 
 def _owner_id(sender_id: str | None, chat_id: str) -> str:
     raw = (sender_id or chat_id or "local-owner").strip()
-    return normalize_whatsapp_jid(raw) or raw
-
-
-def _notification_jid() -> str:
-    return admin_jid()
+    return normalize_chat_id(raw) or raw
 
 
 async def _deliver_captcha(
@@ -71,8 +68,12 @@ async def _deliver_captcha(
     label: str = "Cyber Campus",
     metadata: dict | None = None,
 ) -> str | list[TextContent | ImageContent]:
-    """Kirim CAPTCHA: WhatsApp bila tersedia, fallback ke MCP image blocks."""
-    jid = _notification_jid()
+    """Persist a CAPTCHA challenge via owner inbox; return MCP image blocks when available.
+
+    Replaces the legacy WhatsApp-channel delivery. Legacy ``metadata.channel``
+    values like ``"whatsapp"`` are still accepted as a no-op alias.
+    """
+    owner_target = _owner_id(owner_id, _notification_jid() or "owner")
     png = await LOGIN_COORDINATOR.captcha_png(
         challenge["challenge_id"], owner_id
     )
@@ -80,16 +81,11 @@ async def _deliver_captcha(
     settings = get_settings()
     result = await deliver_captcha(
         envelope,
-        wa_jid=jid,
-        wa_preferred=settings.XNINETZY_CAPTCHA_WA_PREFERRED,
-        auto_open=settings.XNINETZY_CAPTCHA_AUTO_OPEN,
+        owner_chat_id=owner_target,
         captcha_dir=settings.XNINETZY_CAPTCHA_DIR,
-        wa_timeout_seconds=settings.XNINETZY_CAPTCHA_WA_TIMEOUT_SECONDS,
     )
-    if result.delivered_via == "whatsapp":
-        return result.text
     if (metadata or {}).get("channel") == "whatsapp":
-        return result.text
+        return result.text  # legacy callers expected plain text
     return result.blocks or [TextContent(type="text", text=result.text)]
 
 
@@ -154,14 +150,13 @@ async def portal_login_submit_captcha(
     jid = _notification_jid()
     if jid:
         try:
-            await call_wa_tool(
-                "send_text_message",
-                {
-                    "jid": jid,
-                    "text": "Cyber Campus berhasil login dan session terenkripsi sudah disimpan.",
-                },
+            await asyncio.to_thread(
+                _inbox_capture_item,
+                "Cyber Campus berhasil login dan session terenkripsi sudah disimpan.",
+                "note",
+                jid,
             )
-        except WaToolError:
+        except Exception:
             pass
     return "Cyber Campus berhasil login dan session terenkripsi sudah disimpan."
 
@@ -271,14 +266,13 @@ async def uacc_login_submit_captcha(
     jid = _notification_jid()
     if jid:
         try:
-            await call_wa_tool(
-                "send_text_message",
-                {
-                    "jid": jid,
-                    "text": "UACC berhasil login dan session terenkripsi sudah disimpan.",
-                },
+            await asyncio.to_thread(
+                _inbox_capture_item,
+                "UACC berhasil login dan session terenkripsi sudah disimpan.",
+                "note",
+                jid,
             )
-        except WaToolError:
+        except Exception:
             pass
     return "UACC berhasil login dan session terenkripsi sudah disimpan."
 
@@ -553,7 +547,7 @@ async def portal_grades(
             f"Berlaku sampai: {challenge['expires_at']}\n"
             "Token dipakai sekali, tidak masuk LLM, dan tidak disimpan."
         )
-        await call_wa_tool("send_text_message", {"jid": jid, "text": text})
+        await asyncio.to_thread(_inbox_capture_item, text, "note", jid)
     except Exception as exc:
         if challenge:
             await GRADE_TOKEN_COORDINATOR.cancel(challenge["challenge_id"])

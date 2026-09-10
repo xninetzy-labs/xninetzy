@@ -1,0 +1,66 @@
+flowchart TB
+    subgraph UI["Interfaces"]
+        A1["Chat / WhatsApp"]
+        A2["CLI / API"]
+        A3["MCP / Web"]
+    end
+    subgraph ORCH["Orchestration Layer"]
+        B1["Learning Session Manager"]
+        B2["Research Orchestrator"]
+        B3["Adaptive Planner"]
+    end
+    subgraph LAG["Learning Agents"]
+        C1["Assessment Agent"]
+        C2["Reflection Agent"]
+        C3["Curriculum Planner"]
+        C4["Goal Manager"]
+    end
+    subgraph RAG_AG["Research Agents"]
+        D1["Web Search Agent"]
+        D2["Paper Research Agent"]
+        D3["Video Research Agent"]
+        D4["Source Verification Agent"]
+        D5["Content Synthesis Agent"]
+    end
+    subgraph MEM["Memory Layer"]
+        E1["Working Memory"]
+        E2["Episodic Memory"]
+        E3["Semantic Memory"]
+        E4["Procedural Memory"]
+        E5["Memory Manager"]
+        E6["Scheduler (Spaced Repetition)"]
+    end
+    subgraph RET["Retrieval Layer"]
+        F1["Vector Store (FAISS)"]
+        F2["Knowledge Graph"]
+        F3["Hybrid Retrieval + Rerank"]
+    end
+    subgraph STORE["Data Stores"]
+        G1["Document Store"]
+        G2["Citation Store"]
+        G3["Relational DB (SQLite)"]
+        G4["Learner Profile"]
+    end
+    subgraph EXT["External Sources"]
+        H1["Web / Official Docs"]
+        H2["Academic Databases"]
+        H3["YouTube / Video"]
+        H4["Local Documents"]
+    end
+    subgraph SAFE["Safety & Governance"]
+        I1["Human Approval Layer (HITL)"]
+        I2["Safety & Privacy Layer"]
+        I3["Evaluation & Observability"]
+    end
+    UI --> ORCH
+    ORCH --> LAG
+    ORCH --> RAG_AG
+    LAG --> MEM
+    RAG_AG --> MEM
+    MEM --> RET
+    RET --> STORE
+    RAG_AG --> EXT
+    B1 --> I1
+    I1 --> C3
+    I2 --> MEM
+    I3 --> ORCH

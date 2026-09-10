@@ -1,6 +1,6 @@
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.rules.store import (
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.rules.store import (
     add_rule,
     classify_rule,
     delete_rule,

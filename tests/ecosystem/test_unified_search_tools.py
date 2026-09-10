@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.tools.ecosystem.unified_search_tools import unified_search
+from xninetzy.tools.ecosystem.unified_search_tools import unified_search
 
 
 def test_unified_search_returns_empty_for_unknown_query(tmp_path, monkeypatch):
@@ -12,13 +12,13 @@ def test_unified_search_returns_empty_for_unknown_query(tmp_path, monkeypatch):
     monkeypatch.setenv("OBSIDIAN_ALLOW_WRITE", "true")
     (tmp_path / "vault").mkdir()
 
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.core.config import get_settings
 
     get_settings.cache_clear()
-    from app.xninetzy.db.sqlite import init_db
+    from xninetzy.db.sqlite import init_db
 
     init_db()
-    from app.xninetzy.db.migrations import run_migrations
+    from xninetzy.db.migrations import run_migrations
 
     run_migrations()
 
@@ -40,13 +40,13 @@ def test_unified_search_finds_vault_note(tmp_path, monkeypatch):
         "Evidence-Based Learning Techniques untuk Xninetzy", encoding="utf-8"
     )
 
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.core.config import get_settings
 
     get_settings.cache_clear()
-    from app.xninetzy.db.sqlite import init_db
+    from xninetzy.db.sqlite import init_db
 
     init_db()
-    from app.xninetzy.db.migrations import run_migrations
+    from xninetzy.db.migrations import run_migrations
 
     run_migrations()
 
@@ -56,7 +56,7 @@ def test_unified_search_finds_vault_note(tmp_path, monkeypatch):
 
 
 def test_unified_search_registered_in_registry():
-    from app.xninetzy.tools.registry import get_all_tools
+    from xninetzy.tools.registry import get_all_tools
 
     names = {t.name for t in get_all_tools()}
     assert "unified_search" in names

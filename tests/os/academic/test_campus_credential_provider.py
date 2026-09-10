@@ -1,8 +1,8 @@
 import pytest
 from pydantic import SecretStr
 
-from app.xninetzy.core.config import Settings
-from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+from xninetzy.core.config import Settings
+from xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     CampusCredentialError,
     resolve_campus_credentials,
 )

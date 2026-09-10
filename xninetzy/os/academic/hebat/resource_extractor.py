@@ -8,9 +8,9 @@ from __future__ import annotations
 
 from bs4 import BeautifulSoup
 
-from app.xninetzy.os.academic.hebat.html_cleaner import html_to_readable_text
-from app.xninetzy.os.academic.hebat.link_extractor import extract_file_links
-from app.xninetzy.os.academic.hebat.models import DownloadLink
+from xninetzy.os.academic.hebat.html_cleaner import html_to_readable_text
+from xninetzy.os.academic.hebat.link_extractor import extract_file_links
+from xninetzy.os.academic.hebat.models import DownloadLink
 
 
 def extract_resource_detail_from_html(html: str, base_url: str, *, source: str = "resource") -> dict:

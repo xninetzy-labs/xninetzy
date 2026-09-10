@@ -7,15 +7,15 @@ from urllib.parse import urljoin
 
 import httpx
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.academic.hebat.browser_session import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.academic.hebat.browser_session import (
     get_courses_ajax_payload,
     get_cookies_for_httpx,
     get_page_html,
     relogin_hebat,
 )
-from app.xninetzy.os.academic.hebat.parsers import (
+from xninetzy.os.academic.hebat.parsers import (
     is_logged_out,
     is_login_redirect,
     looks_like_login_page,
@@ -233,7 +233,7 @@ async def download_file(
 
         mime_type = content_type.split(";")[0].strip()
 
-        from app.xninetzy.os.academic.hebat.storage import record_download
+        from xninetzy.os.academic.hebat.storage import record_download
 
         record_download(
             chat_id,

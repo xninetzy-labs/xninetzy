@@ -12,19 +12,19 @@ from urllib.parse import parse_qsl, urlencode, urljoin, urlsplit, urlunsplit
 
 from bs4 import BeautifulSoup
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsAnnouncement
-from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect
+from xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsAnnouncement
+from xninetzy.os.academic.mahasiswa_portal.reader import (
     AcademicPortalReadError,
     PORTAL_READ_FETCH_SCRIPT,
     parse_current_krs_html,
 )
-from app.xninetzy.os.notes.vault_service import ObsidianVaultService
-from app.xninetzy.os.notifications.admin_notifier import notify_admin
-from app.xninetzy.os.web_analysis.security import looks_like_login
-from app.xninetzy.os.web_analysis.session_manager import SessionManager
+from xninetzy.os.notes.vault_service import ObsidianVaultService
+from xninetzy.os.notifications.admin_notifier import notify_admin
+from xninetzy.os.web_analysis.security import looks_like_login
+from xninetzy.os.web_analysis.session_manager import SessionManager
 
 logger = logging.getLogger(__name__)
 

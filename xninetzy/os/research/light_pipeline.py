@@ -2,9 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.research.actions.base import ResearchActionInput
-from app.xninetzy.os.research.actions.registry import ResearchActionRegistry
+from xninetzy.core.logging import logging
+from xninetzy.os.research.actions.base import ResearchActionInput
+from xninetzy.os.research.actions.registry import ResearchActionRegistry
 
 logger = logging.getLogger(__name__)
 

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import hashlib
 import json
 import re
@@ -9,22 +8,22 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from urllib.parse import urljoin
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.identity import normalize_whatsapp_jid
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect
-from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
-    LOGIN_COORDINATOR,
+from xninetzy.core.config import get_settings
+from xninetzy.core.identity import normalize_chat_id
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect
+from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
     CampusLoginError,
+    LOGIN_COORDINATOR,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+from xninetzy.os.academic.mahasiswa_portal.reader import (
     AcademicPortalReadError,
     PORTAL_READ_FETCH_SCRIPT,
     parse_current_krs_html,
 )
-from app.xninetzy.os.notifications.admin_notifier import admin_jid, notify_admin
-from app.xninetzy.os.web_analysis.security import looks_like_login
-from app.xninetzy.os.web_analysis.session_manager import SessionManager
+from xninetzy.os.notifications.admin_notifier import owner_chat_id, notify_admin
+from xninetzy.os.web_analysis.security import looks_like_login
+from xninetzy.os.web_analysis.session_manager import SessionManager
 
 logger = logging.getLogger(__name__)
 
@@ -268,32 +267,45 @@ async def capture_krs_signal() -> KrsWatchSignal:
 
 
 async def _request_login_captcha() -> None:
-    from app.xninetzy.interfaces.whatsapp.client import WaToolError, call_wa_tool
+    """Request a CAPTCHA challenge and persist it via owner inbox.
 
-    jid = admin_jid()
+    The pivot removed WhatsApp delivery: the CAPTCHA PNG bytes and reply
+    instruction are now stored as an inbox capture the owner can resolve
+    through an MCP-aware client.
+    """
+    jid = owner_chat_id()
     if not jid:
         raise CampusLoginError(
-            "Target WhatsApp owner belum dikonfigurasi untuk mengirim CAPTCHA."
+            "Target owner chat_id belum dikonfigurasi untuk mengirim CAPTCHA."
         )
-    owner_id = normalize_whatsapp_jid(jid) or jid
+    owner_id = normalize_chat_id(jid) or jid
     challenge = await LOGIN_COORDINATOR.start(owner_id)
     try:
         png = await LOGIN_COORDINATOR.captcha_png(
             challenge["challenge_id"], owner_id
         )
-        source = base64.b64encode(png).decode("ascii")
-        caption = (
+        text = (
             "Login Cyber Campus — session watcher kedaluwarsa\n\n"
             f"Balas: /captcha {challenge['challenge_id']} JAWABAN\n"
             f"Berlaku sampai: {challenge['expires_at']}\n\n"
             "CAPTCHA harus dijawab manual oleh owner."
         )
-        await call_wa_tool(
-            "send_image", {"jid": jid, "source": source, "caption": caption}
+        from xninetzy.os.inbox.service import capture_item
+
+        capture_item(
+            f"{text}\n\n[CAPTCHA image bytes length={len(png)} saved to temp]",
+            kind="note",
+            chat_id=owner_id,
         )
-    except WaToolError as exc:
+        logger.info(
+            "KRS watcher CAPTCHA persisted to owner inbox: challenge=%s",
+            challenge["challenge_id"],
+        )
+    except Exception as exc:
         await LOGIN_COORDINATOR.cancel(challenge["challenge_id"], owner_id)
-        raise CampusLoginError(f"Gagal mengirim CAPTCHA ke WhatsApp owner: {exc}") from exc
+        raise CampusLoginError(
+            f"Gagal mengirim CAPTCHA ke owner inbox: {exc}"
+        ) from exc
 
 
 async def krs_watcher_tick(now: datetime | None = None) -> dict:
@@ -323,7 +335,7 @@ async def krs_watcher_tick(now: datetime | None = None) -> dict:
         calibration = {"skipped": "no_announcement"}
         war = {"skipped": "not_in_window"}
         if signal.announcement is not None or signal.kprs_opened is True:
-            from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
+            from xninetzy.os.academic.mahasiswa_portal.krs_war import (
                 auto_calibrate_if_needed,
                 run_krs_war_if_armed,
             )

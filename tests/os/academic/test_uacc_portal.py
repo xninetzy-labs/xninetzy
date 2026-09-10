@@ -1,11 +1,11 @@
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
-from app.xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
+from xninetzy.core.config import get_settings
+from xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
+from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
     portal_login_config,
 )
-from app.xninetzy.os.web_analysis.sites import get_site
+from xninetzy.os.web_analysis.sites import get_site
 
 
 def test_uacc_site_definition_and_aliases():
@@ -116,7 +116,7 @@ async def test_uacc_login_start_forwards_captcha_to_admin(monkeypatch):
 
 @pytest.mark.asyncio
 async def test_uacc_captcha_envelope_uses_uacc_command(monkeypatch):
-    from app.xninetzy.os.academic.mahasiswa_portal import captcha_delivery as cd
+    from xninetzy.os.academic.mahasiswa_portal import captcha_delivery as cd
 
     envelope = cd.build_envelope(
         {"challenge_id": "challenge-uacc", "expires_at": "2026-08-05T00:00:00+00:00"},

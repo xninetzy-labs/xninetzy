@@ -4,9 +4,8 @@ from types import SimpleNamespace
 import pytest
 from mcp.types import ImageContent, TextContent
 
-from app.xninetzy.interfaces.whatsapp.client import WaToolError
-from app.xninetzy.os.academic.mahasiswa_portal import captcha_delivery as cd
-from app.xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
+from xninetzy.os.academic.mahasiswa_portal import captcha_delivery as cd
+from xninetzy.os.academic.mahasiswa_portal import tools as portal_tools
 
 PNG_1PX = base64.b64decode(
     "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg=="
@@ -25,83 +24,67 @@ def _envelope(challenge_id="c1"):
 
 
 @pytest.mark.asyncio
-async def test_deliver_whatsapp_when_wa_healthy(monkeypatch, tmp_path):
-    sent = []
+async def test_deliver_persists_to_owner_inbox(monkeypatch, tmp_path):
+    captured: list[dict] = []
 
-    async def fake_send(jid, envelope):
-        sent.append((jid, envelope.challenge_id))
+    def fake_capture(text, *, kind, chat_id):
+        captured.append({"text": text, "kind": kind, "chat_id": chat_id})
+        return ({}, True)
 
-    monkeypatch.setattr(cd, "_wa_healthcheck", lambda timeout: True)
-    monkeypatch.setattr(cd, "_wa_send_image", fake_send)
-
-    result = await cd.deliver_captcha(
-        _envelope(),
-        wa_jid="628123@s.whatsapp.net",
-        captcha_dir=str(tmp_path),
-    )
-
-    assert result.delivered_via == "whatsapp"
-    assert result.blocks is None
-    assert result.png_path is None
-    assert result.error is None
-    assert sent == [("628123@s.whatsapp.net", "c1")]
-    assert "CAPTCHA harus dijawab manual oleh owner." in result.text
-
-
-@pytest.mark.asyncio
-async def test_deliver_mcp_image_when_wa_down(monkeypatch, tmp_path):
-    monkeypatch.setattr(cd, "_wa_healthcheck", lambda timeout: False)
+    monkeypatch.setattr(cd, "_persist_captcha_inbox", lambda *args, **kwargs: True)
+    monkeypatch.setattr(cd, "capture_item", fake_capture, raising=False)
     monkeypatch.setattr(cd, "_open_local", lambda p: None)
 
     result = await cd.deliver_captcha(
         _envelope(),
-        wa_jid="628123@s.whatsapp.net",
+        owner_chat_id="62812345678",
+        captcha_dir=str(tmp_path),
+    )
+
+    assert result.delivered_via == "owner_inbox"
+    assert result.blocks is not None
+    assert result.png_path is not None
+    assert (tmp_path / "uacc_captcha_c1.png").exists()
+    assert isinstance(result.blocks[0], TextContent)
+    assert isinstance(result.blocks[1], ImageContent)
+    assert result.blocks[1].mimeType == "image/png"
+    assert result.blocks[1].data == base64.b64encode(PNG_1PX).decode("ascii")
+    assert "CAPTCHA harus dijawab manual oleh owner." in result.text
+
+
+@pytest.mark.asyncio
+async def test_deliver_falls_back_to_mcp_image_when_inbox_unavailable(monkeypatch, tmp_path):
+    monkeypatch.setattr(cd, "_persist_captcha_inbox", lambda *args, **kwargs: False)
+    monkeypatch.setattr(cd, "_open_local", lambda p: None)
+
+    result = await cd.deliver_captcha(
+        _envelope(),
+        owner_chat_id="62812345678",
         captcha_dir=str(tmp_path),
     )
 
     assert result.delivered_via == "mcp_image"
     assert result.png_path is not None
-    assert (tmp_path / "uacc_captcha_c1.png").exists()
     assert result.blocks is not None
     assert isinstance(result.blocks[0], TextContent)
     assert isinstance(result.blocks[1], ImageContent)
-    assert result.blocks[1].mimeType == "image/png"
-    assert result.blocks[1].data == base64.b64encode(PNG_1PX).decode("ascii")
-    assert "WA MCP tidak siap" in (result.error or "")
+    assert "owner_inbox unavailable" in (result.error or "")
 
 
 @pytest.mark.asyncio
-async def test_deliver_mcp_image_when_wa_send_fails(monkeypatch, tmp_path):
-    async def fake_send(jid, envelope):
-        raise WaToolError("gagal kirim ke WhatsApp")
-
-    monkeypatch.setattr(cd, "_wa_healthcheck", lambda timeout: True)
-    monkeypatch.setattr(cd, "_wa_send_image", fake_send)
+async def test_deliver_uses_default_owner_when_chat_id_missing(monkeypatch, tmp_path):
+    monkeypatch.setattr(cd, "_persist_captcha_inbox", lambda *args, **kwargs: True)
     monkeypatch.setattr(cd, "_open_local", lambda p: None)
+    monkeypatch.setattr(cd, "get_settings", lambda: SimpleNamespace(OWNER_CHAT_ID=""))
 
     result = await cd.deliver_captcha(
         _envelope(),
-        wa_jid="628123@s.whatsapp.net",
+        owner_chat_id=None,
         captcha_dir=str(tmp_path),
     )
 
-    assert result.delivered_via == "mcp_image"
-    assert result.blocks is not None
-    assert "gagal kirim ke WhatsApp" in (result.error or "")
-
-
-@pytest.mark.asyncio
-async def test_deliver_mcp_image_without_wa_jid(monkeypatch, tmp_path):
-    monkeypatch.setattr(cd, "_open_local", lambda p: None)
-
-    result = await cd.deliver_captcha(
-        _envelope(),
-        wa_jid=None,
-        captcha_dir=str(tmp_path),
-    )
-
-    assert result.delivered_via == "mcp_image"
-    assert "belum dikonfigurasi" in (result.error or "")
+    assert result.delivered_via == "owner_inbox"
+    assert "owner" in result.text or result.text
 
 
 def _portal_settings(tmp_path):
@@ -110,6 +93,7 @@ def _portal_settings(tmp_path):
         XNINETZY_CAPTCHA_AUTO_OPEN=False,
         XNINETZY_CAPTCHA_DIR=str(tmp_path),
         XNINETZY_CAPTCHA_WA_TIMEOUT_SECONDS=8.0,
+        OWNER_CHAT_ID="62812345678",
     )
 
 
@@ -127,6 +111,7 @@ def _mock_coordinator(monkeypatch, tmp_path):
     monkeypatch.setattr(portal_tools.LOGIN_COORDINATOR, "start", fake_start)
     monkeypatch.setattr(portal_tools.LOGIN_COORDINATOR, "captcha_png", fake_captcha_png)
     monkeypatch.setattr(portal_tools, "get_settings", lambda: _portal_settings(tmp_path))
+    monkeypatch.setattr(cd, "_persist_captcha_inbox", lambda *args, **kwargs: True)
     monkeypatch.setattr(cd, "_open_local", lambda p: None)
 
 
@@ -138,7 +123,7 @@ async def test_uacc_login_start_returns_blocks_for_mcp_caller(monkeypatch, tmp_p
     result = await portal_tools.uacc_login_start.ainvoke(
         {
             "chat_id": "chat",
-            "sender_id": "628123@s.whatsapp.net",
+            "sender_id": "62812345678",
             "metadata": {"source": "mcp"},
         }
     )
@@ -151,41 +136,23 @@ async def test_uacc_login_start_returns_blocks_for_mcp_caller(monkeypatch, tmp_p
 
 
 @pytest.mark.asyncio
-async def test_uacc_login_start_whatsapp_channel_gets_text_hint(monkeypatch, tmp_path):
+async def test_uacc_login_start_whatsapp_metadata_alias_returns_text(monkeypatch, tmp_path):
+    """Legacy ``metadata.channel == "whatsapp"`` callers still get plain text.
+
+    The pivot removed WhatsApp delivery, so the text is now the inbox
+    notification body rather than a WA message — but the return shape stays
+    a ``str`` for backwards compat.
+    """
     _mock_coordinator(monkeypatch, tmp_path)
     monkeypatch.setattr(portal_tools, "_notification_jid", lambda: None)
-    monkeypatch.setattr(cd, "_wa_healthcheck", lambda timeout: False)
 
     result = await portal_tools.uacc_login_start.ainvoke(
         {
             "chat_id": "chat",
-            "sender_id": "628123@s.whatsapp.net",
+            "sender_id": "62812345678",
             "metadata": {"channel": "whatsapp"},
         }
     )
 
     assert isinstance(result, str)
     assert "PNG lokal" in result
-
-
-@pytest.mark.asyncio
-async def test_uacc_login_start_whatsapp_healthy_returns_text(monkeypatch, tmp_path):
-    _mock_coordinator(monkeypatch, tmp_path)
-    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@s.whatsapp.net")
-
-    async def fake_send(jid, envelope):
-        pass
-
-    monkeypatch.setattr(cd, "_wa_healthcheck", lambda timeout: True)
-    monkeypatch.setattr(cd, "_wa_send_image", fake_send)
-
-    result = await portal_tools.uacc_login_start.ainvoke(
-        {
-            "chat_id": "chat",
-            "sender_id": "628123@s.whatsapp.net",
-            "metadata": {"source": "mcp"},
-        }
-    )
-
-    assert isinstance(result, str)
-    assert "PNG lokal" not in result

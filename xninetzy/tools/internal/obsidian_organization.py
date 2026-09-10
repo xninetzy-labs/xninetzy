@@ -4,7 +4,7 @@ import json
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.notes.organization_service import ObsidianOrganizationService
+from xninetzy.os.notes.organization_service import ObsidianOrganizationService
 
 
 def _service() -> ObsidianOrganizationService:
@@ -45,8 +45,8 @@ async def obsidian_organize_apply(
     sender_id: str | None = None,
 ) -> str:
     """Minta approval owner sebelum memindahkan note ke folder canonical."""
-    from app.xninetzy.os.hitl.approval_service import request_approval
-    from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
+    from xninetzy.os.hitl.approval_service import request_approval
+    from xninetzy.os.notifications.admin_notifier import notify_admin_approval
 
     moves = list(plan.get("moves") or [])
     if not moves:

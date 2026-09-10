@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import asyncio
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 
@@ -140,7 +140,7 @@ async def read_url(url: str, max_chars: int = 3000) -> str:
     """Fetch and extract text from a URL."""
     from bs4 import BeautifulSoup
 
-    from app.xninetzy.os.research.safe_fetch import safe_get
+    from xninetzy.os.research.safe_fetch import safe_get
 
     try:
         html = await safe_get(url)

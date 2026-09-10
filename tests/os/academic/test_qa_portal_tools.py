@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.os.academic.qa_portal import tools as qa_tools
+from xninetzy.os.academic.qa_portal import tools as qa_tools
 
 
 @pytest.mark.asyncio

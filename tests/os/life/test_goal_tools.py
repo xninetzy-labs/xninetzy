@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 
 @pytest.fixture
@@ -12,10 +12,10 @@ def db(tmp_path, monkeypatch):
     monkeypatch.setenv("OBSIDIAN_VAULT_HOST_PATH", str(tmp_path / "vault"))
     monkeypatch.setenv("OBSIDIAN_ALLOW_WRITE", "true")
     get_settings.cache_clear()
-    from app.xninetzy.db.sqlite import init_db
+    from xninetzy.db.sqlite import init_db
 
     init_db()
-    from app.xninetzy.db.migrations import run_migrations
+    from xninetzy.db.migrations import run_migrations
 
     run_migrations()
     yield
@@ -23,7 +23,7 @@ def db(tmp_path, monkeypatch):
 
 
 def test_goal_flow_create_list_update_review(db):
-    from app.xninetzy.tools.ecosystem.goal_tools import (
+    from xninetzy.tools.ecosystem.goal_tools import (
         goal_create,
         goal_list,
         goal_review,
@@ -65,7 +65,7 @@ def test_goal_flow_create_list_update_review(db):
 
 
 def test_goal_create_defaults_domain_and_horizon(db):
-    from app.xninetzy.tools.ecosystem.goal_tools import goal_create, goal_list
+    from xninetzy.tools.ecosystem.goal_tools import goal_create, goal_list
 
     created = goal_create.invoke({"title": "Goal Tanpa Detail"})
     assert "Goal dibuat" in created
@@ -77,7 +77,7 @@ def test_goal_create_defaults_domain_and_horizon(db):
 
 
 def test_goal_list_domain_filter(db):
-    from app.xninetzy.tools.ecosystem.goal_tools import goal_create, goal_list
+    from xninetzy.tools.ecosystem.goal_tools import goal_create, goal_list
 
     goal_create.invoke({"title": "Goal Learning", "domain": "learning"})
     goal_create.invoke({"title": "Goal Health", "domain": "health"})
@@ -88,22 +88,22 @@ def test_goal_list_domain_filter(db):
 
 
 def test_goal_update_progress_missing_goal(db):
-    from app.xninetzy.tools.ecosystem.goal_tools import goal_update_progress
+    from xninetzy.tools.ecosystem.goal_tools import goal_update_progress
 
     result = goal_update_progress.invoke({"goal_id": 999, "log_text": "test"})
     assert "tidak ditemukan" in result
 
 
 def test_goal_review_missing_goal(db):
-    from app.xninetzy.tools.ecosystem.goal_tools import goal_review
+    from xninetzy.tools.ecosystem.goal_tools import goal_review
 
     result = goal_review.invoke({"goal_id": 999})
     assert "tidak ditemukan" in result
 
 
 def test_goal_create_writes_event(db):
-    from app.xninetzy.ecosystem.event_bus import recent_events
-    from app.xninetzy.tools.ecosystem.goal_tools import goal_create
+    from xninetzy.ecosystem.event_bus import recent_events
+    from xninetzy.tools.ecosystem.goal_tools import goal_create
 
     goal_create.invoke({"title": "Goal Event", "chat_id": "goal-chat-1"})
     events = recent_events(chat_id="goal-chat-1", event_type="goal_created")
@@ -112,7 +112,7 @@ def test_goal_create_writes_event(db):
 
 
 def test_goal_tools_registered_in_registry():
-    from app.xninetzy.tools.registry import get_all_tools
+    from xninetzy.tools.registry import get_all_tools
 
     names = {t.name for t in get_all_tools()}
     assert {"goal_create", "goal_list", "goal_review", "goal_update_progress"} <= names

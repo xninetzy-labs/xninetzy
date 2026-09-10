@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from langchain_core.messages import HumanMessage, SystemMessage
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.llm import get_llm_flash
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.knowledge.extraction.schemas import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.llm import get_llm_flash
+from xninetzy.core.logging import logging
+from xninetzy.os.knowledge.extraction.schemas import (
     DocumentOverview,
     StructuredDocument,
 )

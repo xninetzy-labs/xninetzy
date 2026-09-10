@@ -12,8 +12,8 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from app.xninetzy.os.academic.hebat import moodle_client
-from app.xninetzy.os.academic.hebat.parsers import is_login_redirect, looks_like_login_page
+from xninetzy.os.academic.hebat import moodle_client
+from xninetzy.os.academic.hebat.parsers import is_login_redirect, looks_like_login_page
 
 
 # ─── detection helpers ───────────────────────────────────────────────────────

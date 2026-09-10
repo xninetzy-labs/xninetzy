@@ -1,5 +1,5 @@
-from app.xninetzy.skills.prompting import build_relevant_skill_context
-from app.xninetzy.skills.registry import (
+from xninetzy.skills.prompting import build_relevant_skill_context
+from xninetzy.skills.registry import (
     SkillValidationError,
     get_skill,
     install_skill,

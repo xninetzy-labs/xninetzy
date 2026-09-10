@@ -3,11 +3,11 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.os.hitl.approval_service import request_approval, set_approval_status
-from app.xninetzy.os.policy.action_policy import ActionMode, RiskClass, evaluate_action
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.os.hitl.approval_service import request_approval, set_approval_status
+from xninetzy.os.policy.action_policy import ActionMode, RiskClass, evaluate_action
 
 
 def test_policy_auto_for_read_and_draft(monkeypatch, tmp_path):
@@ -83,7 +83,7 @@ def test_approved_action_hash_mismatch_is_rejected(monkeypatch, tmp_path):
         {"resource": "r"},
     )
     assert set_approval_status(approval_id, "approved", None, "Misbahul")[0] is True
-    from app.xninetzy.os.hitl.approval_service import validate_approval
+    from xninetzy.os.hitl.approval_service import validate_approval
     import pytest
 
     with pytest.raises(ValueError, match="tidak berlaku"):

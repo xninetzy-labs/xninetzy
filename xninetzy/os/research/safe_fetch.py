@@ -4,7 +4,7 @@ import ipaddress
 import socket
 from urllib.parse import urlparse
 
-from app.xninetzy.core.logging import logging
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 

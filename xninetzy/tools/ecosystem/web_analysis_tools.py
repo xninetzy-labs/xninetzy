@@ -6,11 +6,11 @@ import httpx
 from bs4 import BeautifulSoup
 from langchain_core.tools import tool
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
-from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
-from app.xninetzy.os.web_analysis.security import detect_human_verification
-from app.xninetzy.os.web_analysis.sites import _canonical_seed_url, get_site
+from xninetzy.core.config import get_settings
+from xninetzy.os.web_analysis.analyzer_service import AnalyzerService
+from xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
+from xninetzy.os.web_analysis.security import detect_human_verification
+from xninetzy.os.web_analysis.sites import _canonical_seed_url, get_site
 
 
 @tool
@@ -83,7 +83,7 @@ async def web_discover(
     verification terdeteksi, dan menjaga host tetap sama dengan URL awal.
     Knowledge ingestion dan capture visual harus diminta eksplisit.
     """
-    from app.xninetzy.os.web_analysis.discovery import WebDiscoveryService
+    from xninetzy.os.web_analysis.discovery import WebDiscoveryService
 
     result = await WebDiscoveryService().discover(
         source_url,

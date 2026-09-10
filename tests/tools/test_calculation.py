@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.tools.internal.calculation import calculate, calculate_percentage
+from xninetzy.tools.internal.calculation import calculate, calculate_percentage
 
 
 def test_calculate_arithmetic():

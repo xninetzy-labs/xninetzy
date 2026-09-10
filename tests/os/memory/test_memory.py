@@ -1,6 +1,6 @@
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.memory.memory_store import (
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.memory.memory_store import (
     add_memory,
     classify_memory,
     forget_memory,

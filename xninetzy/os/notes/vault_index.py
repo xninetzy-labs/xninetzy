@@ -5,8 +5,8 @@ import re
 from collections.abc import Callable, Iterable
 from dataclasses import dataclass
 
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
 
 
 @dataclass(frozen=True, slots=True)

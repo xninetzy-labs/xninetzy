@@ -13,7 +13,7 @@ async def web_search(query: str, limit: int = 5) -> str:
         query: Query pencarian
         limit: Jumlah hasil (default: 5)
     """
-    from app.xninetzy.os.research.web_search import web_search as _search
+    from xninetzy.os.research.web_search import web_search as _search
 
     results = await _search(query, limit)
     if not results:
@@ -28,7 +28,7 @@ async def web_search(query: str, limit: int = 5) -> str:
 @tool
 def research_capabilities() -> dict:
     """Tampilkan status provider Deep Research tanpa membocorkan credential."""
-    from app.xninetzy.os.research.web_search import research_capabilities as _capabilities
+    from xninetzy.os.research.web_search import research_capabilities as _capabilities
     return _capabilities()
 
 
@@ -42,8 +42,8 @@ async def youtube_search(query: str, limit: int = 5) -> str:
         query: Query pencarian video
         limit: Jumlah hasil (default: 5)
     """
-    from app.xninetzy.os.research.youtube_search import youtube_search as _search
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.os.research.youtube_search import youtube_search as _search
+    from xninetzy.core.config import get_settings
     if not get_settings().YOUTUBE_API_KEY:
         return "⚠️ YouTube search tidak aktif. Set YOUTUBE_API_KEY di .env"
 
@@ -63,7 +63,7 @@ async def research_light(topic: str, limit: int = 3) -> str:
 
     Menggabungkan web, YouTube, dan paper akademik dalam satu panggilan cepat.
     """
-    from app.xninetzy.os.research.light_pipeline import (
+    from xninetzy.os.research.light_pipeline import (
         collect_quick_sources,
         group_sources_by_type,
     )
@@ -107,7 +107,7 @@ async def research_light(topic: str, limit: int = 3) -> str:
 @tool
 async def research_create_subplans(topic: str, mode: str = "balanced") -> str:
     """Buat sub-plan riset tanpa menjalankan full deep research."""
-    from app.xninetzy.os.research.subplanner import format_subplans_for_whatsapp, generate_research_subplans
+    from xninetzy.os.research.subplanner import format_subplans_for_whatsapp, generate_research_subplans
     subplans = await generate_research_subplans(topic, None, mode)
     return format_subplans_for_whatsapp(topic, subplans)
 
@@ -127,7 +127,7 @@ async def research_youtube_collect(query: str, limit: int = 5) -> str:
 @tool
 async def research_rank_sources(topic: str, sources: list[dict] | None = None) -> str:
     """Rank sumber riset sederhana berdasarkan relevansi judul/snippet."""
-    from app.xninetzy.os.research.deep_research import rank_research_sources
+    from xninetzy.os.research.deep_research import rank_research_sources
     ranked = rank_research_sources(topic, [], sources or [], "balanced")
     if not ranked:
         return "Belum ada sumber untuk diranking."
@@ -141,9 +141,9 @@ async def research_rank_sources(topic: str, sources: list[dict] | None = None) -
 @tool
 async def research_generate_brief(topic: str) -> str:
     """Buat brief riset kerangka dengan sumber nyata (web + paper + video)."""
-    from app.xninetzy.os.research.deep_research import generate_research_brief
-    from app.xninetzy.os.research.light_pipeline import collect_quick_sources
-    from app.xninetzy.os.research.subplanner import generate_research_subplans
+    from xninetzy.os.research.deep_research import generate_research_brief
+    from xninetzy.os.research.light_pipeline import collect_quick_sources
+    from xninetzy.os.research.subplanner import generate_research_subplans
 
     subplans = await generate_research_subplans(topic, None, "balanced")
     sources = await collect_quick_sources(topic, limit=3)
@@ -161,8 +161,8 @@ async def research_generate_brief(topic: str) -> str:
 @tool
 async def research_save_brief(topic: str, brief: str, chat_id: str = "system") -> str:
     """Buat approval request untuk menyimpan brief riset."""
-    from app.xninetzy.os.hitl.approval_service import request_approval
-    from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
+    from xninetzy.os.hitl.approval_service import request_approval
+    from xninetzy.os.notifications.admin_notifier import notify_admin_approval
 
     approval_id = request_approval(
         chat_id=chat_id,
@@ -189,7 +189,7 @@ async def research_save_brief(topic: str, brief: str, chat_id: str = "system") -
 @tool
 async def youtube_learning_search(topic: str, level: str = "beginner", limit: int = 6) -> str:
     """Cari dan susun YouTube learning path untuk topik belajar."""
-    from app.xninetzy.os.research.youtube_search import youtube_search as _search
+    from xninetzy.os.research.youtube_search import youtube_search as _search
     results = await _search(f"{topic} tutorial {level}", limit=limit)
     return _format_youtube_learning_path(topic, results)
 
@@ -244,7 +244,7 @@ async def deep_research_topic(
     include_academic: bool = False,
 ) -> str:
     """Lakukan deep research admin-only dengan subplanning, session, dan tanpa auto-save."""
-    from app.xninetzy.os.research.deep_research import run_deep_research
+    from xninetzy.os.research.deep_research import run_deep_research
     return await run_deep_research(
         topic=topic,
         chat_id=chat_id,
@@ -266,7 +266,7 @@ async def deep_research_get(session_id: int, chat_id: str = "system") -> str:
         session_id: ID session deep research
         chat_id: Chat pemilik session (diinjeksi server-side untuk MCP)
     """
-    from app.xninetzy.os.research.session import get_research_session
+    from xninetzy.os.research.session import get_research_session
     row = get_research_session(int(session_id))
     if not row or row.get("chat_id") != chat_id:
         return f"Session #{session_id} tidak ditemukan untuk chat ini."
@@ -292,7 +292,7 @@ async def deep_research_list(limit: int = 5, chat_id: str = "system") -> str:
         limit: Jumlah session (maks 50)
         chat_id: Chat pemilik session (diinjeksi server-side untuk MCP)
     """
-    from app.xninetzy.os.research.session import list_research_sessions
+    from xninetzy.os.research.session import list_research_sessions
     rows = list_research_sessions(chat_id, limit=int(limit))
     if not rows:
         return "Belum ada deep research session di chat ini."
@@ -316,7 +316,7 @@ async def research_search_papers(
         sources: Sumber dipisah koma: arxiv, crossref
         max_results: Jumlah hasil per sumber (default: 5)
     """
-    from app.xninetzy.os.research.academic_search import search_papers
+    from xninetzy.os.research.academic_search import search_papers
 
     results = await search_papers(query, sources=sources, max_results=int(max_results))
     if not results:
@@ -349,7 +349,7 @@ async def research_get_paper(
         ingest: True untuk menyimpan metadata+abstrak ke knowledge base
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.research.academic_search import get_paper
+    from xninetzy.os.research.academic_search import get_paper
 
     paper = await get_paper(identifier, source=source)
     if paper.get("status") != "ok":
@@ -370,7 +370,7 @@ async def research_get_paper(
         lines.append(f"\nAbstrak: {abstract[:800]}")
 
     if ingest and abstract:
-        from app.xninetzy.os.knowledge.ingestion import ingest_text
+        from xninetzy.os.knowledge.ingestion import ingest_text
 
         result = ingest_text(
             title=paper["title"],
@@ -393,7 +393,7 @@ async def research_download_paper(identifier: str, source: str = "auto") -> str:
         identifier: DOI, ID arXiv, atau URL keduanya
         source: auto|doi|arxiv (default: auto-deteksi)
     """
-    from app.xninetzy.os.research.academic_search import download_paper_pdf
+    from xninetzy.os.research.academic_search import download_paper_pdf
 
     result = await download_paper_pdf(identifier, source=source)
     if result["status"] == "downloaded":

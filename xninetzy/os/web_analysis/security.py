@@ -3,7 +3,7 @@ from __future__ import annotations
 import re
 from urllib.parse import parse_qsl, urlsplit
 
-from app.xninetzy.os.web_analysis.models import EndpointRecord
+from xninetzy.os.web_analysis.models import EndpointRecord
 
 
 SAFE_METHODS = frozenset({"GET", "HEAD"})

@@ -7,7 +7,7 @@ from types import SimpleNamespace
 import httpx
 import pytest
 
-from app.xninetzy.interfaces.media import audio_transcriber
+from xninetzy.interfaces.media import audio_transcriber
 
 
 class _FakeResponse:

@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.tools.ecosystem.pixelrag_tools import _validate_source
-from app.xninetzy.tools.registry import get_all_tools
+from xninetzy.tools.ecosystem.pixelrag_tools import _validate_source
+from xninetzy.tools.registry import get_all_tools
 
 PIXELRAG_TOOLS = {
     "pixelrag_capture",

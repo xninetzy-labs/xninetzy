@@ -7,13 +7,13 @@ from pathlib import Path
 
 from pydantic import BaseModel, Field
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
-from app.xninetzy.os.web_analysis.cache_manager import AnalysisBusyError, AnalysisCacheManager
-from app.xninetzy.os.web_analysis.security import detect_human_verification, is_safe_request_method
-from app.xninetzy.os.web_analysis.sites import get_site
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.web_analysis.analyzer_service import AnalyzerService
+from xninetzy.os.web_analysis.cache_manager import AnalysisBusyError, AnalysisCacheManager
+from xninetzy.os.web_analysis.security import detect_human_verification, is_safe_request_method
+from xninetzy.os.web_analysis.sites import get_site
 
 
 class DiscoveredPage(BaseModel):
@@ -214,7 +214,7 @@ class WebDiscoveryService:
         settings = get_settings()
         graph_keys: dict[str, str] = {}
         if settings.GRAPHRAG_V3_ENABLED:
-            from app.xninetzy.os.graph.v3 import graph_service
+            from xninetzy.os.graph.v3 import graph_service
 
             for page in result.pages:
                 try:
@@ -256,7 +256,7 @@ class WebDiscoveryService:
                     result.errors.append(f"graph edge {parent}: {type(exc).__name__}")
 
         if ingest_to_knowledge:
-            from app.xninetzy.os.knowledge.ingestion import ingest_text
+            from xninetzy.os.knowledge.ingestion import ingest_text
 
             for page in result.pages:
                 if not page.text:
@@ -275,7 +275,7 @@ class WebDiscoveryService:
                     result.errors.append(f"knowledge {page.url}: {type(exc).__name__}")
 
         if capture_visual:
-            from app.xninetzy.tools.ecosystem.pixelrag_tools import pixelrag_capture
+            from xninetzy.tools.ecosystem.pixelrag_tools import pixelrag_capture
 
             for page in result.pages[: max(0, settings.WEB_ANALYSIS_MAX_VISUAL_CAPTURES)]:
                 try:

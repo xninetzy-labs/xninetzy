@@ -1,6 +1,6 @@
 import pytest
 
-from app.xninetzy.ecosystem.command_router import parse_command
+from xninetzy.ecosystem.command_router import parse_command
 
 
 def test_media_info_command():
@@ -12,14 +12,14 @@ def test_analyze_media_command():
 
 
 def test_media_info_no_media_returns_message():
-    from app.xninetzy.interfaces.media.media_tools import media_info
+    from xninetzy.interfaces.media.media_tools import media_info
 
     out = media_info.invoke({"metadata": {}})
     assert "Tidak ada media" in out
 
 
 def test_media_info_with_media():
-    from app.xninetzy.interfaces.media.media_tools import media_info
+    from xninetzy.interfaces.media.media_tools import media_info
 
     md = {"media": {"hasMedia": True, "mediaType": "document",
                     "filename": "bab1.pdf", "mimetype": "application/pdf", "fileLength": 1234}}
@@ -30,7 +30,7 @@ def test_media_info_with_media():
 
 @pytest.mark.asyncio
 async def test_analyze_media_no_media():
-    from app.xninetzy.interfaces.media.media_tools import analyze_media
+    from xninetzy.interfaces.media.media_tools import analyze_media
 
     out = await analyze_media.ainvoke({"chat_id": "c", "metadata": {}})
     assert "Tidak ada media" in out
@@ -38,7 +38,7 @@ async def test_analyze_media_no_media():
 
 @pytest.mark.asyncio
 async def test_analyze_media_image_uses_ocr(monkeypatch):
-    from app.xninetzy.interfaces.media import media_tools
+    from xninetzy.interfaces.media import media_tools
 
     md = {"media": {"hasMedia": True, "mediaType": "image", "messageId": "m1"}}
 
@@ -61,7 +61,7 @@ async def test_analyze_media_image_uses_ocr(monkeypatch):
 
 
 def test_media_info_supports_quoted_media():
-    from app.xninetzy.interfaces.media.media_tools import media_info
+    from xninetzy.interfaces.media.media_tools import media_info
 
     md = {
         "quotedMedia": {
@@ -76,7 +76,7 @@ def test_media_info_supports_quoted_media():
 
 
 def test_media_tools_registered():
-    from app.xninetzy.tools.registry import get_tool_names
+    from xninetzy.tools.registry import get_tool_names
 
     names = get_tool_names()
     for t in (

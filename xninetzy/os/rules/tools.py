@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.rules.store import (
+from xninetzy.os.rules.store import (
     add_rule,
     delete_rule,
     list_rules,
@@ -78,7 +78,7 @@ def rule_search(query: str, sender_id: str = "", chat_id: str = "") -> str:
 @tool
 def rules_healthcheck(sender_id: str = "", chat_id: str = "") -> str:
     """Healthcheck sistem rules + style (untuk /test-rules)."""
-    from app.xninetzy.os.style.store import get_style_text
+    from xninetzy.os.style.store import get_style_text
 
     uid = _uid(sender_id, chat_id)
     active = list_rules(uid, active_only=True)

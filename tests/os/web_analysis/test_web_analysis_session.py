@@ -3,12 +3,12 @@ from pathlib import Path
 import pytest
 from cryptography.fernet import Fernet
 
-from app.xninetzy.os.web_analysis.session_manager import (
+from xninetzy.os.web_analysis.session_manager import (
     SessionDecryptionError,
     SessionEncryptionUnavailable,
     SessionManager,
 )
-from app.xninetzy.os.web_analysis.snapshot_manager import SnapshotManager
+from xninetzy.os.web_analysis.snapshot_manager import SnapshotManager
 
 
 def test_session_is_encrypted_and_profile_name_not_in_path(tmp_path):

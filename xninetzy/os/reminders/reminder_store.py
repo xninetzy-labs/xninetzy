@@ -6,8 +6,8 @@ from datetime import datetime
 from zoneinfo import ZoneInfo
 from typing import Any
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect, init_db
 
 
 ACTIVE_STATUSES = ("pending", "processing", "sent", "closed")
@@ -24,7 +24,7 @@ def _normalize_title(title: str) -> str:
 def _ensure_db() -> None:
     init_db()
     try:
-        from app.xninetzy.db.migrations import run_migrations
+        from xninetzy.db.migrations import run_migrations
         run_migrations()
     except Exception:
         pass

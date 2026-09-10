@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import re
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.skills.registry import list_skills, rank_skills
+from xninetzy.core.config import get_settings
+from xninetzy.skills.registry import list_skills, rank_skills
 
 
 def build_skill_prompt() -> str:

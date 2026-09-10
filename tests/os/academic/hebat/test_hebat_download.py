@@ -2,12 +2,12 @@
 
 from __future__ import annotations
 
-from app.xninetzy.os.academic.hebat.assignment_extractor import extract_assignment_detail_from_html
-from app.xninetzy.os.academic.hebat.content_analyzer import analyze_downloaded_file
-from app.xninetzy.os.academic.hebat.download_resolver import extract_download_candidates
-from app.xninetzy.os.academic.hebat.moodle_client import _is_login_html_bytes
-from app.xninetzy.os.academic.hebat.resource_extractor import extract_resource_detail_from_html
-from app.xninetzy.os.academic.hebat import storage
+from xninetzy.os.academic.hebat.assignment_extractor import extract_assignment_detail_from_html
+from xninetzy.os.academic.hebat.content_analyzer import analyze_downloaded_file
+from xninetzy.os.academic.hebat.download_resolver import extract_download_candidates
+from xninetzy.os.academic.hebat.moodle_client import _is_login_html_bytes
+from xninetzy.os.academic.hebat.resource_extractor import extract_resource_detail_from_html
+from xninetzy.os.academic.hebat import storage
 
 BASE = "https://hebat.elearning.unair.ac.id"
 

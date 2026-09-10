@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from types import SimpleNamespace
 
-from app.xninetzy.interfaces import external_mcp
+from xninetzy.interfaces import external_mcp
 
 
 def test_external_mcp_registry_add_list_remove(tmp_path, monkeypatch):

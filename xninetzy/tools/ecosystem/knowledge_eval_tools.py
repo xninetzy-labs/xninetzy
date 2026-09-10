@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.knowledge.evaluation import evaluate_retrieval
+from xninetzy.os.knowledge.evaluation import evaluate_retrieval
 
 
 @tool

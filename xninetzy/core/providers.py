@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 
-from app.xninetzy.core.config import Settings, get_settings
+from xninetzy.core.config import Settings, get_settings
 
 
 @dataclass(frozen=True)

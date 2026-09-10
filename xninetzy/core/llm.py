@@ -6,8 +6,8 @@ from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel
 from langchain_openai import ChatOpenAI
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.providers import LLMProfile, provider_catalog, resolve_profile
+from xninetzy.core.config import get_settings
+from xninetzy.core.providers import LLMProfile, provider_catalog, resolve_profile
 
 
 @lru_cache(maxsize=32)

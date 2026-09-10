@@ -1,0 +1,33 @@
+@startuml
+actor User
+participant "Orchestrator" as O
+participant "Memory" as M
+participant "Planner" as P
+participant "Web Search" as W
+participant "Paper Search" as PA
+participant "Video Search" as V
+participant "Source Verifier" as SV
+participant "Synthesizer" as S
+participant "Human Approval" as H
+participant "Document Generator" as D
+
+User -> O: minta deep research topik
+O -> M: baca learner profile & memory
+M --> O: konteks belajar
+O -> P: buat subplan riset
+P --> O: daftar subquery
+O -> W: cari web
+O -> PA: cari paper
+O -> V: cari video
+W --> O: hasil mentah
+PA --> O: hasil mentah
+V --> O: hasil mentah
+O -> SV: verifikasi sumber
+SV --> O: status akses & kualitas
+O -> S: sintesis materi
+S --> O: ringkasan + sitasi
+O -> H: minta persetujuan
+H --> O: disetujui / direvisi
+O -> D: generate materi belajar
+D --> User: dokumen + kartu recall
+@enduml

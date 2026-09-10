@@ -5,7 +5,7 @@ from urllib.parse import urljoin, urlparse, parse_qs
 
 from bs4 import BeautifulSoup
 
-from app.xninetzy.os.academic.hebat.models import ActivityType
+from xninetzy.os.academic.hebat.models import ActivityType
 
 
 BASE = "https://hebat.elearning.unair.ac.id"
@@ -153,16 +153,18 @@ def parse_assignment_page(html: str) -> dict:
     opened_at = due_at = time_remaining = None
     dates_region = soup.find(attrs={"data-region": "activity-dates"})
     if dates_region:
-        for item in dates_region.find_all("div", class_=True):
+        for item in dates_region.find_all("div"):
             text = item.get_text(" ", strip=True)
+            if not text:
+                continue
             if re.search(r"open(ed)?", text, re.I):
-                m = re.search(r"\d{1,2}\s+\w+\s+\d{4}", text)
-                if m:
-                    opened_at = m.group()
-            if re.search(r"due|deadline", text, re.I):
                 m = re.search(r"\d{1,2}\s+\w+\s+\d{4}.*", text)
                 if m:
-                    due_at = m.group()
+                    opened_at = m.group().strip()
+            if re.search(r"due|deadline|batas akhir", text, re.I):
+                m = re.search(r"\d{1,2}\s+\w+\s+\d{4}.*", text)
+                if m:
+                    due_at = m.group().strip()
 
     # Time remaining
     time_el = soup.find(string=re.compile(r"Time remaining", re.I))
@@ -201,9 +203,9 @@ def parse_assignment_page(html: str) -> dict:
             elif "time remaining" in label and not time_remaining:
                 time_remaining = value
 
-    # Add submission button / edit submission
-    has_add_button = bool(soup.find("button", string=re.compile(r"Add submission", re.I)))
-    has_edit_button = bool(soup.find("button", string=re.compile(r"Edit submission", re.I)))
+    # Add submission button / edit submission (EN + ID)
+    has_add_button = bool(soup.find("button", string=re.compile(r"Add submission|Tambah.*pengumpulan", re.I)))
+    has_edit_button = bool(soup.find("button", string=re.compile(r"Edit submission|Sunting", re.I)))
     can_submit = has_add_button or has_edit_button
 
     return {

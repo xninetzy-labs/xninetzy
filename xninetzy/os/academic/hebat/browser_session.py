@@ -4,11 +4,11 @@ import asyncio
 import json
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.academic.hebat.parsers import is_logged_out, looks_like_login_page, parse_login_page
-from app.xninetzy.os.academic.hebat.storage import audit_log, mark_session_checked, upsert_session
-from app.xninetzy.os.academic.mahasiswa_portal.credential_provider import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.academic.hebat.parsers import is_logged_out, looks_like_login_page, parse_login_page
+from xninetzy.os.academic.hebat.storage import audit_log, mark_session_checked, upsert_session
+from xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     CampusCredentialError,
     resolve_campus_credentials,
 )
@@ -134,8 +134,8 @@ async def ensure_hebat_session(
 
     Returns ``(ok, profile_name, course_count)``.
     """
-    from app.xninetzy.os.academic.hebat.moodle_client import fetch_courses
-    from app.xninetzy.os.academic.hebat.storage import get_session
+    from xninetzy.os.academic.hebat.moodle_client import fetch_courses
+    from xninetzy.os.academic.hebat.storage import get_session
 
     try:
         shared = resolve_campus_credentials("hebat")

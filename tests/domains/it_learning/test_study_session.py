@@ -2,24 +2,24 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.domains.it_learning.progress_tracker import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.domains.it_learning.progress_tracker import (
     build_today_plan,
     get_roadmap_progress,
 )
-from app.xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
-from app.xninetzy.domains.it_learning.roadmap_store import (
+from xninetzy.domains.it_learning.roadmap_models import RoadmapDraft
+from xninetzy.domains.it_learning.roadmap_store import (
     activate_roadmap,
     save_roadmap_draft,
 )
-from app.xninetzy.domains.it_learning.study_session import (
+from xninetzy.domains.it_learning.study_session import (
     complete_study_session,
     learning_start_study_session,
     start_study_session,
 )
-from app.xninetzy.interfaces.mcp_tool_adapter import (
+from xninetzy.interfaces.mcp_tool_adapter import (
     MCPPrincipal,
     langchain_tool_as_mcp_callable,
 )

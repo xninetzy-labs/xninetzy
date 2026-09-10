@@ -1,14 +1,14 @@
 import json
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.lightning.rl import (
+from xninetzy.core.config import get_settings
+from xninetzy.os.lightning.rl import (
     record_action,
     record_outcome,
     reward_summary,
     start_episode,
     strategy_rank,
 )
-from app.xninetzy.tools.registry import get_tool_names
+from xninetzy.tools.registry import get_tool_names
 
 
 def test_episode_reward_and_idempotency(monkeypatch, tmp_path):

@@ -2,13 +2,13 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.os.research import light_pipeline
-from app.xninetzy.os.research.citations import format_sources_block
-from app.xninetzy.os.research.light_pipeline import (
+from xninetzy.os.research import light_pipeline
+from xninetzy.os.research.citations import format_sources_block
+from xninetzy.os.research.light_pipeline import (
     collect_quick_sources,
     group_sources_by_type,
 )
-from app.xninetzy.tools.ecosystem import research_tools
+from xninetzy.tools.ecosystem import research_tools
 
 
 class _FakeAction:

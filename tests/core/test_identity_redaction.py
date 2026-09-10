@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.core.identity import redact_whatsapp_jid
+from xninetzy.core.identity import redact_whatsapp_jid
 
 
 def test_redact_masks_full_jid():

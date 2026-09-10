@@ -5,10 +5,10 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.workflow.models import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.workflow.models import (
     WorkflowAction,
     WorkflowExecutionResult,
     WorkflowPlan,

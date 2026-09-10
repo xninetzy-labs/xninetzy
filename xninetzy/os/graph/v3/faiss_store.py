@@ -18,9 +18,9 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.knowledge.embeddings import embed_query, embed_texts, embedding_dim
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.knowledge.embeddings import embed_query, embed_texts, embedding_dim
 
 logger = logging.getLogger(__name__)
 
@@ -152,7 +152,7 @@ def rebuild_index() -> int:
     every node's ``faiss_row``. Safe to call anytime; used by HITL rebuild."""
     global _graph_index, _graph_id_map
     # Imported lazily to avoid a circular import at module load.
-    from app.xninetzy.os.graph.v3 import sqlite_store
+    from xninetzy.os.graph.v3 import sqlite_store
 
     try:
         import faiss

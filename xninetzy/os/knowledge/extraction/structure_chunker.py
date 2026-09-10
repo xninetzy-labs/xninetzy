@@ -8,8 +8,8 @@ existing ``chunk_text`` splitter.
 """
 from __future__ import annotations
 
-from app.xninetzy.os.knowledge.chunking import chunk_text
-from app.xninetzy.os.knowledge.extraction.schemas import (
+from xninetzy.os.knowledge.chunking import chunk_text
+from xninetzy.os.knowledge.extraction.schemas import (
     ContextualChunk,
     StructuredDocument,
 )

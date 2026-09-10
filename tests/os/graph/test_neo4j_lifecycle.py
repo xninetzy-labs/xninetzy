@@ -13,8 +13,8 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.graph.v3 import neo4j_lifecycle, neo4j_store
+from xninetzy.core.config import get_settings
+from xninetzy.os.graph.v3 import neo4j_lifecycle, neo4j_store
 
 
 @pytest.fixture(autouse=True)

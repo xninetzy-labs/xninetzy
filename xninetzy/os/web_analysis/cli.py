@@ -4,10 +4,10 @@ import argparse
 import asyncio
 import json
 
-from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
-from app.xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
-from app.xninetzy.os.web_analysis.manual_login import capture_manual_session
-from app.xninetzy.os.web_analysis.session_manager import SessionManager
+from xninetzy.os.web_analysis.analyzer_service import AnalyzerService
+from xninetzy.os.web_analysis.cache_manager import AnalysisCacheManager
+from xninetzy.os.web_analysis.manual_login import capture_manual_session
+from xninetzy.os.web_analysis.session_manager import SessionManager
 
 
 def build_parser() -> argparse.ArgumentParser:

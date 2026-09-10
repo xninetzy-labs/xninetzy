@@ -4,7 +4,7 @@ import json
 
 from langchain_core.tools import tool
 
-from app.xninetzy.ecosystem.event_bus import record_event
+from xninetzy.ecosystem.event_bus import record_event
 
 
 @tool
@@ -16,7 +16,7 @@ def document_analyze(file_path: str) -> str:
     """
     from pathlib import Path
 
-    from app.xninetzy.os.knowledge.extraction import analyze_document
+    from xninetzy.os.knowledge.extraction import analyze_document
 
     p = Path(file_path)
     if not p.exists():
@@ -58,7 +58,7 @@ def document_ingest(
         source_type: Tipe sumber
         chat_id: WhatsApp chat ID (dari context)
     """
-    from app.xninetzy.os.knowledge.ingestion import ingest_document
+    from xninetzy.os.knowledge.ingestion import ingest_document
 
     result = ingest_document(file_path, title, source_type)
     status = result.get("status")
@@ -97,7 +97,7 @@ def document_overview(source_id: int) -> str:
     Args:
         source_id: ID sumber knowledge (dari document_catalog / document_ingest)
     """
-    from app.xninetzy.db.sqlite import connect, init_db
+    from xninetzy.db.sqlite import connect, init_db
 
     init_db()
     with connect() as conn:
@@ -132,7 +132,7 @@ def document_tables(file_path: str, max_pages: int = 20) -> str:
     """
     from pathlib import Path
 
-    from app.xninetzy.interfaces.media.document_parser import _resolve_ext
+    from xninetzy.interfaces.media.document_parser import _resolve_ext
 
     p = Path(file_path)
     if not p.exists():
@@ -141,11 +141,11 @@ def document_tables(file_path: str, max_pages: int = 20) -> str:
     ext = _resolve_ext(p, None, p.name)
     tables = []
     if ext == ".pdf":
-        from app.xninetzy.os.knowledge.extraction.extractors.tables import extract_pdf_tables
+        from xninetzy.os.knowledge.extraction.extractors.tables import extract_pdf_tables
 
         tables = extract_pdf_tables(file_path, max_pages=max_pages)
     elif ext in (".docx", ".xlsx"):
-        from app.xninetzy.os.knowledge.extraction.extractors.office import extract_office
+        from xninetzy.os.knowledge.extraction.extractors.office import extract_office
 
         tables = extract_office(file_path).tables()
     else:
@@ -168,7 +168,7 @@ def document_catalog(limit: int = 20) -> str:
     Args:
         limit: Jumlah maksimal
     """
-    from app.xninetzy.os.knowledge.ingestion import list_sources
+    from xninetzy.os.knowledge.ingestion import list_sources
 
     sources = list_sources(limit=limit)
     docs = []

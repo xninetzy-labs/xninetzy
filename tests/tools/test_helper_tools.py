@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.tools.ecosystem.helper_tools import (
+from xninetzy.tools.ecosystem.helper_tools import (
     helper_generate_obsidian_docs,
     helper_get,
 )
@@ -30,7 +30,7 @@ def test_helper_get_unknown_topic_returns_fallback():
 
 
 def test_helper_get_registered_in_registry():
-    from app.xninetzy.tools.registry import get_all_tools
+    from xninetzy.tools.registry import get_all_tools
 
     names = {t.name for t in get_all_tools()}
     assert "helper_get" in names
@@ -46,13 +46,13 @@ def test_helper_generate_obsidian_docs_writes_to_isolated_vault(tmp_path, monkey
     vault = tmp_path / "vault"
     vault.mkdir()
 
-    from app.xninetzy.core.config import get_settings
+    from xninetzy.core.config import get_settings
 
     get_settings.cache_clear()
-    from app.xninetzy.db.sqlite import init_db
+    from xninetzy.db.sqlite import init_db
 
     init_db()
-    from app.xninetzy.db.migrations import run_migrations
+    from xninetzy.db.migrations import run_migrations
 
     run_migrations()
 

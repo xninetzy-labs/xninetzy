@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.os.academic.hebat import tools as hebat_tools
-from app.xninetzy.tools.errors import (
+from xninetzy.os.academic.hebat import tools as hebat_tools
+from xninetzy.tools.errors import (
     ERROR_CODE_PATTERN,
     ToolErrorCode,
     parse_tool_error,
@@ -74,7 +74,7 @@ async def test_prepare_submission_non_pdf_is_invalid_input_with_valid_values(
 
 @pytest.mark.asyncio
 async def test_upload_submission_unknown_token_is_not_found_error():
-    from app.xninetzy.os.academic.hebat import storage
+    from xninetzy.os.academic.hebat import storage
 
     result = await hebat_tools.hebat_upload_submission.ainvoke(
         {"chat_id": "chat-test", "confirmation_token": "HBT-TIDAKADA"}

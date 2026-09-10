@@ -3,15 +3,15 @@ from __future__ import annotations
 import asyncio
 import re
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.interfaces.api.chat_events import emit_chat_event
-from app.xninetzy.os.notifications.admin_notifier import notify_admin
-from app.xninetzy.os.research.actions.base import ResearchActionInput
-from app.xninetzy.os.research.actions.registry import ResearchActionRegistry
-from app.xninetzy.os.research.citations import format_sources_block, validate_citations
-from app.xninetzy.os.research.guards import check_resource_guards, resource_guard_denied_message
-from app.xninetzy.os.research.permissions import can_run_deep_research, deep_research_denied_message
-from app.xninetzy.os.research.session import (
+from xninetzy.core.config import get_settings
+from xninetzy.interfaces.api.chat_events import emit_chat_event
+from xninetzy.os.notifications.admin_notifier import notify_admin
+from xninetzy.os.research.actions.base import ResearchActionInput
+from xninetzy.os.research.actions.registry import ResearchActionRegistry
+from xninetzy.os.research.citations import format_sources_block, validate_citations
+from xninetzy.os.research.guards import check_resource_guards, resource_guard_denied_message
+from xninetzy.os.research.permissions import can_run_deep_research, deep_research_denied_message
+from xninetzy.os.research.session import (
     add_sources,
     add_substep,
     create_research_session,
@@ -21,8 +21,8 @@ from app.xninetzy.os.research.session import (
     set_plan,
     update_substep_status,
 )
-from app.xninetzy.os.research.sources import assign_sids
-from app.xninetzy.os.research.subplanner import ResearchSubPlan
+from xninetzy.os.research.sources import assign_sids
+from xninetzy.os.research.subplanner import ResearchSubPlan
 
 
 MODE_LIMITS = {

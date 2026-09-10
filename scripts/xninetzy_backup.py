@@ -3,8 +3,8 @@ from __future__ import annotations
 import argparse
 import json
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.os.backup.service import (
+from xninetzy.core.config import get_settings
+from xninetzy.os.backup.service import (
     create_backup,
     list_backups,
     restore_backup,

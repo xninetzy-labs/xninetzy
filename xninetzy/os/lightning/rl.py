@@ -9,9 +9,9 @@ from datetime import UTC, datetime, timedelta
 from typing import Any
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
 
 
 _SENSITIVE_RE = re.compile(

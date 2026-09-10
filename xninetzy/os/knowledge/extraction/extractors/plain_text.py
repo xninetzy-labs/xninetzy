@@ -3,8 +3,8 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from app.xninetzy.interfaces.media.document_parser import _parse_text
-from app.xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
+from xninetzy.interfaces.media.document_parser import _parse_text
+from xninetzy.os.knowledge.extraction.schemas import DocBlock, StructuredDocument
 
 
 def extract_plain_text(path: str) -> StructuredDocument:

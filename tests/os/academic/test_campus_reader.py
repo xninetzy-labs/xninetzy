@@ -1,6 +1,6 @@
 import pytest
 
-from app.xninetzy.os.academic.mahasiswa_portal.reader import (
+from xninetzy.os.academic.mahasiswa_portal.reader import (
     AcademicPeriod,
     AcademicPortalReader,
     AcademicPortalReadError,

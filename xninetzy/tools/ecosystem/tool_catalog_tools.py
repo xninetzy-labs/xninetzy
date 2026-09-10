@@ -2,13 +2,13 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.tools.manifest import manifest_for
+from xninetzy.tools.manifest import manifest_for
 
 
 @tool
 def tool_catalog(feature_pack: str = "", risk: str = "", limit: int = 250) -> list[dict]:
     """List shared Xninetzy tool metadata for routing and operator inspection."""
-    from app.xninetzy.tools.registry import get_all_tools
+    from xninetzy.tools.registry import get_all_tools
 
     bounded_limit = max(1, min(limit, 500))
     normalized_pack = feature_pack.strip().lower()

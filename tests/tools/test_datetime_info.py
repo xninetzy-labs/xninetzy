@@ -3,7 +3,7 @@ from __future__ import annotations
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.tools.internal.datetime_info import datetime_now, get_now_info
+from xninetzy.tools.internal.datetime_info import datetime_now, get_now_info
 
 
 def test_datetime_now_returns_human_string():

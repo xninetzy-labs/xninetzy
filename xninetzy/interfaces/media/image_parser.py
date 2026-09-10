@@ -9,8 +9,8 @@ import math
 from pathlib import Path
 from typing import Any
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 

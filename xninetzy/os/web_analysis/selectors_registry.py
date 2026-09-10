@@ -8,7 +8,7 @@ from urllib.parse import urlsplit
 
 from bs4 import BeautifulSoup
 
-from app.xninetzy.os.web_analysis.models import ModuleRecord
+from xninetzy.os.web_analysis.models import ModuleRecord
 
 
 SELECTOR_CANDIDATES = (

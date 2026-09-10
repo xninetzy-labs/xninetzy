@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.memory.memory_store import (
+from xninetzy.os.memory.memory_store import (
     add_memory,
     forget_memory,
     list_memories,

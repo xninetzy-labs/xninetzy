@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 CONFIRMATION_REQUIRED_ACTIONS = {
     "upload_assignment",

@@ -4,8 +4,8 @@ import json
 from datetime import datetime
 from zoneinfo import ZoneInfo
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect
 
 
 def ensure_entity_link(

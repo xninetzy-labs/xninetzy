@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-from app.xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
-from app.xninetzy.os.research.web_search import web_search
+from xninetzy.os.research.actions.base import ResearchAction, ResearchActionInput, ResearchActionOutput
+from xninetzy.os.research.web_search import web_search
 
 
 class WebSearchAction(ResearchAction):

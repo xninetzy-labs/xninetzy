@@ -2,7 +2,7 @@
 
 Tools are grouped by category inside ``get_all_tools()``:
 core/general · it-learning roadmap · knowledge · research · notes/obsidian ·
-academic/hebat · life · reminder · whatsapp · media · graph · hitl · rules/style ·
+academic/hebat · life · reminder · media · graph · hitl · rules/style ·
 memory · lightning · helper.
 
 ``get_all_tools()`` returns the full, unchanged tool set — grouping is
@@ -13,9 +13,9 @@ from __future__ import annotations
 
 from langchain_core.tools import BaseTool
 
-from app.xninetzy.tools.internal.calculation import calculate, calculate_percentage
-from app.xninetzy.tools.internal.datetime_info import datetime_now
-from app.xninetzy.tools.internal.obsidian import (
+from xninetzy.tools.internal.calculation import calculate, calculate_percentage
+from xninetzy.tools.internal.datetime_info import datetime_now
+from xninetzy.tools.internal.obsidian import (
     obsidian_add_tags,
     obsidian_append,
     obsidian_backlinks,
@@ -33,7 +33,7 @@ from app.xninetzy.tools.internal.obsidian import (
     obsidian_todos,
     obsidian_update_section,
 )
-from app.xninetzy.tools.internal.obsidian_organization import (
+from xninetzy.tools.internal.obsidian_organization import (
     obsidian_folder_status,
     obsidian_moc_refresh,
     obsidian_organize_apply,
@@ -41,32 +41,19 @@ from app.xninetzy.tools.internal.obsidian_organization import (
     obsidian_verify,
     obsidian_vault_init,
 )
-from app.xninetzy.tools.internal.planning import (
+from xninetzy.tools.internal.planning import (
     draft_workflow,
     generate_plan,
     idea_analysis,
     skill_discovery,
     task_breakdown,
 )
-from app.xninetzy.tools.internal.reminder import (
+from xninetzy.tools.internal.reminder import (
     reminder_cancel,
     reminder_create,
     reminder_list,
 )
-from app.xninetzy.interfaces.whatsapp.messaging import (
-    wa_forward_media_to_admin,
-    wa_pin_message,
-    wa_send_admin_verification,
-    wa_send_audio,
-    wa_send_document,
-    wa_send_image,
-    wa_send_ptt,
-    wa_send_sticker,
-    wa_send_text,
-    wa_send_video,
-    wa_set_announce,
-)
-from app.xninetzy.os.academic.hebat.tools import (
+from xninetzy.os.academic.hebat.tools import (
     hebat_login_status,
     hebat_start_login,
     hebat_sync_courses,
@@ -76,7 +63,6 @@ from app.xninetzy.os.academic.hebat.tools import (
     hebat_read_pdf,
     hebat_sync_assignments,
     hebat_get_assignment_detail,
-    hebat_prepare_submission_from_whatsapp_file,
     hebat_upload_submission,
     hebat_cancel_submission,
     hebat_remove_submission,
@@ -84,7 +70,7 @@ from app.xninetzy.os.academic.hebat.tools import (
     hebat_debug_login,
     hebat_login_status_verbose,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.tools import (
+from xninetzy.os.academic.mahasiswa_portal.tools import (
     portal_academic_status,
     portal_current_krs,
     portal_info,
@@ -115,27 +101,27 @@ from app.xninetzy.os.academic.mahasiswa_portal.tools import (
     uacc_logout,
     uacc_session_status,
 )
-from app.xninetzy.os.academic.qa_portal.tools import (
+from xninetzy.os.academic.qa_portal.tools import (
     qa_fill_kuesioner,
     qa_list_kuesioner,
 )
-from app.xninetzy.os.jobs.tools import os_job_status
-from app.xninetzy.os.policy.tools import action_policy_evaluate
-from app.xninetzy.os.inbox.tools import os_capture, os_inbox, os_today, os_triage
-from app.xninetzy.tools.ecosystem.web_analysis_tools import (
+from xninetzy.os.jobs.tools import os_job_status
+from xninetzy.os.policy.tools import action_policy_evaluate
+from xninetzy.os.inbox.tools import os_capture, os_inbox, os_today, os_triage
+from xninetzy.tools.ecosystem.web_analysis_tools import (
     web_analysis_refresh,
     web_analysis_status,
     web_analysis_catalog,
     web_discover,
     web_fetch,
 )
-from app.xninetzy.tools.ecosystem.goal_tools import (
+from xninetzy.tools.ecosystem.goal_tools import (
     goal_create,
     goal_list,
     goal_update_progress,
     goal_review,
 )
-from app.xninetzy.tools.ecosystem.life_tools import (
+from xninetzy.tools.ecosystem.life_tools import (
     task_capture,
     task_list,
     task_today,
@@ -150,7 +136,7 @@ from app.xninetzy.tools.ecosystem.life_tools import (
     daily_review_generate,
     life_dashboard,
 )
-from app.xninetzy.tools.ecosystem.knowledge_tools import (
+from xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_ingest_text,
     knowledge_ingest_file,
     knowledge_search,
@@ -158,16 +144,16 @@ from app.xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_list_sources,
     knowledge_rebuild_index,
 )
-from app.xninetzy.tools.ecosystem.knowledge_eval_tools import knowledge_evaluate_retrieval
-from app.xninetzy.tools.ecosystem.unified_search_tools import unified_search
-from app.xninetzy.tools.ecosystem.document_tools import (
+from xninetzy.tools.ecosystem.knowledge_eval_tools import knowledge_evaluate_retrieval
+from xninetzy.tools.ecosystem.unified_search_tools import unified_search
+from xninetzy.tools.ecosystem.document_tools import (
     document_analyze,
     document_ingest,
     document_overview,
     document_tables,
     document_catalog,
 )
-from app.xninetzy.tools.ecosystem.research_tools import (
+from xninetzy.tools.ecosystem.research_tools import (
     web_search,
     youtube_search,
     deep_research_topic,
@@ -188,12 +174,12 @@ from app.xninetzy.tools.ecosystem.research_tools import (
     youtube_playlist_finder,
     youtube_video_ranker,
 )
-from app.xninetzy.tools.ecosystem.helper_tools import (
+from xninetzy.tools.ecosystem.helper_tools import (
     helper_get,
     helper_generate_obsidian_docs,
 )
-from app.xninetzy.tools.ecosystem.tool_catalog_tools import tool_catalog
-from app.xninetzy.tools.ecosystem.ai_runtime_tools import (
+from xninetzy.tools.ecosystem.tool_catalog_tools import tool_catalog
+from xninetzy.tools.ecosystem.ai_runtime_tools import (
     ai_provider_list,
     ai_provider_status,
     ai_provider_use,
@@ -202,14 +188,14 @@ from app.xninetzy.tools.ecosystem.ai_runtime_tools import (
     coding_agent_use,
     coding_agent_run,
 )
-from app.xninetzy.tools.ecosystem.pixelrag_tools import (
+from xninetzy.tools.ecosystem.pixelrag_tools import (
     pixelrag_capture,
     pixelrag_health,
     pixelrag_local_start,
     pixelrag_search_local,
     pixelrag_search_public,
 )
-from app.xninetzy.skills.tools import (
+from xninetzy.skills.tools import (
     skill_get,
     skill_install,
     skill_list,
@@ -219,14 +205,14 @@ from app.xninetzy.skills.tools import (
     skill_validate,
     skill_healthcheck,
 )
-from app.xninetzy.os.hitl.approval_tools import (
+from xninetzy.os.hitl.approval_tools import (
     hitl_approve,
     hitl_get_status,
     hitl_list_pending,
     hitl_reject,
     hitl_request_approval,
 )
-from app.xninetzy.os.graph.graph_tools import (
+from xninetzy.os.graph.graph_tools import (
     graph_add_edge,
     graph_add_node,
     graph_explain_topic_map,
@@ -235,7 +221,7 @@ from app.xninetzy.os.graph.graph_tools import (
     graph_link_research_to_roadmap,
     graph_search,
 )
-from app.xninetzy.os.graph.v3.graph_tools_v3 import (
+from xninetzy.os.graph.v3.graph_tools_v3 import (
     graph_v3_link,
     graph_v3_neighborhood,
     graph_v3_path,
@@ -244,7 +230,7 @@ from app.xninetzy.os.graph.v3.graph_tools_v3 import (
     graph_v3_stats,
     graph_v3_upsert_node,
 )
-from app.xninetzy.domains.it_learning.roadmap_tools import (
+from xninetzy.domains.it_learning.roadmap_tools import (
     learning_attach_resource,
     learning_create_roadmap,
     learning_generate_today_plan,
@@ -254,23 +240,23 @@ from app.xninetzy.domains.it_learning.roadmap_tools import (
     learning_review_week,
     learning_update_progress,
 )
-from app.xninetzy.domains.it_learning.study_session import (
+from xninetzy.domains.it_learning.study_session import (
     learning_complete_study_session,
     learning_list_study_sessions,
     learning_start_study_session,
 )
-from app.xninetzy.domains.it_learning.concept_graph import (
+from xninetzy.domains.it_learning.concept_graph import (
     learning_define_concept,
     learning_get_concept_map,
     learning_record_concept_evidence,
 )
-from app.xninetzy.domains.it_learning.recall import (
+from xninetzy.domains.it_learning.recall import (
     learning_create_recall_card,
     learning_due_recall,
     learning_submit_recall_answer,
 )
-from app.xninetzy.os.notifications.admin_notifier import admin_notify_progress
-from app.xninetzy.interfaces.media.media_tools import (
+from xninetzy.os.notifications.admin_notifier import admin_notify_progress
+from xninetzy.interfaces.media.media_tools import (
     analyze_media,
     media_info,
     media_ingest_to_knowledge,
@@ -278,13 +264,13 @@ from app.xninetzy.interfaces.media.media_tools import (
     media_read_document,
     media_read_image,
 )
-from app.xninetzy.workflow.tools import (
+from xninetzy.workflow.tools import (
     workflow_status,
     workflow_latest,
     workflow_resume,
     workflow_cancel,
 )
-from app.xninetzy.os.rules.tools import (
+from xninetzy.os.rules.tools import (
     rule_add,
     rule_delete,
     rule_disable,
@@ -293,8 +279,8 @@ from app.xninetzy.os.rules.tools import (
     rule_search,
     rules_healthcheck,
 )
-from app.xninetzy.os.style.tools import style_reset, style_set, style_show
-from app.xninetzy.os.memory.memory_tools import (
+from xninetzy.os.style.tools import style_reset, style_set, style_show
+from xninetzy.os.memory.memory_tools import (
     memory_add,
     memory_forget,
     memory_get_context,
@@ -302,7 +288,7 @@ from app.xninetzy.os.memory.memory_tools import (
     memory_search,
     memory_update_tool,
 )
-from app.xninetzy.os.lightning.tools import (
+from xninetzy.os.lightning.tools import (
     lightning_approve,
     lightning_errors,
     lightning_episode_finish,
@@ -319,7 +305,7 @@ from app.xninetzy.os.lightning.tools import (
     lightning_reward_summary,
     lightning_strategy_rank,
 )
-from app.xninetzy.interfaces.external_mcp import EXTERNAL_MCP_TOOLS
+from xninetzy.interfaces.external_mcp import EXTERNAL_MCP_TOOLS
 
 _ALL_TOOLS: list[BaseTool] | None = None
 
@@ -366,18 +352,6 @@ def get_all_tools() -> list[BaseTool]:
             idea_analysis,
             generate_plan,
             draft_workflow,
-            # WhatsApp
-            wa_pin_message,
-            wa_set_announce,
-            wa_send_text,
-            wa_send_image,
-            wa_send_document,
-            wa_send_audio,
-            wa_send_ptt,
-            wa_send_video,
-            wa_send_sticker,
-            wa_send_admin_verification,
-            wa_forward_media_to_admin,
             # HEBAT / Moodle
             hebat_login_status,
             hebat_start_login,
@@ -388,7 +362,6 @@ def get_all_tools() -> list[BaseTool]:
             hebat_read_pdf,
             hebat_sync_assignments,
             hebat_get_assignment_detail,
-            hebat_prepare_submission_from_whatsapp_file,
             hebat_upload_submission,
             hebat_cancel_submission,
             hebat_remove_submission,
@@ -759,19 +732,6 @@ def get_tool_groups() -> dict[str, list[str]]:
         ],
         "life": ["goal_create", "task_capture", "daily_checkin"],
         "reminders": ["reminder_create", "reminder_list", "reminder_cancel"],
-        "whatsapp": [
-            "wa_pin_message",
-            "wa_set_announce",
-            "wa_send_text",
-            "wa_send_image",
-            "wa_send_document",
-            "wa_send_audio",
-            "wa_send_ptt",
-            "wa_send_video",
-            "wa_send_sticker",
-            "wa_send_admin_verification",
-            "wa_forward_media_to_admin",
-        ],
         "media": [
             "media_read_document",
             "media_read_image",

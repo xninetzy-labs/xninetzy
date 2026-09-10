@@ -1,10 +1,10 @@
-from app.xninetzy.ecosystem.command_router import (
+from xninetzy.ecosystem.command_router import (
     parse_captcha_reply,
     parse_command,
 )
-from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
-from app.xninetzy.os.web_analysis.models import SiteAnalysis
-from app.xninetzy.tools.registry import get_tool_names
+from xninetzy.os.web_analysis.analyzer_service import AnalyzerService
+from xninetzy.os.web_analysis.models import SiteAnalysis
+from xninetzy.tools.registry import get_tool_names
 
 
 def test_local_portal_slash_commands():

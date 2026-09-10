@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.reminders.reminder_service import ReminderService, format_reminder_creation_response
+from xninetzy.os.reminders.reminder_service import ReminderService, format_reminder_creation_response
 
 
 @tool

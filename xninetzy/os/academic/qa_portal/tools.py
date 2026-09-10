@@ -2,16 +2,16 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from app.xninetzy.os.academic.qa_portal.automation import (
+from xninetzy.os.academic.qa_portal.automation import (
     QaPortalError,
     fill_all_questionnaires,
     list_questionnaires,
 )
 
-from app.xninetzy.os.hitl.approval_service import request_approval, validate_approval
-from app.xninetzy.os.notifications.admin_notifier import notify_admin_approval
-from app.xninetzy.os.policy.action_policy import evaluate_action
-from app.xninetzy.os.research.permissions import is_owner_admin
+from xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from xninetzy.os.notifications.admin_notifier import notify_admin_approval
+from xninetzy.os.policy.action_policy import evaluate_action
+from xninetzy.os.research.permissions import is_owner_admin
 
 
 @tool

@@ -2,9 +2,9 @@ from datetime import datetime, timedelta, timezone
 
 import pytest
 
-from app.xninetzy.os.web_analysis.cache_manager import AnalysisBusyError, AnalysisCacheManager
-from app.xninetzy.os.web_analysis.models import ModuleRecord, SiteAnalysis
-from app.xninetzy.os.web_analysis.selectors_registry import extract_module_structure
+from xninetzy.os.web_analysis.cache_manager import AnalysisBusyError, AnalysisCacheManager
+from xninetzy.os.web_analysis.models import ModuleRecord, SiteAnalysis
+from xninetzy.os.web_analysis.selectors_registry import extract_module_structure
 
 
 def _analysis(timestamp: str) -> SiteAnalysis:

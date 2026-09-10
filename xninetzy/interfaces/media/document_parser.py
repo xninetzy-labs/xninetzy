@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-from app.xninetzy.core.logging import logging
+from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 
@@ -91,7 +91,7 @@ class _MissingLib(RuntimeError):
 
 
 def _parse_pdf(p: Path) -> str:
-    from app.xninetzy.os.academic.hebat.pdf_reader import read_pdf_text
+    from xninetzy.os.academic.hebat.pdf_reader import read_pdf_text
 
     result = read_pdf_text(str(p))
     if result.get("error"):
@@ -104,8 +104,8 @@ def _parse_pdf(p: Path) -> str:
 
 def _ocr_pdf(p: Path) -> str:
     """OCR a scanned PDF when pypdf finds no text layer."""
-    from app.xninetzy.core.config import get_settings
-    from app.xninetzy.interfaces.media.image_parser import ocr_pil_image
+    from xninetzy.core.config import get_settings
+    from xninetzy.interfaces.media.image_parser import ocr_pil_image
 
     settings = get_settings()
     if not settings.OCR_ENABLED:

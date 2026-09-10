@@ -4,10 +4,10 @@ from datetime import UTC, datetime
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import connect, init_db
-from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import connect, init_db
+from xninetzy.os.academic.mahasiswa_portal.krs_war import (
     KrsPlan,
     KrsWarStore,
     _classes_to_try,
@@ -22,7 +22,7 @@ from app.xninetzy.os.academic.mahasiswa_portal.krs_war import (
     plan_to_json,
     run_krs_war_if_armed,
 )
-from app.xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsAnnouncement
+from xninetzy.os.academic.mahasiswa_portal.krs_watcher import KrsAnnouncement
 
 PLAN_TEXT = """---
 tags: [akademik, krs, semester5]
@@ -209,7 +209,7 @@ async def test_load_plan_db_fallback(monkeypatch, store):
     plan = _plan()
     store.set_armed(True, plan)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
         lambda vault_service: None,
     )
     loaded = await load_krs_plan(store=store)
@@ -224,7 +224,7 @@ async def test_load_plan_file_wins_on_change(monkeypatch, store):
     store.set_armed(True, plan)
     changed_text = PLAN_TEXT.replace("MNW409", "MNW410")
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
         lambda vault_service: changed_text,
     )
     loaded = await load_krs_plan(store=store)
@@ -236,7 +236,7 @@ async def test_load_plan_file_wins_on_change(monkeypatch, store):
 @pytest.mark.asyncio
 async def test_load_plan_none_when_unreadable_and_no_db(monkeypatch, store):
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
         lambda vault_service: None,
     )
     assert await load_krs_plan(store=store) is None
@@ -247,7 +247,7 @@ async def test_load_plan_empty_file_falls_back_to_db(monkeypatch, store):
     plan = _plan()
     store.set_armed(True, plan)
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._read_plan_file_text",
         lambda vault_service: "# KRS Plan Semester 5\n\nno table\n",
     )
     loaded = await load_krs_plan(store=store)
@@ -269,10 +269,10 @@ async def test_run_skipped_when_not_armed(monkeypatch, store):
         return {"status": "done", "taken": [], "already_taken": [], "skipped": [], "summary": "ok"}
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", fake_take
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", fake_take
     )
     result = await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)
     assert result == {"war": {"skipped": "not_armed"}}
@@ -314,13 +314,13 @@ async def test_run_once_per_window(monkeypatch, store):
         return None
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", fake_take
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", fake_take
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log", fake_append
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log", fake_append
     )
     first = await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)
     assert first["war"]["status"] == "done"
@@ -362,13 +362,13 @@ async def test_run_error_retries_next_tick(monkeypatch, store):
         return None
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", failing_take
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", failing_take
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log", fake_append
+        "xninetzy.os.academic.mahasiswa_portal.krs_war._append_war_log", fake_append
     )
     result = await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)
     assert result["war"]["status"] == "error"
@@ -376,7 +376,7 @@ async def test_run_error_retries_next_tick(monkeypatch, store):
     assert store.get()["last_status"] == "error"
     assert "krs_war_error" in notifications
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", ok_take
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.take_krs_plan", ok_take
     )
     retried = await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)
     assert retried["war"]["status"] == "done"
@@ -395,10 +395,10 @@ async def test_run_no_plan_fails_closed(monkeypatch, store):
         return None
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.notify_admin", fake_notify
     )
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.load_krs_plan", fake_load
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.load_krs_plan", fake_load
     )
     result = await run_krs_war_if_armed(now=NOW, announcement=ANNOUNCEMENT, store=store)
     assert result == {"war": {"skipped": "no_plan"}}
@@ -462,7 +462,7 @@ def test_read_plan_file_falls_back_to_container_vault(monkeypatch, tmp_path):
         OBSIDIAN_VAULT_PATH = str(vault_dir)
 
     monkeypatch.setattr(
-        "app.xninetzy.os.academic.mahasiswa_portal.krs_war.get_settings",
+        "xninetzy.os.academic.mahasiswa_portal.krs_war.get_settings",
         lambda: FakeSettings(),
     )
     text = _read_plan_file_text(None)

@@ -2,10 +2,10 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.migrations import run_migrations
-from app.xninetzy.db.sqlite import init_db
-from app.xninetzy.os.graph.graph_store import add_edge, add_node, search_nodes
+from xninetzy.core.config import get_settings
+from xninetzy.db.migrations import run_migrations
+from xninetzy.db.sqlite import init_db
+from xninetzy.os.graph.graph_store import add_edge, add_node, search_nodes
 
 
 @pytest.fixture

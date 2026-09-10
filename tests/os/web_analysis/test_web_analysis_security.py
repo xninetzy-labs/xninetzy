@@ -1,5 +1,5 @@
-from app.xninetzy.os.web_analysis.analyzer_service import AnalyzerService
-from app.xninetzy.os.web_analysis.security import (
+from xninetzy.os.web_analysis.analyzer_service import AnalyzerService
+from xninetzy.os.web_analysis.security import (
     detect_human_verification,
     has_sensitive_query,
     is_safe_request_method,
@@ -7,7 +7,7 @@ from app.xninetzy.os.web_analysis.security import (
 )
 import pytest
 
-from app.xninetzy.os.web_analysis.sites import get_site, is_allowed_url
+from xninetzy.os.web_analysis.sites import get_site, is_allowed_url
 
 
 def test_only_get_and_head_are_safe():
@@ -60,7 +60,7 @@ def test_uacc_allows_sso_host_and_rejects_foreign():
 
 def test_dynamic_public_site_registry_reuses_host_guard(monkeypatch):
     monkeypatch.setattr(
-        "app.xninetzy.os.web_analysis.sites.socket.getaddrinfo",
+        "xninetzy.os.web_analysis.sites.socket.getaddrinfo",
         lambda host, port: [(None, None, None, None, ("93.184.216.34", 0))],
     )
     site = get_site("https://example.com/learning/start")

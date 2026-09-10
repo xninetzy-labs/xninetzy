@@ -2,8 +2,8 @@ from __future__ import annotations
 
 import pytest
 
-from app.xninetzy.os.research import web_search as web_search_service
-from app.xninetzy.tools.ecosystem import research_tools
+from xninetzy.os.research import web_search as web_search_service
+from xninetzy.tools.ecosystem import research_tools
 
 
 @pytest.mark.asyncio

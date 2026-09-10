@@ -5,8 +5,8 @@ nothing and the caller degrades to plain text.
 """
 from __future__ import annotations
 
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.knowledge.extraction.schemas import DocBlock
+from xninetzy.core.logging import logging
+from xninetzy.os.knowledge.extraction.schemas import DocBlock
 
 logger = logging.getLogger(__name__)
 

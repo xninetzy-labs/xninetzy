@@ -12,10 +12,10 @@ from __future__ import annotations
 
 from urllib.parse import urljoin
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.os.academic.hebat.link_extractor import extract_file_links, looks_like_file_url
-from app.xninetzy.os.academic.hebat.models import DownloadLink
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.os.academic.hebat.link_extractor import extract_file_links, looks_like_file_url
+from xninetzy.os.academic.hebat.models import DownloadLink
 
 logger = logging.getLogger(__name__)
 
@@ -44,8 +44,8 @@ async def _resource_redirect_target(chat_id: str, url: str) -> DownloadLink | No
     """
     import httpx
 
-    from app.xninetzy.os.academic.hebat.browser_session import get_cookies_for_httpx
-    from app.xninetzy.os.academic.hebat.parsers import is_login_redirect
+    from xninetzy.os.academic.hebat.browser_session import get_cookies_for_httpx
+    from xninetzy.os.academic.hebat.parsers import is_login_redirect
 
     raw = await get_cookies_for_httpx(chat_id)
     cookies = {c["name"]: c["value"] for c in raw if "name" in c and "value" in c}
@@ -74,7 +74,7 @@ async def resolve_download_links(chat_id: str, activity_url: str) -> list[Downlo
     1. Probe for a direct resource→pluginfile redirect.
     2. Otherwise fetch the (session-healed) HTML and scrape file links.
     """
-    from app.xninetzy.os.academic.hebat.moodle_client import _get
+    from xninetzy.os.academic.hebat.moodle_client import _get
 
     candidates: list[DownloadLink] = []
     seen: set[str] = set()

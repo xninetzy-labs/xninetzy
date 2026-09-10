@@ -1,6 +1,6 @@
 import json
 
-from app.xninetzy.interfaces.media.document_parser import parse_document
+from xninetzy.interfaces.media.document_parser import parse_document
 
 
 def test_parse_txt(tmp_path):
@@ -67,8 +67,8 @@ def test_empty_document(tmp_path):
 
 
 def test_scanned_pdf_uses_ocr_fallback(tmp_path, monkeypatch):
-    from app.xninetzy.interfaces.media import document_parser
-    from app.xninetzy.os.academic.hebat import pdf_reader
+    from xninetzy.interfaces.media import document_parser
+    from xninetzy.os.academic.hebat import pdf_reader
 
     path = tmp_path / "scan.pdf"
     path.write_bytes(b"%PDF diagnostic")

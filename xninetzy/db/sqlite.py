@@ -4,7 +4,7 @@ import sqlite3
 from pathlib import Path
 from typing import Iterable
 
-from app.xninetzy.core.config import get_settings
+from xninetzy.core.config import get_settings
 
 
 def get_db_path() -> Path:

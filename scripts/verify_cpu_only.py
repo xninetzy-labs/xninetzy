@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 import sys
 
-from app.xninetzy.runtime.cpu_guard import validate_cpu_only_runtime
+from xninetzy.runtime.cpu_guard import validate_cpu_only_runtime
 
 
 def main() -> int:

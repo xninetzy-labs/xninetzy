@@ -15,10 +15,10 @@ from __future__ import annotations
 
 import time
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.core.logging import logging
-from app.xninetzy.workflow.actions import execute_action
-from app.xninetzy.workflow.models import (
+from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
+from xninetzy.workflow.actions import execute_action
+from xninetzy.workflow.models import (
     WorkflowAction,
     WorkflowActionResult,
     WorkflowActionStatus,
@@ -27,7 +27,7 @@ from app.xninetzy.workflow.models import (
     WorkflowPlan,
     WorkflowState,
 )
-from app.xninetzy.workflow.notifier import WorkflowNotifier
+from xninetzy.workflow.notifier import WorkflowNotifier
 
 logger = logging.getLogger(__name__)
 
@@ -181,7 +181,7 @@ async def run_workflow(
     chat_id: str, user_message: str, *, context: dict | None = None, from_whatsapp: bool = True
 ) -> str:
     """High-level entry: build a plan, execute it, return the final reply text."""
-    from app.xninetzy.workflow.plan import build_workflow_plan
+    from xninetzy.workflow.plan import build_workflow_plan
 
     settings = get_settings()
     plan = await build_workflow_plan(chat_id, user_message, context)
@@ -192,7 +192,7 @@ async def run_workflow(
     )
     store = None
     try:
-        from app.xninetzy.workflow.store import WorkflowStore
+        from xninetzy.workflow.store import WorkflowStore
         store = WorkflowStore()
     except Exception:  # pragma: no cover
         store = None

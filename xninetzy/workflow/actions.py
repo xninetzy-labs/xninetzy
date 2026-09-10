@@ -11,8 +11,8 @@ from __future__ import annotations
 import re
 from typing import Awaitable, Callable
 
-from app.xninetzy.core.logging import logging
-from app.xninetzy.workflow.models import (
+from xninetzy.core.logging import logging
+from xninetzy.workflow.models import (
     WorkflowAction,
     WorkflowActionResult,
     WorkflowActionStatus,
@@ -63,7 +63,7 @@ def _first_lines(text: str, n: int = 2, limit: int = 220) -> str:
 
 async def _h_sync(action, state):
     try:
-        from app.xninetzy.os.academic.hebat.tools import hebat_sync_courses
+        from xninetzy.os.academic.hebat.tools import hebat_sync_courses
         res = await hebat_sync_courses.ainvoke({"chat_id": state.chat_id})
         state.course_context = {"sync": _first_lines(res)}
         return _ok(action, _first_lines(res))
@@ -76,7 +76,7 @@ async def _h_course_detail(action, state):
     if not course_id:
         return _skip(action, "Course belum dipilih — butuh course_id untuk detail.")
     try:
-        from app.xninetzy.os.academic.hebat.tools import hebat_sync_course_activities
+        from xninetzy.os.academic.hebat.tools import hebat_sync_course_activities
         res = await hebat_sync_course_activities.ainvoke(
             {"chat_id": state.chat_id, "course_id": str(course_id)}
         )
@@ -91,7 +91,7 @@ async def _h_assignment_detail(action, state):
     if not assign:
         return _skip(action, "Belum ada id/URL tugas spesifik untuk diambil detailnya.")
     try:
-        from app.xninetzy.os.academic.hebat.tools import hebat_get_assignment_detail
+        from xninetzy.os.academic.hebat.tools import hebat_get_assignment_detail
         res = await hebat_get_assignment_detail.ainvoke(
             {"chat_id": state.chat_id, "assignment_id_or_url": str(assign)}
         )
@@ -106,7 +106,7 @@ async def _h_download(action, state):
     if not target:
         return _skip(action, "Belum ada activity/file spesifik untuk diunduh.")
     try:
-        from app.xninetzy.os.academic.hebat.tools import hebat_download_material
+        from xninetzy.os.academic.hebat.tools import hebat_download_material
         res = await hebat_download_material.ainvoke(
             {"chat_id": state.chat_id, "activity_id_or_url": str(target)}
         )
@@ -121,7 +121,7 @@ async def _h_download(action, state):
 async def _h_deep_research(action, state):
     topic = action.input.get("topic") or _topic_from(state.original_user_message)
     try:
-        from app.xninetzy.os.research.deep_research import run_deep_research
+        from xninetzy.os.research.deep_research import run_deep_research
         res = await run_deep_research(
             topic=topic, chat_id=state.chat_id, sender_id=None, sender_name=None,
             chat_type="private", metadata={}, mode="balanced",
@@ -138,10 +138,10 @@ def _make_search_handler(kind: str) -> Handler:
         try:
             items: list = []
             if kind == "youtube":
-                from app.xninetzy.os.research.youtube_search import search_youtube as fn  # type: ignore
+                from xninetzy.os.research.youtube_search import search_youtube as fn  # type: ignore
                 items = await fn(topic)  # type: ignore
             elif kind == "web":
-                from app.xninetzy.os.research.web_search import search_web as fn  # type: ignore
+                from xninetzy.os.research.web_search import search_web as fn  # type: ignore
                 items = await fn(topic)  # type: ignore
             count = len(items) if isinstance(items, list) else 0
             if isinstance(items, list):
@@ -163,7 +163,7 @@ async def _h_knowledge(action, state):
     if not text.strip():
         return _skip(action, "Belum ada teks untuk di-ingest ke knowledge.")
     try:
-        from app.xninetzy.os.knowledge.ingestion import ingest_text
+        from xninetzy.os.knowledge.ingestion import ingest_text
         res = ingest_text(title, text, source_type="workflow")
         chunks = res.get("chunks", 0)
         return _ok(action, f"{chunks} chunk disimpan ke knowledge base.", chunks=chunks)
@@ -174,7 +174,7 @@ async def _h_knowledge(action, state):
 async def _h_roadmap(action, state):
     topic = _topic_from(state.original_user_message)
     try:
-        from app.xninetzy.domains.it_learning.roadmap_planner import create_roadmap_draft
+        from xninetzy.domains.it_learning.roadmap_planner import create_roadmap_draft
         draft = create_roadmap_draft(topic)
         state.roadmap_context = {"topic": topic, "milestones": list(draft.milestones)}
         n = len(draft.milestones)
@@ -192,7 +192,7 @@ async def _h_planning(action, state):
         "Review & finalisasi",
     ]
     try:
-        from app.xninetzy.os.life.task_manager import create_task
+        from xninetzy.os.life.task_manager import create_task
         created = 0
         for m in milestones[:8]:
             try:
@@ -208,7 +208,7 @@ async def _h_planning(action, state):
 
 async def _h_reminder_create(action, state):
     try:
-        from app.xninetzy.os.reminders.reminder_service import ReminderService, format_reminder_creation_response
+        from xninetzy.os.reminders.reminder_service import ReminderService, format_reminder_creation_response
 
         svc = ReminderService()
         if action.input.get("remind_at"):
@@ -245,7 +245,7 @@ async def _h_reminder_create(action, state):
 
 async def _h_reminder_infer(action, state):
     try:
-        from app.xninetzy.os.reminders.reminder_service import ReminderService, format_auto_reminder_summary
+        from xninetzy.os.reminders.reminder_service import ReminderService, format_auto_reminder_summary
 
         svc = ReminderService()
         topic = (state.planning_context or {}).get("topic") or _topic_from(state.original_user_message)
@@ -276,7 +276,7 @@ async def _h_reminder_infer(action, state):
 
 async def _h_reminder_list(action, state):
     try:
-        from app.xninetzy.os.reminders.reminder_service import ReminderService
+        from xninetzy.os.reminders.reminder_service import ReminderService
         reminders = ReminderService().list_pending(state.chat_id)
         return _ok(action, f"{len(reminders)} reminder pending.", reminders=reminders)
     except Exception as exc:
@@ -288,7 +288,7 @@ async def _h_reminder_cancel(action, state):
     if not reminder_id:
         return _skip(action, "Butuh reminder_id untuk cancel.")
     try:
-        from app.xninetzy.os.reminders.reminder_service import ReminderService
+        from xninetzy.os.reminders.reminder_service import ReminderService
         ReminderService().cancel(reminder_id)
         return _ok(action, f"Reminder `{reminder_id}` dibatalkan.")
     except Exception as exc:
@@ -314,7 +314,7 @@ async def _h_obsidian(action, state):
     content = "\n".join(body_parts).strip() or f"# {topic}"
     path = f"Workflow/{_safe(topic)}.md"
     try:
-        from app.xninetzy.os.notes.vault_service import ObsidianVaultService
+        from xninetzy.os.notes.vault_service import ObsidianVaultService
         ObsidianVaultService().create_note(path, content, overwrite=True)
         state.obsidian_paths.append(path)
         return _ok(action, f"Disimpan ke Obsidian: `{path}`", path=path)

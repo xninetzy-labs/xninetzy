@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from app.xninetzy.core.coding_agents import (
+from xninetzy.core.coding_agents import (
     _host_workspace_request,
     build_command,
     build_mcp_preflight_command,
@@ -13,7 +13,7 @@ from app.xninetzy.core.coding_agents import (
     runtime_catalog,
     subprocess_environment,
 )
-from app.xninetzy.core.config import Settings
+from xninetzy.core.config import Settings
 
 
 def _settings(tmp_path: Path) -> Settings:
@@ -47,7 +47,7 @@ def test_codex_command_uses_workspace_write_sandbox(monkeypatch, tmp_path) -> No
     repo.mkdir()
     settings = _settings(tmp_path)
     monkeypatch.setattr(
-        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
+        "xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
     )
 
     command = build_command("codex", "fix tests", repo, settings)
@@ -62,7 +62,7 @@ def test_claude_and_opencode_never_use_bypass_flags(monkeypatch, tmp_path) -> No
     repo.mkdir()
     settings = _settings(tmp_path)
     monkeypatch.setattr(
-        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
+        "xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
     )
 
     claude = build_command("claude-code", "review", repo, settings)
@@ -80,7 +80,7 @@ def test_gemini_qwen_and_kilo_use_noninteractive_structured_output(
     repo.mkdir()
     settings = _settings(tmp_path)
     monkeypatch.setattr(
-        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
+        "xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
     )
 
     gemini = build_command("gemini", "review", repo, settings)
@@ -96,7 +96,7 @@ def test_gemini_qwen_and_kilo_use_noninteractive_structured_output(
 def test_runtime_catalog_reports_installed_binaries(monkeypatch, tmp_path) -> None:
     settings = _settings(tmp_path)
     monkeypatch.setattr(
-        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: None
+        "xninetzy.core.coding_agents.shutil.which", lambda binary: None
     )
 
     catalog = runtime_catalog(settings)
@@ -121,7 +121,7 @@ def test_subprocess_environment_does_not_inherit_service_secrets(
 def test_each_external_runtime_has_an_mcp_preflight(monkeypatch, tmp_path) -> None:
     settings = _settings(tmp_path)
     monkeypatch.setattr(
-        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
+        "xninetzy.core.coding_agents.shutil.which", lambda binary: f"/bin/{binary}"
     )
 
     assert build_mcp_preflight_command("codex", settings) == [
@@ -178,7 +178,7 @@ def test_host_bridge_marks_external_runtimes_available_without_container_binarie
         }
     )
     monkeypatch.setattr(
-        "app.xninetzy.core.coding_agents.shutil.which", lambda binary: None
+        "xninetzy.core.coding_agents.shutil.which", lambda binary: None
     )
 
     catalog = runtime_catalog(settings)

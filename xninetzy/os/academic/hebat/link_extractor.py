@@ -15,7 +15,7 @@ from urllib.parse import parse_qs, urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
-from app.xninetzy.os.academic.hebat.models import ActivityType
+from xninetzy.os.academic.hebat.models import ActivityType
 
 _MOD_RE = re.compile(r"/mod/([a-z]+)/view\.php\?id=(\d+)", re.I)
 

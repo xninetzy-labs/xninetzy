@@ -6,8 +6,8 @@ from zoneinfo import ZoneInfo
 
 from pydantic import BaseModel, Field
 
-from app.xninetzy.core.config import get_settings
-from app.xninetzy.db.sqlite import connect
+from xninetzy.core.config import get_settings
+from xninetzy.db.sqlite import connect
 
 
 class ResearchSubStep(BaseModel):

@@ -1,0 +1,34 @@
+sequenceDiagram
+    actor U as User
+    participant O as Orchestrator
+    participant M as Memory
+    participant P as Planner
+    participant W as Web Search
+    participant PA as Paper Search
+    participant V as Video Search
+    participant SV as Source Verifier
+    participant S as Synthesizer
+    participant H as Human Approval
+    participant D as Doc Generator
+
+    U->>O: minta deep research topik
+    O->>M: baca learner profile & memory
+    M-->>O: konteks belajar
+    O->>P: buat subplan riset
+    P-->>O: daftar subquery
+    par Parallel search
+        O->>W: cari web
+        O->>PA: cari paper
+        O->>V: cari video
+    end
+    W-->>O: hasil mentah
+    PA-->>O: hasil mentah
+    V-->>O: hasil mentah
+    O->>SV: verifikasi sumber
+    SV-->>O: status akses & kualitas
+    O->>S: sintesis materi
+    S-->>O: ringkasan + sitasi
+    O->>H: minta persetujuan
+    H-->>O: disetujui / direvisi
+    O->>D: generate materi belajar
+    D-->>U: dokumen + kartu recall

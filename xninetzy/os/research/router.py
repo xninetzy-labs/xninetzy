@@ -15,7 +15,7 @@ class RouteRequest:
 
 
 _ROUTING_TABLE: dict[SourceCategory, tuple[str, ...]] = {
-    SourceCategory.PAPER: ("openalex", "arxiv", "crossref", "semantic_scholar", "pubmed"),
+    SourceCategory.PAPER: ("openalex", "arxiv", "crossref", "semantic_scholar", "pubmed", "europe_pmc", "dblp"),
     SourceCategory.CODE: ("github",),
     SourceCategory.DATASET: ("huggingface", "zenodo", "kaggle"),
     SourceCategory.NEWS: ("hackernews", "reddit", "rss"),
@@ -26,7 +26,7 @@ _ROUTING_TABLE: dict[SourceCategory, tuple[str, ...]] = {
     SourceCategory.PATENT: ("patentsview",),
     SourceCategory.ECONOMICS: ("world_bank", "fred", "bps"),
     SourceCategory.GEOGRAPHIC: ("osm",),
-    SourceCategory.ENTITY: ("wikidata", "dbpedia"),
+    SourceCategory.ENTITY: ("wikidata", "dbpedia", "wikipedia"),
     SourceCategory.GENERAL: ("stackoverflow", "wayback"),
 }
 

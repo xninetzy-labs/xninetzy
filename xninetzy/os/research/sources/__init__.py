@@ -3,6 +3,8 @@ from xninetzy.os.research.sources import (
     bps,
     crossref,
     dbpedia,
+    dblp,
+    europe_pmc,
     fred,
     github,
     hackernews,
@@ -21,6 +23,7 @@ from xninetzy.os.research.sources import (
     stackoverflow,
     wayback,
     wikidata,
+    wikipedia,
     world_bank,
 )
 from xninetzy.os.research.sources.base import (
@@ -65,6 +68,8 @@ __all__ = [
     "clear_registry",
     "crossref",
     "dbpedia",
+    "dblp",
+    "europe_pmc",
     "fred",
     "get_adapter",
     "github",
@@ -87,5 +92,6 @@ __all__ = [
     "stackoverflow",
     "wayback",
     "wikidata",
+    "wikipedia",
     "world_bank",
 ]

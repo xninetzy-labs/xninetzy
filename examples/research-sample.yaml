@@ -1,0 +1,18 @@
+version: 1
+title: "Sample research plan"
+steps:
+  - id: search_papers
+    tool: research_search
+    args:
+      query: "self-improving LLM"
+      intent: paper
+      limit: 5
+    tier: 0
+    idempotency_key: auto
+  - id: grade_evidence
+    tool: research_grade_evidence
+    depends_on: [search_papers]
+    args:
+      record_dicts: []
+    tier: 0
+    idempotency_key: auto

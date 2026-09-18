@@ -589,3 +589,62 @@ CAPTURE → UNDERSTAND → PLAN → EXECUTE → REVIEW → ADAPT
 ```
 
 The primary orchestrator keeps those transitions **shared**, **grounded**, **safe**, **idempotent**, **verifiable**, **auditable**, and **resumable** — with no comments in the code that performs them.
+
+---
+
+# 26. Research MCP Expansion (from-scratch foundation)
+
+Adopted 2026-09-18. Foundation: **all-from-scratch**. No external MCP gateway.
+No spawning of GitHub MCP / Reddit MCP / HuggingFace MCP / ArXiv MCP as child
+processes. Source adapters live in-tree under
+`xninetzy/os/research/sources/`.
+
+- Source registry + adapter pattern: `SourceAdapter` ABC, `SourceRecord`
+  dataclass, `RateLimiter`, `RetryPolicy`, `CircuitBreakerGuard`.
+- Phase 1 adapters: OpenAlex, arXiv, Crossref (all free, no key).
+- Router: `xninetzy/os/research/router.py` maps `SourceCategory` to adapter list.
+- New MCP tools (Tier 0/1, auto): `research_search`, `research_fetch`,
+  `research_compare_sources`, `research_grade_evidence`.
+- Skills: 5 meta-skills (`research-planner`, `source-selector`,
+  `evidence-grader`, `contradiction-hunter`, `research-critic`) under
+  `.agents/skills/`. All are Tier 0 workflow bodies, not factual evidence.
+- CLI orchestrator: `xninetzy/cli/orchestrator.py` accepts YAML plans,
+  enforces per-step tier gate via `manifest_for()` + RiskClass mapping,
+  halts on Tier 2/3.
+- Batch HITL: `hitl_request_plan_approval(plan_id, final_steps)` creates a
+  single approval covering all listed FINAL steps.
+- Harness: `harness_plan_drift_detect`, `harness_resume_safe`,
+  `harness_checkpoint_commit`.
+
+Design rationale: avoid transitive security surface from child MCP servers,
+avoid upstream ToS drift, reuse existing idempotency + harness + audit infra.
+
+---
+
+# 27. CAPTCHA auto-OCR opt-in
+
+OCR auto-login is **off by default**. Opt-in via
+`XNINETZY_CAPTCHA_OCR_ENABLED=true`. When enabled, the guard at
+`xninetzy/os/security/captcha/lockout.py` enforces:
+
+- `XNINETZY_CAPTCHA_OCR_MIN_CONFIDENCE` (default `0.6`)
+- `XNINETZY_CAPTCHA_OCR_LOCKOUT_THRESHOLD` (default `3`)
+- `XNINETZY_CAPTCHA_OCR_LOCKOUT_WINDOW_SECONDS` (default `600`)
+- `XNINETZY_CAPTCHA_OCR_COOLDOWN_SECONDS` (default `3600`)
+
+After threshold failures within the window, OCR auto-disables for cooldown.
+Manual owner delivery via WhatsApp (`XNINETZY_CAPTCHA_WA_PREFERRED`) is the
+fallback. This satisfies `§24 #9` (never bypass CAPTCHA/OTP/MFA).
+
+---
+
+# 28. Optimization + Improvement tooling
+
+- `scripts/optimize_run.py` — runs `ruff check` + `pytest -ra` +
+  `scripts/verify_cpu_only.py` + `yarn check && yarn build`. Emits JSON
+  report to `generated/untracked/optimize-report-{timestamp}.json`. **Report
+  only — no auto-fix.**
+- `scripts/improvement_apply.py` — reads `improvement_proposals` with
+  `status='proposed'`. Classifies by `risk_level` (low → dry-run eligible,
+  anything else → requires owner approval). **Dry-run only — no source
+  modification.** Apply path requires `improvement_approve` (FINAL).

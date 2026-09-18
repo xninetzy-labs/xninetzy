@@ -3,7 +3,8 @@ from __future__ import annotations
 from fastapi import APIRouter, Depends
 
 from xninetzy.os.memory.chat_store import ChatStore
-from xninetzy.schemas.routing import ToolInvokeRequest
+from xninetzy.schemas.routing import ToolInvokeRequest, derive_idempotency_key
+from xninetzy.tools.manifest import manifest_for
 from xninetzy.tools.registry import get_tool_descriptions, get_all_tools
 from xninetzy.interfaces.api.deps.auth import require_api_key
 
@@ -50,8 +51,18 @@ async def invoke_tool(tool_name: str, request: ToolInvokeRequest) -> dict:
             "error": f"Tool '{tool_name}' not found",
             "available": list(tools.keys()),
         }
+    args = dict(request.args or {})
+    manifest = manifest_for(tool_name)
+    risk_value = manifest.risk.value if manifest else "read"
+    needs_idempotency = risk_value in {"write", "final"}
+    if needs_idempotency and "idempotency_key" not in args:
+        args["idempotency_key"] = (
+            request.idempotency_key
+            if request.idempotency_key
+            else derive_idempotency_key(tool_name, args, request.chat_id)
+        )
     try:
-        result = await tools[tool_name].ainvoke(request.args)
-        return {"tool": tool_name, "result": result}
+        result = await tools[tool_name].ainvoke(args)
+        return {"tool": tool_name, "result": result, "idempotency_key": args.get("idempotency_key")}
     except Exception as e:
         return {"tool": tool_name, "error": str(e)}

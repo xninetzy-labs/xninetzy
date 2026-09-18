@@ -114,11 +114,84 @@ Symlink every skill into the supported harnesses with
 
 # 7. CAPTCHA auto-OCR
 
-`portal_login_start` (Cyber Campus, UACC) attempts OCR auto-login when
-`CAPTCHA_AUTO_OCR=true`. Confidence threshold lives at
-`CAPTCHA_OCR_MIN_CONFIDENCE` (default `0.6`). Failed or low-confidence
-OCR falls back to manual owner delivery via `os_inbox` (kind `captcha`).
-Bypass per-call with `metadata={"force_manual_captcha": True}`.
+OCR auto-login is **opt-in** (`XNINETZY_CAPTCHA_OCR_ENABLED=false` by default).
+When enabled, the guard at `xninetzy/os/security/captcha/lockout.py` enforces:
+
+- `XNINETZY_CAPTCHA_OCR_MIN_CONFIDENCE` (default `0.6`) — minimum OCR confidence
+- `XNINETZY_CAPTCHA_OCR_LOCKOUT_THRESHOLD` (default `3`) — failures within window
+- `XNINETZY_CAPTCHA_OCR_LOCKOUT_WINDOW_SECONDS` (default `600`) — failure window
+- `XNINETZY_CAPTCHA_OCR_COOLDOWN_SECONDS` (default `3600`) — cooldown after lockout
+
+After `lockout_threshold` failures inside the window, OCR is auto-disabled
+for `cooldown_seconds`. Owner fallback via WhatsApp delivery still applies
+(see `xninetzy/core/config.py::XNINETZY_CAPTCHA_WA_PREFERRED`).
+
+# 7b. Research MCP expansion (from-scratch foundation)
+
+The Research MCP surface expands via `xninetzy/os/research/sources/`. Foundation
+is **from-scratch** (no external MCP gateway; no spawning GitHub MCP / Reddit
+MCP / HF MCP as child processes).
+
+Architecture:
+
+```text
+xninetzy/os/research/sources/
+├── base.py           # SourceAdapter ABC + SourceRecord dataclass + RiskClass
+├── registry.py       # SOURCE_REGISTRY dict + register/get/list
+├── rate_limit.py     # RateLimiter, RetryPolicy, CircuitBreakerGuard
+├── openalex.py       # OpenAlex (free, no key)
+├── arxiv.py          # wraps existing arXiv logic
+└── crossref.py       # wraps existing Crossref logic
+
+xninetzy/os/research/router.py  # intent → adapter list
+xninetzy/tools/ecosystem/research_v2_tools.py  # research_search, research_fetch, research_compare_sources, research_grade_evidence
+xninetzy/cli/orchestrator.py    # YAML plan loader + per-step tier gate
+```
+
+Adapter rules:
+
+- Each adapter declares `RateLimit`, `RetryPolicy`, `CircuitBreaker`.
+- All HTTP calls honor rate limits and breaker state.
+- No paid API key is a hard dependency. Paid adapters (Tavily, Serper) remain
+  optional and are off by default unless their env var is set.
+- Each adapter emits `harness_checkpoint_commit` + `harness_record_step` on
+  every state-changing call.
+
+# 7c. CLI orchestrator
+
+`python -m xninetzy.cli.orchestrator` provides a YAML-plan-driven executor:
+
+```bash
+python -m xninetzy.cli.orchestrator validate examples/research-sample.yaml
+python -m xninetzy.cli.orchestrator run examples/research-sample.yaml
+python -m xninetzy.cli.orchestrator run plan.yaml --approve <approval_id>
+```
+
+Each step declares a `tier`:
+
+- `tier: 0` (READ) — auto-execute
+- `tier: 1` (WRITE/DRAFT) — auto-execute, `idempotency_key` required
+- `tier: 2` — halt, emit preview
+- `tier: 3` (FINAL) — halt, require `approval_id` via
+  `hitl_request_approval` (single approval may cover a whole plan via
+  `hitl_request_plan_approval`)
+
+# 7d. Batch HITL approval
+
+For plans with multiple FINAL-class steps, call `hitl_request_plan_approval`
+once with `plan_id` + `final_steps: list[str]`. A single `approval_id`
+covers all listed steps; per-step receipts via `claim_ledger_record`.
+
+# 7e. Harness drift/resume/checkpoint
+
+Three tools extend S6 harness:
+
+- `harness_plan_drift_detect(plan_id)` — compares plan's `required_tools`
+  vs current `_ALL_TOOLS`. Returns drift report.
+- `harness_resume_safe(plan_id)` — reads last checkpoint, returns
+  replayable actions (sequence with `outcome != "ok"`).
+- `harness_checkpoint_commit(plan_id, step_id, status, payload)` —
+  persists a checkpoint into `observability_events`.
 
 # 8. Authority hierarchy
 

@@ -357,3 +357,170 @@ def harness_review(
         owner=owner,
         status_filter=status_filter,
     )
+
+
+@tool
+def harness_plan_drift_detect(
+    plan_id: str,
+    chat_id: str = "system",
+    sender_id: str = "",
+) -> str:
+    """Bandingkan required_tools sebuah plan dengan registry saat ini.
+
+    Args:
+        plan_id: Plan id.
+        chat_id: Chat ID.
+        sender_id: Owner principal.
+    """
+    _ensure_db()
+    with connect() as conn:
+        row = conn.execute(
+            "SELECT plan_id, required_tools_json, status FROM harness_plans WHERE plan_id=?",
+            (plan_id,),
+        ).fetchone()
+    if row is None:
+        return to_tool_result(
+            f"plan {plan_id} tidak ditemukan",
+            {"plan_id": plan_id, "status": "not_found"},
+            plan_id=plan_id,
+        )
+    required = []
+    try:
+        raw = row["required_tools_json"]
+        if raw:
+            required = [str(item) for item in json.loads(raw)]
+    except (json.JSONDecodeError, TypeError):
+        required = []
+    from xninetzy.tools.registry import get_all_tools
+
+    registered = {tool.name for tool in get_all_tools()}
+    missing = sorted(set(required) - registered)
+    drift = {
+        "plan_id": plan_id,
+        "status": row["status"],
+        "required": required,
+        "registered_count": len(registered),
+        "missing_tools": missing,
+        "drift_detected": bool(missing),
+    }
+    return to_tool_result(
+        f"plan {plan_id}: drift={'ya' if missing else 'tidak'}",
+        drift,
+        plan_id=plan_id,
+    )
+
+
+@tool
+def harness_resume_safe(
+    plan_id: str,
+    chat_id: str = "system",
+    sender_id: str = "",
+) -> str:
+    """Baca checkpoint terakhir dan kembalikan aksi yang masih bisa diulang.
+
+    Args:
+        plan_id: Plan id.
+        chat_id: Chat ID.
+        sender_id: Owner principal.
+    """
+    _ensure_db()
+    with connect() as conn:
+        plan_row = conn.execute(
+            "SELECT plan_id, status FROM harness_plans WHERE plan_id=?",
+            (plan_id,),
+        ).fetchone()
+        if plan_row is None:
+            return to_tool_result(
+                f"plan {plan_id} tidak ditemukan",
+                {"plan_id": plan_id, "status": "not_found"},
+                plan_id=plan_id,
+            )
+        action_rows = conn.execute(
+            """
+            SELECT action_id, sequence, tool_name, args_json, outcome
+              FROM harness_actions
+             WHERE plan_id=?
+             ORDER BY sequence ASC
+            """,
+            (plan_id,),
+        ).fetchall()
+    last_sequence = -1
+    replayable: list[dict[str, Any]] = []
+    completed_sequences: set[int] = set()
+    for row in action_rows:
+        try:
+            sequence = int(row["sequence"])
+        except (TypeError, ValueError):
+            continue
+        completed_sequences.add(sequence)
+        last_sequence = max(last_sequence, sequence)
+        if str(row["outcome"] or "").strip().lower() != "ok":
+            replayable.append(
+                {
+                    "action_id": row["action_id"],
+                    "sequence": sequence,
+                    "tool_name": row["tool_name"],
+                    "outcome": row["outcome"],
+                }
+            )
+    next_sequence = last_sequence + 1 if last_sequence >= 0 else 0
+    return to_tool_result(
+        f"plan {plan_id}: replay {len(replayable)} actions from sequence {next_sequence}",
+        {
+            "plan_id": plan_id,
+            "plan_status": plan_row["status"],
+            "last_sequence": last_sequence,
+            "next_sequence": next_sequence,
+            "replayable": replayable,
+            "completed_count": len(completed_sequences),
+        },
+        plan_id=plan_id,
+    )
+
+
+@tool
+def harness_checkpoint_commit(
+    plan_id: str,
+    step_id: str,
+    status: str,
+    payload: dict[str, Any] | None = None,
+    chat_id: str = "system",
+    sender_id: str = "",
+) -> str:
+    """Catat checkpoint persisten untuk satu langkah plan.
+
+    Args:
+        plan_id: Plan id.
+        step_id: Step identifier.
+        status: ok|error|halted|skipped.
+        payload: Optional dict for audit context.
+        chat_id: Chat ID.
+        sender_id: Owner principal.
+    """
+    _ensure_db()
+    bounded_status = str(status or "").strip().lower() or "unknown"
+    if bounded_status not in {"ok", "error", "halted", "skipped", "unknown"}:
+        bounded_status = "unknown"
+    payload_json = json.dumps(payload or {}, ensure_ascii=False, default=str)
+    now = _now_iso()
+    event_subject = f"{plan_id}:{step_id}"
+    with connect() as conn:
+        conn.execute(
+            """
+            INSERT INTO observability_events
+              (event_kind, severity, source, subject, payload_json, occurred_at)
+            VALUES ('harness_checkpoint', 'info', 'harness_tools', ?, ?, ?)
+            """,
+            (event_subject, payload_json, now),
+        )
+    return to_tool_result(
+        f"checkpoint {plan_id}:{step_id} -> {bounded_status}",
+        {
+            "plan_id": plan_id,
+            "step_id": step_id,
+            "status": bounded_status,
+            "occurred_at": now,
+        },
+        plan_id=plan_id,
+        step_id=step_id,
+    )

@@ -22,6 +22,26 @@ def connect() -> sqlite3.Connection:
     return conn
 
 
+def _backfill_legacy_owner_columns(conn) -> None:
+    rows = conn.execute(
+        "SELECT name FROM sqlite_master WHERE type='table'"
+    ).fetchall()
+    table_names = {row["name"] for row in rows}
+    backfills: dict[str, list[tuple[str, str]]] = {
+        "improvement_proposals": [("owner", "TEXT")],
+    }
+    for table, columns in backfills.items():
+        if table not in table_names:
+            continue
+        existing = {
+            row["name"]
+            for row in conn.execute(f"PRAGMA table_info({table})").fetchall()
+        }
+        for name, ddl in columns:
+            if name not in existing:
+                conn.execute(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
+
+
 def init_db() -> None:
     statements: Iterable[str] = (
         """
@@ -758,5 +778,6 @@ def init_db() -> None:
     )
 
     with connect() as conn:
+        _backfill_legacy_owner_columns(conn)
         for statement in statements:
             conn.execute(statement)

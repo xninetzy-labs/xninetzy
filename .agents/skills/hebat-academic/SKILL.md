@@ -1,92 +1,877 @@
 ---
+
 name: hebat-academic
-description: Academic operating system for HEBAT or Moodle courses, including course freshness, activities, assignments, deadlines, learning materials, downloadable files, PDF reading, assignment grounding, submission preparation, and submission verification. Use for LMS course work where human approval is required before any external upload or final submission.
+
+description: Academic operating system for HEBAT, Moodle, and compatible LMS platforms. Use for course discovery, freshness-aware activity tracking, assignment and deadline identification, learning-material retrieval, file verification, assignment grounding, submission preparation, human-approved submission execution, external submission verification, and learning-state integration.
+
 metadata:
-  scope: general
-  platform: "HEBAT/Moodle-like LMS"
-  owner: xninetzy
-  language: en
-  version: "2.0.0"
-  lifecycle: "discover -> refresh -> identify -> retrieve -> verify -> understand -> ground -> prepare -> approve -> execute -> confirm -> learn"
----
+        scope: general
+        platform: "HEBAT/Moodle-like LMS"
+        owner: xninetzy
+        language: en
+        version: "3.0.0"
+        lifecycle: "discover -> refresh -> identify -> retrieve -> verify -> understand -> ground -> prepare -> approve -> revalidate -> execute -> confirm -> learn"
+-------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # HEBAT Academic OS
 
-This skill is the reusable and safety-conscious workflow for working with academic learning management systems such as **HEBAT, Moodle, and compatible course portals**.
+## 1. Purpose
 
-It connects academic course activity to the broader IT Learning OS without treating the LMS itself as the learning system.
+This skill is the academic LMS operating layer for HEBAT, Moodle, and compatible course portals.
 
-The system should answer four distinct questions:
+It connects:
 
-* What is happening in the course?
-* What material or requirement matters?
-* What should the learner do next?
-* What action, if any, requires explicit approval?
+```text
+LMS
+↓
+Academic Context
+↓
+Assignment / Learning Task
+↓
+Preparation
+↓
+Human Approval
+↓
+Controlled Action
+↓
+External Verification
+↓
+Learning Evidence
+```
 
-The core lifecycle is:
+The LMS is treated as the authoritative source for current academic logistics, while specialized skills handle research, assignment reasoning, artifact generation, and learning development.
 
-**Discover → Refresh → Identify → Retrieve → Verify → Understand → Ground → Prepare → Approve → Execute → Confirm → Learn**
+The system should reliably answer:
 
-## When to use
+1. What course or activity is relevant?
+2. What is its current state?
+3. What does the learner need to do?
+4. What material or evidence is required?
+5. What action is safe to prepare?
+6. What action requires explicit approval?
+7. What happened after execution?
+8. What learning evidence can be derived from the activity?
 
-* the user asks for an HEBAT/Moodle course, activity, assignment, or deadline;
-* the user wants to download or read course materials;
-* the user wants to ground an assignment in the current course context;
-* the user wants to prepare or execute a confirmed submission.
+---
 
-## When NOT to use
+# 2. Core Operating Principle
 
-* Cyber Campus or UACC operations — use `xninetzy-cyber-campus` or `xninetzy-uacc`;
-* assignment orchestration across many skills — use `xninetzy-assignment-orchestrator`;
-* web structure analysis without LMS workflow — use `xninetzy-web-analysis`.
+Use:
 
-## Core principles
+> **Discover → Refresh → Identify → Retrieve → Verify → Understand → Ground → Prepare → Approve → Revalidate → Execute → Confirm → Learn**
 
-* **The LMS is a source of academic context.** HEBAT/Moodle should provide authoritative context for course identity, activity identity, assignment requirements, deadlines, lecturer instructions, learning materials, submission rules, available files, and grades/statuses when accessible. Do not replace official course information with assumptions from memory.
-* **Freshness before action.** Course information can change. Refresh when a deadline may have changed, an activity appears newly created or modified, the user asks for current status, submission information is uncertain, a file may have been replaced, the last synchronization is stale, or the portal indicates a different state. Never present stale course information as current without qualification.
-* **Portal internals are not evidence.** Credentials, cookies, browser state, raw HTML, session tokens, internal selectors, hidden page metadata, and technical request logs may help operate the connector but must never be exposed as evidence in the final answer.
+The critical invariant is:
 
-## Academic context hierarchy
+> **Never perform a consequential LMS action from stale, ambiguous, or unverified state.**
 
-When determining what an assignment requires, prioritize:
+---
+
+# 3. Scope
+
+Use this skill for:
+
+* course discovery
+* course status
+* activity discovery
+* assignment identification
+* deadline tracking
+* announcement/context retrieval
+* learning-material retrieval
+* downloadable-file verification
+* assignment grounding
+* submission preparation
+* submission confirmation
+* LMS state verification
+* learning-state integration
+
+---
+
+# 4. Non-Goals
+
+Do not use this skill as the primary implementation for:
+
+* generic web browsing
+* cross-course assignment orchestration
+* deep academic research
+* generic document generation
+* generic artifact generation
+* LMS-independent learning coaching
+* Cyber Campus operations
+* unrelated university systems
+
+Route those responsibilities to specialized skills.
+
+---
+
+# 5. Authority Model
+
+For current academic logistics, use this hierarchy:
 
 ```text
 Current official activity/instruction
         ↓
-Current course materials
+Current course announcement/instruction
         ↓
-Official lecturer/course announcements
+Current official course material
         ↓
 Assignment brief
         ↓
-HEBAT/Moodle metadata
+LMS metadata
         ↓
-Stored knowledge / previous context
+Previous verified context
         ↓
-General academic assumptions
+Stored knowledge
+        ↓
+General academic convention
 ```
 
-Current explicit course instructions override generic templates.
+The most specific current official instruction wins.
 
-## Core workflow
+Never allow:
 
-1. **Discover.** Identify the authenticated account/session, available courses, course names, and freshness of course information. Avoid unnecessary synchronization of the entire LMS.
-2. **Refresh.** Re-fetch when information is stale, the user asks for current state, or the cache signals a likely change. Distinguish fresh, stale, unknown, and unavailable states.
-3. **Identify.** Verify the course and activity identity (name, code, semester, title, type, deadline, submission status, required file or response format). Do not act on an activity solely because its title looks similar to another activity.
-4. **Retrieve and verify.** Download only the requested file unless broader retrieval is explicitly required. Verify file existence, filename, type, non-zero size, readable structure, and expected format.
-5. **Understand.** Extract only what is relevant to the user's current task unless they explicitly request a comprehensive digest.
-6. **Ground the assignment.** Tie the assignment brief, lecturer instructions, required material, and relevant learning concepts together before planning the deliverable.
-7. **Prepare.** Compile the complete intended transaction: course, activity, deadline, filename, file type, submission consequence, existing submission, and required action. Show this information before crossing the human-approval boundary.
-8. **Approve explicitly.** Require explicit approval before upload, replacing a previous submission, final submission, or confirming an irreversible submission state. Approval must occur before the action, not after.
-9. **Execute narrowly.** Perform only the smallest action required. Never overwrite a previous academic submission silently.
-10. **Confirm.** Re-read the LMS submission status, timestamp, receipt/reference number, uploaded filename, and confirmation message. Do not claim success unless the LMS actually confirms the submission.
-11. **Learn.** Update learning evidence and mastery state when the assignment maps to a concept, practice, or recall checkpoint.
+* memory
+* cached information
+* old files
+* generic templates
+* assumptions
 
-## Material-to-learning mapping
+to override an explicit current LMS instruction.
 
-When useful, create an explicit mapping:
+---
 
-| Academic Item     | Learning OS Mapping |
+# 6. State Model
+
+Treat LMS information as stateful data.
+
+Every important LMS object should conceptually have:
+
+```text
+Identity
+State
+Timestamp
+Source
+Freshness
+Confidence
+```
+
+For example:
+
+```text
+Course
+  ├── identity
+  ├── current status
+  ├── last verified time
+  └── source
+
+Activity
+  ├── identity
+  ├── deadline
+  ├── requirements
+  ├── submission state
+  ├── last verified time
+  └── source
+
+File
+  ├── filename
+  ├── type
+  ├── size
+  ├── version
+  ├── integrity
+  └── source
+```
+
+Do not collapse these properties into a single vague "current" flag.
+
+---
+
+# 7. Freshness Model
+
+Use explicit freshness states:
+
+```text
+fresh
+stale
+unknown
+unavailable
+```
+
+### Fresh
+
+Recently verified against the current LMS state.
+
+### Stale
+
+Previously verified but potentially outdated.
+
+### Unknown
+
+No reliable verification timestamp/state exists.
+
+### Unavailable
+
+The LMS or relevant data could not be accessed.
+
+Never present:
+
+```text
+stale
+unknown
+unavailable
+```
+
+as equivalent to:
+
+```text
+current
+```
+
+---
+
+# 8. Refresh Rules
+
+Refresh before consequential decisions when:
+
+* deadline may have changed
+* activity may have been modified
+* submission state matters
+* user asks for current status
+* assignment instructions are uncertain
+* required file may have changed
+* an existing submission may be replaced
+* cached information is stale
+* the portal shows contradictory state
+
+Do not unnecessarily synchronize the entire LMS.
+
+Prefer:
+
+```text
+minimum required retrieval
+```
+
+over:
+
+```text
+full LMS synchronization
+```
+
+---
+
+# 9. Identity Verification
+
+Never identify an activity using title similarity alone.
+
+Verify as many of the following as available:
+
+```text
+Course
+Course code
+Semester/term
+Activity ID
+Activity title
+Activity type
+Deadline
+Submission state
+Instruction context
+Required file/response format
+```
+
+If multiple activities have similar titles:
+
+1. compare course
+2. compare term
+3. compare activity identity
+4. compare deadline
+5. compare instructions
+6. stop if ambiguity remains material
+
+Never guess which activity the user means when the consequences are significant.
+
+---
+
+# 10. Course Discovery
+
+When discovering courses:
+
+1. retrieve available courses
+2. identify active/relevant courses
+3. avoid unnecessary retrieval of unrelated courses
+4. distinguish current from archived courses
+5. verify course identity before acting
+
+Represent course state conceptually as:
+
+```text
+Course
+├── name
+├── code
+├── term
+├── status
+├── activity count
+└── freshness
+```
+
+---
+
+# 11. Activity Discovery
+
+When asked about assignments or activities:
+
+1. identify the target course
+2. retrieve relevant activities
+3. filter by activity type where possible
+4. identify deadlines
+5. identify completion/submission state
+6. verify the exact target activity
+
+Do not assume the newest activity is the requested activity.
+
+---
+
+# 12. Deadline Handling
+
+Deadlines are time-sensitive.
+
+For each deadline capture:
+
+* course
+* activity
+* exact date
+* exact time when available
+* timezone
+* submission target
+* current submission status
+* source
+* freshness
+
+Prefer absolute dates:
+
+```text
+Monday, August 24, 2026 at 23:59 WIB
+```
+
+over:
+
+```text
+next Monday
+```
+
+when ambiguity is possible.
+
+Never infer an activity deadline from:
+
+* weekly schedules
+* course calendars
+* remembered patterns
+
+when the activity contains an explicit deadline.
+
+---
+
+# 13. Deadline Risk
+
+Use advisory states:
+
+```text
+safe
+attention
+at_risk
+blocked
+```
+
+### safe
+
+Deadline sufficiently distant and no known blocker.
+
+### attention
+
+Deadline approaching or preparation remains.
+
+### at_risk
+
+Major unfinished work, unresolved requirement, or technical blocker exists.
+
+### blocked
+
+The learner cannot safely complete the task with the currently available information or access.
+
+These states are informational.
+
+Do not create unnecessary urgency.
+
+---
+
+# 14. Material Retrieval
+
+Retrieve only the material required for the current task.
+
+When downloading a file, verify:
+
+```text
+exists
+non-zero size
+expected filename
+expected type
+readable structure
+expected source
+```
+
+When version information exists, preserve it.
+
+If a new file appears to replace an older file:
+
+* identify the newer source
+* avoid silently mixing versions
+* use the verified current version for current work
+
+---
+
+# 15. File Integrity
+
+For important academic files, verify:
+
+* file exists
+* extension matches content
+* file is non-empty
+* file opens successfully
+* expected structure is present
+* expected pages/sheets/slides exist where applicable
+
+For PDFs, when layout matters:
+
+```text
+extract
+→ render
+→ inspect
+```
+
+Do not consider successful text extraction sufficient for visual validation.
+
+Route detailed PDF validation to `pdf`.
+
+---
+
+# 16. Understand
+
+Extract only the information relevant to the current task unless the user explicitly requests a comprehensive digest.
+
+Identify:
+
+* learning objective
+* assignment objective
+* required output
+* required evidence
+* required concepts
+* methodology
+* constraints
+* deadline
+* submission rules
+* grading criteria
+* lecturer-specific instructions
+
+Do not rewrite the entire course when the user only needs one assignment requirement.
+
+---
+
+# 17. Grounding
+
+Before assignment planning, establish:
+
+```text
+Course Context
++
+Assignment Requirement
++
+Relevant Learning Material
++
+Required Evidence
++
+Expected Output
+```
+
+The LMS provides academic grounding.
+
+Specialized assignment skills determine:
+
+* research strategy
+* argument architecture
+* artifact design
+* document generation
+
+Do not duplicate those responsibilities here.
+
+---
+
+# 18. Assignment Grounding Contract
+
+When handing context to another skill, preserve:
+
+```text
+course_identity
+activity_identity
+official_instructions
+deadline
+submission_rules
+required_format
+required_materials
+relevant_learning_objectives
+grading_constraints
+known_ambiguities
+source_freshness
+```
+
+This prevents downstream agents from accidentally working from incomplete LMS context.
+
+---
+
+# 19. Academic Digest
+
+When asked for a course digest, prioritize:
+
+```text
+Course
+Current Status
+Upcoming Deadlines
+New Activities
+Important Materials
+Assignment Requirements
+Submission Status
+Risks / Ambiguities
+Recommended Next Action
+```
+
+Keep the digest actionable.
+
+Do not overwhelm the learner with irrelevant portal information.
+
+---
+
+# 20. Submission State Model
+
+Treat submission as a state machine:
+
+```text
+NOT_STARTED
+    ↓
+PREPARED
+    ↓
+PENDING_APPROVAL
+    ↓
+APPROVED
+    ↓
+REVALIDATED
+    ↓
+EXECUTING
+    ↓
+SUBMITTED
+    ↓
+VERIFIED
+```
+
+Possible failure states:
+
+```text
+BLOCKED
+FAILED
+UNCERTAIN
+```
+
+Never jump directly from:
+
+```text
+PREPARED → VERIFIED
+```
+
+without actual LMS confirmation.
+
+---
+
+# 21. Human Approval Boundary
+
+Uploading, replacing, or final-submitting academic work is consequential.
+
+Therefore:
+
+> **Prepare automatically. Approve explicitly. Revalidate immediately before execution. Execute narrowly. Verify externally.**
+
+Explicit approval is required before:
+
+* uploading an artifact
+* replacing an existing submission
+* final submission
+* confirming an irreversible LMS action
+
+An earlier general instruction does not constitute permanent approval for future submissions.
+
+---
+
+# 22. Approval Context
+
+Before requesting approval, present:
+
+```text
+Target
+Course
+Activity
+Current deadline
+File
+File type
+File size
+Action
+Existing submission
+Consequence
+Current LMS state
+Approval required
+```
+
+The user must be able to understand the action without seeing portal internals.
+
+Do not hide material consequences.
+
+---
+
+# 23. Approval Semantics
+
+Approval must be:
+
+* explicit
+* current
+* specific to the intended action
+* based on the current verified state
+
+Examples of acceptable approval:
+
+```text
+Submit this file.
+```
+
+```text
+Yes, upload and submit it to Assignment 3.
+```
+
+Do not infer approval from:
+
+```text
+Looks good.
+```
+
+unless the action being approved is unambiguous in context.
+
+Do not reuse approval for another activity or another file.
+
+---
+
+# 24. Revalidation Before Execution
+
+Immediately before a consequential action:
+
+1. refresh relevant LMS state
+2. verify activity identity
+3. verify deadline
+4. verify submission state
+5. verify intended file
+6. verify action consequence
+7. verify approval still corresponds to the action
+
+If any material property changed:
+
+```text
+STOP
+→ surface the change
+→ request renewed approval if necessary
+```
+
+Never execute using obsolete approval after a material state change.
+
+---
+
+# 25. Narrowest-Action Principle
+
+Perform only the action required.
+
+If the user requests:
+
+```text
+upload file
+```
+
+do not automatically:
+
+* submit another file
+* replace an existing submission
+* edit course content
+* modify unrelated settings
+* post comments
+* send messages
+
+Minimize action scope.
+
+---
+
+# 26. Existing Submission Protection
+
+Before upload/submission, determine whether an existing submission exists.
+
+If yes, surface:
+
+```text
+Existing submission detected.
+```
+
+Then identify:
+
+* existing filename
+* submission timestamp
+* current status
+* whether replacement is allowed
+* whether replacement changes grading/submission state
+
+Never overwrite silently.
+
+If replacement is consequential, require explicit approval specifically covering replacement.
+
+---
+
+# 27. Execution
+
+After approval:
+
+1. execute only the approved action
+2. avoid unrelated portal interactions
+3. capture the resulting LMS state
+4. do not claim success before verification
+
+If execution fails:
+
+* report failure
+* preserve the known state
+* do not repeatedly retry blindly
+* determine whether retry is safe
+* request approval again if the action scope materially changes
+
+---
+
+# 28. Submission Verification
+
+After execution, independently verify:
+
+* activity identity
+* submission status
+* uploaded filename
+* timestamp
+* receipt/reference number if available
+* LMS confirmation
+* visible submission state
+
+A local upload result is not sufficient evidence of LMS submission.
+
+The authoritative confirmation must come from the LMS.
+
+---
+
+# 29. Verification States
+
+Use:
+
+```text
+verified
+failed
+uncertain
+```
+
+### verified
+
+LMS explicitly confirms the intended action.
+
+### failed
+
+LMS or execution process explicitly reports failure.
+
+### uncertain
+
+The result cannot be reliably established.
+
+Never convert `uncertain` into `verified`.
+
+---
+
+# 30. Security and Privacy
+
+Treat LMS access as sensitive.
+
+Never expose:
+
+* passwords
+* access tokens
+* cookies
+* session identifiers
+* authentication headers
+* private browser state
+* hidden portal data
+* internal selectors
+* raw request headers
+* technical credentials
+
+Do not include portal internals in evidence presented to the learner.
+
+Use the minimum information necessary to explain the academic state.
+
+---
+
+# 31. Error Handling
+
+When LMS access fails:
+
+1. identify whether the failure is authentication, connectivity, permission, portal state, or unknown
+2. preserve the last verified state
+3. mark freshness appropriately
+4. do not claim current status
+5. do not execute consequential actions
+6. tell the learner what remains uncertain
+
+When an activity cannot be uniquely identified:
+
+```text
+STOP
+→ report ambiguity
+→ ask for the minimum missing information
+```
+
+---
+
+# 32. Conflict Resolution
+
+### Current LMS vs stored knowledge
+
+Current verified LMS state wins.
+
+### Current lecturer instruction vs generic convention
+
+Lecturer instruction wins.
+
+### Current file vs cached file
+
+Current verified file wins.
+
+### Multiple current instructions
+
+Prefer the most specific authoritative instruction.
+
+### Unresolved conflict
+
+Stop and surface it.
+
+Never silently resolve a material conflict through assumption.
+
+---
+
+# 33. Learning OS Integration
+
+The LMS should provide evidence to the learner's broader learning system without becoming a duplicate LMS.
+
+Map relevant events as:
+
+| LMS Item          | Learning OS Mapping |
 | ----------------- | ------------------- |
 | Lecture/material  | Concept             |
 | Assignment brief  | Target/constraint   |
@@ -97,104 +882,252 @@ When useful, create an explicit mapping:
 | Failed task       | Weak concept        |
 | Review activity   | Recall checkpoint   |
 
-This allows course activity to feed the learner's roadmap without duplicating the LMS.
+Only create learning-state updates when sufficient evidence exists.
 
-## Academic digest
+Do not infer mastery merely because an assignment was submitted.
 
-When the user asks for a course digest, prioritize actionable information:
+---
 
-```text
-Course
-Current Status
-Upcoming Deadlines
-New Activities
-Important Materials
-Assignment Requirements
-Risks / Ambiguities
-Recommended Learning Action
-```
+# 34. Mastery Evidence
 
-Do not overwhelm the learner with every portal item when only a few items are relevant.
-
-## Deadline handling
-
-Treat deadlines as time-sensitive data. For each deadline, capture exact date, exact time when available, timezone when relevant, course, activity, submission target, and current status. Use absolute dates in summaries when ambiguity is possible:
-
-> Due Monday, August 24, 2026 at 23:59 WIB.
-
-Do not infer a deadline from a general weekly schedule when the activity contains an explicit deadline.
-
-Deadline risk classes (advisory):
+Distinguish:
 
 ```text
-safe       — sufficient time and no obvious blockers
-attention  — deadline approaching or preparation remains
-at_risk    — major unfinished work, unclear requirements, or technical blocker
-blocked    — submission cannot safely proceed
+activity completed
+≠
+concept mastered
 ```
 
-## Human-in-the-loop boundary
+Possible evidence:
 
-Uploading or final-submitting an academic artifact is consequential. Therefore:
+* assignment completion
+* correct answer
+* lecturer feedback
+* revision quality
+* repeated successful application
+* assessment result
+* demonstrated explanation
 
-**Prepare automatically. Approve explicitly. Execute narrowly. Verify externally.**
+A submission alone should not automatically increase mastery confidence.
 
-Approval must occur before upload, replacing a previous submission, final submission, or confirming an irreversible submission state. Do not treat an earlier general instruction as permanent approval for future consequential actions.
+---
 
-## Approval message
+# 35. Routing
 
-Before execution, present a compact confirmation:
+Route specialized work:
+
+* Cross-domain assignment orchestration → `xninetzy-assignment-orchestrator`
+* Assignment foundation → `hebat-assignment`
+* Research → `xninetzy-deep-research`
+* Artifact generation → `xninetzy-artifact-orchestrator`
+* PDF processing → `pdf`
+* Learning capability development → `it-learning`
+* Learning coaching → `xninetzy-learning-coach`
+* Obsidian ingestion → `xninetzy-obsidian-orchestra`
+* Cyber Campus → `xninetzy-cyber-campus`
+* UACC → `xninetzy-uacc`
+* General web analysis → `xninetzy-web-analysis`
+
+This skill remains the LMS control layer.
+
+---
+
+# 36. Reference Map
 
 ```text
-Target:
-Course:
-Activity:
-File:
-Action:
-Deadline:
-Existing submission:
-Consequence:
-Approval required:
+references/
+├── retrieval.md
+├── grounding.md
+└── submission.md
 ```
 
-The user should be able to understand what will happen without inspecting portal internals.
+### retrieval.md
 
-## Conflict resolution
+Contains:
 
-* When HEBAT information conflicts with stored knowledge, current portal state wins for current course logistics.
-* When lecturer instructions conflict with a generic skill rule, lecturer instructions win.
-* When a file conflicts with a filename or earlier cached version, the verified current file wins.
-* When portal state is uncertain, stop and surface the uncertainty.
+* course discovery
+* activity retrieval
+* freshness handling
+* material retrieval
+* file verification
+* PDF reading handoff
 
-## Security and privacy
+### grounding.md
 
-Never expose passwords, cookies, access tokens, session identifiers, private browser state, authentication headers, hidden portal data, or internal selectors. Use only the minimum information necessary to explain the academic result.
+Contains:
 
-## Reference map
+* assignment requirement extraction
+* course-context mapping
+* conflict resolution
+* learning-objective mapping
+* Learning OS integration
 
-* `references/retrieval.md` — course discovery, material retrieval, file verification, and PDF reading.
-* `references/grounding.md` — assignment requirement extraction, conflict resolution, and Learning OS integration.
-* `references/submission.md` — preparation, approval message, revalidation, narrowest-action principle, existing submission protection, and submission verification.
+### submission.md
 
-## Routing
+Contains:
 
-* Cyber Campus academic status → `xninetzy-cyber-campus`.
-* Cross-domain assignment orchestration → `xninetzy-assignment-orchestrator`.
-* Research → `xninetzy-deep-research`.
-* Learning capability development → `it-learning` and `xninetzy-learning-coach`.
-* Obsidian note ingestion of LMS material → `xninetzy-obsidian-orchestra`.
+* submission state machine
+* approval protocol
+* pre-execution revalidation
+* existing-submission protection
+* narrowest-action principle
+* execution verification
+* failure recovery
 
-## Completion contract
+---
 
-Every HEBAT interaction should return the relevant subset of:
+# 37. Completion Contract
 
-* **Course identity** — verified course name/code when available.
-* **Activity identity** — exact activity or assignment.
-* **Freshness status** — fresh, stale, unknown, or unavailable.
-* **Material/file status** — retrieved path, filename, type, and verification status.
-* **Requirement status** — what the assignment actually requires.
-* **Approval status** — not required / pending / approved / rejected.
-* **Execution status** — not executed / executed / failed / uncertain.
-* **Portal verification** — confirmed evidence from the LMS.
-* **Learning connection** — the corresponding concept, task, evidence, or review checkpoint when applicable.
-* **Next action** — one safe, bounded learning or academic action.
+Every HEBAT interaction should return only the relevant subset of:
+
+### Course
+
+```text
+course_identity
+course_status
+freshness
+```
+
+### Activity
+
+```text
+activity_identity
+activity_type
+deadline
+submission_status
+```
+
+### Materials
+
+```text
+filename
+file_type
+verification_status
+source
+```
+
+### Requirements
+
+```text
+requirements
+constraints
+ambiguities
+```
+
+### Approval
+
+```text
+not_required
+pending
+approved
+rejected
+renewal_required
+```
+
+### Execution
+
+```text
+not_executed
+executed
+failed
+uncertain
+```
+
+### Verification
+
+```text
+verified
+failed
+uncertain
+```
+
+### Learning
+
+```text
+concept
+practice
+evidence
+review_checkpoint
+```
+
+### Next Action
+
+Provide one safe and bounded next action when useful.
+
+---
+
+# 38. Final Invariants
+
+The following rules are non-negotiable:
+
+```text
+1. Never guess the target activity when identity is ambiguous.
+
+2. Never present stale LMS state as current.
+
+3. Never treat cached information as authoritative when current
+   LMS state can be verified.
+
+4. Never fabricate assignment requirements.
+
+5. Never fabricate academic sources or course information.
+
+6. Never expose LMS credentials or session internals.
+
+7. Never upload or final-submit without explicit current approval.
+
+8. Never reuse old approval after a material state change.
+
+9. Never overwrite an existing submission silently.
+
+10. Never claim submission success without LMS verification.
+
+11. Never convert an uncertain result into a verified result.
+
+12. Never infer mastery solely from activity completion.
+
+13. Never perform unrelated LMS actions.
+
+14. Never allow generic skill defaults to override explicit
+    current course instructions.
+```
+
+---
+
+# 39. Operating Objective
+
+The HEBAT Academic OS should minimize two classes of failure:
+
+```text
+ACADEMIC FAILURE
+= wrong course
++ wrong activity
++ wrong requirement
++ stale deadline
++ wrong material
++ incomplete grounding
+
+OPERATIONAL FAILURE
+= unauthorized action
++ wrong file
++ silent replacement
++ stale approval
++ unverified submission
++ false success claim
+```
+
+The system succeeds when it provides:
+
+```text
+Current Context
++
+Correct Academic Grounding
++
+Explicit Human Control
++
+Minimal Action
++
+External Verification
++
+Useful Learning Evidence
+```

@@ -78,6 +78,9 @@ if command -v uv >/dev/null 2>&1; then
     echo
     echo "Menginstal skill ke harness yang didukung (opencode, claude, codex)..."
     uv run --with "" python scripts/install_skills.py || echo "Skill installer dilewati (periksa manual)."
+    echo
+    echo "Memaksa pembaruan skill xninetzy-* untuk mode Xninetzy (backup + symlink)..."
+    uv run --with "" python scripts/install_skills.py --xninetzy-only --force-xninetzy || echo "Force-update skill xninetzy dilewati (periksa manual)."
   fi
 fi
 

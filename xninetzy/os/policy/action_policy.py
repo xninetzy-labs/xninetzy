@@ -38,6 +38,7 @@ _FINAL_ACTIONS = frozenset(
         "portal_krs_war_execute",
         "portal_krs_war_arm",
         "hebat_submit_submission",
+        "hebat_submit_submission_direct",
         "qa_submit_kuesioner",
     }
 )

@@ -1,69 +1,241 @@
 # Xninetzy Artifact Orchestrator — QA and Delivery
 
-This reference expands physical file QA, structural QA, rendering QA, visual QA, defect taxonomy, revision loop, freeze protocol, output package, and standard QA checklist. Read it when finalizing or auditing an artifact.
+This reference defines physical validation, structural validation, evidence QA,
+rendering inspection, visual QA, defect handling, revision, freeze, checkpoint,
+packaging, and delivery.
 
-## Physical file QA
+Read it when:
 
-After generation, verify:
+```text
+finalizing an artifact
+auditing a generated file
+checking rendered output
+assembling a package
+preparing delivery
+handling defects
+freezing a final version
+```
 
-* file exists,
-* path is exact,
-* non-zero size,
-* expected file type,
-* file opens,
-* expected page/slide/sheet count,
-* no obvious corruption.
+---
 
-A successful tool call is not proof that the artifact is valid.
+# 1. QA Principle
 
-## Structural QA
+A successful generator call is not evidence of artifact correctness.
 
-Check the generated structure.
+Use:
 
-### DOCX
+```text
+GENERATE
+→ INSPECT
+→ VALIDATE
+→ RENDER
+→ QA
+→ REVISE IF NEEDED
+→ FREEZE
+→ DELIVER
+```
 
-* headings,
-* paragraphs,
-* tables,
-* figures,
-* sections,
-* page breaks,
-* TOC,
-* references.
+Never skip verification because generation succeeded.
 
-### PDF
+---
 
-* page count,
-* text presence,
-* page order,
-* links,
-* figures,
-* clipping,
-* metadata when relevant.
+# 2. QA Layers
 
-### PPTX
+Use separate QA dimensions:
 
-* slide count,
-* layouts,
-* text boxes,
-* images,
-* speaker notes,
-* slide dimensions.
+```text
+REQUIREMENT QA
+CONTENT QA
+EVIDENCE / CITATION QA
+STRUCTURAL QA
+TECHNICAL QA
+RENDERING QA
+VISUAL QA
+ACCESSIBILITY QA
+DELIVERY QA
+```
 
-### Spreadsheet
+Not every artifact requires every dimension.
 
-* sheets,
-* formulas,
-* ranges,
-* values,
-* references,
-* charts,
-* frozen panes,
-* formatting.
+The applicable dimensions must be determined by artifact type and requirements.
 
-## Rendering QA
+---
 
-Never claim visual quality without inspecting a rendered representation. Recommended pipeline:
+# 3. Physical File QA
+
+After generation verify:
+
+```text
+file exists
+exact path
+non-zero size
+expected extension
+expected MIME/type
+file opens
+no obvious corruption
+```
+
+Where relevant also verify:
+
+```text
+page count
+slide count
+sheet count
+archive contents
+file permissions
+```
+
+A file's existence does not prove its content is correct.
+
+---
+
+# 4. Structural QA
+
+## DOCX
+
+Check:
+
+```text
+headings
+paragraphs
+tables
+figures
+sections
+page breaks
+TOC
+references
+links
+```
+
+## PDF
+
+Check:
+
+```text
+page count
+page order
+text presence
+links
+figures
+metadata when relevant
+clipping indicators
+```
+
+## PPTX
+
+Check:
+
+```text
+slide count
+slide dimensions
+layouts
+text boxes
+images
+notes
+links
+```
+
+## Spreadsheet
+
+Check:
+
+```text
+sheet names
+formulas
+ranges
+values
+references
+charts
+frozen panes
+number formats
+```
+
+---
+
+# 5. Content QA
+
+Verify:
+
+```text
+requirements are addressed
+important claims are supported
+analysis is coherent
+terminology is consistent
+numbers are consistent
+conclusion follows from the content
+required content exists
+```
+
+Do not treat:
+
+```text
+file generated
+```
+
+as:
+
+```text
+content verified
+```
+
+---
+
+# 6. Evidence / Citation QA
+
+For every important claim:
+
+```text
+Claim
+→ Source
+→ Evidence
+→ Artifact location
+```
+
+Check:
+
+```text
+source exists
+source identity is correct
+source supports claim
+citation is correctly attached
+reference exists
+```
+
+Reject:
+
+```text
+fabricated source
+unsupported claim
+citation mismatch
+unverified empirical result
+```
+
+---
+
+# 7. Requirement QA
+
+Build or inspect the requirement matrix:
+
+| Requirement | Artifact Location | Evidence | Validator | Status   |
+| ----------- | ----------------- | -------- | --------- | -------- |
+| R1          | Section X         | Source Y | QA-01     | VERIFIED |
+
+Final readiness normally requires:
+
+```text
+mandatory requirements = 100% VERIFIED
+```
+
+unless an explicit exception is recorded.
+
+---
+
+# 8. Rendering QA
+
+Visual quality must be assessed from the rendered representation whenever
+layout materially matters.
+
+Pipeline:
 
 ```text
 Source Artifact
@@ -74,232 +246,888 @@ Render / Preview
    ↓
 Inspect
    ↓
-Identify defects
+Detect Defects
    ↓
-Revise
+Revise Source
    ↓
-Render again
+Regenerate
+   ↓
+Render Again
 ```
 
-Visual inspection is mandatory when layout materially affects quality.
+Do not claim visual correctness from source structure alone.
 
-## Visual QA
+---
+
+# 9. PDF Rendering
+
+For PDF-sensitive work:
+
+```text
+source document
+→ PDF
+→ render pages
+→ inspect pages
+```
+
+Check:
+
+```text
+font substitution
+missing glyphs
+page-break shifts
+table overflow
+figure displacement
+blank pages
+cropping
+clipping
+broken links
+unexpected page count
+caption displacement
+```
+
+---
+
+# 10. Visual QA
 
 Inspect for:
 
-* overflow,
-* clipping,
-* broken alignment,
-* whitespace imbalance,
-* inconsistent spacing,
-* unreadable text,
-* malformed tables,
-* missing images,
-* duplicated elements,
-* accidental blank pages,
-* inconsistent typography,
-* broken hyperlinks where visible.
+```text
+overflow
+clipping
+misalignment
+spacing inconsistency
+whitespace imbalance
+unreadable text
+malformed tables
+missing images
+duplicate elements
+unexpected blank pages
+inconsistent typography
+broken visible links
+```
 
-Do not rely solely on source code or document structure.
+For documents also inspect:
 
-## Evidence audit
+```text
+cover
+headings
+margins
+pagination
+references
+headers/footers
+```
 
-Before final generation, inspect:
+For presentations:
 
-### Claim-source alignment
+```text
+slide density
+headline hierarchy
+chart legibility
+visual consistency
+speaker-scale readability
+```
 
-Does the source support the claim?
+For spreadsheets:
 
-### Metadata
+```text
+column readability
+sheet navigation
+formula visibility where useful
+number formatting
+frozen panes
+dashboard/chart readability
+```
 
-Is the source identity correct?
+---
 
-### Coverage
+# 11. Cover QA
 
-Are important claims supported?
+When a cover is required:
 
-### Inference
+```text
+exactly one page
+correct title
+correct identity
+correct lecturer when required
+correct academic metadata
+correct logo
+logo appears once
+logo aspect ratio preserved
+no overflow
+no unexpected header/footer
+```
 
-Are interpretations clearly distinguished from source findings?
+Render and inspect the cover visually.
 
-### Freshness
+---
 
-Are time-sensitive claims current?
+# 12. Placeholder Audit
 
-### Consistency
+Before delivery, search for unresolved:
 
-Do tables, figures, and prose agree?
+```text
+TODO
+TBD
+Lorem ipsum
+[NAME]
+[DATE]
+[LINK]
+[PLACEHOLDER]
+INSERT FIGURE
+ADD CITATION
+WILL BE UPDATED
+EMPTY TEMPLATE FIELD
+```
 
-## Artifact generator selection
+No unresolved placeholder belongs in a final artifact unless explicitly
+intentional.
 
-Use the most appropriate generation tool for the artifact:
+---
 
-* **DOCX** — prefer a structured DOCX generation workflow.
-* **PDF** — generate from a controlled document or PDF-native workflow as appropriate.
-* **PPTX** — use a presentation generation workflow such as `python-pptx` when appropriate.
-* **Spreadsheet** — use spreadsheet-native tooling such as `openpyxl` or `artifact_tool`, following the spreadsheet-specific standards.
+# 13. Link Audit
 
-Do not use a generic document workflow for spreadsheets merely because it is convenient.
+For important links verify:
 
-## Artifact defect taxonomy
+```text
+URL is complete
+target is correct
+version is correct
+link resolves when verification is possible
+access state is appropriate
+```
 
-Classify QA defects:
+When verification cannot be performed:
 
-### Critical
+```text
+LINK_STATUS = UNKNOWN
+```
 
-Prevents submission or changes meaning.
+Do not claim that an inaccessible link is verified.
 
-### High
+---
 
-Major layout, evidence, or requirement failure.
+# 14. Length Validation
 
-### Medium
+When constraints exist:
 
-Noticeable inconsistency or quality issue.
+```text
+actual page count
+actual slide count
+actual word count when applicable
+appendix treatment
+cover/TOC treatment
+hidden/blank slide treatment
+```
 
-### Low
+Do not estimate page/slide length from word count alone.
 
-Minor cosmetic issue.
+---
 
-Fix critical/high defects before delivery.
+# 15. Accessibility QA
 
-## Revision loop
+When applicable:
+
+```text
+text readability
+contrast
+logical reading order
+meaningful hierarchy
+captions
+alternative text where supported
+non-color-only distinctions
+table readability
+slide readability
+```
+
+Accessibility should be evaluated against:
+
+```text
+artifact type
+target audience
+assignment requirements
+applicable standards
+```
+
+---
+
+# 16. Defect Taxonomy
+
+Use four levels:
+
+## CRITICAL
+
+Prevents submission, corrupts the artifact, or changes meaning materially.
+
+Examples:
+
+```text
+missing mandatory requirement
+wrong artifact
+fabricated source
+corrupted file
+missing required evidence
+unreadable output
+critical calculation error
+wrong identity information
+```
+
+## HIGH
+
+Materially affects quality, correctness, grading, or usability.
+
+Examples:
+
+```text
+unsupported central claim
+missing major requirement
+serious layout failure
+broken important table
+broken required link
+major rendering defect
+incorrect major calculation
+```
+
+## MEDIUM
+
+Noticeable but not normally blocking.
+
+Examples:
+
+```text
+inconsistent spacing
+minor structural issue
+non-critical alignment problem
+small evidence gap
+```
+
+## LOW
+
+Cosmetic or non-material issue.
+
+Examples:
+
+```text
+minor typography mismatch
+small whitespace imbalance
+cosmetic alignment issue
+```
+
+---
+
+# 17. Readiness Gate
+
+Default:
+
+```text
+CRITICAL = 0
+HIGH = 0
+```
+
+Then:
+
+```text
+mandatory requirements verified
++
+required evidence verified
++
+physical file valid
++
+structural validation passed
++
+applicable visual QA passed
++
+critical defects = 0
++
+high defects = 0
+```
+
+→
+
+```text
+READY
+```
+
+Otherwise:
+
+```text
+REWORK_REQUIRED
+```
+
+---
+
+# 18. Defect Handling
+
+For every defect:
+
+```yaml
+defect:
+  defect_id:
+  severity:
+  description:
+  responsible_layer:
+  affected_artifact:
+  validator:
+  resolution:
+  status:
+```
+
+Possible status:
+
+```text
+OPEN
+IN_PROGRESS
+FIXED
+WONT_FIX
+ACCEPTED_EXCEPTION
+```
+
+An exception must remain visible.
+
+---
+
+# 19. Revision Loop
+
+Canonical:
+
+```text
+DETECT
+ ↓
+CLASSIFY
+ ↓
+LOCALIZE RESPONSIBLE SOURCE
+ ↓
+FIX
+ ↓
+REGENERATE
+ ↓
+RENDER
+ ↓
+REINSPECT
+ ↓
+REVALIDATE
+```
+
+Do not patch only the derived artifact when the root defect is upstream.
+
+---
+
+# 20. Revision Scope
+
+After a change, determine which QA dimensions are invalidated.
+
+Examples:
+
+```text
+content edit
+→ content/evidence/citation QA
+
+layout edit
+→ structural/rendering/visual QA
+
+source substitution
+→ evidence/content/citation QA
+
+formula change
+→ spreadsheet calculation QA
+
+package change
+→ delivery QA
+```
+
+When impact cannot be bounded reliably:
+
+```text
+perform broader QA
+```
+
+---
+
+# 21. Spreadsheet QA
+
+For important workbooks:
+
+```text
+inspect formulas
+inspect references
+inspect representative values
+check calculation errors
+reconcile totals
+verify sheet dependencies
+check number formats
+inspect charts
+```
+
+Use spreadsheet-native calculation/validation where practical.
+
+Do not treat a formula string as proof that the spreadsheet computes correctly.
+
+---
+
+# 22. Presentation QA
+
+For decks, verify:
+
+```text
+slide count
+dimensions
+readability
+message hierarchy
+visual consistency
+chart correctness
+image placement
+speaker notes where required
+citation/source placement
+```
+
+Never solve overflow by making all content unreadably small.
+
+---
+
+# 23. Document QA
+
+For documents, verify:
+
+```text
+cover
+TOC when required
+heading hierarchy
+page numbering
+tables
+figures
+captions
+references
+links
+pagination
+```
+
+Where PDF is the final delivery format, repeat applicable checks on the PDF.
+
+---
+
+# 24. Package QA
+
+For multi-file delivery:
+
+```yaml
+submission_package:
+  primary_artifact:
+  supporting_artifacts: []
+  required_links: []
+  required_data: []
+```
+
+Verify:
+
+```text
+all required files exist
+all files correspond to the same final state
+no stale draft is included
+filenames are correct
+required links are present
+package contains no unintended internal artifacts
+```
+
+---
+
+# 25. Version Consistency
+
+All files in the same final package should correspond to compatible versions.
+
+Example:
+
+```text
+report.pdf
+report.docx
+presentation.pptx
+spreadsheet.xlsx
+```
+
+must not silently mix:
+
+```text
+report v5
+presentation v3
+spreadsheet v2
+```
+
+when those versions depend on one another.
+
+---
+
+# 26. Freeze Protocol
+
+Freeze only after readiness gates pass.
+
+Record:
+
+```yaml
+freeze:
+  artifact_id:
+  version:
+  final_path:
+  checksum:
+  frozen_at:
+  qa_summary:
+```
+
+After freeze:
+
+```text
+any content/layout change
+→ new version
+→ revalidation
+```
+
+---
+
+# 27. Checksum / Integrity
+
+When useful, record:
+
+```text
+SHA-256
+```
+
+or another supported integrity identifier for the frozen file.
+
+Do not treat checksum equality as semantic correctness.
+
+Checksum proves:
+
+```text
+same bytes
+```
+
+not:
+
+```text
+correct artifact
+```
+
+---
+
+# 28. Checkpointing
+
+For long-running work preserve:
+
+```text
+artifact goal
+artifact ID
+version
+completed stages
+exact paths
+important decisions
+QA state
+unresolved defects
+next action
+resume hint
+```
+
+Checkpoints are continuity aids.
+
+They are not substitutes for the final artifact.
+
+---
+
+# 29. Delivery States
 
 Use:
 
 ```text
-Detect defect
-↓
-Classify severity
-↓
-Fix smallest responsible source
-↓
-Regenerate
-↓
-Re-render
-↓
-Reinspect
+DRAFT
+QA_READY
+REWORK_REQUIRED
+FROZEN
+READY
+DELIVERED
+SUBMITTED
+CONFIRMED
+BLOCKED
+UNKNOWN
 ```
 
-Do not patch only the generated PDF when the underlying DOCX/source is responsible, unless a final-output-only operation is explicitly intended.
-
-## No false QA claims
-
-Never say: `The layout is verified.` unless the rendered artifact was actually inspected.
-
-Never say: `The file is correct.` when only file existence was checked.
-
-Use precise status: `File exists and opens; visual QA not yet completed.`
-
-## Freeze before delivery
-
-Once QA passes:
-
-1. identify the exact final artifact,
-2. freeze the verified version,
-3. record the final path,
-4. verify checksum/version metadata when useful,
-5. avoid accidental edits afterward.
-
-A submission package should correspond to the verified artifact.
-
-## Output package
-
-When multiple artifacts are required, produce a clear package:
+Definitions:
 
 ```text
-deliverable/
-├── final_report.docx
-├── final_report.pdf
-├── presentation.pptx
-├── spreadsheet.xlsx
-└── sources/
+QA_READY
+Required QA has completed but freeze may not yet have occurred.
+
+FROZEN
+Verified artifact is immutable unless a new version is created.
+
+READY
+Frozen artifact/package has passed delivery readiness.
+
+DELIVERED
+Artifact was provided through the intended local/handoff channel.
+
+SUBMITTED
+External submission system reports submission.
+
+CONFIRMED
+External system verifies the resulting submission state.
 ```
 
-Do not include temporary files unless requested.
+---
 
-## Placeholder audit
+# 30. No False Delivery Claims
 
-Before delivery, search for placeholders such as TODO, TBD, lorem ipsum, "insert figure," "add citation," "will be updated," `[NAME]`, `[LINK]`, or empty template fields. No unresolved placeholder should remain in the final artifact unless explicitly intended.
-
-## Link audit
-
-Verify important links: URLs are complete, links point to intended resources, prototype links reference the correct version, and submission-related links are not accidentally private or invalid. When link verification is impossible, label it accordingly.
-
-## Page and slide count
-
-Where a requirement specifies length:
-
-* verify actual page count,
-* verify actual slide count,
-* check appendix rules,
-* distinguish required pages from cover/TOC pages,
-* ensure hidden or blank slides do not accidentally count.
-
-Do not estimate length from word count alone.
-
-## Accessibility
-
-When appropriate, check readable font sizes, sufficient contrast, logical reading order, meaningful slide/document hierarchy, descriptive captions, useful alternative text where supported, and non-color-only distinctions. Accessibility requirements should follow the target artifact and assignment context.
-
-## Checkpointing
-
-After substantial artifact milestones, create a continuity checkpoint containing:
-
-* artifact goal,
-* completed stages,
-* exact artifact paths,
-* important decisions,
-* version,
-* QA state,
-* unresolved defects,
-* next action,
-* resume hint.
-
-Use the Memory Chat system when persistence is required.
-
-## Standard artifact QA checklist
+Never say:
 
 ```text
-[ ] Requirements verified
-[ ] Template analyzed
-[ ] Sources recorded
-[ ] Architecture defined
-[ ] Bounded sections/slides/sheets produced
-[ ] Integration completed
-[ ] Citation/evidence audit completed
-[ ] Artifact generated
-[ ] Physical file verified
-[ ] Structural QA completed
-[ ] Rendered preview inspected
-[ ] Visual QA completed
-[ ] Placeholders removed
-[ ] Links checked
-[ ] Length/page/slide constraints checked
-[ ] Final version frozen
-[ ] Checkpoint saved when required
+submitted
+uploaded
+published
+confirmed
 ```
 
-## Completion contract
+unless corresponding evidence exists.
 
-An artifact is complete only when the relevant checks have passed. Return:
+Distinguish:
 
-**Artifact identity** — type, name, version, exact path.
+```text
+file created
+file delivered
+file uploaded
+submission accepted
+submission confirmed
+```
 
-**Requirement status** — coverage of required elements.
+---
 
-**Evidence status** — citation/source/validation state.
+# 31. Handoff Contract
 
-**Generation status** — whether the physical file was successfully created.
+A delivery handoff should include:
 
-**Structural QA** — whether the artifact opens and contains the expected structure.
+```yaml
+handoff:
+  artifact_id:
+  version:
+  artifacts: []
+  package_manifest:
+  qa_summary:
+  exceptions: []
+  unresolved: []
+  delivery_state:
+  next_action:
+```
 
-**Visual QA** — whether the rendered result was inspected.
+---
 
-**Known defects** — any remaining issues.
+# 32. Security / Privacy Check
 
-**Final state** — draft, QA-ready, final, or submitted.
+Before delivery inspect for accidental inclusion of:
 
-**Checkpoint status** — whether continuity information was persisted when required.
+```text
+passwords
+tokens
+cookies
+private URLs
+internal infrastructure
+hidden notes
+debug logs
+personal information
+temporary files
+```
 
-**Next action** — one bounded action if anything remains.
+Redact or remove unauthorized sensitive material.
+
+---
+
+# 33. Final QA Checklist
+
+```text
+REQUIREMENTS
+[ ] current requirements inspected
+[ ] mandatory requirements mapped
+[ ] coverage verified
+
+CONTENT
+[ ] required content exists
+[ ] important claims verified
+[ ] numbers reconciled
+[ ] terminology consistent
+
+EVIDENCE
+[ ] sources verified
+[ ] citations verified
+[ ] claim/evidence alignment checked
+[ ] no fabricated sources
+
+STRUCTURE
+[ ] required sections exist
+[ ] hierarchy correct
+[ ] required tables/figures exist
+[ ] length constraints checked
+
+TECHNICAL
+[ ] physical file valid
+[ ] file opens
+[ ] expected counts verified
+[ ] formulas/links checked where applicable
+
+RENDERING
+[ ] final representation rendered
+[ ] rendered output inspected
+
+VISUAL
+[ ] no clipping
+[ ] no overflow
+[ ] no unintended blank pages/slides
+[ ] typography consistent
+[ ] tables/figures readable
+
+PLACEHOLDERS
+[ ] no unresolved placeholders
+
+PACKAGE
+[ ] required files present
+[ ] versions compatible
+[ ] no stale drafts
+[ ] required links present
+
+FREEZE
+[ ] final version identified
+[ ] final path identified
+[ ] checksum recorded when useful
+
+DELIVERY
+[ ] correct destination
+[ ] delivery state explicit
+[ ] exceptions documented
+```
+
+---
+
+# 34. Completion Contract
+
+Return:
+
+```yaml
+qa_result:
+  artifact_id:
+  version:
+  artifact_type:
+
+  requirement_status:
+    coverage:
+    unresolved: []
+
+  evidence_status:
+    verified:
+    unresolved: []
+
+  physical_status:
+  structural_status:
+  technical_status:
+  rendering_status:
+  visual_status:
+  accessibility_status:
+
+  defects:
+    critical: []
+    high: []
+    medium: []
+    low: []
+
+  exceptions: []
+
+  freeze_status:
+  final_path:
+  checksum:
+
+  package_status:
+  delivery_status:
+
+  overall_state:
+  next_action:
+```
+
+Use:
+
+```text
+PASS
+FAIL
+PARTIAL
+UNKNOWN
+```
+
+for individual validators.
+
+---
+
+# 35. Completion Rule
+
+An artifact is:
+
+```text
+READY
+```
+
+only when:
+
+```text
+mandatory requirements verified
++
+required evidence verified
++
+physical artifact valid
++
+required structural QA passed
++
+required rendering/visual QA passed
++
+CRITICAL = 0
++
+HIGH = 0
+```
+
+Then:
+
+```text
+FREEZE
+→ READY
+```
+
+External submission remains a separate state.
+
+---
+
+# 36. Golden QA Workflow
+
+```text
+ARTIFACT GENERATED
+      ↓
+PHYSICAL CHECK
+      ↓
+STRUCTURAL CHECK
+      ↓
+CONTENT CHECK
+      ↓
+EVIDENCE / CITATION CHECK
+      ↓
+RENDER
+      ↓
+VISUAL CHECK
+      ↓
+DEFECT CLASSIFICATION
+      ↓
+REVISE IF NEEDED
+      ↓
+REGENERATE
+      ↓
+REVALIDATE
+      ↓
+FREEZE
+      ↓
+PACKAGE
+      ↓
+DELIVER
+```
+
+---
+
+# 37. Central Principle
+
+> **QA is not a final glance. It is a chain of independent checks proving that the artifact satisfies its requirements, contains supported content, remains structurally and technically valid, renders correctly, and corresponds to the exact frozen version that is delivered.**

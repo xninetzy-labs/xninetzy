@@ -1,378 +1,1287 @@
 ---
+
 name: xninetzy-web-analysis
-description: Safety-first web and portal analysis operating system for allowlisted academic portals, authenticated applications, and dynamic public websites. Use for bounded structural discovery, read-only analysis, graph relationship creation, knowledge ingestion, public-page visual capture, evidence verification, freshness tracking, and cross-session checkpointing.
+
+description: Safety-first read-only web and portal analysis operating system for explicitly allowlisted academic portals, authenticated applications, institutional SSO systems, documentation sites, and dynamic public websites. Use for bounded structural discovery, navigation and module mapping, permitted public-page analysis, evidence and provenance tracking, safe knowledge ingestion, public visual capture, freshness-aware cache management, change detection, and cross-session analysis checkpoints. Never use for mutation, form submission, CAPTCHA solving, credential extraction, access-control bypass, or authenticated personal-page visual capture.
+
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
-  version: "2.0.0"
-  lifecycle: "scope -> inspect -> classify -> session-check -> refresh -> discover -> filter -> persist -> verify -> checkpoint -> report"
----
+        scope: general
+        owner: xninetzy
+        language: en
+        version: "3.0.0"
+        lifecycle: "scope -> authorize -> inspect -> classify -> session-check -> refresh -> discover -> filter -> persist -> verify -> checkpoint -> report"
+-----------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Xninetzy Web Analysis OS
 
-This skill is the **read-only web analysis and portal discovery layer** for Xninetzy. It provides one consistent workflow for academic portals, institutional SSO systems, LMS platforms, student portals, questionnaire portals, dynamic public websites, technical documentation sites, and structured web applications.
+## 1. Purpose
 
-Its purpose is to understand **web structure, navigation, available modules, public content, and evidence relationships** without mutating the target system.
+This skill is the read-only web analysis and portal discovery control layer for Xninetzy.
 
-The core principle is:
+It provides one consistent operating model for:
 
-> **Analyze structure, preserve evidence, keep sessions isolated, stop at human verification, and never turn analysis into unauthorized interaction.**
+* academic portals
+* LMS platforms
+* institutional SSO systems
+* student portals
+* questionnaire portals
+* public documentation sites
+* public institutional websites
+* dynamic web applications
+* permitted authenticated structural analysis
+
+Its purpose is to build a trustworthy structural representation of an authorized web system without mutating the target.
+
+The operating principle is:
+
+> **Scope first. Observe only. Preserve provenance. Isolate sessions. Stop at human verification. Verify persistence. Never convert analysis into unauthorized interaction.**
+
+---
+
+# 2. Core Lifecycle
 
 The canonical lifecycle is:
 
-**Scope → Inspect → Classify → Session Check → Refresh → Discover → Filter → Persist → Verify → Checkpoint → Report**
+```text id="9n2nq7"
+Scope
+  ↓
+Authorize
+  ↓
+Inspect
+  ↓
+Classify
+  ↓
+Session Check
+  ↓
+Refresh
+  ↓
+Discover
+  ↓
+Filter
+  ↓
+Persist
+  ↓
+Verify
+  ↓
+Checkpoint
+  ↓
+Report
+```
 
-## Scope
+Every operation should execute only the stages relevant to the requested task.
+
+---
+
+# 3. Scope
 
 Use this skill for:
 
-* portal structure analysis,
-* page discovery,
-* navigation mapping,
-* module and endpoint inventory,
-* public web discovery,
-* authenticated read-only structural analysis,
-* Graph RAG web-page mapping,
-* knowledge ingestion of permitted page text,
-* public-page visual capture,
-* analysis-cache verification,
-* cross-session analysis checkpoints.
+* portal structure analysis
+* navigation mapping
+* page discovery
+* module inventory
+* read-only endpoint/page inventory
+* public website analysis
+* permitted authenticated structural analysis
+* public-page visual capture
+* Graph RAG web-page relationship creation
+* permitted knowledge ingestion
+* analysis-cache verification
+* historical change detection
+* cross-session analysis checkpoints
 
-Do not use it for portal mutation, form submission, assignment uploads, KRS submission, questionnaire completion, CAPTCHA solving, credential extraction, authenticated personal-page screenshots, or bypassing institutional controls. Those actions belong to the relevant domain-specific skills and approval workflows.
+---
 
-## When to use
+# 4. Explicit Non-Goals
 
-* the user asks to analyze a public or allowlisted portal structure,
-* the user wants a page catalog, navigation map, or Mermaid structure diagram of an allowlisted site,
-* the user asks to ingest permitted page text into the knowledge base,
-* the user asks for public-page visual capture for documentation.
+Never use this skill for:
 
-## When NOT to use
+* form submission
+* questionnaire completion
+* assignment upload
+* assignment submission
+* KRS submission
+* profile modification
+* academic-record modification
+* grade modification
+* sending messages
+* creating content
+* deleting content
+* credential extraction
+* CAPTCHA solving
+* CAPTCHA OCR
+* authentication bypass
+* access-control bypass
+* CSRF bypass
+* rate-limit bypass
+* exploiting application vulnerabilities
+* authenticated personal-page screenshots
+* collecting private academic records
 
-* HEBAT workflow beyond structural analysis — use `hebat-academic`;
-* Cyber Campus operations — use `xninetzy-cyber-campus`;
-* UACC operations — use `xninetzy-uacc`;
-* questionnaire completion — never use this skill for that.
+Those operations belong to explicit domain-specific workflows with their own authorization and human-approval controls.
 
-## Allowlisted portal model
+---
 
-The analyzer may operate on explicitly supported portal presets such as `hebat`, `mahasiswa`, `uacc`, and `qa`, and on permitted dynamic public HTTPS sites.
+# 5. Authorization Model
 
-A portal preset should define `site_slug`, `allowed_hosts`, `seed_urls`, `authentication_mode`, `authenticated_analysis_allowed`, `visual_capture_allowed`, `depth_limit`, and `max_pages`. Do not invent an allowlist entry for an unverified host.
+Analysis requires an explicit target scope.
 
-## Portal isolation
+A valid target should provide, directly or through a trusted preset:
 
-Every portal is its own security and state domain. Never mix cookies, encrypted sessions, credentials, identities, challenge IDs, cache namespaces, analysis records, screenshots, or academic records. A shared owner does not make portal sessions interchangeable.
-
-## Source-of-truth hierarchy
-
-For web analysis, prefer:
-
-```text
-current verified portal response
-        ↓
-typed analyzer result
-        ↓
-verified analysis cache
-        ↓
-Graph RAG persistence
-        ↓
-knowledge persistence
-        ↓
-memory/checkpoint
-        ↓
-historical analysis
+```text id="x5zqfr"
+site_slug
+allowed_hosts
+seed_urls
+authentication_mode
+authenticated_analysis_allowed
+visual_capture_allowed
+depth_limit
+max_pages
 ```
 
-Historical analysis is useful for change detection, but it does not override the current portal.
+Do not invent an allowlist entry.
 
-## Safety invariants
+Do not broaden an allowlist because a discovered page links to another host.
 
-The web analyzer must enforce:
+Do not treat ownership of one portal as authorization for another portal.
 
-* **Read-only operation** — use GET / HEAD for ordinary analysis. Mutation routes should be blocked at the analyzer boundary.
-* **Human verification boundary** — when CAPTCHA or equivalent human verification appears, stop.
-* **Secret protection** — never persist or expose credentials, cookies, tokens, private query values, academic record values, or session identifiers.
-* **Visual privacy boundary** — visual capture is limited to public and login pages only. Do not capture authenticated personal pages.
-* **Bounded discovery** — do not crawl an entire portal unintentionally. Use small bounded depth and page limits unless the target is a genuinely public documentation site where larger bounds are justified.
+---
 
-## Human verification
+# 6. Scope Enforcement
 
-Human verification includes CAPTCHA, reCAPTCHA, math challenges, challenge-response login, and other anti-automation controls. When detected:
+Before every discovery operation:
 
-```text
-page identified
-↓
-verification detected
-↓
-record safe structural observation
-↓
-stop analysis
-↓
-return control to owner
+1. resolve target host
+2. normalize URL
+3. compare host against allowlist
+4. classify access mode
+5. verify operation is permitted
+6. apply depth limit
+7. apply page limit
+8. reject out-of-scope targets
+
+The analyzer must fail closed.
+
+If scope cannot be determined:
+
+```text id="g4d2ly"
+STOP
+→ mark target as unknown
+→ do not crawl
+→ report configuration/authorization ambiguity
 ```
 
-Never OCR the CAPTCHA, solve it automatically, infer the answer, repeatedly poll challenge state, or bypass the gate. The portal-specific authentication skill owns the manual verification process.
+---
 
-## Standard workflow
+# 7. Domain Boundary
 
-```text
-1. web_analysis_status(site_slug)
+Every discovered link must be classified.
 
-2. web_analysis_refresh(
-     site_slug,
-     authenticated=<only when an approved encrypted session exists>
-   )
-
-3. web_analysis_catalog(site_slug)
-
-4. web_discover(
-     seed_url,
-     ingest_to_knowledge=true,
-     capture_visual=true
-   )
-
-5. optional public pixelrag_capture
-
-6. verify:
-     web_analysis_status
-     graph_v3_stats / graph_v3_search
-
-7. checkpoint and report
+```text id="qz6h2v"
+same_allowlisted_domain
+allowed_related_domain
+external_unknown
 ```
 
-Only perform the steps relevant to the request.
-
-## Core workflow
-
-1. **Scope.** Identify the allowlisted target, allowed hosts, authentication mode, and depth/page limits.
-2. **Inspect.** Run `web_analysis_status(site_slug)` to determine whether a fresh verified result already exists.
-3. **Classify.** Distinguish public, login, authenticated, and unknown access. Visual capture is permitted only for public and login pages.
-4. **Session check.** Determine whether an approved encrypted local session is required and present. Surface missing configuration errors explicitly rather than silently degrading.
-5. **Refresh.** Refresh structural analysis when the cache is stale, the user requests current analysis, the portal may have changed, or an important page is missing.
-6. **Discover.** Run bounded public discovery within configured depth and page limits. Persist only non-sensitive page text and metadata.
-7. **Filter.** Exclude credentials, cookies, tokens, session secrets, personal academic records, sensitive query parameters, and private authenticated values before ingestion.
-8. **Persist.** Create graph relationships from observed navigation, ingest permitted text, and capture public visuals.
-9. **Verify.** Confirm graph nodes, knowledge ingestion, visual captures, and cache existence rather than trusting discovery tool responses.
-10. **Checkpoint.** Persist analysis state when the work is material.
-11. **Report.** Return site identity, analysis mode, freshness, pages discovered, structural findings, graph state, knowledge ingestion state, visual capture state, verification, blockers, artifacts, and next action.
-
-## Public vs authenticated content
-
-Classify each page:
+Default behavior:
 
 ```text
-public
-login
-authenticated
-unknown
+same_allowlisted_domain → may continue
+allowed_related_domain  → continue only if explicitly configured
+external_unknown        → do not crawl
 ```
 
-Visual capture is permitted only for `public` and `login`. Authenticated personal pages receive structural analysis only.
+A link appearing on an allowlisted page does not automatically authorize crawling its destination.
 
-## PixelRAG visual capture
+---
 
-Public visual capture can support layout analysis, visual navigation, UI documentation, public-page comparison, and page-design inspection. It must never be used to capture grades, schedules, names, KRS data, private dashboard content, personal academic records, or authenticated user pages. Images can expose information that text filtering misses.
+# 8. Portal Isolation
 
-## Visual capture safety
+Every portal is an independent security and state domain.
 
-Before capturing:
+Never mix:
 
-1. determine page access class,
-2. verify page is public/login,
-3. verify the capture target,
-4. capture only permitted pages,
-5. inspect output for accidental sensitive information where appropriate.
+* cookies
+* credentials
+* access tokens
+* encrypted sessions
+* browser profiles
+* identities
+* challenge state
+* cache namespaces
+* screenshots
+* analysis records
+* academic records
 
-If access classification is uncertain, do not capture visually.
+between portals.
 
-## Analysis cache
+Conceptually:
 
-The analysis cache should store structure such as modules, routes, endpoint patterns, navigation, page identity, access classification, and structural metadata. It should not store credentials, cookies, token values, academic record values, or private form submissions. The cache is a **structural model**, not a content database.
+```text id="9p4s7x"
+Portal A
+├── session A
+├── cache A
+├── graph evidence A
+└── visual evidence A
 
-## Discovery output
-
-Persist the discovery result under the configured directory:
-
-```text
-<WEB_ANALYSIS_DATA_DIR>/discoveries/<site_slug>/latest.json
+Portal B
+├── session B
+├── cache B
+├── graph evidence B
+└── visual evidence B
 ```
 
-Treat `latest.json` as a generated cache artifact. Verify that it exists and is readable before reporting successful persistence.
+A common user does not make portal state interchangeable.
 
-## Graph RAG integration
+---
 
-Public discovery may create `web_page` nodes and `links_to` edges. Only create graph relationships from actually observed navigation or verified discovery results. Never infer links from semantic similarity alone.
+# 9. Source-of-Truth Hierarchy
 
-## Graph evidence
+Use:
 
-A graph relationship should preserve:
-
-* source page,
-* target page,
-* relationship type,
-* discovery/source context,
-* timestamp/version where relevant.
-
-Do not create factual relationships from page-name similarity, embeddings alone, search rank, or guessed navigation.
-
-## Knowledge ingestion
-
-When enabled:
-
-```text
-web_discover
-→ inspect page text
-→ ingest permitted text
-→ attach source/provenance
+```text id="2ox8v1"
+Current verified portal response
+        ↓
+Current typed analyzer result
+        ↓
+Verified analysis cache
+        ↓
+Verified Graph RAG state
+        ↓
+Verified knowledge state
+        ↓
+Checkpoint/memory
+        ↓
+Historical analysis
 ```
 
-Knowledge ingestion should preserve source URL, page identity, access class, retrieval time, and provider/discovery context when available. Do not ingest sensitive academic values.
+Historical information supports comparison and change detection.
 
-## Knowledge safety
+It does not override current verified state.
 
-Before ingestion, exclude credentials, cookies, tokens, session secrets, personal academic records, sensitive query parameters, and private authenticated values. When a page contains mixed public and sensitive material, ingest only the non-sensitive portion that is explicitly safe.
+---
 
-## Evidence levels
+# 10. Evidence Model
 
-Classify web-analysis observations:
+Every material structural observation should have provenance.
 
-```text
+Represent evidence conceptually as:
+
+```text id="3q6p5z"
+Observation
+├── source URL
+├── page identity
+├── access class
+├── retrieval timestamp
+├── portal/site identity
+├── discovery method
+├── evidence level
+└── version/checkpoint where applicable
+```
+
+Never create a factual relationship without an observable source.
+
+---
+
+# 11. Evidence Levels
+
+Classify observations as:
+
+```text id="x4v6cb"
 direct
 derived
 historical
 unknown
 ```
 
-* **Direct** — observed in the current analysis.
-* **Derived** — reasoned from current observations.
-* **Historical** — known from previous analysis.
-* **Unknown** — not sufficiently verified.
+### direct
 
-Do not present derived or historical structure as though it were directly observed now.
+Observed in the current analysis.
 
-## Portal presets
+### derived
 
-### HEBAT
+Reasoned from current observations.
 
-Use for Moodle structure, activity pages, course navigation, and material discovery. Do not analyze assignment upload, submission, or grading mutation. Those belong to HEBAT Academic.
+### historical
 
-### Cyber Campus / `mahasiswa`
+Observed during an earlier verified analysis.
 
-Use for read-only page structure, navigation, and academic page discovery. KRS submission remains outside the analyzer. Use `xninetzy-cyber-campus` for KRS operations.
+### unknown
 
-### UACC
+Insufficient evidence exists.
 
-Use for SSO structure, login page discovery, and authorized authenticated structural analysis. Typical seed: `/mhs`. Allowed hosts may include `uacc.unair.ac.id` and `unairsatu.unair.ac.id`. Use `xninetzy-uacc` for manual CAPTCHA authentication.
-
-### QA
-
-Use for allowed structural analysis, public/login analysis, and authenticated structural analysis only when explicitly supported. Questionnaire completion is outside this skill.
-
-## Public dynamic sites
-
-For genuinely public sites:
-
-* use HTTPS where appropriate,
-* respect configured domain boundaries,
-* keep depth bounded by default,
-* avoid forms that mutate state,
-* avoid login bypass,
-* capture public visuals only,
-* ingest public text with provenance.
-
-Larger crawl limits may be justified for documentation sites.
-
-## Domain boundary
-
-Do not cross from an allowlisted site into arbitrary external domains merely because a page links there.
-
-Classify external links:
+Never present:
 
 ```text
-same_allowlisted_domain
-allowed_related_domain
-external_unknown
+derived
+historical
+unknown
 ```
 
-Only continue discovery where the configured policy permits it.
+as equivalent to current direct observation.
 
-## Rate and resource control
+---
 
-Avoid unnecessarily expensive crawling. Use bounded page limits, bounded depth, fresh cache reuse, deduplication, one retry for temporary lease conflicts, and provider/tool health where available. Do not repeatedly refresh a stable public site without a reason.
+# 12. Structural Analysis Model
 
-## Lease / busy handling
+The analyzer should conceptually model:
 
-If the analyzer returns `busy`, recognize that another analysis holds the lease, avoid concurrent duplicate work, retry once according to the supported workflow, and stop if the resource remains unavailable. Do not spawn parallel duplicate crawls against the same portal.
+```text id="h3qv4j"
+Site
+├── Host
+├── Page
+├── Route
+├── Module
+├── Navigation
+├── Link
+├── Access Class
+└── Structural Metadata
+```
 
-## Human verification errors
+Possible relationships:
 
-If the analyzer returns `human_verification_required`, report affected site, affected page, verification state, and what analysis was completed before stopping. Then stop. Do not continue discovery through another route intended to avoid the challenge.
+```text id="4c7x0d"
+page
+  └── links_to → page
 
-## Repeated page failures
+module
+  └── contains → page
 
-When a page repeatedly fails, record the error class, identify the affected page, avoid persisting sensitive error details, and continue only if the remaining analysis remains valid.
+page
+  └── belongs_to → module
+```
 
-## Failure classification
+Only create relationships supported by observed navigation or verified analyzer output.
 
-Useful failure classes: `configuration_required`, `busy`, `human_verification_required`, `authentication_missing`, `authentication_expired`, `not_found`, `forbidden`, `timeout`, `network_error`, `parser_error`, `unsupported_structure`, `unknown`. Each error should lead to an appropriate next action rather than blind retry.
+Do not infer relationships solely from:
 
-## Change detection
+* URL similarity
+* page-name similarity
+* embeddings
+* search ranking
+* semantic similarity
+* guessed conventions
 
-When historical analysis exists, compare `previous catalog` against `current catalog` and identify new pages, removed pages, renamed pages, changed navigation, changed forms, and changed access classification. Preserve historical records. Do not overwrite them without retaining enough provenance to understand the change.
+---
 
-## Freshness
+# 13. Access Classification
 
-Track analysis freshness:
+Every page should be classified as:
+
+```text id="2j4f1k"
+public
+login
+authenticated
+unknown
+```
+
+### public
+
+Accessible without authentication.
+
+### login
+
+Authentication entry/challenge page.
+
+### authenticated
+
+Requires an authenticated session.
+
+### unknown
+
+Access classification cannot be reliably established.
+
+If access classification is unknown, default to the more restrictive interpretation.
+
+---
+
+# 14. Session Check
+
+Authenticated analysis may occur only when:
+
+* authenticated analysis is explicitly allowed
+* a valid approved session exists
+* the session belongs to the intended portal
+* the session is isolated
+* the analyzer is permitted to inspect the requested scope
+
+If the required session is unavailable:
+
+```text id="0d1p4t"
+STOP
+→ authentication_missing
+```
+
+Do not silently fall back to an unrelated session.
+
+---
+
+# 15. Session Security
+
+Never persist or expose:
+
+* passwords
+* cookies
+* bearer tokens
+* session IDs
+* CSRF tokens
+* authentication headers
+* refresh tokens
+* browser storage secrets
+* raw authenticated request payloads
+
+Encrypted session material must remain inside the approved authentication/session mechanism.
+
+The analysis layer consumes authorization state; it must not extract or reveal its secrets.
+
+---
+
+# 16. Read-Only Invariant
+
+The analyzer is observational.
+
+Ordinary discovery must be limited to safe read operations:
 
 ```text
+GET
+HEAD
+```
+
+Mutation methods are prohibited by default:
+
+```text
+POST
+PUT
+PATCH
+DELETE
+```
+
+Do not follow a GET URL merely because its effect appears to be harmless if the operation is known to mutate state.
+
+The analyzer must not submit forms.
+
+---
+
+# 17. Mutation Boundary
+
+If discovery encounters:
+
+* a form
+* a submission endpoint
+* an upload control
+* a delete action
+* a state-changing button
+* a workflow transition
+* an API mutation
+
+record its structural existence if safe, then stop before invoking it.
+
+Return:
+
+```text id="p6n7qt"
+mutation_boundary_reached
+```
+
+and route the action to the appropriate domain-specific skill.
+
+---
+
+# 18. Human Verification Boundary
+
+Human verification includes:
+
+* CAPTCHA
+* reCAPTCHA
+* hCaptcha
+* image challenges
+* math challenges
+* challenge-response login
+* anti-bot interstitials
+* equivalent human-presence mechanisms
+
+When detected:
+
+```text id="o9qv9k"
+page identified
+      ↓
+verification detected
+      ↓
+record safe structural observation
+      ↓
+STOP
+      ↓
+return control to human/domain-specific authentication workflow
+```
+
+Never:
+
+* solve CAPTCHA
+* OCR CAPTCHA
+* infer CAPTCHA answers
+* automate challenge interaction
+* bypass challenge endpoints
+* poll challenge state repeatedly
+* use another route to avoid the challenge
+
+---
+
+# 19. Discovery Bounds
+
+Discovery must always be bounded.
+
+Default controls:
+
+```text id="z5z5c7"
+depth_limit
+max_pages
+allowed_hosts
+seed_urls
+```
+
+Do not crawl an entire portal unintentionally.
+
+For public documentation sites, larger bounds may be justified when explicitly configured.
+
+Bound:
+
+* page count
+* crawl depth
+* retries
+* request frequency
+* response size where supported
+* redirect chains
+
+---
+
+# 20. Discovery Workflow
+
+Conceptually:
+
+```text id="g0g5iy"
+1. inspect status
+2. determine freshness
+3. refresh if necessary
+4. discover from approved seeds
+5. enforce host boundaries
+6. enforce depth/page limits
+7. classify pages
+8. filter sensitive content
+9. persist safe evidence
+10. verify persistence
+```
+
+Do not perform unnecessary discovery.
+
+---
+
+# 21. Freshness
+
+Track:
+
+```text id="4p4o2u"
 fresh
 stale
 unknown
 ```
 
-Refresh when the user requests current structure, a portal changed, cached results are old, current navigation matters, or authenticated structure changed. Do not silently treat yesterday's analysis as today's portal structure when current verification matters.
+Refresh when:
 
-## Reference map
+* user asks for current structure
+* cache is stale
+* portal may have changed
+* important page is missing
+* current navigation matters
+* authenticated structure may have changed
+* change detection is requested
 
-* `references/policies.md` — security and privacy, credential and session separation, read-only enforcement, no form submission, public visual safety, completion contract, standard analysis report, and operating rules.
-* `references/discovery-and-integration.md` — knowledge ingestion, knowledge safety, evidence levels, cross-portal evidence, portal presets, public dynamic sites, domain boundary, rate control, lease handling, human verification errors, repeated page failures, failure classification, verification workflow, result classification, freshness, change detection, memory integration, research memory integration, and artifact integration.
+Historical cache is useful but cannot be reported as current without qualification.
 
-## Routing
+---
 
-* HEBAT workflow → `hebat-academic`.
-* Cyber Campus operations → `xninetzy-cyber-campus`.
-* UACC operations → `xninetzy-uacc`.
-* Obsidian structure → `xninetzy-obsidian-orchestra`.
-* Graph relationships → `graph-rag`.
-* Cross-session continuity → `xninetzy-memory`.
+# 22. Cache Model
 
-## Operating rules
+The analysis cache should contain structural information:
 
-The system must:
+* site identity
+* page identity
+* routes
+* modules
+* navigation
+* access classification
+* structural metadata
+* timestamps
+* provenance
 
-* use one consistent read-only workflow across supported portals,
-* keep all portal sessions and identities separate,
-* enforce GET/HEAD-only analysis,
-* stop at human verification,
-* never solve CAPTCHA automatically,
-* keep credentials and private portal values out of persistence,
-* capture visuals only from public/login pages,
-* bound crawl depth and page count,
-* reuse fresh analysis cache,
-* deduplicate discovery results,
-* persist only verified graph relationships,
-* preserve source/access provenance,
-* verify graph, knowledge, cache, and visual outputs,
-* handle busy/configuration errors explicitly,
-* checkpoint meaningful analysis state,
-* never claim completion without verification.
+It should not contain:
 
-The canonical lifecycle is:
+* credentials
+* cookies
+* access tokens
+* private academic records
+* private form submissions
+* session secrets
 
-**Scope → Inspect → Classify → Session Check → Refresh → Discover → Filter → Persist → Verify → Checkpoint → Report**
+The cache is a structural model, not a private-record database.
 
-The central objective is:
+---
 
-> **Build a trustworthy structural map of authorized web systems without turning analysis into interaction, preserving evidence and privacy while keeping every portal session strictly isolated and every result verifiable.**
+# 23. Discovery Artifact
+
+Persist discovery output under:
+
+```text
+<WEB_ANALYSIS_DATA_DIR>/discoveries/<site_slug>/latest.json
+```
+
+Treat `latest.json` as generated state.
+
+After persistence:
+
+1. verify file exists
+2. verify it is readable
+3. verify expected structure
+4. verify site identity
+5. verify timestamp/version
+
+Do not report successful persistence solely because a write operation returned successfully.
+
+---
+
+# 24. Historical Snapshots
+
+Where practical, preserve historical snapshots separately from `latest.json`.
+
+Conceptually:
+
+```text id="5d0q3f"
+discoveries/
+└── <site_slug>/
+    ├── latest.json
+    └── history/
+        ├── <timestamp-1>.json
+        ├── <timestamp-2>.json
+        └── ...
+```
+
+Historical snapshots support:
+
+* change detection
+* regression analysis
+* portal migration tracking
+* navigation evolution
+
+Do not destroy historical evidence merely because a new analysis exists.
+
+---
+
+# 25. Change Detection
+
+Compare verified historical and current catalogs.
+
+Possible changes:
+
+```text id="1w6e8x"
+page_added
+page_removed
+page_renamed
+route_changed
+navigation_changed
+module_changed
+access_class_changed
+content_changed
+```
+
+Distinguish:
+
+```text structural change
+```
+
+from:
+
+```text content change
+```
+
+Do not claim that a page was removed merely because discovery failed once.
+
+Require sufficient evidence.
+
+---
+
+# 26. Sensitive Content Filtering
+
+Before persistence, inspect content for:
+
+* credentials
+* cookies
+* tokens
+* session identifiers
+* private query parameters
+* personal academic records
+* private form values
+* sensitive identifiers
+
+Strip or exclude sensitive material.
+
+When a page mixes public and sensitive information:
+
+```text id="9g4w5c"
+retain safe public structure/content
+discard sensitive values
+```
+
+Never persist an entire authenticated page merely because part of it is structurally useful.
+
+---
+
+# 27. Query Parameter Safety
+
+Treat query parameters as potentially sensitive.
+
+Potentially sensitive examples:
+
+```text
+token
+session
+auth
+code
+key
+signature
+student_id
+user_id
+record_id
+```
+
+Do not persist sensitive parameter values.
+
+Where possible, normalize URLs before persistence:
+
+```text
+/path/resource?token=<redacted>
+```
+
+rather than storing the actual secret.
+
+---
+
+# 28. Public Visual Capture
+
+Visual capture is permitted only for:
+
+```text id="4efx6r"
+public
+login
+```
+
+Visual capture is prohibited for:
+
+```text id="u2k8q3"
+authenticated personal pages
+private dashboards
+grades
+schedules
+KRS data
+academic records
+private submissions
+```
+
+If access classification is uncertain:
+
+```text
+DO NOT CAPTURE
+```
+
+---
+
+# 29. PixelRAG Integration
+
+Public visual captures may support:
+
+* UI documentation
+* layout analysis
+* public navigation analysis
+* visual regression
+* public design inspection
+* page comparison
+
+Images must not be used to extract private authenticated information.
+
+Visual evidence should retain:
+
+* source URL
+* page identity
+* access classification
+* capture timestamp
+* analysis context
+
+---
+
+# 30. Visual Privacy Check
+
+Before persistence:
+
+1. verify page classification
+2. verify URL is in scope
+3. verify capture target
+4. capture only permitted page
+5. inspect the output when appropriate
+6. reject accidental sensitive captures
+
+If a supposedly public page unexpectedly contains private data:
+
+```text id="d7d2q8"
+STOP
+→ discard/restrict capture
+→ report privacy boundary
+```
+
+---
+
+# 31. Knowledge Ingestion
+
+When enabled:
+
+```text id="4j4b6n"
+discover
+→ extract permitted text
+→ filter sensitive values
+→ attach provenance
+→ ingest
+→ verify
+```
+
+Preserve, where available:
+
+* source URL
+* page identity
+* access class
+* retrieval time
+* provider/discovery context
+* source version
+
+Knowledge ingestion must not silently convert authenticated private content into durable knowledge.
+
+---
+
+# 32. Graph RAG Integration
+
+Public or otherwise permitted structural discovery may create:
+
+```text
+web_page
+links_to
+belongs_to
+contains
+```
+
+relationships.
+
+Every graph relationship must be supported by:
+
+* observed navigation
+* verified analyzer output
+* source page
+* target page
+* timestamp/version when relevant
+
+Do not create relationships from embeddings alone.
+
+---
+
+# 33. Graph Verification
+
+After persistence, verify:
+
+* expected nodes exist
+* expected relationships exist
+* source/target identity is correct
+* provenance exists
+* no sensitive content was accidentally persisted
+
+A successful graph-write response is not sufficient evidence of correct persistence.
+
+---
+
+# 34. Knowledge Verification
+
+After ingestion, verify:
+
+* expected source exists
+* expected page identity exists
+* provenance exists
+* sensitive values were excluded
+* content corresponds to the analyzed page
+
+Do not report ingestion as successful without a verification signal.
+
+---
+
+# 35. Resource and Rate Control
+
+Use:
+
+* bounded crawl depth
+* bounded page count
+* deduplication
+* cache reuse
+* controlled retries
+* request pacing
+* response-size limits where supported
+
+Do not repeatedly hit a stable site without reason.
+
+The objective is:
+
+```text
+maximum useful evidence
+with minimum unnecessary requests
+```
+
+---
+
+# 36. Lease / Busy Handling
+
+If the analyzer reports:
+
+```text
+busy
+```
+
+then:
+
+1. recognize another analysis owns the resource
+2. avoid duplicate crawling
+3. retry once according to supported workflow
+4. stop if still unavailable
+5. report the blocker
+
+Do not create parallel crawls to bypass a lease.
+
+---
+
+# 37. Failure Classification
+
+Use explicit failure classes:
+
+```text
+configuration_required
+scope_denied
+authentication_missing
+authentication_expired
+human_verification_required
+busy
+not_found
+forbidden
+timeout
+network_error
+parser_error
+unsupported_structure
+mutation_boundary
+privacy_boundary
+unknown
+```
+
+Each failure should map to an appropriate next action.
+
+Do not blindly retry failures that are:
+
+* authorization-related
+* human-verification-related
+* scope-related
+* mutation-related
+* privacy-related
+
+---
+
+# 38. Retry Policy
+
+Retry only when the failure is plausibly transient.
+
+Reasonable candidates:
+
+```text
+timeout
+temporary network_error
+temporary busy
+```
+
+Avoid repeated retries for:
+
+```text
+forbidden
+not_found
+scope_denied
+authentication_missing
+human_verification_required
+mutation_boundary
+privacy_boundary
+unsupported_structure
+```
+
+Never use retries to circumvent security controls.
+
+---
+
+# 39. Checkpointing
+
+Material analysis should be checkpointed.
+
+A checkpoint should preserve:
+
+```text id="u5zjz6"
+site identity
+scope
+analysis mode
+last verified state
+freshness
+pages discovered
+important findings
+persisted artifacts
+verification state
+known blockers
+next safe action
+timestamp
+```
+
+Do not checkpoint secrets or private authenticated values.
+
+---
+
+# 40. Cross-Session Continuity
+
+A later session may use a prior checkpoint to resume analysis.
+
+However:
+
+```text id="5qj6z8"
+checkpoint
+≠
+current portal truth
+```
+
+Before reporting current state after a long gap:
+
+```text
+checkpoint
+→ freshness evaluation
+→ refresh if necessary
+→ current verification
+```
+
+Historical checkpoints provide continuity, not authorization.
+
+---
+
+# 41. Standard Report
+
+A completed analysis should report the relevant subset of:
+
+```text id="qg8i0m"
+Target
+Scope
+Analysis Mode
+Access Classification
+Freshness
+Pages Discovered
+Structural Findings
+Changed Since Previous Analysis
+Graph State
+Knowledge State
+Visual State
+Verification State
+Blockers
+Artifacts
+Checkpoint
+Next Action
+```
+
+Avoid exposing internal session details.
+
+---
+
+# 42. Result State
+
+Use:
+
+```text id="lyu5is"
+complete
+partial
+blocked
+failed
+uncertain
+```
+
+### complete
+
+Requested analysis completed and persisted/verified.
+
+### partial
+
+Some requested analysis completed, but bounded failures remain.
+
+### blocked
+
+A security, authorization, configuration, or human-verification boundary prevented continuation.
+
+### failed
+
+The operation could not produce a valid result.
+
+### uncertain
+
+Evidence is insufficient to determine the requested state.
+
+Never report `complete` when a material requested component remains unverified.
+
+---
+
+# 43. Routing
+
+Route specialized operations:
+
+```text
+HEBAT workflow
+→ hebat-academic
+
+Cyber Campus
+→ xninetzy-cyber-campus
+
+UACC authentication/operations
+→ xninetzy-uacc
+
+Assignment orchestration
+→ xninetzy-assignment-orchestrator
+
+Research
+→ xninetzy-deep-research
+
+Obsidian ingestion
+→ xninetzy-obsidian-orchestra
+
+Graph relationships
+→ graph-rag
+
+Cross-session memory
+→ xninetzy-memory
+
+Artifact generation
+→ xninetzy-artifact-orchestrator
+```
+
+This skill remains the **read-only web analysis control layer**.
+
+---
+
+# 44. Operating Invariants
+
+The following are non-negotiable:
+
+```text id="v3x9p1"
+1. Scope before discovery.
+
+2. Authorization before authenticated analysis.
+
+3. Allowlist before crawling.
+
+4. Read-only means genuinely read-only.
+
+5. Never invoke mutation routes.
+
+6. Never solve or bypass human verification.
+
+7. Never extract or expose secrets.
+
+8. Never mix portal sessions.
+
+9. Never visually capture authenticated personal pages.
+
+10. Never cross domain boundaries without explicit configuration.
+
+11. Never persist sensitive values.
+
+12. Never infer factual relationships from embeddings alone.
+
+13. Never report stale data as current.
+
+14. Never claim persistence without verification.
+
+15. Never claim submission or mutation success because analysis succeeded.
+
+16. Never retry to bypass a security control.
+
+17. Never use historical evidence as a substitute for current verification.
+
+18. Never silently broaden scope.
+
+19. Never convert an unknown state into a positive state.
+
+20. Fail closed whenever authorization, scope, privacy, or mutation state is ambiguous.
+```
+
+---
+
+# 45. Completion Contract
+
+Every completed operation should expose the relevant subset of:
+
+```text
+site_identity
+scope_status
+analysis_mode
+access_classification
+freshness
+discovery_status
+pages_discovered
+structural_findings
+change_detection
+knowledge_ingestion_status
+graph_persistence_status
+visual_capture_status
+verification_status
+blockers
+checkpoint_status
+artifacts
+next_safe_action
+```
+
+The report must distinguish:
+
+```text
+observed
+derived
+historical
+unknown
+```
+
+when the distinction matters.
+
+---
+
+# 46. Final Objective
+
+The objective of Xninetzy Web Analysis OS is:
+
+> **Build a trustworthy, provenance-preserving, freshness-aware structural model of explicitly authorized web systems while minimizing requests, isolating security state, protecting privacy, respecting human-verification boundaries, and preventing read-only analysis from becoming unauthorized interaction.**
+
+The analyzer should prefer:
+
+```text
+verified partial result
+```
+
+over:
+
+```text
+unverified complete result
+```
+
+and:
+
+```text
+safe stop
+```
+
+over:
+
+```text
+unsafe continuation
+```

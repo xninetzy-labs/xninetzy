@@ -174,6 +174,18 @@ from xninetzy.tools.ecosystem.research_tools import (
     youtube_playlist_finder,
     youtube_video_ranker,
 )
+from xninetzy.tools.ecosystem.research_v2_tools import (
+    research_compare_sources,
+    research_fetch,
+    research_grade_evidence,
+    research_search,
+)
+from xninetzy.tools.ecosystem.optimization_tools import (
+    deepeval_evaluate,
+    dspy_compile,
+    dspy_optimize_prompt,
+    langfuse_trace,
+)
 from xninetzy.tools.ecosystem.helper_tools import (
     helper_get,
     helper_generate_obsidian_docs,
@@ -211,6 +223,7 @@ from xninetzy.os.hitl.approval_tools import (
     hitl_list_pending,
     hitl_reject,
     hitl_request_approval,
+    hitl_request_plan_approval,
 )
 from xninetzy.os.graph.graph_tools import (
     graph_add_edge,
@@ -358,10 +371,13 @@ from xninetzy.tools.ecosystem.memory_lifecycle_tools import (
     memory_retire,
 )
 from xninetzy.tools.ecosystem.harness_tools import (
+    harness_checkpoint_commit,
     harness_execute,
     harness_plan,
+    harness_plan_drift_detect,
     harness_recover,
     harness_record_step,
+    harness_resume_safe,
     harness_review,
     harness_trace,
     harness_verify,
@@ -555,6 +571,14 @@ def get_all_tools() -> list[BaseTool]:
             youtube_learning_search,
             youtube_playlist_finder,
             youtube_video_ranker,
+            research_search,
+            research_fetch,
+            research_compare_sources,
+            research_grade_evidence,
+            dspy_optimize_prompt,
+            dspy_compile,
+            deepeval_evaluate,
+            langfuse_trace,
             # PixelRAG (visual RAG)
             pixelrag_capture,
             pixelrag_search_public,
@@ -610,6 +634,7 @@ def get_all_tools() -> list[BaseTool]:
             hitl_approve,
             hitl_reject,
             hitl_get_status,
+            hitl_request_plan_approval,
             # Admin notifications
             admin_notify_progress,
             # Media (WhatsApp documents)
@@ -723,6 +748,9 @@ def get_all_tools() -> list[BaseTool]:
             harness_recover,
             harness_trace,
             harness_review,
+            harness_plan_drift_detect,
+            harness_resume_safe,
+            harness_checkpoint_commit,
             # S6: Improvement proposal + evaluation
             improvement_detect,
             improvement_propose,

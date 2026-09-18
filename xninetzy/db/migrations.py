@@ -1164,6 +1164,7 @@ def _migrate_lightning(conn) -> None:
         "rollback_json": "TEXT DEFAULT '{}'",
         "expires_at": "TEXT",
         "idempotency_key": "TEXT",
+        "owner": "TEXT",
     }.items():
         if name not in proposal_columns:
             conn.execute(f"ALTER TABLE improvement_proposals ADD COLUMN {name} {ddl}")

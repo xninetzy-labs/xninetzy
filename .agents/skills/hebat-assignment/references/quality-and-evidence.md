@@ -1,173 +1,699 @@
-# HEBAT Assignment — Content Quality and Evidence
+# HEBAT Assignment — Quality, Evidence, and Academic Reasoning
 
-This reference expands content quality, research and evidence, tables and figures, conclusion standard, references, academic tone, and visual design system. Read it when drafting or auditing the substantive content of an HEBAT deliverable.
+This reference defines the substantive quality model for HEBAT assignments.
 
-## Content quality standard
+Read it when:
 
-Every section should answer a clear academic purpose. A useful structure is:
+```text
+drafting substantive content
+evaluating sources
+mapping claims to evidence
+designing arguments
+checking citation integrity
+reviewing tables and figures
+writing conclusions
+auditing academic tone
+```
 
-**Claim → Explanation → Evidence → Interpretation → Relevance**
+The core model is:
 
-Avoid sections that simply stack quotations or facts without analysis. The writing should demonstrate:
+```text
+CLAIM
+  ↓
+EVIDENCE
+  ↓
+INTERPRETATION
+  ↓
+RELEVANCE
+  ↓
+CONCLUSION
+```
 
-* understanding,
-* reasoning,
-* connection between evidence and claims,
-* application of course concepts,
-* relevance to the project/problem.
+---
 
-Avoid writing that sounds like a collection of disconnected summaries.
+# 1. Content Quality Standard
 
-## Research and evidence
+Every substantive section should have a clear purpose.
 
-Use sources according to their authority and relevance.
+A strong section generally follows:
 
-### Preferred source hierarchy
+```text
+Claim
+→ Explanation
+→ Evidence
+→ Interpretation
+→ Relevance
+```
 
-1. Official government/institutional sources
-2. Peer-reviewed academic research
-3. Official organizational documentation
-4. Credible datasets
-5. Professional or industry sources
-6. Reputable secondary sources
+Avoid:
 
-Avoid relying heavily on:
+```text
+quotation
+→ quotation
+→ quotation
+→ source summary
+```
 
-* anonymous websites,
-* low-quality blogs,
-* unsupported claims,
-* search snippets as primary evidence.
+without synthesis.
 
-When a claim materially affects the assignment, support it with an appropriate source.
+The assignment should demonstrate:
 
-## Tables, figures, and captions
+```text
+understanding
+reasoning
+application
+course-concept integration
+evidence interpretation
+contextual relevance
+```
 
-### Tables
+---
 
-Default table style:
+# 2. Claim Classification
 
-* fixed layout,
-* readable column widths,
-* header background `#D9D9D9`,
-* black text,
-* consistent borders,
-* no excessive decoration.
+Classify substantive statements as:
 
-Use tables when they improve comparison, organization, or clarity.
+```text
+FACT
+INTERPRETATION
+ASSUMPTION
+RECOMMENDATION
+LIMITATION
+```
 
-### Figures
+## Fact
 
-Every important figure should have:
+Directly supported by an appropriate source or verified observation.
 
-* figure number,
-* informative caption,
-* source when applicable,
-* sufficient resolution,
-* clear relationship to the surrounding discussion.
+## Interpretation
 
-Default caption:
+Reasoned reading of evidence.
 
-* 9 pt
-* italic
-* gray
+## Assumption
 
-Example: *Figure 3. User journey mapping for household waste disposal*
+Condition accepted because evidence is unavailable or the assignment explicitly
+requires it.
 
-## Links and external artifacts
+## Recommendation
 
-When the assignment uses external artifacts such as Figma, Google Sheets, prototype links, datasets, or project repositories, keep the relevant links in the final document. Do not surround useful links with unnecessary technical metadata.
+Proposed action, design, or decision.
 
-A simple format is preferred:
+## Limitation
 
-**Figma Prototype:** [link]
+Constraint affecting confidence, generalizability, or implementation.
 
-**Project Spreadsheet:** [link]
+Do not present an assumption or recommendation as an established fact.
 
-## Conclusion standard
+---
 
-The conclusion must synthesize the **entire discussion**, not simply repeat the introduction. A strong HEBAT conclusion should connect:
+# 3. Claim Strength
 
-**Theme → SDGs/context → problem → scope → research → methodology → analysis → proposed output → feasibility**
-
-Explain why the selected theme or solution is appropriate based on the evidence. When relevant, explain practical feasibility using contextual factors such as:
-
-* relevance to everyday problems,
-* availability of potential respondents,
-* accessibility of field information,
-* existing ecosystem or infrastructure,
-* realistic implementation conditions.
-
-The conclusion should emphasize **understanding and application of principles**, not merely compare tools or software.
-
-### Preferred conclusion opening
-
-Avoid: `This practical assignment aims to train students...`
-
-Prefer: `This practical assignment applies an understanding of...`
-
-The conclusion should focus on what was learned, analyzed, developed, and demonstrated.
-
-### Required closing direction
-
-Where applicable, end with concrete next steps such as:
-
-* maintaining project data in the designated spreadsheet,
-* finalizing the team PDF,
-* updating the prototype,
-* submitting the required Figma link,
-* completing the required HEBAT submission process.
-
-## References
-
-Use an informative reference section rather than a list of filenames. Default title:
-
-# DAFTAR PUSTAKA DAN SUMBER RUJUKAN TERKAIT
-
-When useful, organize sources into categories.
-
-### Modul & Materi HEBAT
-
-Course modules, lecture materials, assignment briefs, and official HEBAT references.
-
-### SDGs, Policies & Institutional Sources
-
-United Nations SDGs, government regulations, institutional reports, and official policies.
-
-### Academic Research & Prototypes
-
-Academic papers, journals, conference publications, case studies, and relevant prototypes.
-
-### Field Data & Local Context
-
-Interviews, observations, local datasets, surveys, and Surabaya-specific evidence.
-
-### Informative reference labels
-
-References should communicate what the source contributes.
+Language strength should match evidence strength.
 
 Prefer:
 
-`[S1] Design Thinking for Residential Waste Management in Taman Sasana Patra — Syntax Idea, 2024 — empathize-stage evidence from waste collection context`
+```text
+suggests
+indicates
+supports
+is consistent with
+may
+```
 
-instead of: `[S1] Minggu ke 03 Tema Proyek.pdf`
+when evidence is limited.
 
-The reference list should help the reader understand **why the source matters**, not merely identify the file.
+Use:
 
-## Academic tone
+```text
+demonstrates
+establishes
+shows
+```
 
-Use language that is clear, precise, academically appropriate, readable, evidence-based, and direct. Avoid excessive jargon, exaggerated claims, marketing language, unsupported superlatives, repetitive statements, and overly complicated sentence structures. Write for comprehension first.
+only when the evidence and method justify the stronger wording.
 
-## Visual design system
+Avoid unsupported:
 
-The visual system should support academic readability rather than compete with the content. Default principles:
+```text
+proves
+always
+guarantees
+best
+most effective
+revolutionary
+100% effective
+```
 
-* consistent typography,
-* consistent spacing,
-* restrained use of gray/black,
-* clear hierarchy,
-* sufficient whitespace,
-* aligned elements,
-* consistent tables and figures,
-* no unnecessary decorative graphics.
+---
 
-For academic deliverables, **clarity > decoration**.
+# 4. Evidence Hierarchy
+
+Typical hierarchy:
+
+```text
+1. Official institutional / government source
+2. Primary research
+3. Peer-reviewed research
+4. Official dataset
+5. Official organizational documentation
+6. Professional organization
+7. Credible secondary source
+8. Reputable educational/reference source
+9. Search snippet / informal source
+```
+
+Lower-ranked sources are not automatically invalid.
+
+Their fitness depends on the claim.
+
+A course requirement should be established from course authority, not from an
+academic paper.
+
+---
+
+# 5. Source Fitness
+
+Evaluate each source by:
+
+```text
+authority
+relevance
+recency
+specificity
+methodological quality
+traceability
+```
+
+A prestigious source is not sufficient when it does not address the actual claim.
+
+Likewise, a highly relevant source may be appropriate even if it is not the most
+prestigious publication type.
+
+---
+
+# 6. Evidence Ledger
+
+For important claims use:
+
+```yaml
+evidence_item:
+  evidence_id:
+  claim_id:
+  source:
+  source_type:
+  observation:
+  relevant_excerpt:
+  interpretation:
+  limitation:
+  target_section:
+  citation:
+  verification_status:
+```
+
+The ledger should answer:
+
+```text
+What is the claim?
+Where did it come from?
+What exactly supports it?
+Where is it used?
+Has the support been verified?
+```
+
+---
+
+# 7. Evidence Proportionality
+
+Match evidence effort to claim importance.
+
+```text
+minor contextual statement
+→ lightweight evidence
+
+central analytical claim
+→ strong evidence
+
+quantitative claim
+→ exact source / dataset
+
+causal claim
+→ evidence appropriate to causal inference
+
+recommendation
+→ supporting rationale and relevant constraints
+```
+
+Do not spend most research effort on low-value background while leaving central
+claims weakly supported.
+
+---
+
+# 8. Citation Integrity
+
+Every substantive citation should satisfy:
+
+```text
+source exists
++
+source identity is correct
++
+source supports the attached claim
++
+citation style is consistent
++
+reference entry exists
+```
+
+Before finalization, check:
+
+```text
+citation → reference
+reference → actual source
+claim → supporting evidence
+```
+
+---
+
+# 9. Citation Anti-Patterns
+
+Avoid:
+
+```text
+citation dumping
+citation padding
+one citation attached to unrelated claims
+citation to a source that does not support the sentence
+invented DOI
+invented page number
+invented quotation
+search snippet treated as full-source evidence
+```
+
+A larger bibliography does not automatically mean stronger academic work.
+
+---
+
+# 10. Research Workflow
+
+Use:
+
+```text
+Research Question
+→ Search
+→ Source Evaluation
+→ Evidence Extraction
+→ Comparison
+→ Synthesis
+→ Claim Support
+→ Citation
+```
+
+Each important source should have a purpose:
+
+```yaml
+source_use:
+  source:
+  contributes_to:
+  key_finding:
+  limitation:
+  intended_claim:
+```
+
+---
+
+# 11. Research Synthesis
+
+Prefer synthesis:
+
+```text
+Source A:
+finding
+
+Source B:
+supporting / contrasting finding
+
+Source C:
+contextual limitation
+
+Synthesis:
+what the combined evidence means
+```
+
+over:
+
+```text
+Source A says...
+Source B says...
+Source C says...
+```
+
+The goal is analytical integration, not source enumeration.
+
+---
+
+# 12. Contradictory Evidence
+
+When credible sources disagree:
+
+```text
+identify conflict
+→ compare authority
+→ compare method
+→ compare population/context
+→ compare recency
+→ explain remaining uncertainty
+```
+
+Do not silently choose whichever source supports the preferred argument.
+
+---
+
+# 13. Quantitative Claims
+
+For every important number, verify:
+
+```text
+value
+unit
+population
+time period
+source
+method
+```
+
+Do not mix:
+
+```text
+different populations
+different years
+different definitions
+different denominators
+```
+
+as if they were directly comparable.
+
+---
+
+# 14. Tables
+
+Use tables when they materially improve:
+
+```text
+comparison
+organization
+traceability
+summary
+```
+
+Each substantive table should have:
+
+```text
+table number
+informative title
+clear units
+consistent terminology
+source where applicable
+```
+
+Avoid tables that merely restate prose.
+
+---
+
+# 15. Figures
+
+Every important figure should have:
+
+```text
+figure number
+informative caption
+source when applicable
+adequate resolution
+connection to surrounding analysis
+```
+
+A figure should contribute information.
+
+Avoid decorative figures with no analytical role.
+
+---
+
+# 16. Figure Interpretation
+
+Do not insert a figure without explaining its significance.
+
+Preferred pattern:
+
+```text
+Figure
+→ observed pattern
+→ interpretation
+→ relevance to the assignment
+```
+
+The figure should support the argument, not replace it.
+
+---
+
+# 17. Academic Argument Architecture
+
+A strong general structure is:
+
+```text
+Problem
+→ Context
+→ Evidence
+→ Analysis
+→ Implication
+→ Response
+→ Limitation
+→ Conclusion
+```
+
+Adapt the structure to the current assignment.
+
+The rubric or brief may require a different architecture.
+
+---
+
+# 18. Conclusion Standard
+
+The conclusion should synthesize the discussion rather than repeat the introduction.
+
+Where applicable, connect:
+
+```text
+theme
+→ context / SDGs
+→ problem
+→ scope
+→ research
+→ methodology
+→ analysis
+→ proposed output
+→ feasibility
+→ limitations
+```
+
+The conclusion should answer:
+
+```text
+What was learned?
+What was established?
+What was developed?
+Why is the result relevant?
+What remains uncertain?
+What should happen next?
+```
+
+---
+
+# 19. Conclusion Quality
+
+Avoid:
+
+```text
+"This assignment aims to train students..."
+```
+
+Prefer a conclusion centered on demonstrated understanding and application.
+
+The conclusion should follow from the evidence already presented.
+
+Do not introduce a major new claim in the conclusion without support.
+
+---
+
+# 20. Academic Tone
+
+Use language that is:
+
+```text
+clear
+precise
+direct
+academically appropriate
+readable
+evidence-based
+```
+
+Avoid:
+
+```text
+marketing language
+unsupported superlatives
+exaggerated certainty
+excessive jargon
+repetition
+overly long sentences
+```
+
+Academic writing does not need to sound unnecessarily complicated.
+
+---
+
+# 21. Context and Local Evidence
+
+When the assignment requires contextual analysis, distinguish:
+
+```text
+verified local evidence
+general evidence
+assumption
+inference
+```
+
+Do not present generic national or international evidence as direct proof of a
+local condition without an appropriate bridge.
+
+---
+
+# 22. Feasibility
+
+When feasibility matters, ground it in observable factors such as:
+
+```text
+problem relevance
+stakeholder accessibility
+respondent availability
+data accessibility
+existing infrastructure
+implementation conditions
+resource constraints
+institutional environment
+```
+
+Do not call a solution "feasible" merely because it is technically possible.
+
+---
+
+# 23. Methodology Alignment
+
+The chosen method should match:
+
+```text
+assignment objective
+research question
+available evidence
+scope
+deliverable
+```
+
+Do not insert a methodology simply because it is common or academically popular.
+
+Explain why the method is appropriate to the task.
+
+---
+
+# 24. Evidence and Recommendation Boundary
+
+Recommendations should be derived from:
+
+```text
+requirements
+evidence
+analysis
+constraints
+```
+
+not presented as observed facts.
+
+Example:
+
+```text
+Evidence:
+users report difficulty finding information.
+
+Recommendation:
+improve information hierarchy.
+```
+
+The recommendation is not itself evidence.
+
+---
+
+# 25. Limitation Standard
+
+A meaningful limitation should identify:
+
+```text
+what is limited
+why it is limited
+what consequence it has
+```
+
+Avoid generic:
+
+```text
+"This study has limitations."
+```
+
+Prefer a specific limitation tied to interpretation.
+
+---
+
+# 26. Academic Integrity
+
+Never fabricate:
+
+```text
+participants
+interviews
+observations
+survey data
+experiments
+benchmarks
+sources
+statistics
+results
+references
+```
+
+Generated material must not be represented as empirical observation unless it
+actually originates from verified evidence.
+
+---
+
+# 27. Quality Checklist
+
+Before substantive completion:
+
+```text
+[ ] Every major section has a purpose
+[ ] Important claims have evidence
+[ ] Evidence supports the exact claim
+[ ] Interpretations are distinguishable from facts
+[ ] Recommendations are not presented as facts
+[ ] Quantitative claims are verified
+[ ] Contradictions are handled explicitly
+[ ] Citations are traceable
+[ ] References are complete
+[ ] Conclusion follows the evidence
+[ ] Limitations are meaningful
+[ ] Terminology is consistent
+```
+
+---
+
+# 28. Core Principle
+
+> **Academic quality is not the number of citations or pages. It is the strength of the chain from requirement to claim, claim to evidence, evidence to interpretation, and interpretation to conclusion.**

@@ -35,6 +35,9 @@ dependencies = [
     "opencv-python-headless>=5.0.0.93",
 ]
 
+[project.scripts]
+xninetzy-cli = "xninetzy.cli.orchestrator:main"
+
 [dependency-groups]
 dev = [
     "pytest>=8.0",

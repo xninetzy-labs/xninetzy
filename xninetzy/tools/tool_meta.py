@@ -28,6 +28,7 @@ TAG_BY_GROUP = {
     "life": "life",
     "reminders": "reminders",
     "media": "media",
+    "documentation": "docs",
 }
 
 
@@ -102,6 +103,10 @@ def meta_for(name: str) -> dict[str, Any]:
             ("pixelrag_", "visual"),
             ("web_", "web"),
             ("repo_", "repo"),
+            ("adr_", "docs"),
+            ("implementation_record", "docs"),
+            ("security_finding_record", "docs"),
+            ("learning_record", "docs"),
             ("calculate", "core"),
             ("datetime", "core"),
             ("tool_catalog", "meta"),

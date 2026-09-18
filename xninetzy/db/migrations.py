@@ -471,25 +471,6 @@ def run_migrations() -> None:
         )
         """,
         """
-        CREATE TABLE IF NOT EXISTS improvement_proposals (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            proposal_id TEXT UNIQUE,
-            source_type TEXT,
-            source_id TEXT,
-            user_id TEXT,
-            title TEXT,
-            problem TEXT,
-            proposed_change TEXT,
-            target_area TEXT,
-            patch_json TEXT DEFAULT '{}',
-            risk_level TEXT DEFAULT 'low',
-            status TEXT DEFAULT 'pending',
-            created_at TEXT,
-            reviewed_at TEXT,
-            reviewed_by TEXT
-        )
-        """,
-        """
         CREATE TABLE IF NOT EXISTS ai_preferences (
             user_id TEXT PRIMARY KEY,
             chat_provider TEXT NOT NULL,
@@ -794,6 +775,255 @@ def run_migrations() -> None:
         "CREATE VIRTUAL TABLE IF NOT EXISTS obsidian_notes_fts USING fts5(path UNINDEXED, content)",
         IDEMPOTENCY_TABLE_DDL,
         IDEMPOTENCY_INDEX_DDL,
+        """
+        CREATE TABLE IF NOT EXISTS web_source_ledger (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          url TEXT NOT NULL,
+          canonical_url TEXT NOT NULL,
+          title TEXT,
+          publisher TEXT,
+          host TEXT,
+          content_type TEXT,
+          http_status INTEGER,
+          excerpt TEXT,
+          claim TEXT,
+          confidence REAL DEFAULT 0.0,
+          retrieval_kind TEXT NOT NULL DEFAULT 'fetch',
+          pixelrag_capture_path TEXT,
+          evidence_score REAL DEFAULT 0.0,
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          fetched_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_web_ledger_url ON web_source_ledger(url)",
+        "CREATE INDEX IF NOT EXISTS idx_web_ledger_host ON web_source_ledger(host)",
+        "CREATE INDEX IF NOT EXISTS idx_web_ledger_fetched ON web_source_ledger(fetched_at)",
+        """
+        CREATE TABLE IF NOT EXISTS security_scopes (
+          scope_token TEXT PRIMARY KEY,
+          owner TEXT NOT NULL,
+          targets_json TEXT NOT NULL,
+          rationale TEXT,
+          expires_at TEXT,
+          approved_at TEXT,
+          approved_by TEXT,
+          created_at TEXT NOT NULL
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS security_findings (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          scope_token TEXT,
+          asset TEXT NOT NULL,
+          location TEXT,
+          category TEXT NOT NULL,
+          title TEXT NOT NULL,
+          evidence TEXT,
+          precondition TEXT,
+          reproduction TEXT,
+          impact TEXT,
+          confidence REAL DEFAULT 0.0,
+          severity TEXT DEFAULT 'medium',
+          remediation TEXT,
+          regression_test TEXT,
+          status TEXT DEFAULT 'open',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL,
+          FOREIGN KEY (scope_token) REFERENCES security_scopes(scope_token)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_security_findings_scope ON security_findings(scope_token)",
+        "CREATE INDEX IF NOT EXISTS idx_security_findings_status ON security_findings(status)",
+        "CREATE INDEX IF NOT EXISTS idx_security_findings_severity ON security_findings(severity)",
+        """
+        CREATE TABLE IF NOT EXISTS harness_plans (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          plan_id TEXT NOT NULL UNIQUE,
+          owner TEXT NOT NULL,
+          title TEXT NOT NULL,
+          steps_json TEXT NOT NULL,
+          required_tools_json TEXT NOT NULL DEFAULT '[]',
+          required_skills_json TEXT NOT NULL DEFAULT '[]',
+          verification TEXT,
+          status TEXT NOT NULL DEFAULT 'planned',
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_harness_plans_owner ON harness_plans(owner)",
+        "CREATE INDEX IF NOT EXISTS idx_harness_plans_status ON harness_plans(status)",
+        """
+        CREATE TABLE IF NOT EXISTS harness_actions (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          action_id TEXT NOT NULL UNIQUE,
+          plan_id TEXT NOT NULL,
+          sequence INTEGER NOT NULL,
+          tool_name TEXT NOT NULL,
+          args_json TEXT NOT NULL DEFAULT '{}',
+          outcome TEXT,
+          recorded_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_harness_actions_plan ON harness_actions(plan_id, sequence)",
+        """
+        CREATE TABLE IF NOT EXISTS harness_verifications (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          plan_id TEXT NOT NULL,
+          passed INTEGER NOT NULL,
+          evidence TEXT,
+          notes TEXT,
+          verified_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_harness_verifications_plan ON harness_verifications(plan_id)",
+        """
+        CREATE TABLE IF NOT EXISTS improvement_proposals (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          proposal_id TEXT NOT NULL UNIQUE,
+          owner TEXT,
+          user_id TEXT,
+          scope TEXT,
+          target_kind TEXT,
+          target_id TEXT,
+          source_type TEXT,
+          source_id TEXT,
+          title TEXT,
+          problem TEXT,
+          proposed_change TEXT,
+          target_area TEXT,
+          patch_json TEXT DEFAULT '{}',
+          risk_level TEXT DEFAULT 'low',
+          rationale TEXT,
+          metrics_json TEXT NOT NULL DEFAULT '{}',
+          rollout TEXT NOT NULL DEFAULT 'candidate',
+          status TEXT NOT NULL DEFAULT 'pending',
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          confidence REAL DEFAULT 0,
+          risk_score REAL DEFAULT 0,
+          evidence_json TEXT DEFAULT '{}',
+          baseline_metrics_json TEXT DEFAULT '{}',
+          candidate_metrics_json TEXT DEFAULT '{}',
+          rollout_state TEXT DEFAULT 'pending',
+          rollback_json TEXT DEFAULT '{}',
+          expires_at TEXT,
+          idempotency_key TEXT,
+          reviewed_at TEXT,
+          reviewed_by TEXT,
+          created_at TEXT NOT NULL DEFAULT '',
+          updated_at TEXT NOT NULL DEFAULT ''
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_improvement_proposals_owner ON improvement_proposals(owner) WHERE owner IS NOT NULL",
+        "CREATE INDEX IF NOT EXISTS idx_improvement_proposals_status ON improvement_proposals(status)",
+        """
+        CREATE TABLE IF NOT EXISTS improvement_evaluations (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          proposal_id TEXT NOT NULL,
+          metric_name TEXT NOT NULL,
+          baseline REAL,
+          candidate REAL,
+          delta REAL,
+          verdict TEXT,
+          notes TEXT,
+          evaluated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_improvement_eval_proposal ON improvement_evaluations(proposal_id)",
+        """
+        CREATE TABLE IF NOT EXISTS observability_events (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          event_kind TEXT NOT NULL,
+          severity TEXT NOT NULL DEFAULT 'info',
+          source TEXT,
+          subject TEXT,
+          payload_json TEXT NOT NULL DEFAULT '{}',
+          occurred_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_obs_events_kind ON observability_events(event_kind, occurred_at)",
+        "CREATE INDEX IF NOT EXISTS idx_obs_events_severity ON observability_events(severity, occurred_at)",
+        """
+        CREATE TABLE IF NOT EXISTS memory_episodes (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          episode_id TEXT NOT NULL UNIQUE,
+          scope TEXT NOT NULL DEFAULT 'personal',
+          owner TEXT NOT NULL,
+          task TEXT NOT NULL,
+          intent TEXT,
+          plan_json TEXT NOT NULL DEFAULT '[]',
+          actions_json TEXT NOT NULL DEFAULT '[]',
+          outcome TEXT,
+          verification TEXT,
+          reward REAL DEFAULT 0.0,
+          usefulness REAL DEFAULT 0.0,
+          status TEXT NOT NULL DEFAULT 'active',
+          related_tools_json TEXT NOT NULL DEFAULT '[]',
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_memory_episodes_owner ON memory_episodes(owner)",
+        "CREATE INDEX IF NOT EXISTS idx_memory_episodes_status ON memory_episodes(status)",
+        """
+        CREATE TABLE IF NOT EXISTS memory_failures (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          failure_id TEXT NOT NULL UNIQUE,
+          owner TEXT NOT NULL,
+          failure_class TEXT NOT NULL,
+          title TEXT NOT NULL,
+          context TEXT,
+          root_cause TEXT,
+          recovery TEXT,
+          recovery_success INTEGER NOT NULL DEFAULT 0,
+          related_tool TEXT,
+          related_skill TEXT,
+          recurrence_count INTEGER NOT NULL DEFAULT 1,
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          last_seen_at TEXT NOT NULL,
+          created_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_memory_failures_owner ON memory_failures(owner)",
+        "CREATE INDEX IF NOT EXISTS idx_memory_failures_class ON memory_failures(failure_class)",
+        """
+        CREATE TABLE IF NOT EXISTS memory_procedures (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          procedure_id TEXT NOT NULL UNIQUE,
+          owner TEXT NOT NULL,
+          name TEXT NOT NULL,
+          trigger TEXT NOT NULL,
+          steps_json TEXT NOT NULL,
+          tools_json TEXT NOT NULL DEFAULT '[]',
+          skills_json TEXT NOT NULL DEFAULT '[]',
+          verification TEXT,
+          success_count INTEGER NOT NULL DEFAULT 0,
+          failure_count INTEGER NOT NULL DEFAULT 0,
+          last_used_at TEXT,
+          status TEXT NOT NULL DEFAULT 'candidate',
+          metadata_json TEXT NOT NULL DEFAULT '{}',
+          created_at TEXT NOT NULL,
+          updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_memory_procedures_owner ON memory_procedures(owner)",
+        "CREATE INDEX IF NOT EXISTS idx_memory_procedures_status ON memory_procedures(status)",
+        """
+        CREATE TABLE IF NOT EXISTS memory_promotion_log (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          source_kind TEXT NOT NULL,
+          source_id TEXT NOT NULL,
+          candidate_kind TEXT NOT NULL,
+          candidate_id TEXT,
+          stage TEXT NOT NULL,
+          verdict TEXT,
+          rationale TEXT,
+          owner TEXT,
+          created_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_memory_promotion_kind ON memory_promotion_log(source_kind, source_id)",
     ]
     with connect() as conn:
         for statement in statements:

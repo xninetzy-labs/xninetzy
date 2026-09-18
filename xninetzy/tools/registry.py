@@ -306,6 +306,91 @@ from xninetzy.os.lightning.tools import (
     lightning_strategy_rank,
 )
 from xninetzy.interfaces.external_mcp import EXTERNAL_MCP_TOOLS
+from xninetzy.tools.ecosystem.repo_tools import (
+    repo_architecture,
+    repo_dependency,
+    repo_diff,
+    repo_risk,
+    repo_search,
+    repo_symbol,
+    repo_test,
+)
+from xninetzy.tools.ecosystem.vision_tools import (
+    image_compare,
+    image_crop,
+    image_inspect,
+    image_layout,
+    image_ocr,
+    image_preprocess,
+    image_regions,
+)
+from xninetzy.tools.ecosystem.web_evidence_tools import (
+    web_compare,
+    web_evidence,
+    web_extract,
+    web_source_ledger,
+)
+from xninetzy.tools.ecosystem.documentation_tools import (
+    adr_generate,
+    implementation_record,
+    learning_record,
+    security_finding_record,
+)
+from xninetzy.tools.ecosystem.security_tools import (
+    security_api_inventory,
+    security_assets,
+    security_correlate,
+    security_dependencies,
+    security_headers,
+    security_regression,
+    security_sast,
+    security_scope,
+    security_threat_model,
+    security_validate_finding,
+)
+from xninetzy.tools.ecosystem.memory_lifecycle_tools import (
+    memory_episode_search,
+    memory_episode_store,
+    memory_failure_store,
+    memory_procedure_store,
+    memory_promote,
+    memory_relevance,
+    memory_retire,
+)
+from xninetzy.tools.ecosystem.harness_tools import (
+    harness_execute,
+    harness_plan,
+    harness_recover,
+    harness_record_step,
+    harness_review,
+    harness_trace,
+    harness_verify,
+)
+from xninetzy.tools.ecosystem.improvement_tools import (
+    improvement_approve,
+    improvement_detect,
+    improvement_evaluate,
+    improvement_list,
+    improvement_propose,
+    improvement_regress,
+    improvement_reject,
+)
+from xninetzy.tools.ecosystem.observability_tools import (
+    observability_checkpoint,
+    observability_emit,
+    observability_query,
+    observability_recent_checkpoints,
+    observability_summary,
+)
+from xninetzy.tools.ecosystem.harness_router_tools import (
+    claim_ledger_record,
+    confidence_score,
+    evidence_normalize,
+    intent_resolve,
+    recovery_choose,
+    task_state_record,
+    tool_route,
+)
 
 _ALL_TOOLS: list[BaseTool] | None = None
 
@@ -585,6 +670,81 @@ def get_all_tools() -> list[BaseTool]:
             helper_get,
             helper_generate_obsidian_docs,
             tool_catalog,
+            # S5: Repo introspection
+            repo_search,
+            repo_symbol,
+            repo_dependency,
+            repo_test,
+            repo_diff,
+            repo_architecture,
+            repo_risk,
+            # S5: Vision / OpenCV / PIL / OCR
+            image_inspect,
+            image_preprocess,
+            image_crop,
+            image_ocr,
+            image_regions,
+            image_compare,
+            image_layout,
+            # S5: Web evidence pipeline
+            web_extract,
+            web_compare,
+            web_evidence,
+            web_source_ledger,
+            # S5: Authorized security scope-gated analysis
+            security_scope,
+            security_assets,
+            security_headers,
+            security_api_inventory,
+            security_sast,
+            security_dependencies,
+            security_threat_model,
+            security_validate_finding,
+            security_regression,
+            security_correlate,
+            # Documentation (Obsidian-ready)
+            adr_generate,
+            implementation_record,
+            security_finding_record,
+            learning_record,
+            # S6: Memory lifecycle
+            memory_episode_store,
+            memory_episode_search,
+            memory_failure_store,
+            memory_procedure_store,
+            memory_promote,
+            memory_retire,
+            memory_relevance,
+            # S6: Harness plan/execute/verify/recover/trace/review
+            harness_plan,
+            harness_execute,
+            harness_record_step,
+            harness_verify,
+            harness_recover,
+            harness_trace,
+            harness_review,
+            # S6: Improvement proposal + evaluation
+            improvement_detect,
+            improvement_propose,
+            improvement_evaluate,
+            improvement_approve,
+            improvement_reject,
+            improvement_regress,
+            improvement_list,
+            # S6: Observability emit/query/summary/checkpoint
+            observability_emit,
+            observability_query,
+            observability_summary,
+            observability_checkpoint,
+            observability_recent_checkpoints,
+            # S7: Harness router / state machine / recovery / claim ledger
+            intent_resolve,
+            evidence_normalize,
+            recovery_choose,
+            claim_ledger_record,
+            confidence_score,
+            tool_route,
+            task_state_record,
         ]
     return _ALL_TOOLS
 
@@ -608,6 +768,75 @@ def get_tool_groups() -> dict[str, list[str]]:
     """
     return {
         "core": ["calculate", "calculate_percentage", "datetime_now"],
+        "repo": [
+            "repo_search",
+            "repo_symbol",
+            "repo_dependency",
+            "repo_test",
+            "repo_diff",
+            "repo_architecture",
+            "repo_risk",
+        ],
+        "vision": [
+            "image_inspect",
+            "image_preprocess",
+            "image_crop",
+            "image_ocr",
+            "image_regions",
+            "image_compare",
+            "image_layout",
+        ],
+        "web_evidence": [
+            "web_extract",
+            "web_compare",
+            "web_evidence",
+            "web_source_ledger",
+        ],
+        "security": [
+            "security_scope",
+            "security_assets",
+            "security_headers",
+            "security_api_inventory",
+            "security_sast",
+            "security_dependencies",
+            "security_threat_model",
+            "security_validate_finding",
+            "security_regression",
+        ],
+        "memory_lifecycle": [
+            "memory_episode_store",
+            "memory_episode_search",
+            "memory_failure_store",
+            "memory_procedure_store",
+            "memory_promote",
+            "memory_retire",
+            "memory_relevance",
+        ],
+        "harness": [
+            "harness_plan",
+            "harness_execute",
+            "harness_record_step",
+            "harness_verify",
+            "harness_recover",
+            "harness_trace",
+            "harness_review",
+        ],
+        "improvement": [
+            "improvement_detect",
+            "improvement_propose",
+            "improvement_evaluate",
+            "improvement_approve",
+            "improvement_reject",
+            "improvement_regress",
+            "improvement_list",
+        ],
+        "observability": [
+            "observability_emit",
+            "observability_query",
+            "observability_summary",
+            "observability_checkpoint",
+            "observability_recent_checkpoints",
+        ],
         "os_kernel": ["os_capture", "os_inbox", "os_triage", "os_today", "os_job_status"],
         "policy": ["action_policy_evaluate"],
         "ai_runtime": [
@@ -673,6 +902,12 @@ def get_tool_groups() -> dict[str, list[str]]:
             "obsidian_generate_moc",
             "obsidian_add_tags",
             "obsidian_set_frontmatter",
+        ],
+        "documentation": [
+            "adr_generate",
+            "implementation_record",
+            "security_finding_record",
+            "learning_record",
         ],
         "academic": [
             "hebat_login_status",

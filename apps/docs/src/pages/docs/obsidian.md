@@ -5,7 +5,9 @@ description: Canonical foldering, safe migration, note metadata, MOCs, and groun
 section: Integrations
 ---
 
-Xninetzy treats Obsidian as the human-readable persistence layer for the Learning OS and Life OS. Every interface uses the same vault policy: WhatsApp, LangGraph, MCP, Codex, Claude Code, and OpenCode never maintain separate note conventions.
+Xninetzy treats Obsidian as the human-readable persistence layer for the
+Learning OS and Life OS. Every MCP client uses the same vault policy —
+no client maintains a separate note convention.
 
 ## Canonical vault structure
 
@@ -27,7 +29,10 @@ System/{MOCs,Templates,Help,Logs,Migration}/
 Archive/
 ```
 
-Existing paths such as `Daily/`, `Learning/`, `Tasks/`, `Goals/`, `HEBAT/`, and `Helper/` remain readable. New generated notes use the canonical paths. Migration is hybrid: preview first, then owner approval, backup, atomic move, link update, and verification.
+Existing paths such as `Daily/`, `Learning/`, `Tasks/`, `Goals/`,
+`HEBAT/`, and `Helper/` remain readable. New generated notes use the
+canonical paths. Migration is hybrid: preview first, then owner
+approval, backup, atomic move, link update, and verification.
 
 ## Folder management tools
 
@@ -66,16 +71,24 @@ source_id:
 ---
 ```
 
-Unknown existing fields are preserved during migration. Folder names and filenames use lowercase kebab-case; note titles remain human-readable. Tags are lowercase and do not include the `#` prefix.
+Unknown existing fields are preserved during migration. Folder names and
+filenames use lowercase kebab-case; note titles remain human-readable.
+Tags are lowercase and do not include the `#` prefix.
 
 ## Safety and privacy
 
-- All paths are vault-relative and reject absolute paths, traversal, credentials, and blocked runtime directories.
-- Overwrites and migrations create backups when `OBSIDIAN_BACKUP_BEFORE_WRITE=true`.
-- Migration validates the source hash and skips notes changed after preview.
-- Unknown notes stay in place and are reported instead of being moved silently.
-- HEBAT summaries may be stored, but Cyber Campus grades, tokens, cookies, and KRS details are not persisted by default.
-- Downloads, browser state, SQLite, and WhatsApp sessions remain outside the vault.
+- All paths are vault-relative and reject absolute paths, traversal,
+  credentials, and blocked runtime directories.
+- Overwrites and migrations create backups when
+  `OBSIDIAN_BACKUP_BEFORE_WRITE=true`.
+- Migration validates the source hash and skips notes changed after
+  preview.
+- Unknown notes stay in place and are reported instead of being moved
+  silently.
+- HEBAT summaries may be stored, but Cyber Campus grades, tokens,
+  cookies, and KRS details are not persisted by default.
+- Downloads, browser state, SQLite, and HEBAT browser sessions remain
+  outside the vault.
 
 ## Configuration
 
@@ -92,6 +105,10 @@ OBSIDIAN_REQUIRE_ORGANIZE_APPROVAL=true
 OBSIDIAN_AUTO_REFRESH_MOC=true
 OBSIDIAN_PERSIST_ACADEMIC_SENSITIVE=false
 OBSIDIAN_LEGACY_PATH_COMPATIBILITY=true
+OBSIDIAN_MIGRATION_BACKUP=true
+OBSIDIAN_CANONICAL_SCHEMA_VERSION=1
+OBSIDIAN_SEARCH_INDEX_MAX_FILES=2000
+OBSIDIAN_MAX_FILE_SIZE_MB=5
 ```
 
 ## Knowledge and learning workflow
@@ -99,9 +116,13 @@ OBSIDIAN_LEGACY_PATH_COMPATIBILITY=true
 Use the shared loop:
 
 1. Capture a note or source in `Inbox/Captures`.
-2. Triage it into Learning, Research, Knowledge, Academic, Life, or Projects.
+2. Triage it into Learning, Research, Knowledge, Academic, Life, or
+   Projects.
 3. Ingest evidence into the knowledge index when it must be searchable.
-4. Link concepts, roadmaps, tasks, and evidence through MOCs and wikilinks.
+4. Link concepts, roadmaps, tasks, and evidence through MOCs and
+   wikilinks.
 5. Review progress through daily and weekly notes.
 
-`knowledge_search` is evidence inspection. `knowledge_answer` produces grounded answers with citations. Raw vector chunks are never presented as final answers.
+`knowledge_search` is evidence inspection. `knowledge_answer` produces
+grounded answers with citations. Raw vector chunks are never presented
+as final answers.

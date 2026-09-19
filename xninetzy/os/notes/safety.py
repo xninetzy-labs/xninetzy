@@ -7,6 +7,7 @@ from xninetzy.os.notes.obsidian_config import vault_path
 
 BLOCKED_PARTS = {
     ".env",
+    ".backup",
     "sessions",
     "node_modules",
     "__pycache__",
@@ -30,7 +31,7 @@ def resolve_vault_path(path: str | None, *, for_write: bool = False) -> Path:
     if not raw:
       raw = "."
 
-    if "\x00" in raw or "~" in raw:
+    if "\x00" in raw:
         raise ObsidianSafetyError("Path tidak aman untuk vault Obsidian")
 
     candidate_raw = Path(raw)

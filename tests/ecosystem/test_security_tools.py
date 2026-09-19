@@ -67,6 +67,11 @@ def mock_server():
         thread.join(timeout=2)
 
 
+@pytest.fixture(autouse=True)
+def _allow_test_private_targets(monkeypatch):
+    monkeypatch.setenv("XNINETZY_ALLOW_PRIVATE_TARGETS", "true")
+
+
 @pytest.fixture
 def sqlite_env(tmp_path, monkeypatch):
     monkeypatch.setenv("SQLITE_PATH", str(tmp_path / "test.sqlite3"))
@@ -164,7 +169,7 @@ def test_security_api_inventory_finds_spec(sqlite_env, mock_server):
 
 
 def test_security_sast_runs_repo_risk(sqlite_env):
-    scope = _invoke(security_scope, targets=["http://127.0.0.1:1"], rationale="audit")
+    scope = _invoke(security_scope, targets=["file:///home/misbahul45/code/xninetzy"], rationale="audit")
     out = _invoke(
         security_sast,
         scope_token=scope["scope_token"],
@@ -176,7 +181,7 @@ def test_security_sast_runs_repo_risk(sqlite_env):
 
 
 def test_security_dependencies_returns_inventory(sqlite_env):
-    scope = _invoke(security_scope, targets=["http://127.0.0.1:1"], rationale="audit")
+    scope = _invoke(security_scope, targets=["file:///home/misbahul45/code/xninetzy"], rationale="audit")
     out = _invoke(
         security_dependencies,
         scope_token=scope["scope_token"],
@@ -187,7 +192,7 @@ def test_security_dependencies_returns_inventory(sqlite_env):
 
 
 def test_security_threat_model_scores_signals(sqlite_env):
-    scope = _invoke(security_scope, targets=["http://127.0.0.1:1"], rationale="audit")
+    scope = _invoke(security_scope, targets=["file:///home/misbahul45/code/xninetzy"], rationale="audit")
     out = _invoke(
         security_threat_model,
         scope_token=scope["scope_token"],
@@ -199,7 +204,7 @@ def test_security_threat_model_scores_signals(sqlite_env):
 
 
 def test_security_validate_finding_persists(sqlite_env):
-    scope = _invoke(security_scope, targets=["http://127.0.0.1:1"], rationale="audit")
+    scope = _invoke(security_scope, targets=["file:///home/misbahul45/code/xninetzy"], rationale="audit")
     out = _invoke(
         security_validate_finding,
         scope_token=scope["scope_token"],
@@ -217,7 +222,7 @@ def test_security_validate_finding_persists(sqlite_env):
 
 
 def test_security_validate_finding_records_runtime_proof_flag(sqlite_env):
-    scope = _invoke(security_scope, targets=["http://127.0.0.1:1"], rationale="audit")
+    scope = _invoke(security_scope, targets=["file:///home/misbahul45/code/xninetzy"], rationale="audit")
     out = _invoke(
         security_validate_finding,
         scope_token=scope["scope_token"],
@@ -232,7 +237,7 @@ def test_security_validate_finding_records_runtime_proof_flag(sqlite_env):
 
 
 def test_security_regression_links_test(sqlite_env):
-    scope = _invoke(security_scope, targets=["http://127.0.0.1:1"], rationale="audit")
+    scope = _invoke(security_scope, targets=["file:///home/misbahul45/code/xninetzy"], rationale="audit")
     finding = _invoke(
         security_validate_finding,
         scope_token=scope["scope_token"],
@@ -254,7 +259,7 @@ def test_security_regression_links_test(sqlite_env):
 
 
 def test_security_regression_rejects_finding_outside_scope(sqlite_env):
-    scope = _invoke(security_scope, targets=["http://127.0.0.1:1"], rationale="audit")
+    scope = _invoke(security_scope, targets=["file:///home/misbahul45/code/xninetzy"], rationale="audit")
     out = _invoke(
         security_regression,
         scope_token=scope["scope_token"],

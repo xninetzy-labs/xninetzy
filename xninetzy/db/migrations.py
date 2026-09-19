@@ -1155,6 +1155,18 @@ def _migrate_lightning(conn) -> None:
     proposal_rows = conn.execute("PRAGMA table_info(improvement_proposals)").fetchall()
     proposal_columns = {row["name"] for row in proposal_rows}
     for name, ddl in {
+        "owner": "TEXT",
+        "scope": "TEXT",
+        "target_kind": "TEXT",
+        "target_id": "TEXT",
+        "source_type": "TEXT",
+        "source_id": "TEXT",
+        "proposed_change": "TEXT",
+        "target_area": "TEXT",
+        "rationale": "TEXT",
+        "metrics_json": "TEXT NOT NULL DEFAULT '{}'",
+        "rollout": "TEXT NOT NULL DEFAULT 'candidate'",
+        "metadata_json": "TEXT NOT NULL DEFAULT '{}'",
         "confidence": "REAL DEFAULT 0",
         "risk_score": "REAL DEFAULT 0",
         "evidence_json": "TEXT DEFAULT '{}'",
@@ -1164,7 +1176,9 @@ def _migrate_lightning(conn) -> None:
         "rollback_json": "TEXT DEFAULT '{}'",
         "expires_at": "TEXT",
         "idempotency_key": "TEXT",
-        "owner": "TEXT",
+        "reviewed_at": "TEXT",
+        "reviewed_by": "TEXT",
+        "updated_at": "TEXT NOT NULL DEFAULT ''",
     }.items():
         if name not in proposal_columns:
             conn.execute(f"ALTER TABLE improvement_proposals ADD COLUMN {name} {ddl}")

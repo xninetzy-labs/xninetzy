@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import ipaddress
+
 from mcp.server.fastmcp import FastMCP
 
 # Bootstrap host-safe paths before modules below can load get_settings().
@@ -12,6 +14,7 @@ from xninetzy.interfaces.mcp_tool_adapter import (
 )
 from xninetzy.db.migrations import run_migrations
 from xninetzy.db.sqlite import init_db
+from xninetzy.core.config import get_settings
 
 from xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_answer as _knowledge_answer,
@@ -53,6 +56,34 @@ _MCP_PRINCIPAL = mcp_principal()
 _MCP_CONTEXT = _MCP_PRINCIPAL.as_tool_context()
 
 
+_XNINETZY_SETTINGS = get_settings()
+_TRANSPORT = (_XNINETZY_SETTINGS.XNINETZY_MCP_TRANSPORT or "stdio").strip().lower()
+_HTTP_HOST = (_XNINETZY_SETTINGS.XNINETZY_MCP_HTTP_HOST or "127.0.0.1").strip()
+_HTTP_PORT = int(_XNINETZY_SETTINGS.XNINETZY_MCP_HTTP_PORT)
+_HTTP_PATH = (_XNINETZY_SETTINGS.XNINETZY_MCP_HTTP_PATH or "/mcp").strip()
+_HTTP_STATELESS = True
+_HTTP_JSON = True
+
+if _TRANSPORT not in {"stdio", "streamable-http"}:
+    raise ValueError(
+        f"XNINETZY_MCP_TRANSPORT must be stdio|streamable-http, got: {_TRANSPORT!r}"
+    )
+
+if _TRANSPORT == "streamable-http":
+    try:
+        bound = ipaddress.ip_address(_HTTP_HOST)
+    except ValueError as exc:
+        raise ValueError(f"XNINETZY_MCP_HTTP_HOST must be a valid IP, got: {_HTTP_HOST!r}") from exc
+    if not bound.is_loopback:
+        import sys
+        print(
+            "WARNING: XNINETZY_MCP_HTTP_HOST is non-loopback; "
+            "Streamable HTTP must carry real auth (OAuth 2.1 + Resource Indicators) "
+            "before exposing beyond localhost.",
+            file=sys.stderr,
+        )
+
+
 mcp = FastMCP(
     "xninetzy",
     instructions=(
@@ -64,6 +95,11 @@ mcp = FastMCP(
         "dipasang owner melalui skill_validate dan skill_install, "
         "tanpa menambah tool atau kode client. Semua path vault harus relatif terhadap vault."
     ),
+    stateless_http=_HTTP_STATELESS,
+    json_response=_HTTP_JSON,
+    host=_HTTP_HOST,
+    port=_HTTP_PORT,
+    streamable_http_path=_HTTP_PATH,
 )
 
 
@@ -256,7 +292,12 @@ EXPOSED_XNINETZY_TOOLS = expose_xninetzy_tools(mcp, principal=_MCP_PRINCIPAL)
 
 
 def main() -> None:
-    mcp.run(transport="stdio")
+    if _TRANSPORT == "streamable-http":
+        mcp.settings.host = _HTTP_HOST
+        mcp.settings.port = _HTTP_PORT
+        mcp.run(transport="streamable-http")
+    else:
+        mcp.run(transport="stdio")
 
 
 if __name__ == "__main__":

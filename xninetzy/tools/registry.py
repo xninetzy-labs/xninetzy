@@ -338,6 +338,7 @@ from xninetzy.os.lightning.tools import (
     lightning_strategy_rank,
 )
 from xninetzy.interfaces.external_mcp import EXTERNAL_MCP_TOOLS
+from xninetzy.interfaces.tasks_extension import TASKS_TOOLS
 from xninetzy.tools.ecosystem.repo_tools import (
     repo_architecture,
     repo_dependency,
@@ -439,6 +440,7 @@ def get_all_tools() -> list[BaseTool]:
             calculate_percentage,
             datetime_now,
             *EXTERNAL_MCP_TOOLS,
+            *TASKS_TOOLS,
             # Obsidian
             obsidian_search_health,
             obsidian_search,
@@ -939,6 +941,12 @@ def get_tool_groups() -> dict[str, list[str]]:
             "deep_research_list",
             "web_search",
             "youtube_search",
+        ],
+        "tasks": [
+            "tasks_submit",
+            "tasks_get",
+            "tasks_cancel",
+            "tasks_list",
         ],
         "career": [
             "career_search_jobs",

@@ -8,6 +8,7 @@ from pathlib import Path
 from zoneinfo import ZoneInfo
 
 from xninetzy.core.config import get_settings
+from xninetzy.core.logging import logging
 from xninetzy.db.sqlite import connect
 from xninetzy.os.notes.obsidian_config import vault_path
 from xninetzy.os.notes.markdown_service import MarkdownService
@@ -17,6 +18,8 @@ from xninetzy.os.notes.safety import (
     ensure_write_allowed,
     resolve_vault_path,
 )
+
+logger = logging.getLogger(__name__)
 
 
 class ObsidianVaultService:
@@ -66,8 +69,8 @@ class ObsidianVaultService:
                     }
                 )
             return indexed_matches
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning("obsidian fts search failed; falling back to in-memory: %s", exc)
         matches: list[dict] = []
         for item in files:
             path = item["path"]
@@ -194,7 +197,11 @@ class ObsidianVaultService:
         return todos
 
     def get_backlinks(self, note_path: str) -> list[dict]:
-        note = Path(note_path).with_suffix("").name
+        try:
+            resolved = resolve_vault_path(note_path)
+        except Exception:
+            return []
+        note = resolved.with_suffix("").name
         pattern = f"[[{note}"
         backlinks: list[dict] = []
         for item in self.list_files():

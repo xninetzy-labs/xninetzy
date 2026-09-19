@@ -80,7 +80,9 @@ def test_agent_tools_can_manage_safe_vault_operations(isolated_vault):
 
     saved = (isolated_vault / "Projects" / "Project.md").read_text(encoding="utf-8")
     assert "owner: Misbahul" in saved
-    assert "tags: [ai, learning]" in saved
+    assert "tags:" in saved
+    assert "- ai" in saved
+    assert "- learning" in saved
     assert "Active" in saved
 
 
@@ -220,3 +222,27 @@ def test_obsidian_save_note_falls_back_on_duplicate_with_timestamp(isolated_vaul
     second = obsidian_save_note.invoke({"title": "Dup", "content": "second", "folder": "Notes"})
     assert "Disimpan" in first
     assert "timestamp" in second
+
+
+def test_obsidian_read_blocks_dotbackup_path(isolated_vault):
+    (isolated_vault / "note.md").write_text("body", encoding="utf-8")
+    backup = isolated_vault / ".backup" / "2026-09-19" / "secret.md"
+    backup.parent.mkdir(parents=True, exist_ok=True)
+    backup.write_text("leaked", encoding="utf-8")
+    result = obsidian_read.invoke({"path": ".backup/2026-09-19/secret.md"})
+    assert "tidak aman" in result.lower() or "diblokir" in result.lower() or "Gagal" in result
+
+
+def test_obsidian_create_blocks_dotbackup_path(isolated_vault):
+    result = obsidian_create.invoke({
+        "path": ".backup/2026-09-19/malicious.md",
+        "content": "bad",
+    })
+    assert "diblokir" in result.lower() or "Gagal" in result
+
+
+def test_obsidian_read_allows_tilde_filenames(isolated_vault):
+    (isolated_vault / "~important.md").write_text("ok", encoding="utf-8")
+    result = obsidian_read.invoke({"path": "~important.md"})
+    assert "ok" in result
+    assert "tidak aman" not in result.lower()

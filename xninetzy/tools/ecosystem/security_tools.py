@@ -9,10 +9,14 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
+import ipaddress
+import socket
+
 import httpx
 from langchain_core.tools import tool
 
 from xninetzy.db.sqlite import connect, init_db
+from xninetzy.db.idempotency import idempotent_call as _idempotent_call
 
 
 DEFAULT_SCOPE_TTL_HOURS = 24
@@ -25,7 +29,21 @@ _SECURITY_HEADERS = (
     "permissions-policy",
     "x-xss-protection",
 )
-_PRIVATE_HOST_HINTS = {"localhost", "127.0.0.1", "::1", "0.0.0.0"}
+_PRIVATE_HOST_HINTS = {"localhost"}
+_BLOCKED_NETWORKS = [
+    ipaddress.ip_network("0.0.0.0/8"),
+    ipaddress.ip_network("10.0.0.0/8"),
+    ipaddress.ip_network("100.64.0.0/10"),
+    ipaddress.ip_network("127.0.0.0/8"),
+    ipaddress.ip_network("169.254.0.0/16"),
+    ipaddress.ip_network("172.16.0.0/12"),
+    ipaddress.ip_network("192.0.0.0/24"),
+    ipaddress.ip_network("192.168.0.0/16"),
+    ipaddress.ip_network("198.18.0.0/15"),
+    ipaddress.ip_network("::1/128"),
+    ipaddress.ip_network("fc00::/7"),
+    ipaddress.ip_network("fe80::/10"),
+]
 _REQUEST_TIMEOUT = 15.0
 
 
@@ -37,14 +55,45 @@ def _scope_seed(scope_token: str) -> str:
     return hashlib.sha256(f"xninetzy-scope:{scope_token}".encode()).hexdigest()[:16]
 
 
+def _host_is_private(host: str) -> bool:
+    lowered = host.lower().strip()
+    if not lowered:
+        return True
+    if lowered in _PRIVATE_HOST_HINTS:
+        return True
+    try:
+        addr = ipaddress.ip_address(lowered)
+    except ValueError:
+        return False
+    return any(addr in network for network in _BLOCKED_NETWORKS)
+
+
+def _private_ip_block_disabled() -> bool:
+    import os
+
+    return os.environ.get("XNINETZY_ALLOW_PRIVATE_TARGETS", "").strip().lower() in {
+        "1", "true", "yes", "on",
+    }
+
+
 def _normalize_target(target: str) -> tuple[str, str, int]:
     parsed = urlparse(target.strip())
-    if parsed.scheme.lower() not in ("http", "https") or not parsed.hostname:
-        raise ValueError(f"target tidak valid: {target}")
-    host = parsed.hostname.lower()
-    port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
-    canonical = f"{parsed.scheme.lower()}://{host}:{port}"
-    return canonical, host, port
+    if parsed.scheme.lower() in ("http", "https"):
+        if not parsed.hostname:
+            raise ValueError(f"target tidak valid: {target}")
+        host = parsed.hostname.lower()
+        if not _private_ip_block_disabled() and _host_is_private(host):
+            raise ValueError(f"target tidak diizinkan (host private): {host}")
+        port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+        canonical = f"{parsed.scheme.lower()}://{host}:{port}"
+        return canonical, host, port
+    if parsed.scheme.lower() == "file":
+        path = parsed.path or parsed.netloc
+        if path.startswith("//"):
+            path = path[1:]
+        canonical = f"file://{path}"
+        return canonical, path, 0
+    raise ValueError(f"target tidak valid (scheme harus http/https/file): {target}")
 
 
 def _ensure_db() -> None:
@@ -76,6 +125,7 @@ def security_scope(
         return json.dumps({"error": "rationale wajib diisi"}, ensure_ascii=False)
     bounded_ttl = max(1, min(ttl_hours, 720))
     bounded_targets = targets[:32]
+    targets_truncated = len(targets) > 32
 
     canonical_targets: list[str] = []
     for target in bounded_targets:
@@ -118,26 +168,55 @@ def security_scope(
             "rationale": rationale,
             "targets": canonical_targets,
             "target_count": len(canonical_targets),
+            "targets_truncated": targets_truncated,
+            "original_target_count": len(bounded_targets),
             "created_at": _now_iso(),
             "expires_at": expires.isoformat(),
             "ttl_hours": bounded_ttl,
         }
         return json.dumps(payload, ensure_ascii=False)
 
-    return idempotent_call(
+    return _idempotent_call(
         "security_scope", idempotency_key,
         {"targets": canonical_targets, "rationale": rationale, "ttl_hours": bounded_ttl},
         _do,
     )[0]
 
 
-def idempotent_call(*args, **kwargs):
-    from xninetzy.db.idempotency import idempotent_call as _ic
+def _ssrf_safe_event_hook(request: httpx.Request) -> None:
+    parsed = urlparse(str(request.url))
+    if parsed.scheme.lower() not in ("http", "https"):
+        raise httpx.HTTPError(f"redirect scheme not allowed: {parsed.scheme}")
+    host = parsed.hostname or ""
+    if _private_ip_block_disabled():
+        return
+    if _host_is_private(host):
+        raise httpx.HTTPError(f"redirect target blocked (literal private ip): {host}")
+    if host and not _looks_like_ip(host):
+        try:
+            infos = socket.getaddrinfo(host, None)
+        except (socket.gaierror, OSError) as exc:
+            raise httpx.HTTPError(f"redirect dns resolution failed: {exc}")
+        for info in infos:
+            try:
+                resolved = ipaddress.ip_address(info[4][0])
+            except (ValueError, IndexError):
+                continue
+            if any(resolved in network for network in _BLOCKED_NETWORKS):
+                raise httpx.HTTPError(f"redirect resolved to private ip: {resolved}")
 
-    return _ic(*args, **kwargs)
+
+def _looks_like_ip(host: str) -> bool:
+    try:
+        ipaddress.ip_address(host)
+        return True
+    except ValueError:
+        return False
 
 
-def _check_scope(scope_token: str) -> tuple[bool, dict[str, Any] | None, str]:
+def _check_scope(
+    scope_token: str, sender_id: str | None = None
+) -> tuple[bool, dict[str, Any] | None, str]:
     if not scope_token or not scope_token.startswith("sec-"):
         return False, None, "scope_token tidak valid"
     _ensure_db()
@@ -148,6 +227,13 @@ def _check_scope(scope_token: str) -> tuple[bool, dict[str, Any] | None, str]:
     if not row:
         return False, None, "scope_token tidak ditemukan"
     record = dict(row)
+    if sender_id:
+        owner = (record.get("owner") or "").strip().lower()
+        caller = (sender_id or "").strip().lower()
+        if owner and caller and owner != caller:
+            return False, record, "scope_token bukan milik caller"
+        if not owner and caller:
+            return False, record, "scope tanpa owner tidak bisa dipakai caller teridentifikasi"
     expires = record.get("expires_at")
     if expires:
         try:
@@ -183,7 +269,17 @@ def _matches_target(asset: str, target: str) -> bool:
     except ValueError:
         pass
     asset_lower = asset_norm.lower()
+    if canonical.startswith("file://"):
+        return asset_lower.startswith(canonical[len("file://"):])
     return asset_lower.endswith(canonical) or canonical.endswith(asset_lower)
+
+
+def _target_kind(canonical: str) -> str:
+    if canonical.startswith("file://"):
+        return "file"
+    if canonical.startswith(("http://", "https://")):
+        return "http"
+    return "unknown"
 
 
 @tool
@@ -201,7 +297,7 @@ def security_assets(
         limit: Maks aset (cap 500).
         sender_id: Owner principal.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
     if not _matches_scope(record, target):
@@ -216,7 +312,12 @@ def security_assets(
     seed_paths = ["/", "/robots.txt", "/sitemap.xml", "/.well-known/security.txt", "/favicon.ico"]
     assets: list[dict[str, Any]] = []
     try:
-        with httpx.Client(timeout=_REQUEST_TIMEOUT, follow_redirects=True, headers=headers) as client:
+        with httpx.Client(
+            timeout=_REQUEST_TIMEOUT,
+            follow_redirects=True,
+            headers=headers,
+            event_hooks={"request": [_ssrf_safe_event_hook]},
+        ) as client:
             for path in seed_paths:
                 try:
                     response = client.get(f"{canonical}{path}")
@@ -259,7 +360,7 @@ def security_headers(
         target: URL target.
         sender_id: Owner principal.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
     if not _matches_scope(record, target):
@@ -272,7 +373,12 @@ def security_headers(
 
     headers = {"User-Agent": "Xninetzy-SecurityHeaders/1.0"}
     try:
-        with httpx.Client(timeout=_REQUEST_TIMEOUT, follow_redirects=True, headers=headers) as client:
+        with httpx.Client(
+            timeout=_REQUEST_TIMEOUT,
+            follow_redirects=True,
+            headers=headers,
+            event_hooks={"request": [_ssrf_safe_event_hook]},
+        ) as client:
             response = client.get(canonical)
     except httpx.HTTPError as exc:
         return json.dumps({"error": f"connect failed: {exc}"}, ensure_ascii=False)
@@ -321,7 +427,7 @@ def security_api_inventory(
         target: URL target.
         sender_id: Owner principal.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
     if not _matches_scope(record, target):
@@ -345,7 +451,12 @@ def security_api_inventory(
     headers = {"User-Agent": "Xninetzy-SecurityApiInventory/1.0"}
     found: list[dict[str, Any]] = []
     try:
-        with httpx.Client(timeout=_REQUEST_TIMEOUT, follow_redirects=True, headers=headers) as client:
+        with httpx.Client(
+            timeout=_REQUEST_TIMEOUT,
+            follow_redirects=True,
+            headers=headers,
+            event_hooks={"request": [_ssrf_safe_event_hook]},
+        ) as client:
             for path in candidates:
                 try:
                     response = client.get(f"{canonical}{path}")
@@ -393,13 +504,28 @@ def security_sast(
         limit: Maks finding.
         sender_id: Owner principal.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
     targets = json.loads(record.get("targets_json") or "[]")
-    repo_root = str(_resolve_repo_root(root))
-    if not any(repo_root.startswith(t.split(":")[0]) for t in targets if t.startswith("file:")):
-        pass
+    file_targets = [
+        t[len("file://"):] if t.startswith("file://") else t[len("file:"):]
+        for t in targets if t.startswith("file:")
+    ]
+    file_targets = [p[1:] if p.startswith("//") else p for p in file_targets]
+    if not file_targets:
+        return json.dumps({
+            "error": "scope tidak berisi target file:; security_sast butuh file-scope",
+            "scope_token": scope_token,
+        }, ensure_ascii=False)
+    repo_root = str(_resolve_repo_root(root).resolve())
+    if not any(repo_root.startswith(t) or t.startswith(repo_root) for t in file_targets):
+        return json.dumps({
+            "error": "root di luar scope file target",
+            "scope_token": scope_token,
+            "repo_root": repo_root,
+            "allowed": file_targets,
+        }, ensure_ascii=False)
     from xninetzy.tools.ecosystem.repo_tools import repo_risk
     result = repo_risk.invoke({"root": root, "glob": glob, "limit": limit, "sender_id": sender_id})
     return json.dumps({
@@ -427,10 +553,29 @@ def security_dependencies(
         root: Path atau alias repo.
         sender_id: Owner principal.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
-    base = _resolve_repo_root(root)
+    targets = json.loads(record.get("targets_json") or "[]")
+    file_targets = [
+        t[len("file://"):] if t.startswith("file://") else t[len("file:"):]
+        for t in targets if t.startswith("file:")
+    ]
+    file_targets = [p[1:] if p.startswith("//") else p for p in file_targets]
+    if not file_targets:
+        return json.dumps({
+            "error": "scope tidak berisi target file:; security_dependencies butuh file-scope",
+            "scope_token": scope_token,
+        }, ensure_ascii=False)
+    base = _resolve_repo_root(root).resolve()
+    repo_root = str(base)
+    if not any(repo_root.startswith(t) or t.startswith(repo_root) for t in file_targets):
+        return json.dumps({
+            "error": "root di luar scope file target",
+            "scope_token": scope_token,
+            "repo_root": repo_root,
+            "allowed": file_targets,
+        }, ensure_ascii=False)
     deps: list[dict[str, Any]] = []
     pyproject = base / "pyproject.toml"
     if pyproject.exists():
@@ -488,7 +633,7 @@ def security_threat_model(
         threat_classes: Daftar kelas ancaman (opsional).
         sender_id: Owner principal.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
 
@@ -576,13 +721,17 @@ def security_validate_finding(
         sender_id: Owner principal.
         idempotency_key: Kunci opsional.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
     if not title.strip() or not asset.strip():
         return json.dumps({"error": "title dan asset wajib diisi"}, ensure_ascii=False)
     bounded_confidence = max(0.0, min(confidence, 1.0))
-    bounded_severity = severity if severity in {"high", "medium", "low"} else "medium"
+    if severity not in {"high", "medium", "low", "critical", "info"}:
+        return json.dumps({
+            "error": f"severity tidak valid: {severity!r}; expected one of critical|high|medium|low|info",
+        }, ensure_ascii=False)
+    bounded_severity = severity
     reproduction = "static-evidence"
     if allow_runtime_proof:
         reproduction = "runtime-proof"
@@ -620,7 +769,7 @@ def security_validate_finding(
         }
         return json.dumps(payload, ensure_ascii=False)
 
-    return idempotent_call(
+    return _idempotent_call(
         "security_validate_finding", idempotency_key,
         {"scope_token": scope_token, "title": title, "asset": asset},
         _do,
@@ -644,10 +793,14 @@ def security_regression(
         status: proposed|passing|failing.
         sender_id: Owner principal.
     """
-    ok, record, reason = _check_scope(scope_token)
+    ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
-    bounded_status = status if status in {"proposed", "passing", "failing"} else "proposed"
+    if status not in {"proposed", "passing", "failing"}:
+        return json.dumps({
+            "error": f"status tidak valid: {status!r}; expected one of proposed|passing|failing",
+        }, ensure_ascii=False)
+    bounded_status = status
     _ensure_db()
     with connect() as conn:
         cur = conn.execute(
@@ -706,11 +859,16 @@ def security_correlate(
         return json.dumps({"error": "scope_token wajib saat persist=True"}, ensure_ascii=False)
 
     groups: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+    skipped_invalid = 0
     for hit in hits[:256]:
+        if not isinstance(hit, dict):
+            skipped_invalid += 1
+            continue
         key = _correlate_key(hit)
         groups.setdefault(key, []).append(hit)
 
     severity_order = {"critical": 4, "high": 3, "medium": 2, "low": 1, "info": 0}
+    unknown_severity_rank = -1
     now = _now_iso()
     findings: list[dict[str, Any]] = []
     persist_failures: list[str] = []
@@ -730,7 +888,7 @@ def security_correlate(
                     persist_failures.append(f"asset out of scope: {asset}")
                     continue
                 severities = [str(h.get("severity", "medium")).lower() for h in group]
-                max_severity = max(severities, key=lambda s: severity_order.get(s, 1)) if severities else "medium"
+                max_severity = max(severities, key=lambda s: severity_order.get(s, unknown_severity_rank)) if severities else "medium"
                 confidences = [float(h.get("confidence", 0.5) or 0.0) for h in group]
                 avg_conf = sum(confidences) / max(len(confidences), 1)
                 scanners = sorted({str(h.get("scanner", "unknown")) for h in group})
@@ -802,10 +960,11 @@ def security_correlate(
                 "persisted": False,
             })
 
-    findings.sort(key=lambda item: severity_order.get(item["severity"], 1), reverse=True)
+    findings.sort(key=lambda item: severity_order.get(item["severity"], unknown_severity_rank), reverse=True)
     return json.dumps({
         "finding_count": len(findings),
         "findings": findings,
         "persist_failures": persist_failures,
+        "skipped_invalid_hits": skipped_invalid,
         "owner": sender_id,
     }, ensure_ascii=False)

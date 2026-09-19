@@ -1,35 +1,46 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: Shared Agent Skills
-description: An open skill catalog shared by LangGraph, MCP, Codex, Claude Code, and OpenCode.
+description: An open skill catalog shared by MCP, Codex, Claude Code, and OpenCode.
 section: AI & developer tools
 ---
 
-Xninetzy follows the Agent Skills `SKILL.md` contract. A skill is workflow
-guidance, not factual evidence. Facts must come from OS tools, validated portal
-data, evidence bundles, or grounded knowledge retrieval.
+Xninetzy follows the Agent Skills `SKILL.md` contract. A skill is
+workflow guidance, not factual evidence. Facts must come from OS tools,
+validated portal data, evidence bundles, or grounded knowledge
+retrieval.
 
 ```text
-LangGraph / WhatsApp / MCP / Codex / Claude Code / OpenCode
-                         ↓
-              services/ai/.agents/skills
+MCP / Codex / Claude Code / OpenCode
+              ↓
+   .agents/skills/   (repo + runtime data dir)
 ```
 
 ## Built-in Xninetzy skills
+
+The catalog at `.agents/skills/` holds 68 skill bodies, including:
 
 - `xninetzy-os`: OS principles and boundaries;
 - `it-learning`: roadmaps, concepts, sessions, mastery, and recall;
 - `research`: research plans, sources, and citations;
 - `obsidian-knowledge`: vault workflow and knowledge grounding;
 - `graph-rag`: nodes, edges, prerequisites, and topic maps;
-- `hebat-academic`: courses, materials, deadlines, and submission policy;
-- `cyber-campus`: read-only portal access, tokens, CAPTCHA, and KRS safety;
-- `life-management`: goals, tasks, habits, money, workouts, and reviews.
+- `hebat-academic`, `xninetzy-hebat`, `xninetzy-assignment-orchestrator`:
+  courses, materials, deadlines, and submission policy;
+- `cyber-campus`, `xninetzy-cyber-campus`, `xninetzy-krs`,
+  `xninetzy-uacc`: portal access, tokens, CAPTCHA, and KRS safety;
+- `life-management`: goals, tasks, habits, money, workouts, and reviews;
+- 19 career skills (`job_search`, `resume_tailoring`, `interview_prep`,
+  `salary_analysis`, `cv_analysis`, etc.) under
+  `.agents/skills/career/`;
+- additional skills for graph, observability, security, memory, MCP
+  development, debugging, code review, evidence grading, regression
+  analysis, and self-improvement.
 
 ## Additional open-source skills
 
-These skills come from the open `openai/skills` catalog and pass the Xninetzy
-validator:
+These skills come from the open `openai/skills` catalog and pass the
+Xninetzy validator:
 
 | Skill | Purpose |
 |---|---|
@@ -46,27 +57,29 @@ validator:
 | `cli-creator` | Consistent developer CLI design |
 | `gh-fix-ci` | GitHub Actions failure analysis |
 
-Open-source skills retain their upstream LICENSE and NOTICE files. Installing a
-skill does not add a new domain tool or override a built-in Xninetzy skill.
+Open-source skills retain their upstream LICENSE and NOTICE files.
+Installing a skill does not add a new domain tool or override a built-in
+Xninetzy skill.
 
 ## Discovery and use
 
 The runtime scans the catalog on demand:
 
 ```text
-/skills
-/skills-health
-/skill research
+skill_list
+skill_healthcheck
+skill_suggest_for_request
 ```
 
 For a natural request, call `skill_suggest_for_request`, then load
 `skill_get` only when the procedure is relevant. Load additional files
-progressively with `skill_resource_list` and `skill_resource_read`; never
-inject the entire catalog into context.
+progressively with `skill_resource_list` and `skill_resource_read`;
+never inject the entire catalog into context.
 
-`skill_healthcheck` reports validity, provenance, resource count, line count,
-and quality warnings. Built-ins are `trusted-builtin`; owner installs are
-`owner-installed`. User skills are not injected automatically. Enable
+`skill_healthcheck` reports validity, provenance, resource count, line
+count, and quality warnings. Built-ins are `trusted-builtin`;
+owner-installed skills are `owner-installed`. User skills are not
+injected automatically. Enable
 `XNINETZY_SKILL_AUTO_INJECT_USER=true` only after an audit.
 
 The lifecycle is:
@@ -75,11 +88,13 @@ The lifecycle is:
 trigger metadata → inspect state → choose tool → plan → act → verify → adapt
 ```
 
-Skill text cannot become evidence, reduce action policy, or bypass approval.
+Skill text cannot become evidence, reduce action policy, or bypass
+approval.
 
 ## Install a shared skill
 
-All interfaces use one installation. Do not create a separate client registry.
+All interfaces use one installation. Do not create a separate client
+registry.
 
 From an MCP client:
 
@@ -104,8 +119,8 @@ skill_healthcheck
 
 `skill_install` accepts a `SKILL.md` body plus an optional `resources`
 mapping under `references/`, `scripts/`, `assets/`, or `agents/`.
-Resources are size-limited, hash-verified, written atomically, and rejected for
-path traversal or symlinks.
+Resources are size-limited, hash-verified, written atomically, and
+rejected for path traversal or symlinks.
 
 Installation rules:
 
@@ -115,10 +130,10 @@ Installation rules:
 - credentials are forbidden;
 - skills cannot lower action policy;
 - factual claims still require evidence;
-- a valid skill is immediately available to LangGraph and MCP clients.
+- a valid skill is immediately available to every MCP client.
 
-Custom skills live under `XNINETZY_SKILLS_DIR` or the runtime data catalog.
-Repository built-ins remain in `services/ai/.agents/skills`.
+Custom skills live under `XNINETZY_SKILLS_DIR` or the runtime data
+catalog. Repository built-ins remain in `.agents/skills/`.
 
 A productive sequence is to use `define-goal` for the outcome,
 `it-learning` for the roadmap, `jupyter-notebook` for experiments,
@@ -126,4 +141,4 @@ A productive sequence is to use `define-goal` for the outcome,
 `security-threat-model` before exposing a connector or browser action.
 
 The detailed design audit is available in
-[Skill Agentic Best Practices](https://github.com/misbahul45/xninetzy/blob/main/docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md).
+[`docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md`](https://github.com/misbahul45/xninetzy/blob/main/docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md).

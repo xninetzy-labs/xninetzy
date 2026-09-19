@@ -28,7 +28,32 @@ def _backfill_legacy_owner_columns(conn) -> None:
     ).fetchall()
     table_names = {row["name"] for row in rows}
     backfills: dict[str, list[tuple[str, str]]] = {
-        "improvement_proposals": [("owner", "TEXT")],
+        "improvement_proposals": [
+            ("owner", "TEXT"),
+            ("scope", "TEXT"),
+            ("target_kind", "TEXT"),
+            ("target_id", "TEXT"),
+            ("source_type", "TEXT"),
+            ("source_id", "TEXT"),
+            ("proposed_change", "TEXT"),
+            ("target_area", "TEXT"),
+            ("rationale", "TEXT"),
+            ("metrics_json", "TEXT NOT NULL DEFAULT '{}'"),
+            ("rollout", "TEXT NOT NULL DEFAULT 'candidate'"),
+            ("metadata_json", "TEXT NOT NULL DEFAULT '{}'"),
+            ("confidence", "REAL DEFAULT 0"),
+            ("risk_score", "REAL DEFAULT 0"),
+            ("evidence_json", "TEXT DEFAULT '{}'"),
+            ("baseline_metrics_json", "TEXT DEFAULT '{}'"),
+            ("candidate_metrics_json", "TEXT DEFAULT '{}'"),
+            ("rollout_state", "TEXT DEFAULT 'pending'"),
+            ("rollback_json", "TEXT DEFAULT '{}'"),
+            ("expires_at", "TEXT"),
+            ("idempotency_key", "TEXT"),
+            ("reviewed_at", "TEXT"),
+            ("reviewed_by", "TEXT"),
+            ("updated_at", "TEXT NOT NULL DEFAULT ''"),
+        ],
     }
     for table, columns in backfills.items():
         if table not in table_names:

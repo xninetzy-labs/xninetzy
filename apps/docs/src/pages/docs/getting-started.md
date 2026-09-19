@@ -1,219 +1,152 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: Quick start
-description: Install Xninetzy on Linux, macOS, or Windows and reach the first WhatsApp conversation.
+description: Install Xninetzy on Linux, macOS, or Windows and connect an MCP host.
 section: Start
 ---
 
-The Docker path runs the AI service and WhatsApp engine on one Compose bridge
-network. Ports are published only to host loopback, so the same configuration
-works on Linux, macOS, Windows, and WSL2.
+Xninetzy runs as a single Python process. There is no Docker Compose
+required for the default `local` mode — the MCP server runs over stdio and
+hosts (Claude / Claude Code / Codex / OpenCode) launch the binary.
+
+For self-hosted mode with optional heavier backends (Neo4j, FalkorDB),
+see [Architecture](/docs/architecture/).
 
 ## Prerequisites
 
-- Linux: Docker Engine and the Docker Compose plugin.
-- macOS: Docker Desktop.
-- Windows 10 or 11: Docker Desktop with the WSL2 backend, or PowerShell 7.
-- Git. The Unix installer also requires OpenSSL.
-- A Flaz API key or credentials for another supported LLM provider.
-- An absolute path to an Obsidian vault.
-- A WhatsApp account that can link a new device.
+- Python 3.11 or later.
+- `uv` (recommended) or `pip`.
+- Git.
+- A Flaz API key or credentials for another supported LLM provider (see
+  [Providers](/docs/providers/)).
+- An absolute path to an Obsidian vault (optional).
 
-For host development, also install Python 3.11+, `uv`, Node.js 22.12+, Yarn
-1.22, Playwright Chromium, and Tesseract for OCR.
-
-## One-command installation
-
-Linux, macOS, or WSL2:
+Verify prerequisites:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.sh | bash
+python --version
+command -v uv
+git --version
 ```
 
-Windows PowerShell:
-
-```powershell
-irm https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install.ps1 | iex
-```
-
-The installer clones the repository or uses the active checkout, creates
-`.env`, asks for the vault path, WhatsApp administrator number, and Flaz API
-key, generates independent internal keys, validates Compose, builds the images,
-and starts the services. Secret input is not echoed or printed. Follow the
-WhatsApp engine logs to scan the QR code.
-
-Audit any remote install script before using a pipe-to-shell command. The manual
-path below produces the same result.
-
-## Platform support
-
-| Platform | Runtime | Automatic startup |
-|---|---|---|
-| Linux | Docker Engine and Compose | Enable Docker through systemd |
-| macOS | Docker Desktop | Enable “Start Docker Desktop when you sign in” |
-| Windows | Docker Desktop and WSL2 | Enable “Start Docker Desktop when you sign in” |
-| WSL2 | Docker Desktop integration | Follows Windows Docker Desktop startup |
-
-Use an absolute native-platform vault path. Do not use a network path that has
-not been shared with Docker Desktop.
-
-## 1. Prepare the environment manually
-
-From the repository root:
+## Install
 
 ```bash
+git clone <repo>
+cd xninetzy
+uv sync
 cp .env.example .env
 chmod 600 .env
 ```
 
-Never place a real password, token, cookie, or API key in `.env.example`.
-
-## 2. Add the Flaz API key safely
-
-```bash
-cd services/ai
-uv run python scripts/configure_flaz.py
-cd ../..
-```
-
-The script uses `getpass`, writes `.env` atomically, preserves mode `600`,
-and never echoes the key.
-
-Default provider settings:
+Edit `.env` and set at minimum:
 
 ```dotenv
-LLM_DEFAULT_PROVIDER=flaz
-LLM_ENABLED_PROVIDERS=flaz
-FLAZ_BASE_URL=https://ai.flaz.id/v1
-FLAZ_MODEL=deepseek-v4-pro
+FLAZ_API_KEY=your-key-here
+OBSIDIAN_VAULT_HOST_PATH=/absolute/path/to/your/vault
 ```
 
-Generate internal service authentication without printing secrets:
+## Initialize
 
 ```bash
-cd services/ai
-uv run python scripts/configure_internal_auth.py
-cd ../..
+uv run python -m xninetzy.cli.supervisor init
 ```
 
-## 3. Connect host data
+This:
 
-Find the host user identity:
+- checks Python version, `uv`, `docker` (optional), `tesseract` (optional)
+- creates `~/.local/share/xninetzy`, `~/Documents/xninetzy/output`,
+  `~/Documents/xninetzy-vault`
+- prints next-step instructions
+
+## Start the MCP server
 
 ```bash
-id -u
-id -g
+uv run python -m xninetzy.cli.supervisor start
 ```
 
-Set these values in `.env`:
-
-```dotenv
-HOST_UID=1000
-HOST_GID=1000
-OBSIDIAN_VAULT_HOST_PATH=/absolute/path/to/obsidian-vault
-ADMIN_JID=628xxxxxxxxxx@s.whatsapp.net
-ADMIN_NAMES=your_name
-APP_TIMEZONE=Asia/Jakarta
-WA_STARTUP_MENU_ENABLED=true
-WA_STARTUP_MENU_DELAY_MS=1500
-```
-
-`OBSIDIAN_VAULT_HOST_PATH` must be absolute. Compose rejects an empty value.
-
-## 4. Choose WhatsApp login
-
-QR mode:
-
-```dotenv
-WA_LOGIN_MODE=qr
-```
-
-Pairing-code mode:
-
-```dotenv
-WA_LOGIN_MODE=pairing_code
-WA_PHONE_NUMBER=628xxxxxxxxxx
-```
-
-Use the country code without `+`, spaces, or punctuation.
-
-## 5. Start services
+The server listens on stdio by default. For Streamable HTTP:
 
 ```bash
-docker compose config -q
-docker compose up --build -d ai wa-enggine
-docker compose ps
-docker compose logs -f wa-enggine
+XNINETZY_MCP_TRANSPORT=streamable-http \
+XNINETZY_MCP_HTTP_HOST=127.0.0.1 \
+XNINETZY_MCP_HTTP_PORT=8765 \
+uv run python -m xninetzy.cli.supervisor start
 ```
 
-Complete QR or pairing through **WhatsApp → Linked devices**.
+then connect to `http://127.0.0.1:8765/mcp`.
 
-After the first `open` connection, the administrator receives five menu cards
-with 15 command buttons. The menu is sent once per process launch, not after
-every reconnect. A text fallback is sent when interactive buttons are not
-supported.
+## Connect an MCP host
 
-## Automatic startup after boot or login
-
-On Linux with systemd:
+### Claude Code
 
 ```bash
-sudo systemctl enable --now docker
-systemctl is-enabled docker
-systemctl is-active docker
+claude mcp add --scope user xninetzy \
+  -e PYTHONUNBUFFERED=1 -- \
+  /home/you/.local/bin/uv run \
+  --directory /home/you/code/xninetzy \
+  python -m xninetzy.interfaces.mcp_server
 ```
 
-Compose uses `restart: unless-stopped` for the AI and WhatsApp services. Once
-created, the containers return with Docker after reboot. Avoid
-`docker compose down` when containers must remain registered for automatic
-startup.
-
-On macOS and Windows, enable Docker Desktop startup under Settings → General.
-On WSL2, verify distribution integration. Docker Desktop restores the
-containers with the same restart policy.
-
-## 6. Verify health
+### Codex CLI
 
 ```bash
-curl -s http://127.0.0.1:8000/health
-curl -s http://127.0.0.1:8081/health
+codex mcp add xninetzy -- \
+  /home/you/.local/bin/uv run \
+  --directory /home/you/code/xninetzy \
+  python -m xninetzy.interfaces.mcp_server
 ```
 
-The AI service should return:
+### OpenCode
+
+Edit `~/.config/opencode/opencode.jsonc`:
 
 ```json
-{"status":"ok","service":"xninetzy-ai"}
+{
+  "$schema": "https://opencode.ai/config.json",
+  "mcp": {
+    "xninetzy": {
+      "type": "local",
+      "command": [
+        "/home/you/.local/bin/uv",
+        "run",
+        "--directory",
+        "/home/you/code/xninetzy",
+        "python",
+        "-m",
+        "xninetzy.interfaces.mcp_server"
+      ],
+      "enabled": true,
+      "timeout": 120000
+    }
+  }
+}
 ```
 
-WhatsApp health reports socket and connection state.
-
-## 7. Try WhatsApp
-
-```text
-/helper
-create a 14-day machine-learning roadmap
-remind me tomorrow at 08:00 to review my assignment
-save this conversation summary to Obsidian
-```
-
-## Host development
-
-AI service:
+## Verify
 
 ```bash
-cd services/ai
-uv sync
-uv run playwright install chromium
-uv run uvicorn app.main:app --host 127.0.0.1 --port 8000 --reload
+uv run python -m xninetzy.cli.supervisor release-check
 ```
 
-WhatsApp engine in a second terminal:
+Expected output:
 
-```bash
-cd services/wa-enggine
-yarn install --frozen-lockfile
-yarn dev
+```
+  [PASS   ] tool_registry            343 tools classified
+  [PASS   ] secret_redaction         3/3 sample secrets redacted
+  [PASS   ] safe_fetch               3/3 SSRF guard scenarios blocked
+  [PASS   ] transport_config         transport=stdio host=127.0.0.1
+  [PASS   ] sdk_pin                  mcp resolved=1.28.1
+overall: PASS
 ```
 
-Never run Docker and host instances on the same ports or WhatsApp account at the
-same time.
+If `tool_registry` reports fewer than 343 tools, an import failed. Check
+the install log for missing optional dependencies.
+
+## Next steps
+
+- [Configuration](/docs/configuration/) — every env var explained
+- [Providers](/docs/providers/) — switch LLM providers
+- [Obsidian](/docs/obsidian/) — connect your vault
+- [Global MCP](/docs/mcp/) — full MCP host connection guide
+- [Security](/docs/security/) — review safety boundaries

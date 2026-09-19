@@ -1,130 +1,100 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: System architecture
-description: Service boundaries, request flow, tool registry, persistence, and the two MCP transports.
+description: Service boundaries, request flow, tool registry, persistence, and the MCP transports.
 section: Start
 ---
 
-Xninetzy is a monorepo with two primary runtime services, one terminal client,
-and one documentation application.
+Xninetzy is an MCP-only monorepo. There is one runtime surface — the MCP
+server — and one documentation application.
 
 ## Service boundaries
 
 ```text
-WhatsApp user
+MCP host (Claude / Claude Code / Cursor / Codex / OpenCode)
+  ↓ stdio OR Streamable HTTP (loopback)
+Xninetzy MCP server / FastMCP :8765 (Streamable) or stdio
   ↓
-WhatsApp engine / Baileys :8081
-  ↓ POST /api/chat
-AI service / FastAPI :8000
+Application core (xninetzy/)
   ↓
-LangGraph → direct | clarify | agent | workflow
+Canonical tool registry → 343 tools across 29 groups
   ↓
-Tool registry → OS kernel | Obsidian | HEBAT | SQLite | FAISS | WhatsApp
+Domain modules (knowledge | research | career | learning | security |
+                os_kernel | lightning | harness | improvement | ...)
+  ↓
+Shared engine: router + planner + source registry + cache + dedup +
+                entity-resolution + evidence + citation + security
 ```
 
-### AI service
+There is no server-side agent loop. Clients do their own reasoning. The MCP
+server exposes capabilities; it does not decide what to do next.
 
-`services/ai` owns routing, prompts, the provider registry, the stdio MCP
-server, domain tools, persistence, knowledge, research, media extraction, HEBAT,
-Obsidian, and approvals.
+### Application core
 
-### WhatsApp engine
+`xninetzy/` owns routing, prompts, the provider registry, the canonical tool
+registry, persistence, knowledge retrieval, research, career intelligence,
+HEBAT, Obsidian, approvals, Lightning, and the security guards.
 
-`services/wa-enggine` is the only process that owns the Baileys socket.
-Message delivery, media, contacts, groups, pins, and labels remain in this
-service.
+### MCP server
 
-### Terminal CLI
+`xninetzy/interfaces/mcp_server.py` constructs a `FastMCP("xninetzy",
+...)` with `stateless_http=True`, `json_response=True`, and tools registered
+from `xninetzy/tools/registry.py`. Tools are exposed at runtime via
+`mcp.tool()` decorators — no separate MCP-server code per tool.
 
-`apps/cli` calls the same chat API so providers, memory, routing, and tools are
-not duplicated.
-
-## CLI streaming and activity
-
-The CLI uses SSE at `/api/chat/stream` with one request ID per message. Each
-turn owns one request, `AbortController`, stream reader, and Thinking timer.
-Answer deltas are buffered before rendering. While streaming, the active answer
-uses a bounded visual preview; after completion, the complete answer moves into
-Ink's append-only `Static` transcript. Spinner and timer updates therefore do
-not redraw conversation history.
-
-The **AI Thinking** panel sits directly above the composer and shows elapsed
-time plus safe summaries of routing, workflows, ReAct execution, tools, and
-research. Events must never expose hidden chain of thought, credentials, raw
-prompts, tool arguments, or untrusted tool output. Use `Ctrl+T` to expand safe
-activity and `Escape` to cancel an active request.
-
-Ink performs React reconciliation against terminal output. The stable renderer
-keeps header, completed messages, and input identities unchanged; limits the
-100 ms spinner and 200 ms timer updates to their labels; buffers streaming for
-50 ms; bounds active output using terminal width; and displays only the latest
-four detailed activities. Old request events are rejected by request ID.
-
-Run phases are `queued`, `planning`, `thinking`, `tool-running`,
-`waiting-approval`, `streaming`, and one terminal state. Illegal transitions
-are ignored. SSE heartbeats keep long requests active without disclosing
-internal reasoning.
-
-### CLI and workflow timeouts
-
-| Variable | Default | Boundary |
-|---|---:|---|
-| `XNINETZY_THINK_TIMEOUT_SECONDS` | 120 | Time to first token for normal chat |
-| `XNINETZY_INACTIVITY_TIMEOUT_SECONDS` | 60 | Time without an SSE event or heartbeat |
-| `XNINETZY_TOOL_TIMEOUT_SECONDS` | 180 | Direct registry tool |
-| `XNINETZY_MCP_CONNECT_TIMEOUT_SECONDS` | 20 | External MCP connection and catalog |
-| `XNINETZY_MCP_CALL_TIMEOUT_SECONDS` | 180 | One external MCP call |
-| `XNINETZY_DEEP_RESEARCH_TIMEOUT_SECONDS` | 900 | Complete deep-research workflow |
-| `XNINETZY_STREAM_TIMEOUT_SECONDS` | 300 | Complete normal chat stream |
-| `XNINETZY_SLOW_REQUEST_WARNING_SECONDS` | 45 | Slow-request warning threshold |
-
-Timeout and cancellation stop the reader and timers, preserve received partial
-output, and reject late events.
+There is exactly one MCP server in v2.2.0. No WhatsApp tool server, no
+LangGraph runtime, no CLI client.
 
 ## Three request paths
 
-1. **Slash commands** use the deterministic command router.
-2. **Multi-action requests** become workflows with inspectable state.
-3. **Natural messages** are routed by LangGraph to direct, clarify, or ReAct execution.
+1. **Direct tool invocation** — host calls a single tool, returns result.
+2. **Multi-step plans** — host uses the CLI orchestrator (`xninetzy
+   cli/orchestrator.py`) to execute a YAML plan with per-step tier gates.
+3. **Sequential workflows** — host composes tools via its own reasoning;
+   Xninetzy provides capability, not orchestration.
 
 ## The tool registry is the source of truth
 
-`services/ai/app/xninetzy/tools/registry.py` collects all tools. The MCP adapter
-reads this catalog dynamically, so a registered tool does not need a separate
-client-specific wrapper.
+`xninetzy/tools/registry.py` collects all tools. The MCP server reads
+this catalog dynamically, so a registered tool does not need a separate
+client-specific wrapper. Per-tool metadata (risk class, idempotency,
+feature pack, stability) comes from `xninetzy/tools/manifest.py::manifest_for`.
 
-The adapter normalizes names and descriptions, builds JSON Schema, injects
-trusted context, converts return values to MCP content, and contains exceptions
-so they cannot corrupt the protocol stream.
+| Field | Source | Example |
+|---|---|---|
+| `risk` | `RiskClass.READ/DRAFT/WRITE/FINAL` | `FINAL` for `improvement_approve` |
+| `requires_approval` | derived from `risk == FINAL` | True for FINAL |
+| `requires_idempotency` | `risk in (WRITE, FINAL)` | True for state-changing tools |
+| `feature_pack` | `CORE / ACADEMIC_UNAIR / RESEARCH / CODING` | derived from tool name |
+| `stability` | `STABLE / EXPERIMENTAL` | `STABLE` |
 
-## Two tool servers
+## Transports
 
-| Server | Transport | Owner | Content |
+| Transport | Default | Binding | Notes |
 |---|---|---|---|
-| Xninetzy MCP | stdio | AI service | Complete Personal OS registry |
-| WhatsApp tool server | HTTP MCP-style | WhatsApp engine | Actions that require the WhatsApp socket |
-
-Codex, Claude Code, and OpenCode launch the stdio server. A registry tool that
-must send a WhatsApp message calls the engine through `/mcp/call` with an
-internal bearer token.
+| stdio | YES | (OS process boundary) | Always on; clients launch the binary |
+| Streamable HTTP | opt-in via `XNINETZY_MCP_TRANSPORT=streamable-http` | `127.0.0.1` default; warns if non-loopback | stateless + json_response; OAuth 2.1 required for non-loopback |
+| Legacy HTTP+SSE | N/A | N/A | deprecated in 2026-07-28 spec; not shipped |
 
 ## Persistence
 
-| Data | Host | Container |
-|---|---|---|
-| SQLite, FAISS, HEBAT | `services/ai/data` | `/app/data` |
-| Obsidian | owner-selected path | `/app/obsidian-vault` |
-| WhatsApp media | `wa-media` volume | `/app/data/wa-media` |
-| WhatsApp session | `wa-session` volume | `/app/sessions` |
+| Data | Default path |
+|---|---|
+| SQLite | per-`SQLITE_PATH` env var |
+| FAISS | per-`VECTOR_DATA_DIR` env var |
+| Obsidian vault | per-`OBSIDIAN_VAULT_HOST_PATH` env var (host) / `OBSIDIAN_VAULT_PATH` (container) |
+| MCP tasks | `long_tasks` table in the same SQLite |
+| Lightning episodes | `lightning_*` tables in the same SQLite |
+| Approval ledger | `approval_requests` + `file_operations` tables |
 
-SQLite stores structured state, FAISS stores the embedding projection, and the
-Markdown vault remains human-readable.
+There is no forced external database. Optional backends (Neo4j,
+sentence-transformers, Ollama) are opt-in via env vars.
 
 ## Single-owner state and the closed loop
 
 Goals, tasks, roadmaps, habits, workouts, HEBAT state, knowledge, and events
-belong to the installation rather than a transport. `chat_id` records origin,
-delivery, and conversation memory without splitting owner entities.
+belong to the installation rather than a transport. `chat_id` records origin
+without splitting owner entities.
 
 ```text
 HEBAT assignment ─represented_by→ shared task ─reminded_by→ reminder
@@ -136,40 +106,21 @@ roadmap item     ─represented_by→ shared task
 ```
 
 Events are persisted before reducers consume them transactionally and write
-consumption markers. Unconsumed events are replayed at AI startup. Task
-completion emits an event only when state actually changes.
-
-Scheduled jobs share one run table. Daily and weekly keys prevent duplicate
-briefings, leases recover interrupted internal jobs, and weekly reviews use real
-events. See [Automation](/docs/automation/).
-
-## OS Inbox and attention kernel
-
-```text
-important input
-  → os_capture
-  → os_inbox_items
-  → os_triage ──→ shared task ──→ event/reducer
-              └─→ archive
-
-tasks + learning state + inbox
-  → deterministic scoring
-  → os_today / Personal Context / morning briefing
-```
-
-OS Inbox separates capture from commitment. Promotion writes the task, entity
-link, state transition, and event in one transaction. Reusing an idempotency key
-never creates a second row or event. See [OS kernel](/docs/os-kernel/).
+consumption markers. Unconsumed events are replayed at startup.
 
 ## Security boundaries
 
-- Administrators are identified by explicit JIDs.
-- The chat API requires a bearer key; WhatsApp owner checks apply in single-owner mode.
-- Risky tools require approval or confirmation.
-- Obsidian restricts paths to the vault and safe extensions.
-- Coding agents use an allowed root, timeout, environment allowlist, and audit log.
-- HEBAT final submission is not automatic under the safe default.
-- WhatsApp HTTP tools use a shared API key when configured.
+- Tools have explicit `RiskClass` (READ/DRAFT/WRITE/FINAL).
+- `FINAL`-class tools require HITL approval server-side.
+- Streamable HTTP non-loopback requires OAuth 2.1 + Resource Indicators
+  (RFC 8707) + Client ID Metadata Documents (CIMD); never a custom scheme.
+- External MCP servers are untrusted by default; `allowed_tools` allowlist.
+- Obsidian restricts paths to the vault + safe extensions; `.backup` is
+  blocked at the safety layer.
+- `safe_fetch` (SSRF guard) rejects non-http(s) schemes and private hosts.
+- `redact_secrets` strips known secret patterns from any logged text.
+
+Full mapping to NSA CSI U/OO/6030316-26 in `/SECURITY.md` at repo root.
 
 ## Add a feature
 
@@ -177,5 +128,5 @@ never creates a second row or event. See [OS kernel](/docs/os-kernel/).
 2. implement a service or tool without transport coupling;
 3. register the tool in the canonical registry;
 4. add domain tests;
-5. add MCP schema or invocation tests when the signature changes;
+5. add MCP protocol tests if the signature changes;
 6. update documentation and command examples.

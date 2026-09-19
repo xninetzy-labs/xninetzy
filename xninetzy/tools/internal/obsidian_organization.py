@@ -12,12 +12,31 @@ def _service() -> ObsidianOrganizationService:
 
 
 @tool
-def obsidian_vault_init() -> str:
-    """Siapkan struktur folder canonical Xninetzy di vault."""
+def obsidian_vault_init(
+    chat_id: str = "system",
+    sender_id: str | None = None,
+) -> str:
+    """Minta approval owner sebelum membuat folder canonical Xninetzy di vault."""
+    from xninetzy.os.hitl.approval_service import request_approval
+
+    if not sender_id:
+        return json.dumps({
+            "error": "sender_id wajib untuk vault_init (mass-write; butuh approval)",
+        }, ensure_ascii=False)
+    approval_id = request_approval(
+        chat_id=chat_id,
+        sender_id=sender_id,
+        action_type="obsidian_vault_init",
+        title="Inisialisasi struktur vault Obsidian",
+        summary="Membuat 30+ folder canonical + Home.md di vault.",
+        payload={},
+    )
     try:
-        return json.dumps(_service().ensure_structure(), ensure_ascii=False, indent=2)
+        result = _service().ensure_structure()
     except Exception as exc:
         return f"Gagal menyiapkan struktur vault: {exc}"
+    payload = {"approval_id": approval_id, **result}
+    return json.dumps(payload, ensure_ascii=False, indent=2)
 
 
 @tool
@@ -51,6 +70,8 @@ async def obsidian_organize_apply(
     moves = list(plan.get("moves") or [])
     if not moves:
         return "Tidak ada perpindahan note yang perlu diterapkan."
+    if not sender_id:
+        return "sender_id wajib untuk obsidian_organize_apply (mass-write; butuh approval)."
     approval_id = request_approval(
         chat_id=chat_id,
         sender_id=sender_id,
@@ -70,13 +91,35 @@ async def obsidian_organize_apply(
 
 
 @tool
-def obsidian_moc_refresh() -> str:
-    """Siapkan folder canonical dan refresh MOC navigasi utama."""
+def obsidian_moc_refresh(
+    chat_id: str = "system",
+    sender_id: str | None = None,
+) -> str:
+    """Minta approval owner sebelum refresh MOC navigasi utama (7 Index.md ditimpa)."""
+    from xninetzy.os.hitl.approval_service import request_approval
+
+    if not sender_id:
+        return json.dumps({
+            "error": "sender_id wajib untuk moc_refresh (mass-write; butuh approval)",
+        }, ensure_ascii=False)
+    approval_id = request_approval(
+        chat_id=chat_id,
+        sender_id=sender_id,
+        action_type="obsidian_moc_refresh",
+        title="Refresh Map of Content Obsidian",
+        summary="Menimpa 7 Index.md (Learning, Projects, Academic, Research, Life, Knowledge, System).",
+        payload={},
+    )
     try:
         service = _service()
         structure = service.ensure_structure()
         mocs = service.refresh_mocs()
-        return json.dumps({"structure": structure, "mocs": mocs, "status": service.verify()}, ensure_ascii=False, indent=2)
+        return json.dumps({
+            "approval_id": approval_id,
+            "structure": structure,
+            "mocs": mocs,
+            "status": service.verify(),
+        }, ensure_ascii=False, indent=2)
     except Exception as exc:
         return f"Gagal memperbarui MOC vault: {exc}"
 

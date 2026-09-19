@@ -159,8 +159,17 @@ class ObsidianOrganizationService:
             title = self.markdown.parse_frontmatter(current).get("title") or self._title(source_path, current)
             metadata = {"canonical_path": target, "updated": self._now()}
             migrated = self.markdown.upsert_frontmatter(current, metadata)
-            source_path.write_text(migrated, encoding="utf-8")
-            shutil.move(str(source_path), str(target_path))
+            target_path.parent.mkdir(parents=True, exist_ok=True)
+            try:
+                target_path.write_text(migrated, encoding="utf-8")
+            except OSError as exc:
+                skipped.append({"source": source, "target": target, "reason": f"write_failed: {exc}"})
+                continue
+            try:
+                source_path.unlink()
+            except OSError as exc:
+                skipped.append({"source": source, "target": target, "reason": f"unlink_failed: {exc}"})
+                continue
             applied.append({"source": source, "target": target, "backup": backup, "title": title})
         links_updated = self._update_links(applied)
         return {
@@ -234,23 +243,53 @@ class ObsidianOrganizationService:
     def _update_links(self, applied: list[dict[str, Any]]) -> int:
         if not applied:
             return 0
-        replacements: dict[str, str] = {}
+        replacements: list[tuple[str, str]] = []
         for item in applied:
             source = Path(item["source"]).with_suffix("").as_posix()
             target = Path(item["target"]).with_suffix("").as_posix()
-            replacements[f"[[{source}"] = f"[[{target}"
+            replacements.append((source, target))
         updated = 0
+        wikilink_re = re.compile(r"\[\[([^\[\]\|#]+)((?:[|#][^\]\n]*)?)\]\]")
+        backup_root = self.vault / ".backup"
         for path in self.vault.rglob("*.md"):
-            if str(path).startswith(str(self.vault / ".backup")):
+            try:
+                if path.resolve().is_relative_to(backup_root.resolve()):
+                    continue
+            except (ValueError, OSError):
                 continue
-            content = path.read_text(encoding="utf-8", errors="replace")
-            new_content = content
-            for old, new in replacements.items():
-                new_content = new_content.replace(old, new)
-            if new_content != content:
+            try:
+                content = path.read_text(encoding="utf-8", errors="replace")
+            except OSError:
+                continue
+            new_content = self._rewrite_wikilinks(content, replacements, wikilink_re)
+            if new_content == content:
+                continue
+            if get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE:
+                self._backup(path)
+            try:
                 path.write_text(new_content, encoding="utf-8")
-                updated += 1
+            except OSError:
+                continue
+            updated += 1
         return updated
+
+    def _rewrite_wikilinks(
+        self,
+        content: str,
+        replacements: list[tuple[str, str]],
+        pattern: re.Pattern[str],
+    ) -> str:
+        mapping = {old: new for old, new in replacements}
+
+        def _sub(match: re.Match[str]) -> str:
+            target = match.group(1).strip()
+            suffix = match.group(2) or ""
+            replacement = mapping.get(target)
+            if replacement is None:
+                return match.group(0)
+            return f"[[{replacement}{suffix}]]"
+
+        return pattern.sub(_sub, content)
 
     def _backup(self, path: Path) -> str:
         if not get_settings().OBSIDIAN_BACKUP_BEFORE_WRITE or not path.exists():

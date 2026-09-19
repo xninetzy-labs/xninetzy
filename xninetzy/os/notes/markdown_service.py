@@ -3,6 +3,8 @@ from __future__ import annotations
 import re
 from typing import Any
 
+import yaml
+
 
 class MarkdownService:
     def parse_frontmatter(self, content: str) -> dict[str, Any]:
@@ -11,38 +13,30 @@ class MarkdownService:
         end = content.find("\n---\n", 4)
         if end == -1:
             return {}
-
-        data: dict[str, Any] = {}
-        for line in content[4:end].splitlines():
-            if ":" not in line:
-                continue
-            key, value = line.split(":", 1)
-            raw = value.strip()
-            if raw.startswith("[") and raw.endswith("]"):
-                items = [item.strip().strip("\"'") for item in raw[1:-1].split(",") if item.strip()]
-                data[key.strip()] = items
-            else:
-                data[key.strip()] = raw.strip("\"'")
-        return data
+        raw = content[4:end]
+        try:
+            parsed = yaml.safe_load(raw) or {}
+        except yaml.YAMLError:
+            return {}
+        if not isinstance(parsed, dict):
+            return {}
+        return {str(key): value for key, value in parsed.items()}
 
     def upsert_frontmatter(self, content: str, data: dict[str, Any]) -> str:
         existing = self.parse_frontmatter(content)
         merged = {**existing, **data}
-        frontmatter = ["---"]
-        for key, value in merged.items():
-            if isinstance(value, list):
-                rendered = ", ".join(str(item) for item in value)
-                frontmatter.append(f"{key}: [{rendered}]")
-            else:
-                frontmatter.append(f"{key}: {value}")
-        frontmatter.append("---")
-
+        try:
+            serialized = yaml.safe_dump(
+                merged, default_flow_style=False, allow_unicode=True, sort_keys=False
+            )
+        except yaml.YAMLError:
+            return content
+        frontmatter = ["---", *serialized.rstrip("\n").splitlines(), "---"]
         body = content
         if content.startswith("---\n"):
             end = content.find("\n---\n", 4)
             if end != -1:
                 body = content[end + 5 :].lstrip("\n")
-
         return "\n".join(frontmatter) + "\n\n" + body
 
     def extract_headings(self, content: str) -> list[dict[str, Any]]:

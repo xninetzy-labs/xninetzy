@@ -10,19 +10,20 @@ contains no sample owner database, WAL or SHM files, FAISS state, Moodle
 sessions, downloads, or analysis snapshots.
 
 ```text
-clone A → services/ai/data/xninetzy.sqlite3 owned by owner A
-clone B → services/ai/data/xninetzy.sqlite3 owned by owner B
+clone A → ~/.local/share/xninetzy/xninetzy.sqlite3   owner A
+clone B → ~/.local/share/xninetzy/xninetzy.sqlite3   owner B
 ```
 
-The database is created and migrated automatically when the AI service starts.
-State is never shared through Git, Codex configuration, Claude configuration, or
-OpenCode configuration. An MCP client on a machine points to that machine's
-configured local installation.
+The database is created and migrated automatically when the MCP server
+boots via `xninetzy/db/migrations.py::run_migrations()` +
+`xninetzy/db/sqlite.py::init_db()`. State is never shared through Git or
+any MCP client configuration. An MCP client on a machine points to that
+machine's configured local installation.
 
 ## Repository rules
 
-All of `services/ai/data/**` is ignored by Git except the policy file
-`services/ai/data/README.md`. This includes:
+`DATA_DIR` (default `~/.local/share/xninetzy`) is ignored by Git except
+for its README. This includes:
 
 - SQLite, `-wal`, and `-shm`;
 - FAISS indexes and maps that represent personal knowledge;
@@ -31,34 +32,56 @@ All of `services/ai/data/**` is ignored by Git except the policy file
 - normalized Cyber Campus grade snapshots without verified tokens;
 - Learning OS concept graphs, evidence, and mastery;
 - recall cards, attempts, confidence, and spaced-repetition schedules;
-- WhatsApp media and local backups.
+- long-task records (`long_tasks` table for the Tasks extension);
+- external MCP registry state (default path
+  `/app/data/external-mcp.json`).
 
 Before committing:
 
 ```bash
 git status --short
-git ls-files services/ai/data
+git ls-files .local/share/xninetzy 2>/dev/null
 ```
 
-`git ls-files` should list only `services/ai/data/README.md`.
+Only the README should be tracked. The default `DATA_DIR` lives outside
+the repository, so a clean clone never carries any owner data.
+
+## Path conventions (env-driven)
+
+| Env var | Default |
+|---|---|
+| `DATA_DIR` | `~/.local/share/xninetzy` |
+| `OUTPUT_DIR` | `~/Documents/xninetzy/output` |
+| `GENERATED_DOCUMENTS_DIR` | `~/Documents/xninetzy/generated/documents` |
+| `RESEARCH_OUTPUT_DIR` | `~/Documents/xninetzy/generated/research` |
+| `UNTRACKED_OUTPUT_DIR` | `~/Documents/xninetzy/generated/untracked` |
+| `HEBAT_DATA_DIR` | `~/.local/share/xninetzy/hebat` |
+| `HEBAT_DOWNLOAD_DIR` | `~/Documents` |
+| `OBSIDIAN_VAULT_HOST_PATH` | `~/Documents/xninetzy-vault` |
+| `EXTERNAL_MCP_REGISTRY_PATH` | `/app/data/external-mcp.json` |
+
+`ARTIFACT_ALLOWLIST=true` (default) rejects writes outside the four
+`*_DIR` roots above.
 
 ## Move an installation
 
 Use [Backup and restore](/docs/backup-restore/) instead of committing a
-database. Backups have checksums and restore confirmation. Transfer a snapshot
-through encrypted media, restrict access to the owner, and remove temporary
-copies.
+database. Backups have checksums and restore confirmation. Transfer a
+snapshot through encrypted media, restrict access to the owner, and
+remove temporary copies.
 
 ## If data was pushed
 
-Removing a file from the latest commit does not remove its blob from history.
-Before making the repository public:
+Removing a file from the latest commit does not remove its blob from
+history. Before making the repository public:
 
-1. revoke or rotate any exposed session or credential;
+1. revoke or rotate any exposed session or credential (`AI_API_KEY`,
+   `HEBAT_PASSWORD`, OAuth client secrets);
 2. create a private backup clone;
 3. sanitize history with a tool such as `git filter-repo`;
 4. force-push only after coordinating with every collaborator;
-5. run a secret scan and inspect `git ls-files` again;
+5. run a secret scan (`xninetzy/os/security/guards.py::redact_secrets`
+   patterns) and inspect `git ls-files` again;
 6. ask collaborators to create fresh clones after history changes.
 
 History rewriting is destructive and is never performed automatically by

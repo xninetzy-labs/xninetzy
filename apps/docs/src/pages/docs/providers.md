@@ -5,9 +5,10 @@ description: Use Flaz by default or select OpenAI, Anthropic, OpenRouter, Ollama
 section: AI & developer tools
 ---
 
-Chat providers are separate from the agent. Xninetzy selects a provider and
-model from the registry, then creates the LangChain chat model used by
-LangGraph and tool-calling flows.
+Chat providers are separate from the agent. Xninetzy selects a provider
+and model from the registry, then creates the LangChain chat model used
+by tool-calling flows. There is no server-side LangGraph agent loop in
+v2.2.0 — the host invokes tools through MCP.
 
 ## Flaz as the default
 
@@ -25,8 +26,7 @@ FLAZ_MODELS=deepseek-v4-pro
 Enter the key without terminal echo:
 
 ```bash
-cd services/ai
-uv run python scripts/configure_flaz.py
+uv run --no-project --directory . python scripts/configure_flaz.py
 ```
 
 ## Enable multiple providers
@@ -64,16 +64,12 @@ A provider is ready when:
 4. a base URL is configured when required;
 5. required credentials are present.
 
-## Select a provider from WhatsApp
+## Provider selection via MCP
 
-```text
-/llm
-/llm list
-/llm use flaz deepseek-v4-pro
-```
-
-The selection is stored per owner in SQLite. API keys are never stored as a
-preference or displayed by commands.
+The provider selection is stored per owner in SQLite and is read by the
+MCP server. The selection can be changed through `ai_provider_*` MCP
+tools (see `xninetzy/tools/ecosystem/ai_runtime_tools.py`). API keys
+are never stored as a preference and never displayed back.
 
 ## Generic OpenAI-compatible provider
 
@@ -88,8 +84,9 @@ GENERIC_OPENAI_MODEL=model-name
 GENERIC_OPENAI_MODELS=model-name,model-name-fast
 ```
 
-Endpoint compatibility does not guarantee tool-calling compatibility. Test the
-model with ordinary chat and with a request that invokes a tool.
+Endpoint compatibility does not guarantee tool-calling compatibility.
+Test the model with ordinary chat and with a request that invokes a
+tool.
 
 ## Local Ollama
 
@@ -101,8 +98,8 @@ OLLAMA_MODEL=your-tool-capable-model
 OLLAMA_MODELS=your-tool-capable-model
 ```
 
-Verify that the model's context window, structured output, and tool calling are
-sufficient for the intended workflow.
+Verify that the model's context window, structured output, and tool
+calling are sufficient for the intended workflow.
 
 ## Chat provider versus coding runtime
 
@@ -111,15 +108,15 @@ sufficient for the intended workflow.
 | Chat provider | Flaz, OpenAI, Anthropic | Answer messages and select tools |
 | Coding runtime | Codex, Claude Code, OpenCode | Run a CLI inside a repository |
 
-Changing `/llm use` does not change `/agent use`.
+Changing the chat provider does not change the coding runtime.
 
 ## Diagnosis
 
 If the model cannot be reached:
 
-1. run `/llm list`;
-2. inspect enabled providers and model allowlists;
-3. verify the base URL without printing the key;
-4. restart the service after changing `.env`;
-5. test the provider health endpoint from the same host;
-6. inspect HTTP status codes in logs, not request headers.
+1. inspect enabled providers and model allowlists via
+   `ai_provider_list`;
+2. verify the base URL without printing the key;
+3. restart the MCP server after changing `.env`;
+4. test the provider health endpoint from the same host;
+5. inspect HTTP status codes in logs, not request headers.

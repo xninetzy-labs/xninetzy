@@ -100,7 +100,6 @@ class ArxivAdapter(SourceAdapter):
             await self._breaker.record_failure()
             return None
         if paper.get("status") != "ok":
-            await self._breaker.record_success()
             return None
         await self._breaker.record_success()
         return _from_arxiv_dict(paper)

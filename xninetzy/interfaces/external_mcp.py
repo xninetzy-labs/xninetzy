@@ -6,8 +6,9 @@ import json
 import os
 import re
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 from langchain_core.tools import tool
 from mcp import ClientSession, StdioServerParameters
@@ -19,6 +20,8 @@ from xninetzy.os.research.permissions import is_owner_admin
 
 _NAME_PATTERN = re.compile(r"^[a-z][a-z0-9_-]{1,63}$")
 
+RiskLevel = Literal["unreviewed", "low", "medium", "high"]
+
 
 @dataclass(frozen=True, slots=True)
 class ExternalMcpServer:
@@ -27,6 +30,9 @@ class ExternalMcpServer:
     args: list[str]
     env_vars: list[str]
     enabled: bool
+    risk_level: RiskLevel = "unreviewed"
+    allowed_tools: tuple[str, ...] = ()
+    last_reviewed_at: str | None = None
 
 
 def _registry_path() -> Path:
@@ -40,12 +46,20 @@ def _load_servers() -> dict[str, ExternalMcpServer]:
     raw = json.loads(path.read_text(encoding="utf-8"))
     servers: dict[str, ExternalMcpServer] = {}
     for entry in raw.get("servers", []):
+        allowed_raw = entry.get("allowed_tools") or []
+        allowed = tuple(str(value) for value in allowed_raw)
+        risk = str(entry.get("risk_level", "unreviewed"))
+        if risk not in {"unreviewed", "low", "medium", "high"}:
+            risk = "unreviewed"
         server = ExternalMcpServer(
             name=str(entry["name"]),
             command=str(entry["command"]),
             args=[str(value) for value in entry.get("args", [])],
             env_vars=[str(value) for value in entry.get("env_vars", [])],
             enabled=bool(entry.get("enabled", True)),
+            risk_level=risk,
+            allowed_tools=allowed,
+            last_reviewed_at=(str(entry["last_reviewed_at"]) if entry.get("last_reviewed_at") else None),
         )
         servers[server.name] = server
     return servers
@@ -84,7 +98,25 @@ def _server_payload(server: ExternalMcpServer) -> dict[str, Any]:
         "args": server.args,
         "env_vars": server.env_vars,
         "enabled": server.enabled,
+        "risk_level": server.risk_level,
+        "allowed_tools": list(server.allowed_tools),
+        "last_reviewed_at": server.last_reviewed_at,
     }
+
+
+def _normalize_allowed(allowed_json: str) -> tuple[str, ...] | str:
+    try:
+        parsed = json.loads(allowed_json or "[]")
+    except json.JSONDecodeError:
+        return "allowed_tools_json harus JSON array."
+    if not isinstance(parsed, list):
+        return "allowed_tools_json harus JSON array."
+    cleaned: list[str] = []
+    for value in parsed:
+        if not isinstance(value, str) or not value.strip():
+            return "allowed_tools berisi nama tool tidak valid."
+        cleaned.append(value.strip())
+    return tuple(cleaned)
 
 
 async def _session(server: ExternalMcpServer):
@@ -111,6 +143,8 @@ def external_mcp_add(
     command: str,
     args_json: str = "[]",
     env_vars_json: str = "[]",
+    allowed_tools_json: str = "[]",
+    risk_level: str = "unreviewed",
     enabled: bool = True,
     sender_id: str = "",
     sender_name: str = "",
@@ -125,13 +159,28 @@ def external_mcp_add(
         return {"success": False, "message": "args_json dan env_vars_json harus JSON array."}
     if not isinstance(args, list) or not isinstance(env_vars, list):
         return {"success": False, "message": "args_json dan env_vars_json harus JSON array."}
+    allowed = _normalize_allowed(allowed_tools_json)
+    if isinstance(allowed, str):
+        return {"success": False, "message": allowed}
+    if risk_level not in {"unreviewed", "low", "medium", "high"}:
+        return {"success": False, "message": "risk_level tidak valid."}
     normalized_args = [str(value) for value in args]
     normalized_env_vars = [str(value) for value in env_vars]
     error = _validate_server(name, command, normalized_args, normalized_env_vars)
     if error:
         return {"success": False, "message": error}
     servers = _load_servers()
-    server = ExternalMcpServer(name, command, normalized_args, normalized_env_vars, enabled)
+    reviewed_at = datetime.now(timezone.utc).isoformat()
+    server = ExternalMcpServer(
+        name=name,
+        command=command,
+        args=normalized_args,
+        env_vars=normalized_env_vars,
+        enabled=enabled,
+        risk_level=risk_level,
+        allowed_tools=allowed,
+        last_reviewed_at=reviewed_at,
+    )
     if name not in servers and len(servers) >= getattr(get_settings(), "EXTERNAL_MCP_MAX_SERVERS", 8):
         return {"success": False, "message": "Batas jumlah MCP eksternal tercapai."}
     servers[name] = server
@@ -212,6 +261,11 @@ async def external_mcp_call(
     server = _load_servers().get(name)
     if server is None or not server.enabled:
         return {"success": False, "message": "MCP eksternal tidak ditemukan atau dinonaktifkan."}
+    if server.allowed_tools and tool_name not in server.allowed_tools:
+        return {
+            "success": False,
+            "message": f"Tool '{tool_name}' tidak termasuk allowed_tools untuk MCP '{server.name}'.",
+        }
     try:
         result = await asyncio.wait_for(
             _with_session(server, lambda session: session.call_tool(tool_name, arguments)),
@@ -226,6 +280,7 @@ async def external_mcp_call(
         "tool": tool_name,
         "content": content,
         "untrusted_source": True,
+        "risk_level": server.risk_level,
     }
 
 

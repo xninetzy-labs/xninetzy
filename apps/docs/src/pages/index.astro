@@ -4,10 +4,28 @@ import Icon from '../components/Icon.astro';
 import { navigation } from '../data/navigation';
 
 const capabilities = [
-  { number: '01', title: 'MCP-only surface', text: 'One FastMCP server, stdio primary, Streamable HTTP loopback by default. No REST, no GraphQL, no CLI client.' },
-  { number: '02', title: '343 tools, one registry', text: 'Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career, reminders, skills — every capability is an MCP tool.' },
-  { number: '03', title: 'Replay-safe by design', text: 'Every write/final tool carries an idempotency key. FINAL-class actions stop at the HITL approval gate server-side.' },
-  { number: '04', title: 'Host does reasoning', text: 'Claude, Claude Code, Cursor, Codex, OpenCode connect through the same registry. No server-side agent loop.' }
+  { number: '01', title: 'FastMCP server', text: 'FastMCP("xninetzy", stateless_http, json_response) over stdio with Streamable HTTP on loopback by default.' },
+  { number: '02', title: 'Canonical registry', text: '343 tools classified by risk (read/draft/write/final), feature pack, and idempotency requirement.' },
+  { number: '03', title: 'Idempotent writes', text: 'Every write and final tool carries an idempotency key. Replays return the original result, never a duplicate.' },
+  { number: '04', title: 'Host-driven loop', text: 'Claude, Claude Code, Cursor, Codex, and OpenCode connect through the same registry. The MCP server exposes capability; the host decides what to do next.' }
+];
+
+const transports = [
+  { label: 'stdio', detail: 'Primary transport. OS process boundary is the trust boundary. No network auth.' },
+  { label: 'Streamable HTTP', detail: 'stateless_http + json_response, loopback (127.0.0.1) by default. Non-loopback warns and requires OAuth 2.1.' }
+];
+
+const registry = [
+  { bucket: 'core', count: 259, detail: 'Obsidian, reminders, life OS, knowledge, Lightning, skills, security, automation, repo, vision, harness, improvement, memory.' },
+  { bucket: 'academic-unair', count: 40, detail: 'HEBAT, Cyber Campus, UACC, QA Kuesioner, KRS War.' },
+  { bucket: 'research', count: 37, detail: 'deep_research, web_evidence, pixelrag, research_search/fetch/compare/grade.' },
+  { bucket: 'coding', count: 7, detail: 'coding-agent orchestration, harness routing, repo inspection.' }
+];
+
+const finalTools = [
+  { name: 'hebat_upload_submission', note: 'Final HEBAT submission requires HITL approval.' },
+  { name: 'portal_krs_war_arm', note: 'KRS War arming requires HITL approval.' },
+  { name: 'qa_fill_kuesioner', note: 'QA Kuesioner submission requires HITL approval.' }
 ];
 ---
 
@@ -17,50 +35,79 @@ const capabilities = [
       <div class="hero-glow" aria-hidden="true"></div>
       <div class="hero-content">
         <p class="signal"><span></span> MCP SYSTEM / ONLINE</p>
-        <h1>One MCP server.<br /><em>343 tools in orbit.</em></h1>
-        <p class="lead">Xninetzy exposes a single FastMCP server to your host. Obsidian, HEBAT, Cyber Campus, Knowledge, Career, Lightning, and reminders share one canonical registry — stdio primary, Streamable HTTP loopback by default.</p>
+        <h1>FastMCP server.<br /><em>343 tools. One registry.</em></h1>
+        <p class="lead">Xninetzy exposes a single MCP server to your host. stdio primary, Streamable HTTP loopback by default. The registry carries Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career, reminders, skills — every capability as an MCP tool.</p>
         <div class="hero-actions">
           <a class="primary" href="/docs/getting-started/">Start the MCP server <Icon name="arrow" /></a>
-          <a class="secondary" href="/docs/mcp-system/"><Icon name="book" /> Read the MCP reference</a>
+          <a class="secondary" href="/docs/mcp-system/"><Icon name="book" /> MCP reference</a>
         </div>
         <div class="status-line">
-          <span><i></i> MCP-only</span>
-          <span>343 tools</span>
-          <span>stdio + Streamable HTTP</span>
+          <span><i></i> stdio primary</span>
+          <span>Streamable HTTP loopback</span>
+          <span>3 FINAL tools</span>
+          <span>mcp 1.28.1</span>
         </div>
       </div>
       <div class="orbit-visual" aria-label="Xninetzy MCP orbit diagram">
-        <div class="core"><span>M</span><small>XNINETZY</small></div>
-        <div class="orbit orbit-a"><span class="node node-mcp">MCP</span></div>
-        <div class="orbit orbit-b"><span class="node node-obs">OBS</span></div>
-        <div class="orbit orbit-c"><span class="node node-camp">CAMP</span></div>
+        <div class="core"><span>M</span><small>FastMCP</small></div>
+        <div class="orbit orbit-a"><span class="node node-stdio">stdio</span></div>
+        <div class="orbit orbit-b"><span class="node node-http">http</span></div>
+        <div class="orbit orbit-c"><span class="node node-reg">registry</span></div>
         <span class="star s1">✦</span><span class="star s2">·</span><span class="star s3">✧</span>
       </div>
     </section>
 
-    <section class="capability-strip" aria-label="Core capabilities">
+    <section class="capability-strip" aria-label="MCP capabilities">
       {capabilities.map((item) => (
         <article><span>{item.number}</span><h2>{item.title}</h2><p>{item.text}</p></article>
       ))}
     </section>
 
-    <section class="section architecture">
-      <div class="section-copy">
-        <p class="kicker">ONE MCP SERVER / CLEAR BOUNDARIES</p>
-        <h2>From MCP call<br />to replay-safe action.</h2>
-        <p>The host invokes a tool. Xninetzy validates idempotency, checks the action policy, gates FINAL-class work through HITL approval, and returns a typed result with trace context. Sensitive actions stop at the approval boundary — never at the prompt.</p>
-        <a href="/docs/architecture/">Explore the architecture <Icon name="arrow" /></a>
+    <section class="section transport-grid">
+      <header>
+        <p class="kicker">TRANSPORTS</p>
+        <h2>stdio primary, Streamable HTTP loopback.</h2>
+      </header>
+      <div class="grid">
+        {transports.map((t) => (
+          <article>
+            <strong>{t.label}</strong>
+            <p>{t.detail}</p>
+          </article>
+        ))}
       </div>
-      <div class="flow-card">
-        <div class="flow-node active"><small>HOST</small><strong>Claude / Codex / OpenCode</strong></div>
-        <span class="flow-line"><i></i></span>
-        <div class="flow-node"><small>MCP SERVER</small><strong>FastMCP("xninetzy")</strong></div>
-        <span class="flow-line"><i></i></span>
-        <div class="flow-grid">
-          <div class="flow-node"><small>REGISTRY</small><strong>343 tools</strong></div>
-          <div class="flow-node orange"><small>GATES</small><strong>HITL + idempotency</strong></div>
-        </div>
+    </section>
+
+    <section class="section registry-grid">
+      <header>
+        <p class="kicker">REGISTRY</p>
+        <h2>343 tools classified by feature pack.</h2>
+      </header>
+      <div class="grid">
+        {registry.map((r) => (
+          <article>
+            <small>{r.bucket}</small>
+            <strong>{r.count}</strong>
+            <p>{r.detail}</p>
+          </article>
+        ))}
       </div>
+    </section>
+
+    <section class="section final-card">
+      <header>
+        <p class="kicker">FINAL-CLASS</p>
+        <h2>Three tools stop at the HITL gate.</h2>
+        <p class="final-note">Every FINAL-class tool requires server-side HITL approval regardless of host-supplied tier. The CLI orchestrator enforces this via <code>_effective_tier = max(declared, manifest_tier)</code>.</p>
+      </header>
+      <ul>
+        {finalTools.map((f) => (
+          <li>
+            <code>{f.name}</code>
+            <span>{f.note}</span>
+          </li>
+        ))}
+      </ul>
     </section>
 
     <section class="section docs-index">
@@ -88,7 +135,7 @@ const capabilities = [
     <section class="final-cta">
       <p class="kicker">READY WHEN YOU ARE</p>
       <h2>Start the MCP server<br />and connect a host.</h2>
-      <p>Install with `uv sync`, run release-check, then add the Xninetzy MCP server to Claude, Claude Code, Cursor, Codex, or OpenCode.</p>
+      <p>Run <code>uv run python -m xninetzy.cli.supervisor start</code> for stdio, or set <code>XNINETZY_MCP_TRANSPORT=streamable-http</code> for loopback HTTP.</p>
       <a href="/docs/getting-started/">Open quick start <Icon name="arrow" /></a>
       <p class="creator-links">Created by <a href="https://misbahul-muttaqin.vercel.app/" target="_blank" rel="noreferrer">Misbahul Muttaqin</a> · <a href="https://github.com/misbahul45" target="_blank" rel="noreferrer">GitHub</a></p>
     </section>
@@ -134,19 +181,24 @@ const capabilities = [
   .capability-strip span { color: var(--orange); font: .64rem var(--font-mono); }
   .capability-strip h2 { margin: 2.3rem 0 .65rem; font-size: 1rem; }
   .capability-strip p { margin: 0; color: var(--dim); font-size: .77rem; line-height: 1.65; }
-  .section { width: min(80rem, calc(100% - 3rem)); margin: auto; padding: 9rem 0; }
-  .architecture { display: grid; grid-template-columns: .8fr 1.2fr; align-items: center; gap: 7rem; }
-  .section-copy h2, .docs-index h2, .final-cta h2 { margin: .8rem 0 1.1rem; font-size: clamp(2.3rem, 4.8vw, 4.4rem); line-height: .98; letter-spacing: -.055em; }
-  .section-copy > p:not(.kicker) { color: var(--muted); line-height: 1.75; }
-  .section-copy > a { margin-top: 1.2rem; display: inline-flex; align-items: center; gap: .45rem; color: var(--purple-bright); font: .75rem var(--font-mono); text-decoration: none; }
-  .flow-card { padding: 2rem; border: 1px solid var(--line); border-radius: 1rem; background: linear-gradient(145deg, rgba(139,92,246,.06), rgba(0,0,0,.3)); box-shadow: 0 25px 70px rgba(0,0,0,.3); }
-  .flow-node { padding: 1.15rem 1.3rem; display: grid; gap: .35rem; border: 1px solid var(--line); border-radius: .65rem; background: #06020d; }
-  .flow-node.active { border-color: rgba(139,92,246,.6); box-shadow: inset 3px 0 var(--purple); }
-  .flow-node.orange { box-shadow: inset 3px 0 var(--orange); }
-  .flow-node small { color: var(--dim); font: .58rem var(--font-mono); letter-spacing: .1em; }.flow-node strong { font-size: .88rem; }
-  .flow-line { width: 1px; height: 2rem; margin: auto; display: block; background: var(--border-dim); }.flow-line i { width: .3rem; height: .3rem; display: block; border-radius: 50%; background: var(--purple-bright); transform: translate(-.13rem, .8rem); box-shadow: 0 0 7px var(--purple); }
-  .flow-grid { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; }
-  .docs-index { border-top: 1px solid var(--line); }
+  .section { width: min(80rem, calc(100% - 3rem)); margin: auto; padding: 6rem 0; }
+  .section > header { margin-bottom: 2.6rem; }
+  .section h2 { margin: .55rem 0 1rem; font-size: clamp(2rem, 4vw, 3.4rem); line-height: 1; letter-spacing: -.04em; }
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+  .grid article { padding: 1.4rem 1.5rem; border: 1px solid var(--line); border-radius: .9rem; background: linear-gradient(145deg, rgba(139,92,246,.05), rgba(0,0,0,.35)); }
+  .grid strong { display: block; color: #fff; font: 700 1.4rem var(--font-mono); margin-top: .25rem; }
+  .grid small { color: var(--orange-bright); font: 500 .6rem var(--font-mono); letter-spacing: .14em; text-transform: uppercase; }
+  .grid p { margin: .5rem 0 0; color: var(--muted); font-size: .82rem; line-height: 1.6; }
+  .transport-grid { border-block: 1px solid var(--line); }
+  .registry-grid { background: rgba(0,0,0,.18); border-radius: 1.2rem; padding-inline: 2rem; }
+  .final-card { padding-bottom: 7rem; }
+  .final-card ul { list-style: none; margin: 0; padding: 0; display: grid; gap: .5rem; }
+  .final-card li { display: grid; grid-template-columns: minmax(18rem, auto) 1fr; align-items: baseline; gap: 1rem; padding: .85rem 1.1rem; border: 1px solid var(--line); border-radius: .7rem; background: rgba(0,0,0,.3); }
+  .final-card code { color: var(--purple-bright); font: 600 .85rem var(--font-mono); }
+  .final-card span { color: var(--muted); font-size: .82rem; }
+  .final-note { max-width: 38rem; color: var(--muted); line-height: 1.7; }
+  .final-note code { color: var(--orange-bright); background: rgba(249,115,22,.08); padding: .05rem .3rem; border-radius: .25rem; font: .78rem var(--font-mono); }
+  .docs-index { border-top: 1px solid var(--line); padding-top: 7rem; }
   .docs-index > header { display: grid; grid-template-columns: 1fr .65fr; align-items: end; gap: 4rem; }
   .docs-index > header > p { margin-bottom: 1.4rem; color: var(--muted); line-height: 1.7; }
   .doc-groups { margin-top: 4rem; display: grid; grid-template-columns: 1fr 1fr; border-top: 1px solid var(--line); }
@@ -155,9 +207,11 @@ const capabilities = [
   .doc-links { margin-top: 1.25rem; display: grid; }.doc-links a { padding: .85rem 0; display: flex; align-items: center; justify-content: space-between; gap: 1rem; border-top: 1px solid rgba(39,32,51,.75); text-decoration: none; }.doc-links a:hover strong { color: var(--purple-bright); }.doc-links a > span { display: grid; gap: .22rem; }.doc-links strong { font-size: .8rem; transition: color .18s ease; }.doc-links small { color: var(--dim); font-size: .68rem; }
   .final-cta { position: relative; padding: 9rem 2rem; overflow: hidden; border-top: 1px solid rgba(124,58,237,.23); text-align: center; background: radial-gradient(circle at 50% 100%, rgba(109,40,217,.18), transparent 45%); }
   .final-cta::before { content: ''; position: absolute; left: 50%; bottom: -28rem; width: 48rem; height: 48rem; border: 1px solid rgba(249,115,22,.25); border-radius: 50%; transform: translateX(-50%); box-shadow: 0 0 80px rgba(249,115,22,.07); }
-  .final-cta h2, .final-cta p, .final-cta a { position: relative; }.final-cta > p:not(.kicker) { max-width: 35rem; margin: 0 auto 2rem; color: var(--muted); line-height: 1.7; }
+  .final-cta h2, .final-cta p, .final-cta a { position: relative; }
+  .final-cta > p:not(.kicker) { max-width: 35rem; margin: 0 auto 2rem; color: var(--muted); line-height: 1.7; }
+  .final-cta > p:not(.kicker) code { color: var(--orange-bright); background: rgba(249,115,22,.08); padding: .12rem .4rem; border-radius: .3rem; font: .78rem var(--font-mono); }
   .final-cta .creator-links { margin-top: 1.3rem; font: .68rem var(--font-mono); }
   .final-cta .creator-links a { padding: 0; color: var(--purple-bright); background: none; box-shadow: none; }
-  @media(max-width: 900px) { .hero { padding: 6rem 2rem 4rem; grid-template-columns: 1fr; }.orbit-visual { width: min(29rem, 94vw); }.capability-strip { grid-template-columns: 1fr 1fr; }.capability-strip article:nth-child(2) { border-right: 0; }.capability-strip article:nth-child(-n+2) { border-bottom: 1px solid rgba(124,58,237,.16); }.architecture { grid-template-columns: 1fr; gap: 3rem; }.docs-index > header { grid-template-columns: 1fr; gap: .2rem; } }
-  @media(max-width: 600px) { .hero { min-height: auto; padding: 4.5rem 1.2rem 3rem; }.orbit-visual { transform: scale(.78); margin-block: -3rem; }.capability-strip { grid-template-columns: 1fr; }.capability-strip article { min-height: auto; border-right: 0; border-bottom: 1px solid rgba(124,58,237,.16); }.section { padding: 6rem 0; }.flow-card { padding: 1rem; }.flow-grid, .doc-groups { grid-template-columns: 1fr; }.doc-groups > section { padding: 1.5rem 0; border-right: 0; }.docs-index > header { gap: 0; }.final-cta { padding: 7rem 1.2rem; } }
+  @media(max-width: 900px) { .hero { padding: 6rem 2rem 4rem; grid-template-columns: 1fr; }.orbit-visual { width: min(29rem, 94vw); }.capability-strip { grid-template-columns: 1fr 1fr; }.capability-strip article:nth-child(2) { border-right: 0; }.capability-strip article:nth-child(-n+2) { border-bottom: 1px solid rgba(124,58,237,.16); }.grid { grid-template-columns: 1fr; }.docs-index > header { grid-template-columns: 1fr; gap: .2rem; }.final-card li { grid-template-columns: 1fr; } }
+  @media(max-width: 600px) { .hero { min-height: auto; padding: 4.5rem 1.2rem 3rem; }.orbit-visual { transform: scale(.78); margin-block: -3rem; }.capability-strip { grid-template-columns: 1fr; }.capability-strip article { min-height: auto; border-right: 0; border-bottom: 1px solid rgba(124,58,237,.16); }.section { padding: 4rem 0; }.docs-index { padding-top: 5rem; }.doc-groups { grid-template-columns: 1fr; }.doc-groups > section { padding: 1.5rem 0; border-right: 0; }.docs-index > header { gap: 0; }.final-cta { padding: 7rem 1.2rem; } }
 </style>

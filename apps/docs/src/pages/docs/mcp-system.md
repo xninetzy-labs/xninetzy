@@ -1,7 +1,7 @@
 ---
 layout: ../../layouts/DocsLayout.astro
 title: MCP system reference
-description: Canonical reference for the Xninetzy MCP server: transports, registry, gateway, tasks, trace, and security.
+description: "Canonical reference for the Xninetzy MCP server: transports, registry, gateway, tasks, trace, and security."
 section: Start
 ---
 
@@ -41,6 +41,18 @@ Live probe at any time:
 ```bash
 uv run --no-project --directory . python scripts/mcp_audit.py
 ```
+
+Install scripts:
+
+| Script | OS | Install via |
+|---|---|---|
+| `scripts/install-mcp.sh` | Linux + macOS | `curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.sh \| bash` |
+| `scripts/install-mcp.ps1` | Windows (PowerShell 5.1+) | `iwr -useb https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.ps1 \| iex` |
+
+Both scripts clone the repo, ensure `uv`, write `.env` with a random
+`AI_API_KEY`, run `uv sync --all-extras`, and execute the release gate.
+`XNINETZY_INSTALL_MODE=docker` switches the path to `docker compose up
+-d --build`.
 
 The audit script emits a JSON snapshot and exits non-zero if the
 canonical FINAL-tool set drifts.

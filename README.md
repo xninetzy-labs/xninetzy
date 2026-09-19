@@ -117,6 +117,21 @@ Both scripts:
 git clone https://github.com/xninetzy-labs/xninetzy
 cd xninetzy
 uv sync --all-extras
+bash scripts/setup-mcp.sh
+```
+
+### Two remotes
+
+| Remote | URL | Role |
+|---|---|---|
+| `origin` | `git@github.com:xninetzy-labs/xninetzy.git` | canonical, where releases land |
+| `public` | `https://github.com/misbahul45/xninetzy.git` | public mirror, updated via `scripts/sync-public.sh` |
+
+After tagging a release on `origin`, mirror to `public`:
+
+```bash
+bash scripts/sync-public.sh
+```
 cp .env.example .env
 chmod 600 .env
 ```

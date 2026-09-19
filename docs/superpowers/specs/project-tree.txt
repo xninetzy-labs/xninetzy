@@ -1,0 +1,248 @@
+==============================================================================
+XNINETZY v1.0.0 -- MCP-ONLY PROJECT TREE (v2.2.0 pivot)
+==============================================================================
+
+Legend:
+  (*)  loaded by MCP server / FastMCP("xninetzy")
+  (C)  canonical source of truth
+  (?)  optional / opt-in
+
+xninetzy/                                     (C) Python package
+|-- pyproject.toml                            hatchling build; PEP 639 SPDX license
+|-- MANIFEST.in                               sdist manifest (LICENSE, scripts, tests, ...)
+|-- uv.lock                                   resolved deps (mcp==1.28.1 in project venv)
+|-- LICENSE                                   Xninetzy-SAL v2.2.0 (LicenseRef-...)
+|-- README.md                                 operator entry point
+|-- AGENTS.md                                 project governance (Claude/Codex entry)
+|-- CLAUDE.md                                 Claude Code entry point
+|-- SECURITY.md                               NSA CSI U/OO/6030316-26 mapping
+|-- PROVIDERS.md                              default stack + optional adapters
+|
+|-- xninetzy/                                 (C) 343 MCP tools
+|   |-- cli/
+|   |   |-- supervisor.py                     init / start / release-check entry
+|   |   `-- orchestrator.py                   tier-gated plan runner
+|   |
+|   |-- interfaces/                           (*) MCP + HTTP bridge
+|   |   |-- mcp_server.py                     FastMCP("xninetzy", stateless_http, json_response)
+|   |   |-- mcp_tool_adapter.py               mcp_principal() injects trusted owner
+|   |   |-- mcp_runtime.py                    bootstrap path overrides
+|   |   |-- external_mcp.py                   gateway + allowed_tools + risk_level
+|   |   |-- tasks_extension.py                SEP-2663 tasks_submit/get/cancel/list
+|   |   `-- api/                              FastAPI HTTP bridge (secondary)
+|   |       |-- routes/                       /api/chat, /api/chat/stream, /api/reminders/*
+|   |       `-- deps/
+|   |
+|   |-- tools/                                (*) registry + manifest
+|   |   |-- registry.py                       get_all_tools() -> 343 tools
+|   |   |-- manifest.py                       risk / feature_pack / idempotency
+|   |   |-- release_check.py                  6 release-gate checks
+|   |   |-- ecosystem/                       25 tool modules (knowledge, lightning, ...)
+|   |   `-- internal/                         Obsidian, planning, datetime, reminder, calc
+|   |
+|   |-- os/                                  domain subsystems
+|   |   |-- academic/
+|   |   |   |-- hebat/                        (*) 14 HEBAT/Moodle tools (Playwright)
+|   |   |   |-- mahasiswa_portal/            (*) Cyber Campus + KRS War (FINAL)
+|   |   |   `-- qa_portal/                    (*) QA Kuesioner (FINAL)
+|   |   |-- research/
+|   |   |   `-- sources/                      (*) 30 adapters
+|   |   |       |-- arxiv.py openalex.py crossref.py pubmed.py europe_pmc.py
+|   |   |       |-- dblp.py semantic_scholar.py wikipedia.py wikidata.py dbpedia.py
+|   |   |       |-- hackernews.py reddit.py rss.py github.py stackoverflow.py
+|   |   |       |-- open_llm_leaderboard.py papers_with_code.py huggingface.py
+|   |   |       |-- kaggle.py zenodo.py nvd.py patentsview.py osm.py
+|   |   |       |-- world_bank.py fred.py bps.py wayback.py
+|   |   |       |-- remoteok.py arbeitnow.py          Career
+|   |   |       |-- base.py registry.py rate_limit.py
+|   |   |-- inbox/                            OS Inbox + attention queue
+|   |   |-- knowledge/                        FAISS + retrieval + Graph RAG
+|   |   |-- lightning/                        (*) 15 bandit tools
+|   |   |-- notes/                            Obsidian vault ops
+|   |   |-- policy/                           action_policy + classify_risk
+|   |   |-- reminders/                        reminder_* HTTP + MCP
+|   |   |-- hitl/                             approval_service + approval_tools
+|   |   |-- improvement/                      improvement_* + memory_lifecycle
+|   |   |-- graph/                            Graph RAG projections
+|   |   |-- security/captcha/lockout.py        CAPTCHA auto-OCR guard
+|   |   |-- backup/                           backup / restore services
+|   |   `-- ...
+|   |
+|   |-- observability/trace.py                (*) SEP-414 W3C trace context
+|   |-- core/                                 config, identity, providers, coding_agents
+|   |-- db/                                   sqlite + migrations
+|   |-- schemas/                              Pydantic v2 schemas
+|   |-- skills/                               runtime skill tools
+|   `-- workflow/                             workflow engine
+|
+|-- apps/
+|   `-- docs/                                 Astro Starlight static site
+|       |-- astro.config.mjs
+|       |-- package.json                      node 22.12+, astro 7.1.4
+|       |-- src/
+|       |   |-- pages/
+|       |   |   |-- index.astro               landing (MCP-only framing)
+|       |   |   `-- docs/
+|       |   |       |-- mcp-system.md         (C) canonical MCP reference
+|       |   |       |-- getting-started.md    install + connect MCP host
+|       |   |       |-- architecture.md
+|       |   |       |-- configuration.md
+|       |   |       |-- troubleshooting.md
+|       |   |       |-- security.md
+|       |   |       |-- testing.md
+|       |   |       |-- obsidian.md hebat.md cyber-campus.md
+|       |   |       |-- os-kernel.md learning-roadmaps.md automation.md
+|       |   |       |-- lightning.md action-policy.md backup-restore.md
+|       |   |       |-- local-data.md skills.md api.md providers.md
+|       |   |       `-- mcp.md                global MCP host wiring
+|       |   |-- components/                   Sidebar, SiteHeader, MobileNavigation, Icon, Brand
+|       |   |-- data/navigation.ts            nav entries + pageNeighbors
+|       |   `-- styles/global.css
+|       `-- public/                           favicon, og.svg
+|
+|-- docs/                                     project-internal governance
+|   |-- superpowers/specs/
+|   |   |-- mcp-system-audit.md               canonical truth (audit snapshot)
+|   |   |-- mcp-packaging.md                  packaging + install + setup guide
+|   |   `-- project-tree.txt                 (this file)
+|   |-- plan/                                 implementation plans
+|   |-- research/                             design specs
+|   |-- archive/                              archived pivot designs
+|   `-- AI_PROVIDERS_CODING_AGENTS_MCP.md
+|
+|-- .agents/skills/                          68 skill bodies (built-in catalog)
+|   |-- it-learning/ obsidian-knowledge/ hebat-academic/ hebat-assignment/
+|   |-- cyber-campus/ graph-rag/ life-management/ research/ mcp-development/
+|   |-- xninetzy-os/ xninetzy-hebat/ xninetzy-krs/ xninetzy-cyber-campus/
+|   |-- xninetzy-uacc/ xninetzy-academic-safety/ xninetzy-memory/
+|   |-- xninetzy-obsidian-orchestra/ xninetzy-deep-research/ xninetzy-research-memory/
+|   |-- xninetzy-mcp-lightning/ xninetzy-web-analysis/
+|   |-- xninetzy-assignment-orchestrator/ xninetzy-artifact-orchestrator/
+|   |-- xninetzy-security-testing/ xninetzy-learning-coach/
+|   |-- career/                              19 career skill bodies
+|   |   `-- job_search, resume_tailoring, interview_prep, salary_analysis, ...
+|   |-- define-goal/ pdf/ playwright/ playwright-interactive/ screenshot/
+|   |-- transcribe/ jupyter-notebook/ gh-fix-ci/ security-*/ skill-*/
+|   `-- ...                                  (open-source skills from openai/skills catalog)
+|
+|-- scripts/                                  operator scripts
+|   |-- install-mcp.sh                        Linux/macOS one-line installer
+|   |-- install-mcp.ps1                       Windows PowerShell installer
+|   |-- setup-mcp.sh                          idempotent .env + dirs + sync + release-check
+|   |-- setup-mcp.ps1                         Windows PowerShell setup
+|   |-- mcp_audit.py                          live registry probe + --strict
+|   |-- install_skills.py                     symlink skill catalog to harnesses
+|   |-- xninetzy_backup.py                    snapshot + restore
+|   |-- configure_internal_auth.py            AI_API_KEY bootstrap
+|   |-- verify_cpu_only.py                    CPU-only runtime guard
+|   |-- improvement_apply.py                  Lightning self-improvement
+|   `-- _strip_comments_once.py               legacy comment-stripping utility
+|
+|-- tests/                                    878 tests; 828 pass / 29 fail / 7 blocked (baseline)
+|   |-- tools/                                test_registry, test_manifest, test_release_check
+|   |-- interfaces/                           mcp_server, mcp_tool_adapter, api
+|   |-- os/                                   academic/, knowledge/, lightning/, research/, ...
+|   |-- core/                                 flaz_llm, llm_providers, coding_agents (blocked)
+|   |-- db/                                   sqlite, migrations, idempotency
+|   |-- architecture/                         boundary enforcement
+|   `-- ...
+|
+|-- Dockerfile                                (optional) container build
+|-- docker-compose.yml                        (optional) stack orchestration
+|-- assets/branding/                          logo-unair.png
+`-- .claude/                                  Claude Code config (local)
+
+
+==============================================================================
+DATA FLOW (host -> MCP -> tool -> storage)
+==============================================================================
+
+  host (Claude / Claude Code / Cursor / Codex / OpenCode)
+       |
+       |  stdio (default)                or   Streamable HTTP (loopback)
+       |
+       v
+  xninetzy.interfaces.mcp_server.FastMCP("xninetzy")
+       |   stateless_http=True, json_response=True
+       |
+       +-- xninetzy.tools.registry.get_all_tools()      343 tools
+       |     |
+       |     +-- xninetzy.tools.manifest.manifest_for(name)
+       |     |     risk: read | draft | write | final
+       |     |     feature_pack: core | academic-unair | research | coding
+       |     |     requires_approval / requires_idempotency
+       |     |
+       |     +-- xninetzy.os.*                           domain subsystems
+       |     |     academic/hebat/  (FINAL: hebat_upload_submission)
+       |     |     academic/mahasiswa_portal/  (FINAL: portal_krs_war_arm)
+       |     |     academic/qa_portal/  (FINAL: qa_fill_kuesioner)
+       |     |     research/sources/    30 adapters
+       |     |     knowledge/            FAISS + retrieval
+       |     |     lightning/            CPU bandit
+       |     |     notes/                Obsidian vault
+       |     |     inbox/                OS Inbox + attention
+       |     |     policy/               action_policy.classify_risk
+       |     |     hitl/                 approval_service + tools
+       |     |     reminders/
+       |     |     ...
+       |     |
+       |     +-- xninetzy.db.sqlite.connect               canonical SQLite
+       |     |     long_tasks   (Tasks extension)
+       |     |     approval_requests
+       |     |     idempotency_keys
+       |     |     file_operations
+       |     |     reminders / captures / tasks / goals
+       |     |
+       |     +-- xninetzy.observability.trace             SEP-414 traceparent
+       |
+       +-- xninetzy.interfaces.tasks_extension          4 tools
+       +-- xninetzy.interfaces.external_mcp             5 tools (gateway)
+       +-- xninetzy.interfaces.api  (FastAPI, secondary)
+              /api/chat, /api/chat/stream, /api/reminders/*, /api/debug/*
+
+
+==============================================================================
+INSTALL + SETUP FLOW
+==============================================================================
+
+  curl -fsSL .../install-mcp.sh | bash                  (Linux / macOS)
+  iwr -useb   .../install-mcp.ps1 | iex                 (Windows)
+       |
+       +-- ensure git, openssl, uv (auto-install via brew / astral.sh)
+       +-- clone repo
+       +-- apt-get / dnf / pacman / brew install tesseract sqlite libatlas
+       +-- playwright install chromium --with-deps
+       +-- (opt-in XNINETZY_INSTALL_NEO4J=true) install Neo4j
+       |
+       +--> bash scripts/setup-mcp.sh
+              +-- cp .env.example -> .env (chmod 600)
+              +-- AI_API_KEY = openssl rand -hex 32
+              +-- OBSIDIAN_VAULT_HOST_PATH, DATA_DIR, OUTPUT_DIR
+              +-- mkdir data + vault + output
+              +-- uv sync --all-extras
+              +-- uv run xninetzy release-check        (6/6 PASS)
+
+
+==============================================================================
+KEY NUMBERS
+==============================================================================
+
+  343 MCP tools
+    - 305 write / 23 read / 12 draft / 3 final
+    - 259 core / 40 academic-unair / 37 research / 7 coding
+    - 343/343 stable
+  30 source adapters (Research + Career)
+  68 skill bodies (.agents/skills/)
+  19 career skill bodies
+  3 FINAL-class tools (HITL-gated):
+    - hebat_upload_submission
+    - portal_krs_war_arm
+    - qa_fill_kuesioner
+  6 release-gate checks (PASS)
+  4 transports: stdio (primary), Streamable HTTP (loopback), [no legacy HTTP+SSE, no REST/GraphQL]
+  mcp==1.28.1 pinned (>=1.28.1,<2)
+  Python >=3.11
+  Tests: 828 pass / 29 fail / 7 collection-blocked (baseline)
+  ruff: 0 errors
+  yarn build: 23/23 pages pass
+  Wheel: xninetzy_mcp-1.0.0-py3-none-any.whl

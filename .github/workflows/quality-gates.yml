@@ -5,22 +5,32 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: quality-gates-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
-  ai:
+  python:
+    name: Python (ruff + pytest + release-check + mcp_audit)
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/ai
     steps:
       - uses: actions/checkout@v4
       - uses: astral-sh/setup-uv@v6
         with:
           python-version: '3.11'
-      - run: uv sync --no-dev
-      - run: uv run ruff check app tests
-      - run: uv run pytest
+      - name: Sync
+        run: uv sync --all-extras
+      - name: Ruff
+        run: uv run ruff check xninetzy tests scripts
+      - name: Pytest (tools + manifest + release)
+        run: uv run --no-project pytest -ra tests/tools
+      - name: Release gate
+        run: uv run python -m xninetzy.cli.supervisor release-check
+      - name: MCP audit (strict)
+        run: uv run --no-project python scripts/mcp_audit.py --strict
 
-  documentation:
+  docs:
+    name: Documentation (yarn check + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -32,39 +42,6 @@ jobs:
           node-version: 22
           cache: yarn
           cache-dependency-path: apps/docs/yarn.lock
-      - run: yarn install --frozen-lockfile
-      - run: yarn check
-      - run: yarn build
-
-  wa-engine:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: services/wa-enggine
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: yarn
-          cache-dependency-path: services/wa-enggine/yarn.lock
-      - run: yarn install --frozen-lockfile
-      - run: yarn lint
-      - run: yarn test
-      - run: yarn build
-
-  cli:
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: apps/cli
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: yarn
-          cache-dependency-path: apps/cli/yarn.lock
       - run: yarn install --frozen-lockfile
       - run: yarn check
       - run: yarn build

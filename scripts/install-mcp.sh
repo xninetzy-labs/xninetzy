@@ -217,10 +217,42 @@ echo "Running release gate..."
 uv run --no-project python -m xninetzy.cli.supervisor release-check || true
 
 echo
-echo "Xninetzy MCP installed at $INSTALL_DIR (OS=$OS)"
+echo "Running smoke test (mcp_audit.py)..."
+uv run --no-project python scripts/mcp_audit.py || true
+
 echo
-echo "Next:"
-echo "  cd $INSTALL_DIR"
-echo "  uv run python -m xninetzy.cli.supervisor start      # stdio MCP"
-echo "  XNINETZY_MCP_TRANSPORT=streamable-http \\"
-echo "    uv run python -m xninetzy.interfaces.mcp_server   # http://127.0.0.1:8765/mcp"
+echo "================================================================"
+echo "  Xninetzy MCP install summary"
+echo "================================================================"
+echo "  Install path : $INSTALL_DIR"
+echo "  OS           : $OS"
+echo "  Python       : $(uv run python -c 'import sys; print(sys.version.split()[0])' 2>/dev/null || echo 'unknown')"
+echo
+echo "  System deps installed:"
+echo "    - sqlite3   : $(command -v sqlite3 >/dev/null && sqlite3 --version | head -1 || echo MISSING)"
+echo "    - tesseract : $(command -v tesseract >/dev/null && tesseract --version 2>&1 | head -1 || echo MISSING)"
+echo "    - openssl   : $(command -v openssl >/dev/null && openssl version || echo MISSING)"
+if [ "${XNINETZY_INSTALL_NEO4J:-false}" = "true" ]; then
+  echo "    - neo4j     : $(command -v neo4j >/dev/null && neo4j --version 2>&1 | head -1 || echo 'requested but missing')"
+else
+  echo "    - neo4j     : skipped (opt-in via XNINETZY_INSTALL_NEO4J=true)"
+fi
+echo "    - python deps: $(uv pip list 2>/dev/null | wc -l) packages installed"
+echo
+echo "  .env:"
+echo "    - path          : $INSTALL_DIR/.env (mode 600)"
+echo "    - AI_API_KEY    : $(grep -E '^AI_API_KEY=' .env | cut -d= -f2 | head -c 16)...$(grep -E '^AI_API_KEY=' .env | cut -d= -f2 | tail -c 5)"
+echo "    - DATA_DIR      : $(grep -E '^DATA_DIR=' .env | cut -d= -f2)"
+echo "    - OBSIDIAN_VAULT: $(grep -E '^OBSIDIAN_VAULT_HOST_PATH=' .env | cut -d= -f2)"
+echo "    - LLM block     : $(grep -qE '^FLAZ_API_KEY=|^OPENAI_API_KEY=' .env && echo 'configured' || echo 'not configured (host supplies the model)')"
+echo
+echo "  Next:"
+echo "    cd $INSTALL_DIR"
+echo "    uv run python -m xninetzy.cli.supervisor start      # stdio MCP"
+echo "    XNINETZY_MCP_TRANSPORT=streamable-http \\"
+echo "      uv run python -m xninetzy.interfaces.mcp_server   # http://127.0.0.1:8765/mcp"
+echo
+echo "  Optional:"
+echo "    XNINETZY_INSTALL_NEO4J=true bash scripts/install-mcp.sh   # add Neo4j"
+echo "    uv run --no-project python scripts/mcp_audit.py --strict  # strict audit"
+echo "================================================================"

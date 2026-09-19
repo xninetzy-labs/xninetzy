@@ -3057,7 +3057,7 @@ wheels = [
 [[package]]
 name = "xninetzy-mcp"
 version = "2.2.0"
-source = { virtual = "." }
+source = { editable = "." }
 dependencies = [
     { name = "beautifulsoup4" },
     { name = "cryptography" },

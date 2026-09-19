@@ -46,8 +46,15 @@ dev = [
     "ruff>=0.9",
 ]
 
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["xninetzy"]
+
 [tool.uv]
-package = false
+package = true
 
 # CPU-only PyTorch. Pinning torch to the official CPU wheel index keeps the
 # resolver off the default PyPI torch build, which on linux drags in the entire

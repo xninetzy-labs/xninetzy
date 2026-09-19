@@ -156,6 +156,44 @@ if ($env:XNINETZY_INSTALL_NEO4J -eq 'true') {
 Write-Section 'Running release gate...'
 try { uv run --no-project python -m xninetzy.cli.supervisor release-check } catch { Write-Warning "release-check failed: $_" }
 
+Write-Section 'Running smoke test (mcp_audit.py)...'
+try { uv run --no-project python scripts/mcp_audit.py } catch { Write-Warning "mcp_audit failed: $_" }
+
+Write-Section 'Xninetzy MCP install summary'
+
+$envContent = Get-Content '.env' -Raw
+$aiKeyRaw   = if ($envContent -match '(?m)^AI_API_KEY=(.+)$') { $Matches[1] } else { '' }
+$aiKeyMasked = if ($aiKeyRaw.Length -gt 20) { $aiKeyRaw.Substring(0, 16) + '...' + $aiKeyRaw.Substring($aiKeyRaw.Length - 5) } else { $aiKeyRaw }
+$dataDir    = if ($envContent -match '(?m)^DATA_DIR=(.+)$') { $Matches[1] } else { '' }
+$vault      = if ($envContent -match '(?m)^OBSIDIAN_VAULT_HOST_PATH=(.+)$') { $Matches[1] } else { '' }
+$llmBlock   = if ($envContent -match '(?m)^(FLAZ_API_KEY|OPENAI_API_KEY)=.+$') { 'configured' } else { 'not configured (host supplies the model)' }
+$sqliteVer  = if (Test-Command 'sqlite3') { (sqlite3 --version) } else { 'MISSING' }
+
+Write-Host ('  Install path : {0}' -f $InstallDir)
+Write-Host ('  sqlite3      : {0}' -f $sqliteVer)
+Write-Host ('  tesseract    : ' -NoNewline)
+if (Test-Command 'tesseract') { tesseract --version 2>&1 | Select-Object -First 1 } else { Write-Host 'MISSING' }
+Write-Host ('  neo4j        : ' -NoNewline)
+if ($env:XNINETZY_INSTALL_NEO4J -eq 'true') {
+  if (Test-Command 'neo4j') { neo4j --version 2>&1 | Select-Object -First 1 } else { Write-Host 'requested but missing' }
+} else { Write-Host 'skipped (opt-in via XNINETZY_INSTALL_NEO4J=true)' }
+Write-Host ''
+Write-Host ('  .env         : {0}\.env (mode hidden)' -f $InstallDir)
+Write-Host ('  AI_API_KEY   : {0}' -f $aiKeyMasked)
+Write-Host ('  DATA_DIR     : {0}' -f $dataDir)
+Write-Host ('  OBSIDIAN_VAULT: {0}' -f $vault)
+Write-Host ('  LLM block    : {0}' -f $llmBlock)
+Write-Host ''
+Write-Host '  Next:'
+Write-Host ('    cd "{0}"' -f $InstallDir)
+Write-Host '    uv run python -m xninetzy.cli.supervisor start      # stdio MCP'
+Write-Host '    $env:XNINETZY_MCP_TRANSPORT = ''streamable-http'''
+Write-Host '    uv run python -m xninetzy.interfaces.mcp_server     # http://127.0.0.1:8765/mcp'
+Write-Host ''
+Write-Host '  Optional:'
+Write-Host '    $env:XNINETZY_INSTALL_NEO4J = ''true''; iwr -useb ...install-mcp.ps1 | iex  # add Neo4j'
+Write-Host '    uv run --no-project python scripts/mcp_audit.py --strict                  # strict audit'
+
 Write-Section 'Xninetzy MCP installed.'
 Write-Host "Path : $InstallDir"
 Write-Host ''

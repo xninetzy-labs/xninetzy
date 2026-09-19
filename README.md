@@ -9,7 +9,7 @@
 ![SDK](https://img.shields.io/badge/mcp-1.28.1%20(v1.x)-1C3C3C)
 ![Tools](https://img.shields.io/badge/tools-343-009688)
 ![CPU](https://img.shields.io/badge/CPU--only-2496ED)
-![License](https://img.shields.io/badge/license-private-lightgrey)
+![License](https://img.shields.io/badge/license-Xninetzy--SAL%20v2.2.0-6C47FF)
 
 Xninetzy exposes a single MCP server to your host (Claude, Claude Code,
 Cursor, Codex, OpenCode). Obsidian, HEBAT, Cyber Campus, Lightning,
@@ -428,4 +428,20 @@ Full mapping in `/SECURITY.md`.
 
 ## License
 
-Private. All rights reserved by the owner.
+Xninetzy is distributed under the
+[Xninetzy Source-Available License v2.2.0](./LICENSE)
+(`SPDX-License-Identifier: LicenseRef-Xninetzy-Source-Available-2.2.0`).
+
+- **Personal Use** — read, build, run, fork, and contribute back at no
+  charge.
+- **Commercial Use** — requires a separate written agreement with the
+  Licensee. Open an issue titled `commercial-license` on the upstream
+  repository to start the conversation.
+- **Trademarks** — "Xninetzy" and "Xninetzy Labs" are not licensed under
+  this grant; use them only for factual references and the NOTICE file.
+- **Third-party components** — retain their original licenses; see
+  Section 11 of the LICENSE file for the non-exhaustive list.
+
+This is a source-available license, not an OSI-approved open-source
+license. Not a substitute for the Apache License, MIT, or any other
+OSI-approved license.

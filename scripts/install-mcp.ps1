@@ -1,7 +1,7 @@
 # Xninetzy MCP installer (Windows PowerShell 5.1+).
 #
 # One-line install:
-#   iwr -useb https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.ps1 | iex
+#   iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
 #
 # Linux/macOS variant lives at scripts/install-mcp.sh.
 #
@@ -40,7 +40,7 @@ if (-not $Branch)     { $Branch     = 'main' }
 if (-not $Mode)       { $Mode       = 'local' }
 if (-not $VaultPath)  { $VaultPath  = Join-Path $HOME 'Documents\xninetzy-vault' }
 
-$RepoUrl = 'https://github.com/misbahul45/xninetzy.git'
+$RepoUrl = if ($env:XNINETZY_REPO_URL) { $env:XNINETZY_REPO_URL } else { 'https://github.com/xninetzy-labs/xninetzy.git' }
 
 function Write-Section([string]$msg) { Write-Host '' ; Write-Host $msg ; Write-Host '' }
 

@@ -141,4 +141,4 @@ A productive sequence is to use `define-goal` for the outcome,
 `security-threat-model` before exposing a connector or browser action.
 
 The detailed design audit is available in
-[`docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md`](https://github.com/misbahul45/xninetzy/blob/main/docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md).
+[`docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md`](https://github.com/xninetzy-labs/xninetzy/blob/main/docs/research/XNINETZY_SKILL_AGENTIC_BEST_PRACTICES.md).

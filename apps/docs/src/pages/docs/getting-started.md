@@ -15,7 +15,14 @@ on loopback.
 ### Linux / macOS
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.sh | bash
+curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
+```
+
+Override the source repo (for mirrors or forks):
+
+```bash
+XNINETZY_REPO_URL=https://raw.githubusercontent.com/your-fork/xninetzy/main \
+  curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
 ```
 
 The script:
@@ -47,7 +54,7 @@ The script:
 ### Windows (PowerShell 5.1+)
 
 ```powershell
-iwr -useb https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
 ```
 
 The script:
@@ -74,23 +81,23 @@ Python on Windows. Tesseract is required only if you opt into OCR
 Use a non-default branch:
 
 ```bash
-XNINETZY_BRANCH=v2.2.0 curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.sh | bash
+XNINETZY_BRANCH=v2.2.0 curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
 ```
 
 ```powershell
 $env:XNINETZY_BRANCH = 'v2.2.0'
-iwr -useb https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
 ```
 
 Use the Docker compose path instead:
 
 ```bash
-XNINETZY_INSTALL_MODE=docker curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.sh | bash
+XNINETZY_INSTALL_MODE=docker curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
 ```
 
 ```powershell
 $env:XNINETZY_INSTALL_MODE = 'docker'
-iwr -useb https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.ps1 | iex
+iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
 ```
 
 ## Manual install
@@ -98,7 +105,7 @@ iwr -useb https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/ins
 If you'd rather drive each step yourself:
 
 ```bash
-git clone https://github.com/misbahul45/xninetzy
+git clone https://github.com/xninetzy-labs/xninetzy
 cd xninetzy
 uv sync --all-extras
 cp .env.example .env

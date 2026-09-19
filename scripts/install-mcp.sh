@@ -2,7 +2,7 @@
 # Xninetzy MCP installer (Linux + macOS).
 #
 # One-line install:
-#   curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.sh | bash
+#   curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
 #
 # Windows PowerShell variant lives at scripts/install-mcp.ps1.
 #
@@ -27,7 +27,7 @@
 
 set -euo pipefail
 
-REPOSITORY_URL="https://github.com/misbahul45/xninetzy.git"
+REPOSITORY_URL="${XNINETZY_REPO_URL:-https://github.com/xninetzy-labs/xninetzy.git}"
 
 detect_os() {
   case "$(uname -s 2>/dev/null || echo unknown)" in
@@ -54,7 +54,7 @@ usage() {
 xninetzy-mcp installer (Linux/macOS)
 
 Usage:
-  curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.sh | bash
+  curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
 
 Environment variables:
   XNINETZY_INSTALL_DIR    install path (default: ~/xninetzy)

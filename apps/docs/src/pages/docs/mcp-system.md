@@ -46,8 +46,8 @@ Install scripts:
 
 | Script | OS | Install via |
 |---|---|---|
-| `scripts/install-mcp.sh` | Linux + macOS | `curl -fsSL https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.sh \| bash` |
-| `scripts/install-mcp.ps1` | Windows (PowerShell 5.1+) | `iwr -useb https://raw.githubusercontent.com/misbahul45/xninetzy/main/scripts/install-mcp.ps1 \| iex` |
+| `scripts/install-mcp.sh` | Linux + macOS | `curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh \| bash` |
+| `scripts/install-mcp.ps1` | Windows (PowerShell 5.1+) | `iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 \| iex` |
 
 Both scripts clone the repo, ensure `uv`, write `.env` with a random
 `AI_API_KEY`, run `uv sync --all-extras`, and execute the release gate.

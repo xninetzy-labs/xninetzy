@@ -34,9 +34,8 @@ export const navigation: NavGroup[] = [
   {
     title: 'AI & developer tools',
     items: [
-      { title: 'LLM providers', description: 'Flaz and other providers.', href: '/docs/providers/' },
+      { title: 'Chat model selection', description: 'Host supplies the model; HTTP bridge fallback is optional.', href: '/docs/providers/' },
       { title: 'Global MCP', description: 'Codex, Claude Code, and OpenCode.', href: '/docs/mcp/', badge: 'core' },
-      { title: 'Coding agents', description: 'Run coding runtimes from MCP clients.', href: '/docs/coding-agents/' },
       { title: 'Lightning agent', description: 'Rewards, strategy ranking, and regression.', href: '/docs/lightning/' },
       { title: 'Shared skills', description: 'Built-in and open-source skills across clients.', href: '/docs/skills/', badge: 'updated' }
     ]

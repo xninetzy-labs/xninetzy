@@ -1,0 +1,94 @@
+---
+type Props = { pageTitle?: string };
+const { pageTitle } = Astro.props;
+---
+
+<aside class="page-feedback" aria-label="Page feedback">
+  <div class="page-feedback-prompt">
+    <strong>Was this helpful?</strong>
+    <span>Help us improve the docs.</span>
+  </div>
+  <div class="page-feedback-actions">
+    <button type="button" data-vote="up" aria-label="This page was helpful">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 9V5a3 3 0 00-3-3l-4 9v11h11.28a2 2 0 002-1.7l1.38-9A2 2 0 0019.7 9H14zM7 22H4a2 2 0 01-2-2v-7a2 2 0 012-2h3"/></svg>
+      <span>Yes</span>
+    </button>
+    <button type="button" data-vote="down" aria-label="This page needs improvement">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10 15v4a3 3 0 003 3l4-9V2H5.72a2 2 0 00-2 1.7l-1.38 9A2 2 0 004.3 15H10zm7-13h2.67A2.31 2.31 0 0122 4v7a2.31 2.31 0 01-2.33 2H17"/></svg>
+      <span>No</span>
+    </button>
+  </div>
+  <p class="page-feedback-thanks" hidden>Thanks for the signal. Track improvements in <a href="/KNOWN_ISSUES.md">KNOWN_ISSUES.md</a>.</p>
+</aside>
+
+<script>
+  const root = document.currentScript?.previousElementSibling as HTMLElement | null;
+  const block = document.querySelector<HTMLElement>('.page-feedback');
+  if (block) {
+    const thanks = block.querySelector<HTMLElement>('.page-feedback-thanks');
+    block.querySelectorAll<HTMLButtonElement>('button[data-vote]').forEach((b) => {
+      b.addEventListener('click', () => {
+        try {
+          const k = `feedback:${location.pathname}`;
+          const prev = JSON.parse(localStorage.getItem(k) ?? '{}');
+          prev[b.dataset.vote] = Date.now();
+          localStorage.setItem(k, JSON.stringify(prev));
+        } catch {}
+        if (thanks) thanks.hidden = false;
+        b.disabled = true;
+        b.parentElement?.querySelectorAll('button').forEach((x) => {
+          if (x !== b) (x as HTMLButtonElement).disabled = true;
+        });
+      });
+    });
+  }
+</script>
+
+<style>
+  .page-feedback {
+    margin: 3rem 0 1.5rem;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border-dim, #2e1065);
+    border-radius: .65rem;
+    background: var(--surface, #05010f);
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: .75rem 1rem;
+    align-items: center;
+  }
+  .page-feedback-prompt { display: flex; flex-direction: column; gap: .15rem; }
+  .page-feedback-prompt strong { font-size: .92rem; }
+  .page-feedback-prompt span { color: var(--muted, #a1a1aa); font-size: .82rem; }
+  .page-feedback-actions { display: flex; gap: .5rem; }
+  .page-feedback-actions button {
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .4rem .8rem;
+    font: 500 .8rem var(--font-mono, ui-monospace, monospace);
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted, #a1a1aa);
+    background: var(--surface-raised, #0a0417);
+    border: 1px solid var(--border-dim, #2e1065);
+    border-radius: .4rem;
+    cursor: pointer;
+    transition: color .15s, border-color .15s;
+  }
+  .page-feedback-actions button:hover:not(:disabled) {
+    color: var(--text, #fff);
+    border-color: var(--purple, #8b5cf6);
+  }
+  .page-feedback-actions button:disabled { opacity: .55; cursor: default; }
+  .page-feedback-actions svg { width: 1rem; height: 1rem; }
+  .page-feedback-thanks {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: var(--purple-bright, #c084fc);
+    font-size: .82rem;
+  }
+  .page-feedback-thanks a { color: inherit; }
+  @media (max-width: 640px) {
+    .page-feedback { grid-template-columns: 1fr; }
+  }
+</style>

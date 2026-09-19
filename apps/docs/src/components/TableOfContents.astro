@@ -1,0 +1,65 @@
+---
+type Heading = { depth: number; slug: string; text: string };
+type Props = { headings: Heading[]; title?: string };
+const { headings, title = 'On this page' } = Astro.props;
+const items = headings.filter((h) => h.depth === 2 || h.depth === 3);
+---
+
+{items.length > 0 && (
+  <aside class="toc" aria-label={title}>
+    <h2 class="toc-title">{title}</h2>
+    <ol class="toc-list">
+      {items.map((h) => (
+        <li class:list={[`toc-depth-${h.depth}`]}>
+          <a href={`#${h.slug}`}>{h.text}</a>
+        </li>
+      ))}
+    </ol>
+  </aside>
+)}
+
+<style>
+  .toc {
+    position: sticky;
+    top: calc(var(--header-height) + 1rem);
+    max-height: calc(100vh - var(--header-height) - 2rem);
+    overflow-y: auto;
+    font-size: .82rem;
+    line-height: 1.5;
+  }
+  .toc-title {
+    font: 600 .65rem var(--font-mono, ui-monospace, monospace);
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--dim);
+    margin: 0 0 .8rem;
+  }
+  .toc-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-left: 1px solid var(--border-dim, #2e1065);
+  }
+  .toc-list li {
+    margin: 0;
+  }
+  .toc-list a {
+    display: block;
+    padding: .35rem .9rem;
+    color: var(--muted, #a1a1aa);
+    text-decoration: none;
+    border-left: 2px solid transparent;
+    margin-left: -1px;
+    transition: color .15s, border-color .15s;
+  }
+  .toc-list a:hover {
+    color: var(--text, #fff);
+  }
+  .toc-depth-3 a {
+    padding-left: 1.7rem;
+    font-size: .78rem;
+  }
+  @media (max-width: 1180px) {
+    .toc { display: none; }
+  }
+</style>

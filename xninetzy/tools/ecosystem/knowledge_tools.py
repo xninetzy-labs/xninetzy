@@ -72,7 +72,11 @@ def knowledge_ingest_file(
         file_path: Path lokal file
         title: Judul (default: nama file)
         source_type: Tipe sumber
+<<<<<<< Updated upstream
         chat_id:  chat ID (dari context)
+=======
+        chat_id: WhatsApp chat ID (dari context)
+>>>>>>> Stashed changes
         idempotency_key: Kunci opsional agar retry tidak menggandakan ingest
     """
     from pathlib import Path

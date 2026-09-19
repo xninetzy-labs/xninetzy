@@ -49,9 +49,18 @@ def parse_bpmn_text(xml_text: str) -> ProcessModel:
         root = ET.fromstring(xml_text)
     except ParseError as exc:
         raise ValueError(f"invalid BPMN XML: {exc}") from exc
-    process_el = root.find(_q(BPMN_NS, "process"))
+    process_el = None
+    for child in root.iter():
+        if _local(child.tag) == "process":
+            process_el = child
+            break
     if process_el is None:
         raise ValueError("BPMN payload missing <process> element")
+    lane_set = None
+    for child in process_el:
+        if _local(child.tag) == "laneSet":
+            lane_set = child
+            break
     model_id = process_el.attrib.get("id", "process-1")
     title = process_el.attrib.get("name", model_id)
     description = process_el.attrib.get("", "")
@@ -106,17 +115,18 @@ def parse_bpmn_text(xml_text: str) -> ProcessModel:
             )
         )
     lanes: list[ProcessLane] = []
-    lane_set = process_el.find(_q(BPMN_NS, "laneSet"))
     if lane_set is not None:
-        for lane_el in lane_set.findall(_q(BPMN_NS, "lane")):
+        for lane_el in lane_set:
+            if _local(lane_el.tag) != "lane":
+                continue
             lane_id = lane_el.attrib.get("id")
             lane_name = lane_el.attrib.get("name", lane_id or "lane")
             if not lane_id:
                 continue
             lane_node_ids = tuple(
                 ref.attrib.get("id")
-                for ref in lane_el.findall(_q(BPMN_NS, "flowNodeRef"))
-                if ref.attrib.get("id")
+                for ref in lane_el
+                if _local(ref.tag) == "flowNodeRef" and ref.attrib.get("id")
             )
             lanes.append(
                 ProcessLane(

@@ -929,12 +929,15 @@ def get_tool_groups() -> dict[str, list[str]]:
             "web_search",
             "youtube_search",
         ],
+<<<<<<< Updated upstream
         "tasks": [
             "tasks_submit",
             "tasks_get",
             "tasks_cancel",
             "tasks_list",
         ],
+=======
+>>>>>>> Stashed changes
         "career": [
             "career_search_jobs",
             "career_search_internships",

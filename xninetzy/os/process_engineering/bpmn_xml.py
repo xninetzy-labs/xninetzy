@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import json
 from pathlib import Path
 
 from xninetzy.context.process_engineering.bpmn_io import (
@@ -10,7 +9,6 @@ from xninetzy.context.process_engineering.bpmn_io import (
 from xninetzy.context.process_engineering.model import (
     ARTIFACT_STATUS_DRAFT,
     ProcessArtifact,
-    ProcessModel,
 )
 from xninetzy.os.process_engineering.serializers import (
     deserialize_artifact,

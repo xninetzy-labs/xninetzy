@@ -31,25 +31,30 @@ def knowledge_ingest_text(
 
     def _ingest() -> str:
         result = ingest_text(title, text, source_type, uri)
+        status = result.get("status", "unknown")
         record_event(
             chat_id,
             "pdf_ingested",
             "manual",
             "note",
             result.get("source_id", ""),
-            {"title": title, "chunks": result.get("chunks", 0)},
+            {"title": title, "chunks": result.get("chunks", 0), "status": status},
         )
 
-        if result["status"] == "already_exists":
+        if status == "already_exists":
             return f"ℹ️ Sumber *{title}* sudah ada di knowledge base."
-        if result["status"] == "empty":
+        if status == "empty":
             return "⚠️ Teks kosong, tidak ada yang diingest."
+        if status == "ingested":
+            return f"✅ Diingest ke knowledge:\n*{title}*\n{result.get('chunks', 0)} chunk | ID: `{result.get('source_id', '?')}`"
+        return f"⚠️ Status ingest tidak dikenal: {status} ({result})"
 
-        return f"✅ Diingest ke knowledge:\n*{title}*\n{result['chunks']} chunk | ID: `{result.get('source_id', '?')}`"
-
-    result, _created = idempotent_call(
-        "knowledge_ingest_text", idempotency_key, payload, _ingest
-    )
+    try:
+        result, _created = idempotent_call(
+            "knowledge_ingest_text", idempotency_key, payload, _ingest
+        )
+    except Exception as exc:
+        return f"❌ Gagal ingest teks: {exc}"
     return result
 
 
@@ -59,6 +64,7 @@ def knowledge_ingest_file(
     title: str | None = None,
     source_type: str = "hebat_pdf",
     chat_id: str = "system",
+    idempotency_key: str = "",
 ) -> str:
     """Ingest file ke knowledge base (PDF, Markdown, TXT, JSON, CSV, DOCX, PPTX, XLSX).
 
@@ -67,53 +73,68 @@ def knowledge_ingest_file(
         title: Judul (default: nama file)
         source_type: Tipe sumber
         chat_id: WhatsApp chat ID (dari context)
+        idempotency_key: Kunci opsional agar retry tidak menggandakan ingest
     """
     from pathlib import Path
 
+    from xninetzy.db.idempotency import idempotent_call
     from xninetzy.os.knowledge.ingestion import (
         ingest_document,
         ingest_pdf,
         ingest_text,
     )
 
-    path = Path(file_path)
-    if not path.exists():
-        return f"❌ File tidak ditemukan: {file_path}"
+    payload = {"file_path": file_path, "title": title, "source_type": source_type}
 
-    suffix = path.suffix.lower()
-    if suffix == ".pdf":
-        result = ingest_pdf(file_path, title, source_type)
-    elif suffix in {".md", ".markdown", ".txt", ".json", ".csv"}:
-        try:
-            text = path.read_text(encoding="utf-8", errors="replace")
-        except Exception as e:
-            return f"❌ Gagal membaca file teks: {e}"
-        if not text.strip():
-            return "⚠️ File kosong, tidak ada yang diingest."
-        result = ingest_text(title or path.stem, text, source_type, uri=str(path))
-    else:
-        result = ingest_document(file_path, title=title, source_type=source_type)
+    def _do() -> str:
+        path = Path(file_path)
+        if not path.exists():
+            return f"❌ File tidak ditemukan: {file_path}"
 
-    if result.get("status") == "error":
-        return f"❌ Gagal ingest: {result.get('error')}"
-    if result["status"] == "already_exists":
-        return "ℹ️ File sudah ada di knowledge base."
-    if result["status"] == "empty":
-        return "⚠️ Isi file kosong, tidak ada yang diingest."
+        suffix = path.suffix.lower()
+        if suffix == ".pdf":
+            result = ingest_pdf(file_path, title, source_type)
+        elif suffix in {".md", ".markdown", ".txt", ".json", ".csv"}:
+            try:
+                text = path.read_text(encoding="utf-8", errors="replace")
+            except Exception as e:
+                return f"❌ Gagal membaca file teks: {e}"
+            if not text.strip():
+                return "⚠️ File kosong, tidak ada yang diingest."
+            result = ingest_text(title or path.stem, text, source_type, uri=str(path))
+        else:
+            result = ingest_document(file_path, title=title, source_type=source_type)
 
-    record_event(
-        chat_id,
-        "file_ingested",
-        "file",
-        "note",
-        str(result.get("source_id", "")),
-        {"title": result.get("title"), "chunks": result.get("chunks", 0)},
-    )
-    return (
-        f"✅ Diingest!\n"
-        f"*{result['title']}*\n"
-        f"{result.get('chunks', 0)} chunk"
-    )
+        status = result.get("status", "unknown")
+        if status == "error":
+            return f"❌ Gagal ingest: {result.get('error')}"
+        if status == "already_exists":
+            return "ℹ️ File sudah ada di knowledge base."
+        if status == "empty":
+            return "⚠️ Isi file kosong, tidak ada yang diingest."
+        if status == "ingested":
+            record_event(
+                chat_id,
+                "file_ingested",
+                "file",
+                "note",
+                str(result.get("source_id", "")),
+                {"title": result.get("title"), "chunks": result.get("chunks", 0)},
+            )
+            return (
+                f"✅ Diingest!\n"
+                f"*{result.get('title')}*\n"
+                f"{result.get('chunks', 0)} chunk"
+            )
+        return f"⚠️ Status ingest tidak dikenal: {status}"
+
+    try:
+        result, _created = idempotent_call(
+            "knowledge_ingest_file", idempotency_key, payload, _do
+        )
+    except Exception as exc:
+        return f"❌ Gagal ingest file: {exc}"
+    return result
 
 
 @tool
@@ -129,10 +150,17 @@ def knowledge_search(query: str, limit: int = 5) -> str:
         retrieve_evidence,
     )
 
-    bundle = retrieve_evidence(query, limit=limit)
+    clamped = max(1, min(int(limit), 50))
+    try:
+        bundle = retrieve_evidence(query, limit=clamped)
+    except Exception as exc:
+        return f"❌ Gagal mencari evidence: {exc}"
     if not bundle.evidence:
         return "Tidak ada hasil di knowledge base untuk query tersebut."
-    return render_evidence_bundle(bundle)
+    try:
+        return render_evidence_bundle(bundle)
+    except Exception as exc:
+        return f"❌ Gagal render evidence bundle: {exc}"
 
 
 @tool
@@ -145,15 +173,21 @@ async def knowledge_answer(query: str, chat_id: str = "system") -> str:
     """
     from xninetzy.os.knowledge.retrieval import answer_from_knowledge
 
-    answer = await answer_from_knowledge(query)
-    record_event(
-        chat_id,
-        "knowledge_answered",
-        "knowledge",
-        "query",
-        None,
-        {"query": query[:500]},
-    )
+    try:
+        answer = await answer_from_knowledge(query)
+    except Exception as exc:
+        return f"❌ Gagal menjawab dari knowledge base: {exc}"
+    try:
+        record_event(
+            chat_id,
+            "knowledge_answered",
+            "knowledge",
+            "query",
+            None,
+            {"query": query[:500]},
+        )
+    except Exception:
+        pass
     return answer
 
 
@@ -167,15 +201,21 @@ def knowledge_list_sources(source_type: str | None = None, limit: int = 20) -> s
     """
     from xninetzy.os.knowledge.ingestion import list_sources
 
-    sources = list_sources(source_type, limit)
+    clamped = max(1, min(int(limit), 200))
+    try:
+        sources = list_sources(source_type, clamped)
+    except Exception as exc:
+        return f"❌ Gagal membaca daftar sumber: {exc}"
     if not sources:
         return "Belum ada sumber di knowledge base."
 
     lines = [f"📚 *Knowledge Sources ({len(sources)}):*\n"]
     for s in sources:
-        lines.append(
-            f"`{s['id']}` *{s['title']}* ({s['source_type']}) — {s['created_at'][:10]}"
-        )
+        sid = s.get("id", "?")
+        title = s.get("title", "?")
+        stype = s.get("source_type", "?")
+        created = s.get("created_at", "")[:10]
+        lines.append(f"`{sid}` *{title}* ({stype}) — {created}")
     return "\n".join(lines)
 
 
@@ -184,5 +224,8 @@ def knowledge_rebuild_index() -> str:
     """Rebuild FAISS vector index dari semua knowledge chunks yang ada di database."""
     from xninetzy.os.knowledge.vector_store import rebuild_index
 
-    count = rebuild_index()
+    try:
+        count = rebuild_index()
+    except Exception as exc:
+        return f"❌ Gagal rebuild index: {exc}"
     return f"✅ Knowledge index di-rebuild: {count} vectors"

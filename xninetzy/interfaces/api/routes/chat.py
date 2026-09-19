@@ -14,7 +14,6 @@ from xninetzy.ecosystem.command_router import (
     parse_command,
 )
 from xninetzy.os.memory.chat_store import ChatStore
-from xninetzy.os.ai_preferences import resolve_user_profile
 from xninetzy.schemas.chat import ChatRequest, ChatResponse
 from xninetzy.interfaces.api.deps.auth import require_api_key
 from xninetzy.interfaces.api.chat_events import bind_chat_event_queue, emit_chat_event
@@ -284,9 +283,7 @@ async def chat(request: ChatRequest) -> ChatResponse:
     # recommend direct tool invocation rather than running a hidden agent
     # loop on the server side.
     settings = get_settings()
-    user_key = request.sender_id or request.chat_id
     store = ChatStore()
-    history = store.get_recent(request.chat_id)
     fallback_reply = (
         "Xninetzy MCP tidak lagi menjalankan agent loop server-side. "
         "Gunakan slash command (mis. /today, /helper, /tasks, /hebat) atau "

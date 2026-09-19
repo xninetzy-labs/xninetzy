@@ -89,7 +89,7 @@ def ensure_write_allowed(path: Path, *, overwrite: bool = False) -> None:
     if not settings.OBSIDIAN_ALLOW_WRITE:
         raise ObsidianSafetyError("Write ke Obsidian sedang disabled")
     if path.exists() and not overwrite:
-        raise ObsidianSafetyError("File sudah ada; overwrite butuh konfirmasi")
+        raise FileExistsError(f"File sudah ada; overwrite butuh konfirmasi: {path}")
 
 
 def ensure_delete_allowed() -> None:

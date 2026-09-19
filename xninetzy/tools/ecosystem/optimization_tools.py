@@ -89,7 +89,6 @@ def dspy_optimize_prompt(
                 ensure_ascii=False,
             )
         )
-    import dspy
 
     proposed_change_id = f"proposal-{uuid.uuid4().hex[:12]}"
     output = {

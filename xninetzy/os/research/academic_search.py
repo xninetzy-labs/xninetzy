@@ -7,7 +7,7 @@ from xninetzy.core.logging import logging
 
 logger = logging.getLogger(__name__)
 
-ARXIV_ENDPOINT = "http://export.arxiv.org/api/query"
+ARXIV_ENDPOINT = "https://export.arxiv.org/api/query"
 ARXIV_PDF_ENDPOINT = "https://arxiv.org/pdf"
 CROSSREF_ENDPOINT = "https://api.crossref.org/works"
 
@@ -19,7 +19,7 @@ async def _fetch_text(
 ) -> str:
     import httpx
 
-    async with httpx.AsyncClient(timeout=20, trust_env=False) as client:
+    async with httpx.AsyncClient(timeout=20, trust_env=False, follow_redirects=True) as client:
         resp = await client.get(url, params=params, headers=headers)
         resp.raise_for_status()
         return resp.text

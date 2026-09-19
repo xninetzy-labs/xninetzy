@@ -38,9 +38,6 @@ def _from_post(post: dict[str, Any]) -> SourceRecord:
     score = post.get("score") or 0
     num_comments = post.get("num_comments") or 0
     created_utc = post.get("created_utc")
-    created_at = (
-        f"{int(created_utc):.0f}".rjust(13, "0") if isinstance(created_utc, (int, float)) else None
-    )
     iso = None
     if isinstance(created_utc, (int, float)):
         try:
@@ -55,6 +52,10 @@ def _from_post(post: dict[str, Any]) -> SourceRecord:
         identifiers["reddit"] = str(post["id"])
     if subreddit:
         identifiers["subreddit"] = str(subreddit)
+    if score:
+        identifiers["score"] = str(score)
+    if num_comments:
+        identifiers["num_comments"] = str(num_comments)
     snippet_parts = []
     if subreddit:
         snippet_parts.append(f"r/{subreddit}")

@@ -1,27 +1,20 @@
 from __future__ import annotations
 
-import json
 
 from xninetzy.cli.orchestrator import _validate_plan
 from xninetzy.os.research.router import RouteRequest, route_sources
 from xninetzy.os.research.sources import (
-    SOURCE_REGISTRY,
     SourceCategory,
     get_adapter,
     list_adapters,
 )
 from xninetzy.os.research.sources.base import (
-    HealthStatus,
-    RateLimit,
     RetryPolicy,
-    SourceAdapter,
-    SourceCategory as SC,
     SourceRecord,
     CircuitBreaker,
 )
 from xninetzy.os.research.sources.rate_limit import (
     CircuitBreakerGuard,
-    RateLimiter,
     retry_async,
 )
 from xninetzy.os.security.captcha import status_snapshot
@@ -148,8 +141,6 @@ def test_circuit_breaker_opens_after_threshold() -> None:
         await guard.record_failure()
         await guard.record_failure()
         return await guard.allow()
-
-    import asyncio
 
     allowed = asyncio.run(_drive())
     assert allowed is False

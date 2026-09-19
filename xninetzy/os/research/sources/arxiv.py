@@ -63,7 +63,7 @@ def _from_arxiv_dict(item: dict) -> SourceRecord:
 class ArxivAdapter(SourceAdapter):
     id = "arxiv"
     category = SourceCategory.PAPER
-    base_url = "http://export.arxiv.org/api/query"
+    base_url = "https://export.arxiv.org/api/query"
     requires_api_key = False
     rate_limit = RateLimit(requests_per_minute=30, burst=3)
     retry = RetryPolicy(max_attempts=3, backoff_base_seconds=0.5, backoff_max_seconds=8.0)

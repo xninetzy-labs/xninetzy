@@ -12,8 +12,27 @@ from typing import Any
 import yaml
 
 from xninetzy.core.logging import logging
+from xninetzy.os.policy.action_policy import RiskClass
 from xninetzy.os.research.sources.base import stable_idempotency_key
+from xninetzy.tools.manifest import manifest_for
 from xninetzy.tools.registry import get_all_tools
+
+
+_RISK_TO_TIER = {
+    RiskClass.READ: 0,
+    RiskClass.DRAFT: 1,
+    RiskClass.WRITE: 1,
+    RiskClass.FINAL: 3,
+}
+
+
+def _effective_tier(tool_name: str, declared_tier: int) -> int:
+    try:
+        manifest = manifest_for(tool_name)
+        manifest_tier = _RISK_TO_TIER.get(manifest.risk, declared_tier)
+    except Exception:
+        manifest_tier = declared_tier
+    return max(int(declared_tier), int(manifest_tier))
 
 logger = logging.getLogger(__name__)
 
@@ -88,7 +107,7 @@ def _build_tool_map() -> dict[str, Any]:
 async def _run_step(step: dict[str, Any], plan_id: str, tool_map: dict[str, Any]) -> StepResult:
     sid = str(step.get("id") or f"step-{uuid.uuid4().hex[:8]}")
     tool_name = str(step.get("tool") or "")
-    tier = int(step.get("tier", 0))
+    declared_tier = int(step.get("tier", 0))
     args = dict(step.get("args") or {})
     idempotency_key = _resolve_idempotency(step, plan_id)
     started_at = _now_iso()
@@ -102,12 +121,13 @@ async def _run_step(step: dict[str, Any], plan_id: str, tool_map: dict[str, Any]
             started_at=started_at,
             finished_at=_now_iso(),
         )
-    if tier >= 2:
+    effective = _effective_tier(tool_name, declared_tier)
+    if effective >= 2:
         return StepResult(
             step_id=sid,
             tool=tool_name,
             status="halted",
-            error=f"tier {tier} requires explicit owner approval; run with --approve <approval_id> to execute",
+            error=f"tier {effective} (declared={declared_tier}) requires explicit owner approval; run with --approve <approval_id> to execute",
             idempotency_key=idempotency_key,
             started_at=started_at,
             finished_at=_now_iso(),

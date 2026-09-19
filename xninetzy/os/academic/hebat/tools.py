@@ -33,6 +33,7 @@ from xninetzy.os.academic.hebat.pdf_reader import summarize_pdf
 from xninetzy.os.academic.hebat.storage import (
     create_submission,
     get_activity_by_cmid,
+    get_course_by_id,
     get_session,
     get_submission_by_token,
     has_reminder_for_assignment,
@@ -992,8 +993,6 @@ async def _upload_direct_admin(
     idempotency_key: str | None,
 ) -> str:
     """Upload langsung tanpa token WA. Memerlukan approval_id dan file valid."""
-    s = get_settings()
-
     if not os.path.isfile(file_path):
         return tool_error(
             ToolErrorCode.NOT_FOUND,

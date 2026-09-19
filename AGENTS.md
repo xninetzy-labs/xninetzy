@@ -648,3 +648,58 @@ fallback. This satisfies `§24 #9` (never bypass CAPTCHA/OTP/MFA).
   `status='proposed'`. Classifies by `risk_level` (low → dry-run eligible,
   anything else → requires owner approval). **Dry-run only — no source
   modification.** Apply path requires `improvement_approve` (FINAL).
+
+---
+
+# 29. Career Intelligence Domain
+
+Adopted 2026-09-19. The MCP surface expands beyond research into a
+**Career Intelligence Domain** — equal-status sibling to research,
+business, AI, security, developer, data, trend, and MCP intelligence.
+The engine (router + planner + registry + cache + deduplication +
+entity-resolution + evidence + citation + security) is shared.
+
+```text
+XNINETZY INTELLIGENCE MCP
+        │
+   Intelligence Engine (shared core)
+        │
+   ┌────┬────┬────┬────┬────┬────┬────┬────┐
+   │    │    │    │    │    │    │    │    │
+Research Career Business AI Security Developer Data Trend MCP
+   │    │    │    │    │    │    │    │    │
+   └────┴────┴────┴────┴────┴────┴────┴────┘
+                ↓
+       Evidence / Memory / Evaluation / Reflection / Self-improvement
+```
+
+- Tools: 17 in `xninetzy/tools/ecosystem/career_tools.py` (tier 0):
+  `career_search_jobs`, `career_search_internships`, `career_skill_gap`,
+  `career_market_skill_trend`, `career_resume_tailor`,
+  `career_search_companies`, `career_get_job`, `career_extract_requirements`,
+  `career_company_research`, `career_salary_analysis`,
+  `career_find_similar_jobs`, `career_find_alternative_titles`,
+  `career_find_hidden_jobs`, `career_monitor`, `career_track_application`,
+  `career_interview_prep`, `career_resume_analysis`.
+- Skill bodies: 14 under `.agents/skills/career/` (job-discovery,
+  internship-discovery, job-search, job-matching, skill-gap,
+  company-research, salary-analysis, market-skill-trend, cv-analysis,
+  resume-tailoring, interview-prep, application-tracking, job-monitoring,
+  job-risk-analysis).
+- Source adapters (Phase 1 — legal free public APIs only):
+  `RemoteOkAdapter` (`https://remoteok.com/api`) and
+  `ArbeitNowAdapter` (`https://www.arbeitnow.com/api/job-board-api`).
+  Registered under `SourceCategory.COMPANY` in
+  `xninetzy/os/research/router.py::_ROUTING_TABLE`.
+- Legal boundary: no scraping of LinkedIn, Indeed, JobStreet, Glints,
+  or any walled-garden source. Only sources with explicit free public
+  API access. Career skill bodies cite this as an anti-pattern.
+- Identity / privacy: `career_track_application` is owner-scoped;
+  `career_monitor` requires `sender_id`; CV analysis never persists CV
+  text outside an explicit owner-controlled location.
+
+Design rationale: a "career intelligence" domain fits naturally on top
+of the existing source adapter + router + evidence + harness infra.
+Job postings are records. Companies are entities. Skills are extracted
+evidence. The same engine that grades a research paper grades a job
+posting — only the adapter registry differs.

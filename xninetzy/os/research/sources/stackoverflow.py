@@ -35,7 +35,7 @@ def _from_question(q: dict[str, Any]) -> SourceRecord:
     tags = q.get("tags") or []
     score = q.get("score") or 0
     is_answered = bool(q.get("is_answered"))
-    view_count = q.get("view_count") or 0
+    view_count = int(q.get("view_count") or 0)
     creation_date = q.get("creation_date")
     owner = (q.get("owner") or {}).get("display_name") if isinstance(q.get("owner"), dict) else None
     snippet = (q.get("excerpt") or "")[:600] if q.get("excerpt") else " ".join(tags)
@@ -44,6 +44,10 @@ def _from_question(q: dict[str, Any]) -> SourceRecord:
         identifiers["so"] = question_id
     if tags:
         identifiers["tags"] = ",".join(tags[:5])
+    if view_count:
+        identifiers["view_count"] = str(view_count)
+    if is_answered:
+        identifiers["is_answered"] = "1"
     return SourceRecord(
         title=title,
         url=link,

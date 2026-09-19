@@ -1,8 +1,6 @@
 from __future__ import annotations
 
-import json
 import xml.etree.ElementTree as ET
-from typing import Any
 from urllib.parse import urlparse
 
 from xninetzy.core.logging import logging

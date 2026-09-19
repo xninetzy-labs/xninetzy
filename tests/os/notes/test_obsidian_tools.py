@@ -185,3 +185,38 @@ def test_obsidian_update_section_trims_heading_whitespace(isolated_vault):
     saved = (isolated_vault / "Note.md").read_text(encoding="utf-8")
     assert "Active" in saved
     assert saved.count("Status") == 1
+
+
+def test_obsidian_read_offset_beyond_total_reports_clear_error(isolated_vault):
+    path = "OffsetTest.md"
+    obsidian_create.invoke({"path": path, "content": "short note", "overwrite": True})
+    result = obsidian_read.invoke({"path": path, "offset": 9999, "limit": 100})
+    assert "Offset" in result
+    assert "Tidak ada lagi konten" in result
+
+
+def test_obsidian_read_negative_offset_clamps_to_zero(isolated_vault):
+    path = "NegOffset.md"
+    obsidian_create.invoke({"path": path, "content": "hello world", "overwrite": True})
+    result = obsidian_read.invoke({"path": path, "offset": -5, "limit": 100})
+    assert "hello world" in result
+
+
+def test_obsidian_read_zero_limit_reports_error(isolated_vault):
+    path = "ZeroLimit.md"
+    obsidian_create.invoke({"path": path, "content": "x", "overwrite": True})
+    result = obsidian_read.invoke({"path": path, "offset": 0, "limit": 0})
+    assert "Limit tidak valid" in result
+
+
+def test_obsidian_search_handles_no_match_gracefully(isolated_vault):
+    result = obsidian_search.invoke({"query": "absolutely_no_match_token_xyz", "limit": 5})
+    assert "Tidak ada catatan" in result
+
+
+def test_obsidian_save_note_falls_back_on_duplicate_with_timestamp(isolated_vault):
+    from xninetzy.tools.internal.obsidian import obsidian_save_note
+    first = obsidian_save_note.invoke({"title": "Dup", "content": "first", "folder": "Notes"})
+    second = obsidian_save_note.invoke({"title": "Dup", "content": "second", "folder": "Notes"})
+    assert "Disimpan" in first
+    assert "timestamp" in second

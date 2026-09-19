@@ -110,13 +110,16 @@ def obsidian_search(query: str, limit: int = 10) -> str:
         query: Kata kunci pencarian
         limit: Jumlah maksimal hasil (default 10)
     """
-    matches = _vault().search_notes(query, limit)
-    if not matches:
-        return f"Tidak ada catatan tentang '{query}' di vault."
-    lines = [f"Ditemukan {len(matches)} catatan tentang *{query}*:"]
-    for i, m in enumerate(matches[:limit], 1):
-        lines.append(f"{i}. `{m['path']}`")
-    return "\n".join(lines)
+    try:
+        matches = _vault().search_notes(query, max(1, min(limit, 200)))
+        if not matches:
+            return f"Tidak ada catatan tentang '{query}' di vault."
+        lines = [f"Ditemukan {len(matches)} catatan tentang *{query}*:"]
+        for i, m in enumerate(matches, 1):
+            lines.append(f"{i}. `{m['path']}`")
+        return "\n".join(lines)
+    except Exception as exc:
+        return f"Gagal mencari catatan: {exc}"
 
 
 @tool
@@ -141,6 +144,12 @@ def obsidian_read(path: str, offset: int = 0, limit: int = 3000) -> str:
     try:
         content = _vault().read_note(path)
         total = len(content)
+        if offset < 0:
+            offset = 0
+        if limit < 1:
+            return f"⚠️ Limit tidak valid ({limit}); harus >= 1."
+        if offset >= total:
+            return f"⚠️ Offset {offset} >= total {total}. Tidak ada lagi konten."
         selected = content[offset : offset + limit]
         truncated = offset + len(selected) < total
         note = f"*{path}* (total {total} chars)\n\n{selected}"
@@ -207,11 +216,13 @@ def obsidian_save_note(title: str, content: str, folder: str = "Knowledge/Notes"
     try:
         result = _vault().create_note(path, content, overwrite=False)
         return f"✅ Disimpan: `{result['path']}`"
-    except Exception:
+    except FileExistsError:
         today = datetime.now().strftime("%Y-%m-%d-%H%M")
         path = f"{folder}/{safe_title}-{today}.md"
         try:
             result = _vault().create_note(path, content, overwrite=False)
             return f"✅ Disimpan (dengan timestamp): `{result['path']}`"
         except Exception as e2:
-            return f"Gagal menyimpan catatan: {e2}"
+            return f"Gagal menyimpan catatan (fallback): {e2}"
+    except Exception as e:
+        return f"Gagal menyimpan catatan: {e}"

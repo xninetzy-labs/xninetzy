@@ -19,11 +19,15 @@ language: en
 
 # 1. What this project is
 
-Xninetzy is a **single-purpose MCP server**. The v2.2.0 pivot removed the
-Baileys WhatsApp engine, the Ink CLI, the LangGraph conversational agent,
-and every host-bridge / chat-failover / autonomous-coding reference.
-There is **no server-side agent loop**. Clients do their own reasoning
-and call MCP tools.
+Xninetzy is a **single-purpose MCP server** — **Xninetzy Intelligence
+MCP** — exposing many sibling domains (Research, Career, Business, AI,
+Security, Developer, Data, Trend, MCP) over one shared engine (router,
+planner, source registry, cache, deduplication, entity-resolution,
+evidence, citation, security). The v2.2.0 pivot removed the Baileys
+WhatsApp engine, the Ink CLI, the LangGraph conversational agent, and
+every host-bridge / chat-failover / autonomous-coding reference. There
+is **no server-side agent loop**. Clients do their own reasoning and
+call MCP tools.
 
 The repository contains exactly three things:
 
@@ -192,6 +196,21 @@ Three tools extend S6 harness:
   replayable actions (sequence with `outcome != "ok"`).
 - `harness_checkpoint_commit(plan_id, step_id, status, payload)` —
   persists a checkpoint into `observability_events`.
+
+# 7f. Career Intelligence Domain
+
+Xninetzy positioning is **Xninetzy Intelligence MCP** — many sibling
+domains (Research, Career, Business, AI, Security, Developer, Data,
+Trend, MCP) sharing one engine (router, planner, source-registry,
+cache, deduplication, entity-resolution, evidence, citation, security).
+
+Career is the second shipped domain after Research. Source adapters
+live in `xninetzy/os/research/sources/` under `SourceCategory.COMPANY`.
+Phase-1 legal free public APIs only: RemoteOK, ArbeitNow. No scraping
+of LinkedIn, Indeed, JobStreet, Glints, or walled-garden sites.
+
+- Tools: 17 in `xninetzy/tools/ecosystem/career_tools.py` (all tier 0)
+- Skill bodies: 14 under `.agents/skills/career/`
 
 # 8. Authority hierarchy
 

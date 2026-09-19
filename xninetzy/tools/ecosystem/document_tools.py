@@ -56,7 +56,7 @@ def document_ingest(
         file_path: Path lokal dokumen
         title: Judul (default: nama file)
         source_type: Tipe sumber
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.knowledge.ingestion import ingest_document
 

@@ -1,15 +1,16 @@
----
 
-name: xninetzy-artifact-orchestrator
 
-description: Artifact-production control plane for creating, integrating, validating, versioning, and delivering documents, PDFs, presentations, spreadsheets, diagrams, reports, and multi-file deliverable packages. Establishes artifact identity, requirements, source/evidence traceability, information architecture, bounded production, integration, artifact-specific QA, rendering verification, revision, freeze, and delivery state. Use for substantial or multi-stage artifact work where correctness, structure, visual integrity, or packaging must be verified.
+name: "xninetzy-artifact-orchestrator"
+
+description: "Artifact-production control plane for creating, integrating, validating, versioning, and delivering documents, PDFs, presentations, spreadsheets, diagrams, reports, and multi-file deliverable packages. Establishes artifact identity, requirements, source/evidence traceability, information architecture, bounded production, integration, artifact-specific QA, rendering verification, revision, freeze, and delivery state. Use for substantial or multi-stage artifact work where correctness, structure, visual integrity, or packaging must be verified."
 
 metadata:
-   scope: general
-   owner: xninetzy
-   language: en
-   version: "3.0.0"
-   priority: P1
+            sc---
+pe: "general"
+            owner: "xninetzy"
+            language: "en"
+            version: "3.0.0"
+            priority: "P1"
 
 lifecycle: "discover -> bind -> specify -> inspect -> source -> architect -> produce -> integrate -> validate -> render -> qa -> revise -> freeze -> checkpoint -> deliver"
 
@@ -54,14 +55,14 @@ non_goals:
 - replacing specialized artifact-generation skills
 
 routing:
-   academic_assignment: hebat-assignment
-   academic_lms: hebat-academic
-   complex_assignment_orchestration: xninetzy-assignment-orchestrator
-   research: xninetzy-deep-research
-   document: docx
-   pdf: pdf
-   presentation: slides
-   spreadsheet: spreadsheets
+            academic_assignment: "hebat-assignment"
+            academic_lms: "hebat-academic"
+            complex_assignment_orchestration: "xninetzy-assignment-orchestrator"
+            research: "xninetzy-deep-research"
+            document: "docx"
+            pdf: "pdf"
+            presentation: "slides"
+            spreadsheet: "spreadsheets"
 -------------------------
 
 # Xninetzy Artifact Orchestrator
@@ -106,7 +107,6 @@ freeze the exact verified version
 +
 deliver the correct package
 ```
-
 ---
 
 # 1. Responsibility Boundary

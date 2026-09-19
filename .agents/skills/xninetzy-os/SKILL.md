@@ -1,13 +1,17 @@
 ---
-name: xninetzy-os
-description: Top-level coordination layer for the Xninetzy operating system. Routes incoming requests to the appropriate domain skill, inspects relevant current state, separates reads from plans from approvals from writes, preserves verification, and integrates results across canonical subsystems.
+
+...
+
+...
+name: "xninetzy-os"
+description: "Top-level coordination layer for the Xninetzy operating system. Routes incoming requests to the appropriate domain skill, inspects relevant current state, separates reads from plans from approvals from writes, preserves verification, and integrates results across canonical subsystems."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "inspect -> understand -> route -> plan -> act -> verify -> record -> review -> adapt"
----
+...
 
 # Xninetzy OS
 

@@ -1,11 +1,11 @@
 ---
-name: secret-audit
-description: Hunt for accidentally-committed secrets (API keys, tokens, private keys, .env leaks) inside authorized scope. Use after a commit, before a release, or when the operator asks "did we leak anything?".
+name: "secret-audit"
+description: "Hunt for accidentally-committed secrets (API keys, tokens, private keys, .env leaks) inside authorized scope. Use after a commit, before a release, or when the operator asks \"did we leak anything?\"."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: domain
-  priority: P1
+  scope: "domain"
+  priority: "P1"
   required_tools:
     - repo_search
     - repo_symbol

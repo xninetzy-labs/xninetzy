@@ -1,11 +1,11 @@
 ---
-name: skill-improvement-opportunity-logger
-description: Long-running capability layered on top of the Lightning RL trace. Watches installed skills for friction patterns: repeated tool calls, low-confidence retrievals, owner escalations, recovery thrashing, prompt-size blow-ups. Emits structured `ImprovementProposal` objects routed through Lightning → HITL → `skill-creator` → benchmark → publish loop. Use when the operator asks "what's blocking the harness", or any time Lightning episodes are recorded into the trace store.
+name: "skill-improvement-opportunity-logger"
+description: "Long-running capability layered on top of the Lightning RL trace. Watches installed skills for friction patterns: repeated tool calls, low-confidence retrievals, owner escalations, recovery thrashing, prompt-size blow-ups. Emits structured `ImprovementProposal` objects routed through Lightning → HITL → `skill-creator` → benchmark → publish loop. Use when the operator asks \"what's blocking the harness\", or any time Lightning episodes are recorded into the trace store."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: process
-  priority: P0
+  scope: "process"
+  priority: "P0"
   required_tools:
     - lightning_record_action
     - lightning_record_outcome
@@ -153,11 +153,11 @@ target_skill: <name>
 episodes_scanned: N
 friction_clusters: [
     {
-        id: "<hash>",
-        frequency_pct: <float>,
-        failure_class: "..."
-        sample_episodes: ["<id>", ...]
-        proposal_id: "<uuid>" | None
+  id: "<hash>",
+  frequency_pct: <float>,
+  failure_class: "..."
+  sample_episodes: ["<id>", ...]
+  proposal_id: "<uuid>" | None
     }
 ]
 recommended_action: "create proposal" | "monitor" | "no action"

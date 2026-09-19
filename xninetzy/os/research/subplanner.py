@@ -60,7 +60,7 @@ async def generate_research_subplans(
     return plans
 
 
-def format_subplans_for_whatsapp(topic: str, subplans: list[ResearchSubPlan]) -> str:
+def format_subplans_for_(topic: str, subplans: list[ResearchSubPlan]) -> str:
     lines = [f"*Research Sub-Plan*\nTopik: {topic}\n"]
     for i, subplan in enumerate(subplans, 1):
         lines.append(f"{i}. {subplan.title}")

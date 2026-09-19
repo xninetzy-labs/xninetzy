@@ -1,5 +1,10 @@
 # Provider LLM, Coding Agent, dan MCP Xninetzy
 
+> **Post-pivot (2026-09-11):** Xninetzy is MCP-only. References to the
+> Baileys WhatsApp engine, LangGraph agent loop, and Ink CLI elsewhere in
+> this document are historical; the surviving scope is the MCP server
+> (FastAPI + FastMCP). See `docs/superpowers/specs/2026-09-11-mcp-only-pivot-design.md`.
+
 Dokumen ini menjelaskan dua jenis pilihan AI yang berbeda dan cara menghubungkan Xninetzy ke Codex, Claude Code, serta OpenCode.
 
 ## Konsep

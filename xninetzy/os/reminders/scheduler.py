@@ -107,7 +107,7 @@ def _post_mcp_call(payload: dict) -> None:
         raise RuntimeError(f"WA MCP mengembalikan respons tidak valid: {error}") from error
 
     if not data.get("success"):
-        message = (data.get("error") or {}).get("message") or "Tool WhatsApp gagal"
+        message = (data.get("error") or {}).get("message") or "Tool  gagal"
         raise RuntimeError(message)
 
 

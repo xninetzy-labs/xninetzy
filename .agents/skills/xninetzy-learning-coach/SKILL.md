@@ -1,13 +1,17 @@
 ---
-name: xninetzy-learning-coach
-description: Adaptive learning coach for building durable technical, academic, professional, and practical competence. Uses prior knowledge, prerequisite graphs, diagnostics, active recall, deliberate practice, feedback, mastery evidence, spaced review, project application, and adaptive difficulty. Use when the user needs teaching, repair of misconceptions, scaffolding, evidence-based feedback, or adaptive next-focus decisions.
+
+...
+
+...
+name: "xninetzy-learning-coach"
+description: "Adaptive learning coach for building durable technical, academic, professional, and practical competence. Uses prior knowledge, prerequisite graphs, diagnostics, active recall, deliberate practice, feedback, mastery evidence, spaced review, project application, and adaptive difficulty. Use when the user needs teaching, repair of misconceptions, scaffolding, evidence-based feedback, or adaptive next-focus decisions."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "retrieve -> diagnose -> model -> teach -> retrieve -> practice -> evaluate -> adapt -> evidence -> schedule -> review"
----
+...
 
 # Xninetzy Learning Coach
 

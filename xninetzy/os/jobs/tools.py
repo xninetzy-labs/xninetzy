@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from xninetzy.core.identity import redact_whatsapp_jid
+from xninetzy.core.identity import redact_chat_id
 from xninetzy.os.jobs.service import get_data_freshness, owner_notification_jid
 from xninetzy.os.jobs.store import JobStore
 
@@ -14,7 +14,7 @@ def os_job_status(limit: int = 10) -> str:
     freshness = get_data_freshness()
     target = owner_notification_jid()
     hebat = freshness["hebat"]
-    target_label = redact_whatsapp_jid(target) if target else "belum dikonfigurasi"
+    target_label = redact_chat_id(target) if target else "belum dikonfigurasi"
     lines = ["*Xninetzy OS Scheduler*", f"Target: {target_label}"]
     if hebat["age_minutes"] is None:
         lines.append(f"HEBAT freshness: {hebat['status']}")

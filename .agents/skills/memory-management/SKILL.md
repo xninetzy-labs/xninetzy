@@ -1,11 +1,11 @@
 ---
-name: memory-management
-description: Lifecycle governance for Xninetzy memory layers. Restricts what gets stored, where it lives (working / episodic / semantic / procedural / failure / tool / skill / security / research), when it gets promoted across layers, and when it retires. Avoids memory pollution from speculation, temporary noise, raw tool dumps, redundant facts, or unsupported claims. Use on every `memory_add`, after every successful or failed complex episode, and on a periodic cadence to retire stale entries.
+name: "memory-management"
+description: "Lifecycle governance for Xninetzy memory layers. Restricts what gets stored, where it lives (working / episodic / semantic / procedural / failure / tool / skill / security / research), when it gets promoted across layers, and when it retires. Avoids memory pollution from speculation, temporary noise, raw tool dumps, redundant facts, or unsupported claims. Use on every `memory_add`, after every successful or failed complex episode, and on a periodic cadence to retire stale entries."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: harness
-  priority: P0
+  scope: "harness"
+  priority: "P0"
   required_tools:
     - memory_add
     - memory_search

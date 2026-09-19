@@ -4,7 +4,7 @@ import asyncio
 import re
 
 from xninetzy.core.config import get_settings
-from xninetzy.interfaces.api.chat_events import emit_chat_event
+from xninetzy.os.research.chat_events import emit_chat_event
 from xninetzy.os.notifications.admin_notifier import notify_admin
 from xninetzy.os.research.actions.base import ResearchActionInput
 from xninetzy.os.research.actions.registry import ResearchActionRegistry
@@ -78,7 +78,7 @@ def generate_research_brief(topic: str, subplans: list[ResearchSubPlan], sources
     lines.append("\n*3. Temuan Utama*")
     lines.append("• Mulai dari konsep inti sebelum memilih tools.")
     lines.append("• Pisahkan research, knowledge storage, roadmap, dan approval agar aman.")
-    lines.append("• Untuk Xninetzy, MVP terbaik adalah SQLite-first dan WhatsApp-first.\n")
+    lines.append("• Untuk Xninetzy, MVP terbaik adalah SQLite-first dan -first.\n")
     lines.append("*4. Ringkasan per Sub-Plan*")
     for i, subplan in enumerate(subplans, 1):
         lines.append(f"*Sub-plan {i} - {subplan.title}*")

@@ -23,7 +23,7 @@ def test_mcp_server_exposes_all_registered_xninetzy_tools():
     assert "portal_profile" in names
     assert "portal_academic_status" in names
     assert "portal_current_krs" in names
-    assert "coding_agent_run" in names
+    assert "ai_provider_status" in names
     assert "os_capture" in names
     assert "os_today" in names
     assert "learning_define_concept" in names
@@ -33,11 +33,8 @@ def test_mcp_server_exposes_all_registered_xninetzy_tools():
     assert "learning_due_recall" in names
     assert "learning_submit_recall_answer" in names
 
-    coding_tool = mcp._tool_manager.get_tool("coding_agent_run")
-    assert coding_tool is not None
-    assert "sender_id" not in coding_tool.parameters["properties"]
-    assert "sender_name" not in coding_tool.parameters["properties"]
-    assert "chat_id" not in coding_tool.parameters["properties"]
+    ai_tool = mcp._tool_manager.get_tool("ai_provider_status")
+    assert ai_tool is not None
 
 
 def test_mcp_schema_matches_registry_including_previously_hidden_fields():

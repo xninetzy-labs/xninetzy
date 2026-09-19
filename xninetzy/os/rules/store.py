@@ -58,7 +58,7 @@ def add_rule(
             VALUES (?,?,?,?,?,?,?,1,?,?,?,?,?)
             """,
             (rid, user_id, "personal", rt, title, content.strip(), priority,
-             "whatsapp", source_message_id, "{}", now, now),
+             "", source_message_id, "{}", now, now),
         )
         return {"id": int(cur.lastrowid), "rule_id": rid, "rule_type": rt, "content": content.strip()}
 

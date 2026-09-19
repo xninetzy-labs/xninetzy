@@ -107,9 +107,9 @@ async def research_light(topic: str, limit: int = 3) -> str:
 @tool
 async def research_create_subplans(topic: str, mode: str = "balanced") -> str:
     """Buat sub-plan riset tanpa menjalankan full deep research."""
-    from xninetzy.os.research.subplanner import format_subplans_for_whatsapp, generate_research_subplans
+    from xninetzy.os.research.subplanner import format_subplans_for_, generate_research_subplans
     subplans = await generate_research_subplans(topic, None, mode)
-    return format_subplans_for_whatsapp(topic, subplans)
+    return format_subplans_for_(topic, subplans)
 
 
 @tool
@@ -179,7 +179,7 @@ async def research_save_brief(topic: str, brief: str, chat_id: str = "system") -
         "Menyimpan brief ke Obsidian/Knowledge membutuhkan approval.",
     )
     status = (
-        "Tombol dikirim ke WhatsApp admin."
+        "Tombol dikirim ke  admin."
         if delivered
         else "Pengiriman tombol gagal; periksa ADMIN_JID dan WA Engine."
     )
@@ -347,7 +347,7 @@ async def research_get_paper(
         identifier: DOI (10.xxxx/...), ID arXiv (2401.12345), atau URL keduanya
         source: auto|doi|arxiv (default: auto-deteksi)
         ingest: True untuk menyimpan metadata+abstrak ke knowledge base
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.research.academic_search import get_paper
 

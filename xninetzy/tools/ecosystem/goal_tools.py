@@ -25,10 +25,10 @@ def goal_create(title: str, description: str = "", domain: str = "personal",
         horizon: daily|weekly|monthly|quarterly|yearly|lifetime
         priority: low|medium|high|critical
         due_date: Tanggal target (YYYY-MM-DD)
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     g = create_goal(title, description, domain, horizon, priority, due_date)
-    record_event(chat_id, "goal_created", "whatsapp", "goal", str(g["id"]),
+    record_event(chat_id, "goal_created", "", "goal", str(g["id"]),
                  {"title": title, "domain": domain})
 
     try:
@@ -87,14 +87,14 @@ def goal_update_progress(goal_id: int, log_text: str, delta: float = 0,
         log_text: Deskripsi progress hari ini
         delta: Nilai numerik progress (opsional)
         mood: Skor mood 1-5 (opsional)
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     g = get_goal(goal_id)
     if not g:
         return f"Goal ID `{goal_id}` tidak ditemukan."
 
     log_progress(goal_id, log_text, delta, mood)
-    record_event(chat_id, "goal_progress_logged", "whatsapp", "goal", str(goal_id),
+    record_event(chat_id, "goal_progress_logged", "", "goal", str(goal_id),
                  {"log": log_text[:100], "delta": delta})
 
     # Append to Obsidian daily note

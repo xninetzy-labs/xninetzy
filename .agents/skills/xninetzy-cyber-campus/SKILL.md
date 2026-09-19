@@ -1,10 +1,14 @@
 ---
-name: xninetzy-cyber-campus
-description: Safely retrieve and analyze authorized Cyber Campus status, schedules, grades, and KRS using manual CAPTCHA and OTP challenges.
+
+...
+
+...
+name: "xninetzy-cyber-campus"
+description: "Safely retrieve and analyze authorized Cyber Campus status, schedules, grades, and KRS using manual CAPTCHA and OTP challenges."
 metadata:
-  owner: xninetzy
+  owner: "xninetzy"
   version: "1.1.0"
----
+...
 
 # Cyber Campus
 

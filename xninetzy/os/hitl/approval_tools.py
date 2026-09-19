@@ -57,7 +57,7 @@ async def hitl_request_plan_approval(
         composed_summary,
     )
     delivery = (
-        "Tombol approve/reject sudah dikirim ke WhatsApp admin."
+        "Tombol approve/reject sudah dikirim ke  admin."
         if delivered
         else "Tombol gagal dikirim; periksa ADMIN_JID dan koneksi WA Engine."
     )
@@ -93,7 +93,7 @@ async def hitl_request_approval(
         summary,
     )
     delivery = (
-        "Tombol approve/reject sudah dikirim ke WhatsApp admin."
+        "Tombol approve/reject sudah dikirim ke  admin."
         if delivered
         else "Tombol gagal dikirim; periksa ADMIN_JID dan koneksi WA Engine."
     )

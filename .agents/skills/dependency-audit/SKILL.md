@@ -1,17 +1,18 @@
----
 
-name: dependency-audit
 
-description: Evidence-driven dependency and software supply-chain audit for direct and transitive packages. Reviews manifests, lockfiles, dependency graphs, known vulnerabilities, license policy, provenance, package integrity, maintainership signals, reachability, exploitability context, and remediation risk within explicitly authorized scope. Use when dependencies are added, removed, upgraded, downgraded, lockfiles change, advisories affect used packages, or the operator requests a dependency surface review.
+name: "dependency-audit"
+
+description: "Evidence-driven dependency and software supply-chain audit for direct and transitive packages. Reviews manifests, lockfiles, dependency graphs, known vulnerabilities, license policy, provenance, package integrity, maintainership signals, reachability, exploitability context, and remediation risk within explicitly authorized scope. Use when dependencies are added, removed, upgraded, downgraded, lockfiles change, advisories affect used packages, or the operator requests a dependency surface review."
 
 metadata:
-   author: xninetzy
-   version: "2.0.0"
-   scope: domain
-   priority: P1
+            author: "xninetzy"
+            version: "2.0.0"
+            scope: "domain"
+            priority: "P1"
 
 required_tools:
-- repo_dependency
+- r---
+po_dependency
 - security_dependencies
 - security_scope
 - security_validate_finding
@@ -49,10 +50,10 @@ prerequisites:
 - package-manager ecosystem is identifiable
 
 escalation_routes:
-   application_security: security-review
-   infrastructure: xninetzy-security-testing
-   API_surface: api-security
-   architecture_impact: architecture-analysis
+            application_security: "security-review"
+            infrastructure: "xninetzy-security-testing"
+            API_surface: "api-security"
+            architecture_impact: "architecture-analysis"
 ------------------------------------------
 
 # dependency-audit
@@ -84,7 +85,6 @@ what regression risk remediation introduces
 The central principle is:
 
 > **A dependency advisory identifies exposure. Reachability and execution context determine relevance. Evidence determines confidence.**
-
 ---
 
 # 1. Authority Model

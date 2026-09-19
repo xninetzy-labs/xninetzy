@@ -1,9 +1,11 @@
 ---
+
+...
+
+...
 name: "screenshot"
 description: "Use when the user explicitly asks for a desktop or system screenshot (full screen, specific app or window, or a pixel region), or when tool-specific capture capabilities are unavailable and an OS-level capture is needed."
----
-
-
+...
 # Screenshot Capture
 
 Follow these save-location rules every time:

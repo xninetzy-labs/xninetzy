@@ -1,14 +1,14 @@
 ---
-name: source-selector
-description: Pick which source adapters to query for a given intent. Pure logic, no LLM. Maps research intent to the available adapter registry.
+name: "source-selector"
+description: "Pick which source adapters to query for a given intent. Pure logic, no LLM. Maps research intent to the available adapter registry."
 metadata:
-  type: meta
-  layer: research-orchestration
+  type: "meta"
+  layer: "research-orchestration"
   consumes:
     - xninetzy.os.research.router
   produces:
     - source_list
-  tier: 0
+  tier: "0"
 ---
 
 # source-selector

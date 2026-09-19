@@ -390,6 +390,16 @@ Current baseline: **828 pass / 29 fail / 7 collection-blocked** (see
 - For HEBAT, use `hebat_login_status_verbose` and
   `hebat_debug_login` MCP tools.
 
+### Skill repair
+
+If `tests/governance/test_skill_frontmatter.py::test_skill_catalog_yaml_parses`
+xfails (currently all 69 built-in skill SKILL.md files have broken YAML
+frontmatter), see [`docs/runbooks/skill-repair.md`](docs/runbooks/skill-repair.md).
+The repair tool is `scripts/repair_skill_yaml.py`; run it **outside**
+Claude Code (the in-session auto-linter hook re-damages YAML on every
+write to `.agents/skills/*/SKILL.md`). Track via
+[`KNOWN_ISSUES.md`](KNOWN_ISSUES.md) ISS-20260919-01.
+
 See [Troubleshooting](apps/docs/src/pages/docs/troubleshooting.md) for
 the full list.
 

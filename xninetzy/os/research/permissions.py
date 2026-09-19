@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from xninetzy.core.config import get_settings
-from xninetzy.core.identity import normalize_whatsapp_jid
+from xninetzy.core.identity import normalize_chat_id
 
 
 def _norm(value: str | None) -> str:
@@ -20,14 +20,14 @@ def _owner_jids() -> set[str]:
         *settings.OWNER_ALLOWED_JIDS.split(","),
     ]
     return {
-        normalize_whatsapp_jid(value)
+        normalize_chat_id(value)
         for value in values
-        if normalize_whatsapp_jid(value)
+        if normalize_chat_id(value)
     }
 
 
 def is_owner_admin(sender_id: str | None, sender_name: str | None) -> bool:
-    return normalize_whatsapp_jid(sender_id) in _owner_jids() or is_sender_named_misbahul(
+    return normalize_chat_id(sender_id) in _owner_jids() or is_sender_named_misbahul(
         sender_name
     )
 
@@ -71,7 +71,7 @@ def can_run_deep_research(
     ):
         return True, "trusted_local_interface"
 
-    if normalize_whatsapp_jid(sender_id) in _owner_jids():
+    if normalize_chat_id(sender_id) in _owner_jids():
         return True, "admin_jid"
 
     if settings.DEEP_RESEARCH_ALLOW_ADMIN_NAMES and is_sender_named_misbahul(sender_name):

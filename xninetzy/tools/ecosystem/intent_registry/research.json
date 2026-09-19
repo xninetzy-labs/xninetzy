@@ -1,0 +1,7 @@
+{
+  "domain": "research",
+  "keywords": {
+    "research": ["research_light", "deep_research_topic", "web_search", "web_extract", "web_evidence"],
+    "find paper": ["research_search_papers", "research_get_paper"]
+  }
+}

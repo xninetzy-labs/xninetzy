@@ -21,7 +21,7 @@ def knowledge_ingest_text(
         text: Konten teks
         source_type: hebat_pdf|obsidian_note|web_article|youtube_video|manual_note
         uri: URL atau referensi sumber (opsional)
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         idempotency_key: Kunci opsional agar retry tidak menggandakan ingest
     """
     from xninetzy.db.idempotency import idempotent_call
@@ -72,7 +72,7 @@ def knowledge_ingest_file(
         file_path: Path lokal file
         title: Judul (default: nama file)
         source_type: Tipe sumber
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         idempotency_key: Kunci opsional agar retry tidak menggandakan ingest
     """
     from pathlib import Path
@@ -169,7 +169,7 @@ async def knowledge_answer(query: str, chat_id: str = "system") -> str:
 
     Args:
         query: Pertanyaan yang ingin dijawab
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.knowledge.retrieval import answer_from_knowledge
 

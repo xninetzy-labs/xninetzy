@@ -1,0 +1,11 @@
+{
+  "domain": "engineering",
+  "keywords": {
+    "code": ["repo_search", "repo_symbol", "repo_dependency", "repo_architecture", "repo_risk"],
+    "refactor": ["repo_search", "repo_symbol", "repo_dependency", "repo_test", "repo_diff"],
+    "debug": ["repo_search", "repo_symbol", "repo_diff", "repo_test"],
+    "test": ["repo_test", "repo_search", "repo_symbol"],
+    "test generation": ["repo_test", "repo_search", "repo_symbol"],
+    "performance": ["repo_search", "repo_diff", "repo_risk"]
+  }
+}

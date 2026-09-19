@@ -20,10 +20,11 @@ language: en
 # 1. What this project is
 
 Xninetzy is a **single-purpose MCP server** — **Xninetzy Intelligence
-MCP** — exposing many sibling domains (Research, Career, Business, AI,
-Security, Developer, Data, Trend, MCP) over one shared engine (router,
-planner, source registry, cache, deduplication, entity-resolution,
-evidence, citation, security). The v2.2.0 pivot removed the Baileys
+MCP** — exposing tool groups defined by `xninetzy/tools/registry.py`
+(Research, Career, Business, AI, Security, Developer, Data, Trend, MCP)
+over one shared engine (router, planner, source registry, cache,
+deduplication, entity-resolution, evidence, citation, security). The
+v2.2.0 pivot removed the Baileys
 WhatsApp engine, the Ink CLI, the LangGraph conversational agent, and
 every host-bridge / chat-failover / autonomous-coding reference. There
 is **no server-side agent loop**. Clients do their own reasoning and
@@ -109,8 +110,27 @@ All paths resolve through `xninetzy.core.config.expand_path` at runtime.
 
 Skills live at `.agents/skills/<name>/SKILL.md`. The Agent Skills contract
 requires YAML frontmatter at the top of every `SKILL.md` (no code-block
-wrapper, no leading markdown title). 36 built-in skills cover the
-project's MCP surface; install more via `skill_validate` → `skill_install`.
+wrapper, no leading markdown title). 70 built-in skill files (69 skill
+directories + 1 top-level SKILL.md) cover the project's MCP surface;
+install more via `skill_validate` → `skill_install`. See
+`docs/runbooks/skill-repair.md` for the frontmatter-damage recovery flow.
+
+Skill frontmatter integrity is enforced by
+`tests/governance/test_skill_frontmatter.py`; repair flow lives at
+`docs/runbooks/skill-repair.md`.
+
+## 6b. MCP resources & prompts
+
+The MCP server exposes 2 resources and 1 prompt in addition to the 343
+tools (see `xninetzy/interfaces/mcp_server.py`):
+
+- Resource `xninetzy://skills/index` — read-only skill catalog snapshot
+- Resource `xninetzy://tools/catalog` — read-only tool catalog snapshot
+- Prompt `xninetzy-memory-checklist` — seeds memory-aware workflows
+
+Resources surface read-only state; prompts seed common tasks. Both are
+listed in `list_resources` / `list_prompts` server responses at startup.
+Drift detection: `tests/governance/test_mcp_surface.py`.
 
 Symlink every skill into the supported harnesses with
 `scripts/install_skills.py` (env var
@@ -199,9 +219,10 @@ Three tools extend S6 harness:
 
 # 7f. Career Intelligence Domain
 
-Xninetzy positioning is **Xninetzy Intelligence MCP** — many sibling
-domains (Research, Career, Business, AI, Security, Developer, Data,
-Trend, MCP) sharing one engine (router, planner, source-registry,
+Xninetzy positioning is **Xninetzy Intelligence MCP** — tool groups
+defined by `xninetzy/tools/registry.py` (Research, Career, Business, AI,
+Security, Developer, Data, Trend, MCP) sharing one engine (router,
+planner, source-registry,
 cache, deduplication, entity-resolution, evidence, citation, security).
 
 Career is the second shipped domain after Research. Source adapters
@@ -210,7 +231,7 @@ Phase-1 legal free public APIs only: RemoteOK, ArbeitNow. No scraping
 of LinkedIn, Indeed, JobStreet, Glints, or walled-garden sites.
 
 - Tools: 17 in `xninetzy/tools/ecosystem/career_tools.py` (all tier 0)
-- Skill bodies: 14 under `.agents/skills/career/`
+- Skill bodies: 19 under `.agents/skills/career/`
 
 # 8. Authority hierarchy
 

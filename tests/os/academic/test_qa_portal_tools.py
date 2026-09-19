@@ -23,7 +23,7 @@ async def test_qa_fill_requests_approval_before_mutation(monkeypatch):
     monkeypatch.setattr(qa_tools, "notify_admin_approval", fake_notify)
 
     result = await qa_tools.qa_fill_kuesioner.ainvoke(
-        {"chat_id": "chat", "sender_id": "628123@s.whatsapp.net", "score": 10}
+        {"chat_id": "chat", "sender_id": "628123@chat.local", "score": 10}
     )
 
     assert "membutuhkan approval #41" in result

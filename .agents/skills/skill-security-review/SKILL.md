@@ -1,11 +1,11 @@
 ---
-name: skill-security-review
-description: Mandatory static-analysis gate for every third-party Agent Skill before it lands in `.agents/skills/`. Inspect SKILL.md and bundled scripts for unsafe network egress, process execution, secret access, dynamic code generation, prompt-injection vectors, and license/content risks. Never run the target. Always emit a verdict and route `HIGH`/`CRITICAL` findings to the owner via `os_inbox` (kind `captcha` or `note`). Trigger when the operator types `skill install`, `add skill`, copies a SKILL.md from a URL, or before promoting any community skill to all harnesses.
+name: "skill-security-review"
+description: "Mandatory static-analysis gate for every third-party Agent Skill before it lands in `.agents/skills/`. Inspect SKILL.md and bundled scripts for unsafe network egress, process execution, secret access, dynamic code generation, prompt-injection vectors, and license/content risks. Never run the target. Always emit a verdict and route `HIGH`/`CRITICAL` findings to the owner via `os_inbox` (kind `captcha` or `note`). Trigger when the operator types `skill install`, `add skill`, copies a SKILL.md from a URL, or before promoting any community skill to all harnesses."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: governance
-  priority: P0
+  scope: "governance"
+  priority: "P0"
   required_tools:
     - read_file
     - grep_search

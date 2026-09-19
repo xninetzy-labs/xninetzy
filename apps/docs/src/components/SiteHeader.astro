@@ -1,7 +1,6 @@
 ---
 import Brand from './Brand.astro';
 import Icon from './Icon.astro';
-import { flatNavigation } from '../data/navigation';
 ---
 
 <header class="site-header">
@@ -32,34 +31,61 @@ import { flatNavigation } from '../data/navigation';
       <button id="search-close" class="icon-button" aria-label="Close search"><Icon name="x" /></button>
     </div>
     <p id="search-title" class="search-hint">Quick navigation</p>
-    <div id="search-results" class="search-results">
-      {flatNavigation.map((item) => (
-        <a href={item.href} data-search={`${item.eyebrow} ${item.title} ${item.description}`.toLowerCase()}>
-          <span><small>{item.eyebrow}</small><strong>{item.title}</strong></span>
-          <p>{item.description}</p>
-        </a>
-      ))}
-    </div>
+    <div id="search-results" class="search-results"></div>
     <p id="search-empty" class="search-empty" hidden>No matching pages.</p>
   </div>
 </dialog>
 
 <script>
+  type Hit = { title: string; description: string; href: string; body: string };
   const dialog = document.querySelector<HTMLDialogElement>('#search-dialog');
   const input = document.querySelector<HTMLInputElement>('#search-input');
-  const items = Array.from(document.querySelectorAll<HTMLElement>('[data-search]'));
+  const out = document.querySelector<HTMLElement>('#search-results');
   const empty = document.querySelector<HTMLElement>('#search-empty');
+
+  let index: Hit[] = [];
+  fetch('/search-index.json')
+    .then((r) => (r.ok ? r.json() : Promise.reject(new Error(`status ${r.status}`))))
+    .then((d: Hit[]) => { index = d; })
+    .catch(() => { if (out) out.innerHTML = '<p class="search-empty">Index unavailable.</p>'; });
+
+  const score = (q: string, text: string): number => {
+    if (!text) return 0;
+    const t = text.toLowerCase();
+    const i = t.indexOf(q);
+    if (i === -1) return 0;
+    return 100 - Math.min(i, 90) + (q.length / Math.max(text.length, 1)) * 50;
+  };
+
+  const render = (q: string) => {
+    if (!out) return;
+    out.innerHTML = '';
+    if (q.length < 2) { if (empty) empty.hidden = true; return; }
+    const ranked = index
+      .map((h) => ({ h, s: Math.max(score(q, h.title) * 3, score(q, h.description) * 2, score(q, h.body)) }))
+      .filter((r) => r.s > 0)
+      .sort((a, b) => b.s - a.s)
+      .slice(0, 10);
+    if (ranked.length === 0) { if (empty) empty.hidden = false; return; }
+    if (empty) empty.hidden = true;
+    const frag = document.createDocumentFragment();
+    ranked.forEach(({ h }) => {
+      const a = document.createElement('a');
+      a.href = h.href;
+      a.innerHTML = `<span><strong>${h.title}</strong></span><p>${h.description}</p>`;
+      frag.appendChild(a);
+    });
+    out.appendChild(frag);
+  };
 
   function openSearch() {
     dialog?.showModal();
     window.setTimeout(() => input?.focus(), 20);
   }
-
   function closeSearch() {
     dialog?.close();
     if (input) input.value = '';
-    items.forEach((item) => item.hidden = false);
-    if (empty) empty.hidden = true;
+    render('');
   }
 
   document.querySelector('#search-open')?.addEventListener('click', openSearch);
@@ -71,14 +97,5 @@ import { flatNavigation } from '../data/navigation';
       openSearch();
     }
   });
-  input?.addEventListener('input', () => {
-    const query = input.value.trim().toLowerCase();
-    let count = 0;
-    items.forEach((item) => {
-      const visible = !query || item.dataset.search?.includes(query);
-      item.hidden = !visible;
-      if (visible) count += 1;
-    });
-    if (empty) empty.hidden = count > 0;
-  });
+  input?.addEventListener('input', () => render((input.value || '').trim().toLowerCase()));
 </script>

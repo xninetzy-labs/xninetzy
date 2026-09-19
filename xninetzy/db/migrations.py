@@ -394,7 +394,7 @@ def run_migrations() -> None:
             tone TEXT DEFAULT 'friendly-technical',
             language TEXT DEFAULT 'id',
             verbosity TEXT DEFAULT 'adaptive',
-            formatting TEXT DEFAULT 'whatsapp-friendly',
+            formatting TEXT DEFAULT '-friendly',
             learning_style TEXT DEFAULT 'step-by-step',
             correction_style TEXT DEFAULT 'direct-but-kind',
             examples_preference TEXT DEFAULT 'practical',
@@ -1033,6 +1033,7 @@ def run_migrations() -> None:
         _migrate_approval_requests(conn)
         _backfill_learning_concepts(conn)
         _migrate_lightning(conn)
+        _migrate_capability_registry(conn)
 
 
 def _migrate_reminders(conn) -> None:
@@ -1185,3 +1186,135 @@ def _migrate_lightning(conn) -> None:
     conn.execute(
         "CREATE UNIQUE INDEX IF NOT EXISTS idx_improvement_proposals_idempotency ON improvement_proposals(user_id, idempotency_key) WHERE idempotency_key IS NOT NULL"
     )
+
+
+def _migrate_capability_registry(conn) -> None:
+    statement_groups: list[str] = [
+        """
+        CREATE TABLE IF NOT EXISTS capability_aliases (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            capability TEXT NOT NULL,
+            alias TEXT NOT NULL,
+            surface TEXT NOT NULL,
+            weight REAL NOT NULL DEFAULT 1.0,
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            UNIQUE(capability, alias, surface)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_capability_aliases_capability ON capability_aliases(capability)",
+        "CREATE INDEX IF NOT EXISTS idx_capability_aliases_alias ON capability_aliases(alias)",
+        "CREATE INDEX IF NOT EXISTS idx_capability_aliases_surface ON capability_aliases(surface)",
+        """
+        CREATE TABLE IF NOT EXISTS mcp_providers (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            provider_id TEXT NOT NULL UNIQUE,
+            transport TEXT NOT NULL,
+            endpoint TEXT,
+            trust_tier INTEGER NOT NULL DEFAULT 3,
+            risk_class TEXT NOT NULL DEFAULT 'unknown',
+            capabilities_json TEXT NOT NULL DEFAULT '[]',
+            health_state TEXT NOT NULL DEFAULT 'unknown',
+            last_seen_at TEXT,
+            metadata_json TEXT NOT NULL DEFAULT '{}',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_mcp_providers_trust_tier ON mcp_providers(trust_tier)",
+        "CREATE INDEX IF NOT EXISTS idx_mcp_providers_health_state ON mcp_providers(health_state)",
+        """
+        CREATE TABLE IF NOT EXISTS route_decisions (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id TEXT NOT NULL,
+            intent TEXT NOT NULL,
+            context_key TEXT NOT NULL,
+            chosen_provider_id TEXT,
+            chosen_capability TEXT,
+            chosen_tool TEXT,
+            candidate_count INTEGER NOT NULL DEFAULT 0,
+            stage_trace_json TEXT NOT NULL DEFAULT '[]',
+            final_score REAL,
+            fallback_used INTEGER NOT NULL DEFAULT 0,
+            latency_ms INTEGER,
+            outcome TEXT,
+            owner TEXT,
+            created_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_route_decisions_request ON route_decisions(request_id)",
+        "CREATE INDEX IF NOT EXISTS idx_route_decisions_intent ON route_decisions(intent)",
+        "CREATE INDEX IF NOT EXISTS idx_route_decisions_context ON route_decisions(context_key)",
+        "CREATE INDEX IF NOT EXISTS idx_route_decisions_created_at ON route_decisions(created_at)",
+        """
+        CREATE TABLE IF NOT EXISTS context_source_stats (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            context_key TEXT NOT NULL,
+            source_kind TEXT NOT NULL,
+            sample_count INTEGER NOT NULL DEFAULT 0,
+            success_count INTEGER NOT NULL DEFAULT 0,
+            grounded_count INTEGER NOT NULL DEFAULT 0,
+            reward_sum REAL NOT NULL DEFAULT 0.0,
+            latency_sum_ms INTEGER NOT NULL DEFAULT 0,
+            last_used_at TEXT,
+            UNIQUE(context_key, source_kind)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_context_source_stats_context ON context_source_stats(context_key)",
+        "CREATE INDEX IF NOT EXISTS idx_context_source_stats_source ON context_source_stats(source_kind)",
+        """
+        CREATE TABLE IF NOT EXISTS capability_lifecycle (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            capability TEXT NOT NULL,
+            provider_id TEXT NOT NULL,
+            stage TEXT NOT NULL,
+            notes TEXT,
+            actor TEXT,
+            created_at TEXT NOT NULL,
+            UNIQUE(capability, provider_id, stage, created_at)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_capability_lifecycle_capability ON capability_lifecycle(capability)",
+        "CREATE INDEX IF NOT EXISTS idx_capability_lifecycle_provider ON capability_lifecycle(provider_id)",
+        "CREATE INDEX IF NOT EXISTS idx_capability_lifecycle_stage ON capability_lifecycle(stage)",
+        """
+        CREATE TABLE IF NOT EXISTS process_artifacts (
+            artifact_id TEXT PRIMARY KEY,
+            status TEXT NOT NULL DEFAULT 'draft',
+            format TEXT NOT NULL DEFAULT 'json',
+            payload_json TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            version INTEGER NOT NULL DEFAULT 1,
+            created_at TEXT
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_process_artifacts_status ON process_artifacts(status)",
+        "CREATE INDEX IF NOT EXISTS idx_process_artifacts_updated ON process_artifacts(updated_at)",
+        """
+        CREATE TABLE IF NOT EXISTS audit_invocations (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            request_id TEXT NOT NULL,
+            provider_id TEXT NOT NULL,
+            capability TEXT NOT NULL,
+            side_effect_class TEXT NOT NULL,
+            idempotency_key TEXT,
+            approval_id INTEGER,
+            args_hash TEXT NOT NULL,
+            args_bytes INTEGER NOT NULL DEFAULT 0,
+            context_key TEXT NOT NULL,
+            outcome TEXT,
+            latency_ms INTEGER,
+            error TEXT,
+            started_at TEXT NOT NULL,
+            finished_at TEXT,
+            UNIQUE(request_id, idempotency_key)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_audit_invocations_request ON audit_invocations(request_id)",
+        "CREATE INDEX IF NOT EXISTS idx_audit_invocations_provider ON audit_invocations(provider_id)",
+        "CREATE INDEX IF NOT EXISTS idx_audit_invocations_idempotency ON audit_invocations(idempotency_key)",
+        "CREATE INDEX IF NOT EXISTS idx_audit_invocations_context ON audit_invocations(context_key)",
+        "CREATE INDEX IF NOT EXISTS idx_audit_invocations_started ON audit_invocations(started_at)",
+    ]
+    for statement in statement_groups:
+        conn.execute(statement)

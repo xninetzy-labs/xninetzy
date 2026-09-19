@@ -23,7 +23,7 @@ def style_show(sender_id: str = "", chat_id: str = "") -> str:
     """Tampilkan gaya jawaban yang sedang aktif."""
     text = get_style_text(_uid(sender_id, chat_id))
     if not text:
-        return "Belum ada gaya khusus (pakai default WhatsApp-friendly). Atur dengan `/style set <deskripsi>`."
+        return "Belum ada gaya khusus (pakai default -friendly). Atur dengan `/style set <deskripsi>`."
     return f"*Gaya jawaban kamu:*\n“{text}”"
 
 

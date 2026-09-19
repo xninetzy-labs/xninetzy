@@ -1,8 +1,8 @@
 ---
 
-name: code-review
+name: "code-review"
 
-description: Evidence-driven pre-merge code review against the repository's declared rules,
+description: "Evidence-driven pre-merge code review against the repository's declared rules,"
 architecture, API contracts, security boundaries, tests, and engineering
 invariants. Reviews a branch, commit range, or pull request at file and symbol
 level; detects rule violations, behavior regressions, error-propagation problems,
@@ -13,12 +13,12 @@ severity-tiered review with evidence, suggested fixes, coverage gaps, regression
 risks, and a deterministic review verdict. Never silently rewrites the patch.
 
 metadata:
-author: xninetzy
-owner: misbahul45
+author: "xninetzy"
+owner: "misbahul45"
 version: "2.0.0"
-scope: domain
-priority: P1
-domain: xninetzy.domains.code-review
+scope: "domain"
+priority: "P1"
+domain: "xninetzy.domains.code-review"
 lifecycle: >
 discover -> diff -> rules -> context -> classify -> analyze ->
 correlate -> test -> validate -> report -> verdict -> regress
@@ -67,7 +67,7 @@ prerequisites:
 
 references:
 architecture:
-file: ../architecture-analysis/SKILL.md
+file: "../architecture-analysis/SKILL.md"
 use_when:
 - layering
 - dependency direction
@@ -76,7 +76,7 @@ use_when:
 - refactor impact
 
 security:
-file: ../xninetzy-security-testing/SKILL.md
+file: "../xninetzy-security-testing/SKILL.md"
 use_when:
 - auth/authz changes
 - security-sensitive endpoints
@@ -87,7 +87,7 @@ use_when:
 - live validation
 
 api:
-file: ../api-security/SKILL.md
+file: "../api-security/SKILL.md"
 use_when:
 - HTTP/API/MCP/WebSocket/gRPC changes
 - auth contracts
@@ -102,7 +102,6 @@ non_goals:
 * automatic architecture migration
 * treating passing CI as proof of correctness
 * generic style criticism without repository evidence
-
 ---
 
 # code-review

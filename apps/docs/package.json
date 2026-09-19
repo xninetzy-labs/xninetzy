@@ -7,7 +7,9 @@
     "dev": "astro dev",
     "build": "astro build",
     "preview": "astro preview",
-    "check": "astro check"
+    "check": "astro check",
+    "prebuild": "node scripts/build-search-index.mjs",
+    "predev": "node scripts/build-search-index.mjs"
   },
   "engines": {
     "node": ">=22.12.0"

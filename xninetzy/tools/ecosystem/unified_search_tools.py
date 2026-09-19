@@ -19,8 +19,8 @@ def unified_search(
     Args:
         query: Kata kunci pencarian
         limit: Jumlah hasil per sumber (default 5)
-        sender_id: WhatsApp sender ID (dari context)
-        chat_id: WhatsApp chat ID (dari context)
+        sender_id:  sender ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     query = query.strip()
     if not query:

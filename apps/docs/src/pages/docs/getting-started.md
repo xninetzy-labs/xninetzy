@@ -3,6 +3,9 @@ layout: ../../layouts/DocsLayout.astro
 title: Quick start
 description: Install Xninetzy with one curl command or git clone, then connect an MCP host.
 section: Start
+badge: How-to
+difficulty: beginner
+readingTime: 5 min
 ---
 
 Xninetzy runs as a single Python process. The default `local` mode is

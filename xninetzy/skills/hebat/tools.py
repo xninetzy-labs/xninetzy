@@ -8,7 +8,7 @@ TOOLS = [
     "hebat_read_pdf",
     "hebat_sync_assignments",
     "hebat_get_assignment_detail",
-    "hebat_prepare_submission_from_whatsapp_file",
+    "hebat_prepare_submission_from__file",
     "hebat_upload_submission",
     "hebat_cancel_submission",
     "hebat_remove_submission",

@@ -1,4 +1,4 @@
-"""OCR parser for WhatsApp images.
+"""OCR parser for  images.
 
 The parser intentionally extracts text instead of relying on a vision-capable
 LLM so image text extraction stays deterministic and provider-independent.

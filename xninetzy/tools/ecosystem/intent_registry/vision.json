@@ -1,0 +1,8 @@
+{
+  "domain": "vision",
+  "keywords": {
+    "image": ["image_inspect", "image_preprocess", "image_ocr", "image_regions", "image_compare"],
+    "screenshot": ["image_inspect", "image_preprocess", "image_ocr", "image_layout"],
+    "ocr": ["image_ocr", "image_preprocess", "image_regions"]
+  }
+}

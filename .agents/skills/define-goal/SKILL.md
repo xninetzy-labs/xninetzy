@@ -1,22 +1,23 @@
----
 
-name: define-goal
 
-description: Goal-definition control plane for converting intentions, requests, projects, learning objectives, research questions, and operational needs into concrete, bounded, measurable, evidence-verifiable outcomes. Use before significant work when success, acceptance, scope, or stopping conditions are unclear.
+name: "define-goal"
+
+description: "Goal-definition control plane for converting intentions, requests, projects, learning objectives, research questions, and operational needs into concrete, bounded, measurable, evidence-verifiable outcomes. Use before significant work when success, acceptance, scope, or stopping conditions are unclear."
 
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "3.0.0"
-  priority: P1
+  priority: "P1"
 
 lifecycle: "detect -> inspect -> formulate -> measure -> bound -> validate -> reconcile -> version -> create/refine"
 
 required_tools:
 - goal_inspect
 - goal_create
-- goal_update
+- goa---
+_update
 
 optional_tools:
 - repo_search
@@ -44,12 +45,12 @@ prerequisites:
 - target domain or affected object is identifiable or safely inferable
 
 routing:
-  execution: xninetzy-assignment-orchestrator
-  learning: it-learning
-  coaching: xninetzy-learning-coach
-  research: xninetzy-deep-research
-  personal: life-management
-  continuity: xninetzy-memory
+  execution: "xninetzy-assignment-orchestrator"
+  learning: "it-learning"
+  coaching: "xninetzy-learning-coach"
+  research: "xninetzy-deep-research"
+  personal: "life-management"
+  continuity: "xninetzy-memory"
 ---------------------------
 
 # Define Goal OS
@@ -80,7 +81,6 @@ It is not a task list.
 It is not an execution plan.
 
 It is not a motivational statement.
-
 ---
 
 # 1. Goal Model

@@ -1,7 +1,7 @@
 ---
 
-name: api-security
-description: Evidence-driven API security assessment for authorized HTTP, REST, GraphQL, MCP,
+name: "api-security"
+description: "Evidence-driven API security assessment for authorized HTTP, REST, GraphQL, MCP,"
 WebSocket, and gRPC surfaces. Audits authentication, authorization, object/property/
 function access, input validation, rate limiting, CORS, security headers, TLS,
 SSRF exposure, injection boundaries, resource exhaustion, API inventory drift,
@@ -14,12 +14,12 @@ never performs destructive testing, and never treats a scanner signal as a verif
 vulnerability without supporting evidence.
 
 metadata:
-author: xninetzy
-owner: misbahul45
+author: "xninetzy"
+owner: "misbahul45"
 version: "2.0.0"
-scope: domain
-priority: P1
-domain: xninetzy.domains.security
+scope: "domain"
+priority: "P1"
+domain: "xninetzy.domains.security"
 lifecycle: >
 scope -> inventory -> classify -> map-controls -> model-trust ->
 analyze -> validate -> correlate -> prioritize -> regress -> report
@@ -95,7 +95,7 @@ non_goals:
 
 references:
 core_security:
-file: ../xninetzy-security-testing/SKILL.md
+file: "../xninetzy-security-testing/SKILL.md"
 use_when:
 - scope
 - authorization
@@ -104,7 +104,7 @@ use_when:
 - validation
 - reporting
 workflow:
-file: ../xninetzy-security-testing/references/workflow.md
+file: "../xninetzy-security-testing/references/workflow.md"
 use_when:
 - live assessment
 - scanner orchestration
@@ -113,7 +113,7 @@ use_when:
 - correlation
 - regression
 installation:
-file: ../xninetzy-security-testing/references/install.md
+file: "../xninetzy-security-testing/references/install.md"
 use_when:
 - scanner availability
 - installation
@@ -140,7 +140,6 @@ The primary principle is:
 > **Control presence is not control effectiveness.**
 
 A middleware existing in source code does not prove that the endpoint is actually protected.
-
 ---
 
 # 1. Security Model

@@ -1,4 +1,4 @@
-"""Transcribe WhatsApp audio via an OpenAI-compatible transcription API.
+"""Transcribe  audio via an OpenAI-compatible transcription API.
 
 Transcription is provider-independent and bounded by a 120s timeout. Only a
 local cached file is read; media bytes stay in the AI service and are never

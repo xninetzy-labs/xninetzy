@@ -12,10 +12,10 @@ from xninetzy.os.academic.mahasiswa_portal.reader import (
 )
 
 
-def test_owner_id_normalizes_whatsapp_device_suffix():
+def test_owner_id_normalizes__device_suffix():
     assert (
-        portal_tools._owner_id("628123:7@s.whatsapp.net", "unused")
-        == "628123@s.whatsapp.net"
+        portal_tools._owner_id("628123:7@chat.local", "unused")
+        == "628123@chat.local"
     )
 
 
@@ -32,7 +32,7 @@ async def test_cyber_login_denies_non_admin_before_browser_start(monkeypatch):
     monkeypatch.setattr(portal_tools.LOGIN_COORDINATOR, "start", fake_start)
 
     result = await portal_tools.portal_login_start.ainvoke(
-        {"chat_id": "chat", "sender_id": "stranger@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "stranger@chat.local"}
     )
 
     assert result == "Login Cyber Campus hanya dapat dimulai oleh admin."
@@ -56,7 +56,7 @@ async def test_captcha_submit_denies_non_admin_before_challenge_access(monkeypat
             "challenge_id": "challenge",
             "captcha_answer": "ABC9",
             "chat_id": "chat",
-            "sender_id": "stranger@s.whatsapp.net",
+            "sender_id": "stranger@chat.local",
         }
     )
 
@@ -74,7 +74,7 @@ async def test_grade_submit_maps_allowed_owner_alias_to_admin_jid(monkeypatch):
         raise RuntimeError("stop after identity check")
 
     monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: True)
-    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@s.whatsapp.net")
+    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@chat.local")
     monkeypatch.setattr(portal_tools.GRADE_TOKEN_COORDINATOR, "consume", fake_consume)
 
     await portal_tools.submit_grade_token(
@@ -83,7 +83,7 @@ async def test_grade_submit_maps_allowed_owner_alias_to_admin_jid(monkeypatch):
         "145300000000000@lid",
     )
 
-    assert consumed_owner == "628123@s.whatsapp.net"
+    assert consumed_owner == "628123@chat.local"
 
 
 @pytest.mark.asyncio
@@ -112,7 +112,7 @@ async def test_grade_submit_persists_snapshot_after_success(monkeypatch):
         return SimpleNamespace(snapshot_id=7, changes=(), created=True)
 
     monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: True)
-    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@s.whatsapp.net")
+    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@chat.local")
     monkeypatch.setattr(portal_tools.GRADE_TOKEN_COORDINATOR, "consume", fake_consume)
     monkeypatch.setattr(portal_tools.ACADEMIC_PORTAL_READER, "read_grades", fake_read_grades)
     monkeypatch.setattr(portal_tools.GRADE_SNAPSHOT_REPOSITORY, "save", fake_save)
@@ -120,7 +120,7 @@ async def test_grade_submit_persists_snapshot_after_success(monkeypatch):
     result = await portal_tools.submit_grade_token(
         "challenge",
         "12345",
-        "628123@s.whatsapp.net",
+        "628123@chat.local",
     )
 
     assert len(saved) == 1
@@ -199,11 +199,11 @@ async def test_grade_token_submit_mcp_denies_non_admin(monkeypatch):
         {
             "challenge_id": "challenge",
             "token": "12345",
-            "sender_id": "stranger@s.whatsapp.net",
+            "sender_id": "stranger@chat.local",
         }
     )
 
-    assert result == "Token nilai hanya dapat dikirim oleh WhatsApp admin."
+    assert result == "Token nilai hanya dapat dikirim oleh  admin."
     assert consumed is False
 
 
@@ -233,7 +233,7 @@ async def test_grade_token_submit_mcp_owner_persists_snapshot(monkeypatch):
         return SimpleNamespace(snapshot_id=7, changes=(), created=True)
 
     monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: True)
-    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@s.whatsapp.net")
+    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@chat.local")
     monkeypatch.setattr(portal_tools.GRADE_TOKEN_COORDINATOR, "consume", fake_consume)
     monkeypatch.setattr(portal_tools.ACADEMIC_PORTAL_READER, "read_grades", fake_read_grades)
     monkeypatch.setattr(portal_tools.GRADE_SNAPSHOT_REPOSITORY, "save", fake_save)
@@ -242,7 +242,7 @@ async def test_grade_token_submit_mcp_owner_persists_snapshot(monkeypatch):
         {
             "challenge_id": "challenge",
             "token": "12345",
-            "sender_id": "628123@s.whatsapp.net",
+            "sender_id": "628123@chat.local",
         }
     )
 
@@ -278,7 +278,7 @@ async def test_grade_token_submit_token_only_resolves_owner(monkeypatch):
         return SimpleNamespace(snapshot_id=7, changes=(), created=True)
 
     monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: True)
-    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@s.whatsapp.net")
+    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@chat.local")
     monkeypatch.setattr(
         portal_tools.GRADE_TOKEN_COORDINATOR,
         "consume_owner_token",
@@ -288,12 +288,12 @@ async def test_grade_token_submit_token_only_resolves_owner(monkeypatch):
     monkeypatch.setattr(portal_tools.GRADE_SNAPSHOT_REPOSITORY, "save", fake_save)
 
     result = await portal_tools.submit_grade_token(
-        "", "12345", "628123@s.whatsapp.net"
+        "", "12345", "628123@chat.local"
     )
 
     assert read_challenge_ids == ["challenge-resolved"]
     assert "Snapshot lokal: #7" in result
-    assert consume_calls == [("628123@s.whatsapp.net", "12345")]
+    assert consume_calls == [("628123@chat.local", "12345")]
 
 
 @pytest.mark.asyncio
@@ -309,7 +309,7 @@ async def test_grade_token_submit_token_only_denies_non_admin(monkeypatch):
     )
 
     result = await portal_tools.submit_grade_token(
-        "", "12345", "stranger@s.whatsapp.net"
+        "", "12345", "stranger@chat.local"
     )
 
-    assert result == "Token nilai hanya dapat dikirim oleh WhatsApp admin."
+    assert result == "Token nilai hanya dapat dikirim oleh  admin."

@@ -1,15 +1,16 @@
----
 
-name: graph-rag
 
-description: Evidence-grounded graph reasoning control plane for typed relationships across knowledge, concepts, prerequisites, goals, learning activities, notes, research, projects, documents, decisions, and sources. Uses graph traversal only when explicit relationships materially improve retrieval or reasoning beyond text search or vector similarity. Preserves canonical entity identity, provenance, temporal validity, contradiction state, path evidence, and projection consistency.
+name: "graph-rag"
+
+description: "Evidence-grounded graph reasoning control plane for typed relationships across knowledge, concepts, prerequisites, goals, learning activities, notes, research, projects, documents, decisions, and sources. Uses graph traversal only when explicit relationships materially improve retrieval or reasoning beyond text search or vector similarity. Preserves canonical entity identity, provenance, temporal validity, contradiction state, path evidence, and projection consistency."
 
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scop---
+: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "3.0.0"
-  priority: P1
+  priority: "P1"
 
 lifecycle: "detect -> discover -> canonicalize -> validate -> connect -> index -> retrieve -> reason -> explain -> verify -> propose/apply -> audit"
 
@@ -48,11 +49,11 @@ prerequisites:
 - relationship semantics are known or can be safely established
 
 escalation_routes:
-  academic: cyber-campus
-  course_content: hebat-academic
-  durable_memory: xninetzy-memory
-  research: xninetzy-deep-research
-  notes_and_knowledge_base: xninetzy-obsidian-orchestra
+  academic: "cyber-campus"
+  course_content: "hebat-academic"
+  durable_memory: "xninetzy-memory"
+  research: "xninetzy-deep-research"
+  notes_and_knowledge_base: "xninetzy-obsidian-orchestra"
 -----------------------------------------------------
 
 # Graph RAG OS
@@ -99,7 +100,6 @@ Which required relationship is missing?
 The central principle is:
 
 > **A graph edge is a factual claim about a relationship. A similarity score is not.**
-
 ---
 
 # 1. Graph Mental Model

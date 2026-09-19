@@ -291,6 +291,66 @@ def reminder_cancel(reminder_id: int) -> str:
 EXPOSED_XNINETZY_TOOLS = expose_xninetzy_tools(mcp, principal=_MCP_PRINCIPAL)
 
 
+@mcp.resource("xninetzy://skills/index")
+def skills_index_resource() -> str:
+    """List installed skills (name + version + trust level) as a JSON resource."""
+    from xninetzy.skills.registry import list_skills
+
+    rows = []
+    for skill in list_skills():
+        rows.append(
+            {
+                "name": skill.name,
+                "version": skill.metadata.get("version", "unknown"),
+                "trust_level": skill.trust_level,
+                "source": skill.source,
+            }
+        )
+    import json
+
+    return json.dumps({"count": len(rows), "skills": rows}, ensure_ascii=False, sort_keys=True)
+
+
+@mcp.resource("xninetzy://tools/catalog")
+def tools_catalog_resource() -> str:
+    """Tool catalog with risk class and feature pack metadata."""
+    from xninetzy.tools.manifest import manifest_for
+    from xninetzy.tools.registry import get_tool_names
+
+    rows = []
+    for name in get_tool_names():
+        try:
+            m = manifest_for(name)
+            rows.append(
+                {
+                    "name": name,
+                    "feature_pack": m.feature_pack.value,
+                    "risk": m.risk.value,
+                    "requires_approval": m.requires_approval,
+                    "requires_idempotency": m.requires_idempotency,
+                }
+            )
+        except Exception:
+            rows.append({"name": name, "error": "manifest_unavailable"})
+    import json
+
+    return json.dumps({"count": len(rows), "tools": rows}, ensure_ascii=False, sort_keys=True)
+
+
+@mcp.prompt("xninetzy-memory-checklist")
+def memory_checklist_prompt() -> str:
+    """Standard pre-write memory checklist surfaced as a reusable prompt template."""
+    return (
+        "Before persisting any memory, confirm the following:\n"
+        "1. The content is durable (decisions, requirements, stable constraints, blockers, next actions).\n"
+        "2. It is not ephemeral reasoning, secrets, or session tokens.\n"
+        "3. It carries source provenance (URL, document id, conversation turn).\n"
+        "4. Its freshness window is explicit (default 90 days).\n"
+        "5. It does not contradict an existing memory (use memory_promote / memory_retire).\n"
+        "Persist via the memory_add tool only when all five are satisfied."
+    )
+
+
 def main() -> None:
     if _TRANSPORT == "streamable-http":
         mcp.settings.host = _HTTP_HOST

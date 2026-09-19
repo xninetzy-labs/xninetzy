@@ -39,7 +39,7 @@ def os_capture(
 
 @tool
 def os_inbox(status: str = "inbox", limit: int = 10) -> str:
-    """Lihat capture yang belum diproses di OS Inbox lintas WhatsApp dan MCP."""
+    """Lihat capture yang belum diproses di OS Inbox lintas  dan MCP."""
     try:
         items = list_captures(status=status, limit=limit)
     except ValueError as error:

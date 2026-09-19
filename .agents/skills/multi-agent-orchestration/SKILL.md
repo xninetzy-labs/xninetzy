@@ -1,11 +1,11 @@
 ---
-name: multi-agent-orchestration
-description: Distributes a structured project across parallel sub-agents that each reason independently against a scoped context slice. Used for large audit / refactor / research tasks where one agent's context window is insufficient. Merges results with an explicit verification step and surfaces contradictions to the owner. Stays client-side: orchestration lives in this skill, never on the Xninetzy server (no server-side agent loop). Use when the operator asks for a multi-aspect audit, parallel investigation, or any task whose blast radius calls for four or more focused agents.
+name: "multi-agent-orchestration"
+description: "Distributes a structured project across parallel sub-agents that each reason independently against a scoped context slice. Used for large audit / refactor / research tasks where one agent's context window is insufficient. Merges results with an explicit verification step and surfaces contradictions to the owner. Stays client-side: orchestration lives in this skill, never on the Xninetzy server (no server-side agent loop). Use when the operator asks for a multi-aspect audit, parallel investigation, or any task whose blast radius calls for four or more focused agents."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: harness
-  priority: P0
+  scope: "harness"
+  priority: "P0"
   required_tools:
     - lightning_episode_start
     - lightning_episode_finish

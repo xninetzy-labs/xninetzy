@@ -1,0 +1,845 @@
+- generic [active] [ref=f2e1]:
+  - banner [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - link "Xninetzy documentation home" [ref=f2e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f2e10]:
+          - strong [ref=f2e11]: XNINETZY
+          - generic [ref=f2e12]: documentation
+      - generic [ref=f2e13]:
+        - button "Search documentation" [ref=f2e14] [cursor=pointer]:
+          - generic [ref=f2e18]: Search docs
+          - generic [ref=f2e19]: Ctrl K
+        - link "MCP" [ref=f2e20] [cursor=pointer]:
+          - /url: /docs/mcp/
+        - link "Portfolio" [ref=f2e21] [cursor=pointer]:
+          - /url: https://misbahul-muttaqin.vercel.app/
+        - link "Misbahul45 on GitHub" [ref=f2e22] [cursor=pointer]:
+          - /url: https://github.com/misbahul45
+        - link "Get started" [ref=f2e25] [cursor=pointer]:
+          - /url: /docs/getting-started/
+  - generic [ref=f2e28]:
+    - complementary "Documentation" [ref=f2e29]:
+      - navigation [ref=f2e30]:
+        - generic [ref=f2e31]:
+          - heading "Start" [level=2] [ref=f2e32]
+          - list [ref=f2e33]:
+            - listitem [ref=f2e34]:
+              - link "Introduction core" [ref=f2e35] [cursor=pointer]:
+                - /url: /docs/introduction/
+                - generic [ref=f2e36]:
+                  - generic [ref=f2e37]: Introduction
+                  - generic [ref=f2e38]: core
+            - listitem [ref=f2e39]:
+              - link "MCP system reference new" [ref=f2e40] [cursor=pointer]:
+                - /url: /docs/mcp-system/
+                - generic [ref=f2e41]:
+                  - generic [ref=f2e42]: MCP system reference
+                  - generic [ref=f2e43]: new
+            - listitem [ref=f2e45]:
+              - link "Quick start" [ref=f2e46] [cursor=pointer]:
+                - /url: /docs/getting-started/
+            - listitem [ref=f2e49]:
+              - link "Configuration" [ref=f2e50] [cursor=pointer]:
+                - /url: /docs/configuration/
+            - listitem [ref=f2e53]:
+              - link "Architecture core" [ref=f2e54] [cursor=pointer]:
+                - /url: /docs/architecture/
+                - generic [ref=f2e55]:
+                  - generic [ref=f2e56]: Architecture
+                  - generic [ref=f2e57]: core
+        - generic [ref=f2e58]:
+          - heading "Reference" [level=2] [ref=f2e59]
+          - list [ref=f2e60]:
+            - listitem [ref=f2e61]:
+              - link "Skill catalog updated" [ref=f2e62] [cursor=pointer]:
+                - /url: /docs/skills/
+                - generic [ref=f2e63]:
+                  - generic [ref=f2e64]: Skill catalog
+                  - generic [ref=f2e65]: updated
+            - listitem [ref=f2e66]:
+              - link "Skill repair runbook new" [ref=f2e67] [cursor=pointer]:
+                - /url: /KNOWN_ISSUES.md
+                - generic [ref=f2e68]:
+                  - generic [ref=f2e69]: Skill repair runbook
+                  - generic [ref=f2e70]: new
+            - listitem [ref=f2e71]:
+              - link "Known issues new" [ref=f2e72] [cursor=pointer]:
+                - /url: /KNOWN_ISSUES.md
+                - generic [ref=f2e73]:
+                  - generic [ref=f2e74]: Known issues
+                  - generic [ref=f2e75]: new
+            - listitem [ref=f2e76]:
+              - link "Changelog new" [ref=f2e77] [cursor=pointer]:
+                - /url: /CHANGELOG.md
+                - generic [ref=f2e78]:
+                  - generic [ref=f2e79]: Changelog
+                  - generic [ref=f2e80]: new
+        - generic [ref=f2e81]:
+          - heading "Integrations" [level=2] [ref=f2e82]
+          - list [ref=f2e83]:
+            - listitem [ref=f2e84]:
+              - link "Obsidian" [ref=f2e85] [cursor=pointer]:
+                - /url: /docs/obsidian/
+            - listitem [ref=f2e88]:
+              - link "HEBAT / Moodle" [ref=f2e89] [cursor=pointer]:
+                - /url: /docs/hebat/
+            - listitem [ref=f2e92]:
+              - link "Cyber Campus" [ref=f2e93] [cursor=pointer]:
+                - /url: /docs/cyber-campus/
+            - listitem [ref=f2e96]:
+              - link "OS kernel" [ref=f2e97] [cursor=pointer]:
+                - /url: /docs/os-kernel/
+            - listitem [ref=f2e100]:
+              - link "Learning roadmaps" [ref=f2e101] [cursor=pointer]:
+                - /url: /docs/learning-roadmaps/
+        - generic [ref=f2e104]:
+          - heading "AI & developer tools" [level=2] [ref=f2e105]
+          - list [ref=f2e106]:
+            - listitem [ref=f2e107]:
+              - link "Chat model selection" [ref=f2e108] [cursor=pointer]:
+                - /url: /docs/providers/
+            - listitem [ref=f2e111]:
+              - link "Global MCP core" [ref=f2e112] [cursor=pointer]:
+                - /url: /docs/mcp/
+                - generic [ref=f2e113]:
+                  - generic [ref=f2e114]: Global MCP
+                  - generic [ref=f2e115]: core
+            - listitem [ref=f2e116]:
+              - link "Lightning agent" [ref=f2e117] [cursor=pointer]:
+                - /url: /docs/lightning/
+            - listitem [ref=f2e120]:
+              - link "Shared skills updated" [ref=f2e121] [cursor=pointer]:
+                - /url: /docs/skills/
+                - generic [ref=f2e122]:
+                  - generic [ref=f2e123]: Shared skills
+                  - generic [ref=f2e124]: updated
+        - generic [ref=f2e125]:
+          - heading "Operations" [level=2] [ref=f2e126]
+          - list [ref=f2e127]:
+            - listitem [ref=f2e128]:
+              - link "HTTP API" [ref=f2e129] [cursor=pointer]:
+                - /url: /docs/api/
+            - listitem [ref=f2e132]:
+              - link "Action policy" [ref=f2e133] [cursor=pointer]:
+                - /url: /docs/action-policy/
+            - listitem [ref=f2e136]:
+              - link "Testing" [ref=f2e137] [cursor=pointer]:
+                - /url: /docs/testing/
+            - listitem [ref=f2e140]:
+              - link "Automation" [ref=f2e141] [cursor=pointer]:
+                - /url: /docs/automation/
+            - listitem [ref=f2e144]:
+              - link "Local data" [ref=f2e145] [cursor=pointer]:
+                - /url: /docs/local-data/
+            - listitem [ref=f2e148]:
+              - link "Backup & restore" [ref=f2e149] [cursor=pointer]:
+                - /url: /docs/backup-restore/
+            - listitem [ref=f2e152]:
+              - link "Security" [ref=f2e153] [cursor=pointer]:
+                - /url: /docs/security/
+            - listitem [ref=f2e156]:
+              - link "Troubleshooting" [ref=f2e157] [cursor=pointer]:
+                - /url: /docs/troubleshooting/
+      - generic [ref=f2e160]:
+        - generic [ref=f2e161]: MCP ready
+        - strong [ref=f2e163]: 343 tools. Satu registry.
+        - paragraph [ref=f2e164]: "MCP-only owner server: Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career."
+        - link "Connect a client →" [ref=f2e165] [cursor=pointer]:
+          - /url: /docs/mcp/
+    - main [ref=f2e166]:
+      - navigation "Breadcrumb" [ref=f2e167]:
+        - link "Docs" [ref=f2e168] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f2e169]: /
+        - generic [ref=f2e170]: Start
+      - generic [ref=f2e171]:
+        - generic [ref=f2e172]: Start
+        - heading "MCP system reference" [level=1] [ref=f2e175]
+        - paragraph [ref=f2e176]: "Canonical reference for the Xninetzy MCP server: transports, registry, gateway, tasks, trace, and security."
+        - generic [ref=f2e177]:
+          - generic [ref=f2e178]: Reference
+          - generic [ref=f2e179]: intermediate
+          - generic [ref=f2e180]: ⏱ 15 min
+      - article [ref=f2e181]:
+        - paragraph [ref=f2e182]: The MCP server is the only public interface Xninetzy exposes. Every capability — Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career, reminders, automation, skills, security — is delivered as an MCP tool under one canonical registry.
+        - generic [ref=f2e183]:
+          - text: TERMINAL
+          - code [ref=f2e184]:
+            - generic [ref=f2e185]: host (Claude / Claude Code / Cursor / Codex / OpenCode)
+            - generic [ref=f2e186]: │ stdio or Streamable HTTP (loopback by default)
+            - generic [ref=f2e187]: ▼
+            - generic [ref=f2e188]: xninetzy.interfaces.mcp_server ─── FastMCP("xninetzy", ...)
+            - generic [ref=f2e189]: │
+            - generic [ref=f2e190]: ├── xninetzy.tools.registry.get_all_tools() (343 tools)
+            - generic [ref=f2e191]: │ │
+            - generic [ref=f2e192]: │ └── xninetzy.tools.manifest.manifest_for(name)
+            - generic [ref=f2e193]: "│ ├── feature_pack: core | academic-unair | research | coding"
+            - generic [ref=f2e194]: "│ ├── risk: read | draft | write | final"
+            - generic [ref=f2e195]: "│ ├── stability: stable | experimental"
+            - generic [ref=f2e196]: │ └── requires_approval / requires_idempotency / requires_evidence
+            - generic [ref=f2e197]: │
+            - generic [ref=f2e198]: ├── xninetzy.interfaces.tasks_extension (SEP-2663, 4 tools)
+            - generic [ref=f2e199]: ├── xninetzy.interfaces.external_mcp (gateway, 5 tools)
+            - generic [ref=f2e200]: ├── xninetzy.observability.trace (SEP-414, W3C traceparent)
+            - generic [ref=f2e201]: └── xninetzy.os.security.captcha.lockout (CAPTCHA auto-OCR guard)
+          - button "Copy code" [ref=f2e202] [cursor=pointer]:
+            - generic [ref=f2e206]: Copy
+        - paragraph [ref=f2e207]: The host owns reasoning, planning, and tool selection. Xninetzy owns capability, replay safety, idempotency, owner identity, and approval gates. There is no server-side agent loop.
+        - heading "Tool registry" [level=2] [ref=f2e208]
+        - paragraph [ref=f2e209]: "Live probe at any time:"
+        - generic [ref=f2e210]:
+          - text: TERMINAL
+          - code [ref=f2e211]:
+            - generic [ref=f2e212]: uv run --no-project --directory . python scripts/mcp_audit.py
+          - button "Copy code" [ref=f2e213] [cursor=pointer]:
+            - generic [ref=f2e217]: Copy
+        - paragraph [ref=f2e218]: "Install scripts:"
+        - table [ref=f2e219]:
+          - rowgroup [ref=f2e220]:
+            - row [ref=f2e221]:
+              - columnheader "Script" [ref=f2e222]
+              - columnheader "OS" [ref=f2e223]
+              - columnheader "Install via" [ref=f2e224]
+          - rowgroup [ref=f2e225]:
+            - row [ref=f2e226]:
+              - cell [ref=f2e227]:
+                - code [ref=f2e228]: scripts/install-mcp.sh
+              - cell "Linux + macOS" [ref=f2e229]
+              - cell [ref=f2e230]:
+                - code [ref=f2e231]: curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
+            - row [ref=f2e232]:
+              - cell [ref=f2e233]:
+                - code [ref=f2e234]: scripts/install-mcp.ps1
+              - cell "Windows (PowerShell 5.1+)" [ref=f2e235]
+              - cell [ref=f2e236]:
+                - code [ref=f2e237]: iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
+        - paragraph [ref=f2e238]:
+          - text: Both scripts clone the repo, ensure
+          - code [ref=f2e239]: uv
+          - text: ", write"
+          - code [ref=f2e240]: .env
+          - text: with a random
+          - code [ref=f2e241]: AI_API_KEY
+          - text: ", run"
+          - code [ref=f2e242]: uv sync --all-extras
+          - text: ", and execute the release gate."
+          - code [ref=f2e243]: XNINETZY_INSTALL_MODE=docker
+          - text: switches the path to
+          - code [ref=f2e244]: docker compose up -d --build
+          - text: .
+        - paragraph [ref=f2e245]: The audit script emits a JSON snapshot and exits non-zero if the canonical FINAL-tool set drifts.
+        - table [ref=f2e246]:
+          - rowgroup [ref=f2e247]:
+            - row [ref=f2e248]:
+              - columnheader "Metric" [ref=f2e249]
+              - columnheader "Value" [ref=f2e250]
+          - rowgroup [ref=f2e251]:
+            - row [ref=f2e252]:
+              - cell "Total tools" [ref=f2e253]
+              - cell [ref=f2e254]:
+                - strong [ref=f2e255]: "343"
+            - row [ref=f2e256]:
+              - cell [ref=f2e257]:
+                - text: Risk =
+                - code [ref=f2e258]: read
+              - cell "23" [ref=f2e259]
+            - row [ref=f2e260]:
+              - cell [ref=f2e261]:
+                - text: Risk =
+                - code [ref=f2e262]: draft
+              - cell "12" [ref=f2e263]
+            - row [ref=f2e264]:
+              - cell [ref=f2e265]:
+                - text: Risk =
+                - code [ref=f2e266]: write
+              - cell "305" [ref=f2e267]
+            - row [ref=f2e268]:
+              - cell [ref=f2e269]:
+                - text: Risk =
+                - code [ref=f2e270]: final
+              - cell [ref=f2e271]:
+                - strong [ref=f2e272]: "3"
+            - row [ref=f2e273]:
+              - cell [ref=f2e274]:
+                - text: Feature pack =
+                - code [ref=f2e275]: core
+              - cell "259" [ref=f2e276]
+            - row [ref=f2e277]:
+              - cell [ref=f2e278]:
+                - text: Feature pack =
+                - code [ref=f2e279]: academic-unair
+              - cell "40" [ref=f2e280]
+            - row [ref=f2e281]:
+              - cell [ref=f2e282]:
+                - text: Feature pack =
+                - code [ref=f2e283]: research
+              - cell "37" [ref=f2e284]
+            - row [ref=f2e285]:
+              - cell [ref=f2e286]:
+                - text: Feature pack =
+                - code [ref=f2e287]: coding
+              - cell "7" [ref=f2e288]
+            - row [ref=f2e289]:
+              - cell "Stability" [ref=f2e290]
+              - cell [ref=f2e291]:
+                - text: 343/343
+                - code [ref=f2e292]: stable
+        - paragraph [ref=f2e293]:
+          - text: Risk classifier (
+          - code [ref=f2e294]: xninetzy/os/policy/action_policy.py::classify_risk
+          - text: "):"
+        - list [ref=f2e295]:
+          - listitem [ref=f2e296]:
+            - code [ref=f2e297]: _FINAL_ACTIONS
+            - text: set or suffix
+            - code [ref=f2e298]: _final_submit
+            - text: →
+            - code [ref=f2e299]: final
+          - listitem [ref=f2e300]:
+            - text: contains
+            - code [ref=f2e301]: prepare|plan|draft|preview|dry_run|analyze
+            - text: →
+            - code [ref=f2e302]: draft
+          - listitem [ref=f2e303]:
+            - text: matches
+            - code [ref=f2e304]: _READ_ACTIONS
+            - text: set or prefix
+            - code [ref=f2e305]: read|list|get|check|search|status
+            - text: or suffix
+            - code [ref=f2e306]: _status|_info
+            - text: →
+            - code [ref=f2e307]: read
+          - listitem [ref=f2e308]:
+            - text: everything else →
+            - code [ref=f2e309]: write
+        - paragraph [ref=f2e310]:
+          - text: The orchestrator enforces
+          - code [ref=f2e311]: _effective_tier = max(declared, manifest_tier)
+          - text: so an owner-supplied tier downgrade cannot demote a
+          - code [ref=f2e312]: final
+          - text: tool (
+          - code [ref=f2e313]: xninetzy/cli/orchestrator.py
+          - text: ).
+        - heading "FINAL-class tools" [level=2] [ref=f2e314]
+        - paragraph [ref=f2e315]: "These three tools always require HITL approval server-side:"
+        - list [ref=f2e316]:
+          - listitem [ref=f2e317]:
+            - code [ref=f2e318]: hebat_upload_submission
+            - text: (alias-mapped from
+            - code [ref=f2e319]: hebat_submit_submission
+            - text: in
+            - code [ref=f2e320]: xninetzy/tools/manifest.py
+            - text: )
+          - listitem [ref=f2e321]:
+            - code [ref=f2e322]: portal_krs_war_arm
+          - listitem [ref=f2e323]:
+            - code [ref=f2e324]: qa_fill_kuesioner
+        - paragraph [ref=f2e325]:
+          - text: Approval is enforced through
+          - code [ref=f2e326]: xninetzy/os/hitl/approval_service.py
+          - text: (
+          - code [ref=f2e327]: request_approval
+          - text: ","
+          - code [ref=f2e328]: set_approval_status
+          - text: ","
+          - code [ref=f2e329]: validate_approval
+          - text: "). Owner check:"
+          - code [ref=f2e330]: xninetzy/os/research/permissions.py::is_owner_admin
+          - text: .
+        - heading "Transports" [level=2] [ref=f2e331]
+        - table [ref=f2e332]:
+          - rowgroup [ref=f2e333]:
+            - row [ref=f2e334]:
+              - columnheader "Transport" [ref=f2e335]
+              - columnheader "Status" [ref=f2e336]
+              - columnheader "Default" [ref=f2e337]
+              - columnheader "Source" [ref=f2e338]
+          - rowgroup [ref=f2e339]:
+            - row [ref=f2e340]:
+              - cell "stdio" [ref=f2e341]
+              - cell "primary" [ref=f2e342]
+              - cell "yes" [ref=f2e343]
+              - cell [ref=f2e344]:
+                - code [ref=f2e345]: xninetzy/interfaces/mcp_server.py
+            - row [ref=f2e346]:
+              - cell "Streamable HTTP" [ref=f2e347]
+              - cell "secondary (loopback)" [ref=f2e348]
+              - cell "opt-in" [ref=f2e349]
+              - cell [ref=f2e350]:
+                - code [ref=f2e351]: XNINETZY_MCP_TRANSPORT=streamable-http
+            - row [ref=f2e352]:
+              - cell "Legacy HTTP+SSE" [ref=f2e353]
+              - cell "n/a" [ref=f2e354]
+              - cell "n/a" [ref=f2e355]
+              - cell "not used" [ref=f2e356]
+            - row [ref=f2e357]:
+              - cell "REST / GraphQL" [ref=f2e358]
+              - cell "n/a" [ref=f2e359]
+              - cell "n/a" [ref=f2e360]
+              - cell "MCP-only" [ref=f2e361]
+        - paragraph [ref=f2e362]: "Bootstrap validation:"
+        - list [ref=f2e363]:
+          - listitem [ref=f2e364]:
+            - code [ref=f2e365]: "_TRANSPORT ∈ {\"stdio\", \"streamable-http\"}"
+            - text: else
+            - code [ref=f2e366]: ValueError
+          - listitem [ref=f2e367]:
+            - code [ref=f2e368]: _HTTP_HOST
+            - text: must parse as IP
+          - listitem [ref=f2e369]: non-loopback host → stderr WARNING advising OAuth 2.1 + Resource Indicators (RFC 8707) + Client ID Metadata Documents before real use
+        - paragraph [ref=f2e370]:
+          - code [ref=f2e371]: FastMCP(...)
+          - text: is constructed with
+          - code [ref=f2e372]: stateless_http=True
+          - text: ","
+          - code [ref=f2e373]: json_response=True
+          - text: ","
+          - code [ref=f2e374]: host
+          - text: ","
+          - code [ref=f2e375]: port
+          - text: ","
+          - code [ref=f2e376]: streamable_http_path
+          - text: .
+        - table [ref=f2e377]:
+          - rowgroup [ref=f2e378]:
+            - row [ref=f2e379]:
+              - columnheader "Env var" [ref=f2e380]
+              - columnheader "Default" [ref=f2e381]
+          - rowgroup [ref=f2e382]:
+            - row [ref=f2e383]:
+              - cell [ref=f2e384]:
+                - code [ref=f2e385]: XNINETZY_MCP_TRANSPORT
+              - cell [ref=f2e386]:
+                - code [ref=f2e387]: stdio
+            - row [ref=f2e388]:
+              - cell [ref=f2e389]:
+                - code [ref=f2e390]: XNINETZY_MCP_HTTP_HOST
+              - cell [ref=f2e391]:
+                - code [ref=f2e392]: 127.0.0.1
+            - row [ref=f2e393]:
+              - cell [ref=f2e394]:
+                - code [ref=f2e395]: XNINETZY_MCP_HTTP_PORT
+              - cell [ref=f2e396]:
+                - code [ref=f2e397]: "8765"
+            - row [ref=f2e398]:
+              - cell [ref=f2e399]:
+                - code [ref=f2e400]: XNINETZY_MCP_HTTP_PATH
+              - cell [ref=f2e401]:
+                - code [ref=f2e402]: /mcp
+            - row [ref=f2e403]:
+              - cell [ref=f2e404]:
+                - code [ref=f2e405]: XNINETZY_MCP_CONNECT_TIMEOUT_SECONDS
+              - cell [ref=f2e406]:
+                - code [ref=f2e407]: "20"
+            - row [ref=f2e408]:
+              - cell [ref=f2e409]:
+                - code [ref=f2e410]: XNINETZY_MCP_CALL_TIMEOUT_SECONDS
+              - cell [ref=f2e411]:
+                - code [ref=f2e412]: "180"
+        - heading "SDK pin" [level=2] [ref=f2e413]
+        - paragraph [ref=f2e414]:
+          - code [ref=f2e415]: pyproject.toml
+          - text: pins
+          - code [ref=f2e416]: mcp>=1.28.1,<2
+          - text: ". Resolved at install time:"
+          - code [ref=f2e417]: mcp==1.28.1
+          - text: . Stay on SDK v1.x; v2 migration is a follow-up.
+        - heading "External MCP gateway" [level=2] [ref=f2e418]
+        - paragraph [ref=f2e419]:
+          - code [ref=f2e420]: xninetzy/interfaces/external_mcp.py
+          - text: "registers untrusted third-party MCP servers with:"
+        - list [ref=f2e421]:
+          - listitem [ref=f2e422]:
+            - code [ref=f2e423]: risk_level
+            - text: ∈
+            - code [ref=f2e424]: unreviewed
+            - text: /
+            - code [ref=f2e425]: low
+            - text: /
+            - code [ref=f2e426]: medium
+            - text: /
+            - code [ref=f2e427]: high
+          - listitem [ref=f2e428]:
+            - code [ref=f2e429]: allowed_tools
+            - text: allowlist (empty = no calls permitted)
+          - listitem [ref=f2e430]:
+            - code [ref=f2e431]: last_reviewed_at
+            - text: timestamp on add
+          - listitem [ref=f2e432]:
+            - text: owner-scoped registration via
+            - code [ref=f2e433]: is_owner_admin
+        - paragraph [ref=f2e434]:
+          - code [ref=f2e435]: external_mcp_call
+          - text: rejects any tool not in
+          - code [ref=f2e436]: allowed_tools
+          - text: before issuing the upstream call. Every result is tagged
+          - code [ref=f2e437]: untrusted_source=True
+          - text: . Enable flags (all
+          - code [ref=f2e438]: "false"
+          - text: "by default):"
+        - list [ref=f2e439]:
+          - listitem [ref=f2e440]:
+            - code [ref=f2e441]: EXTERNAL_MCP_ENABLED
+          - listitem [ref=f2e442]:
+            - code [ref=f2e443]: EXTERNAL_MCP_ALLOW_CALLS
+          - listitem [ref=f2e444]:
+            - code [ref=f2e445]: EXTERNAL_MCP_MAX_SERVERS
+            - text: (
+            - code [ref=f2e446]: "8"
+            - text: )
+        - paragraph [ref=f2e447]:
+          - text: "Note:"
+          - code [ref=f2e448]: EXTERNAL_MCP_TIMEOUT_SECONDS
+          - text: exists in config but the gateway reuses
+          - code [ref=f2e449]: XNINETZY_MCP_CALL_TIMEOUT_SECONDS
+          - text: for the actual ceiling.
+        - heading "Tasks extension (SEP-2663)" [level=2] [ref=f2e450]
+        - paragraph [ref=f2e451]:
+          - code [ref=f2e452]: xninetzy/interfaces/tasks_extension.py
+          - text: exposes a generic long-task abstraction over MCP
+          - code [ref=f2e453]: io.modelcontextprotocol/tasks
+          - text: ":"
+        - list [ref=f2e454]:
+          - listitem [ref=f2e455]:
+            - code [ref=f2e456]: tasks_submit(name, payload_json)
+            - text: →
+            - code [ref=f2e457]: task_id
+          - listitem [ref=f2e458]:
+            - code [ref=f2e459]: tasks_get(task_id)
+            - text: → status + result
+          - listitem [ref=f2e460]:
+            - code [ref=f2e461]: tasks_cancel(task_id)
+            - text: → cancel
+          - listitem [ref=f2e462]:
+            - code [ref=f2e463]: tasks_list(limit)
+            - text: → recent
+        - paragraph [ref=f2e464]:
+          - text: Backed by the
+          - code [ref=f2e465]: long_tasks
+          - text: SQLite table. Genuinely long tools (
+          - code [ref=f2e466]: deep_research
+          - text: ","
+          - code [ref=f2e467]: mcp_security_audit
+          - text: ","
+          - code [ref=f2e468]: system_security_analyze
+          - text: ", HEBAT ingest) keep their sync fast paths today; migration to Tasks handles is a follow-up."
+        - heading "Trace context (SEP-414)" [level=2] [ref=f2e469]
+        - paragraph [ref=f2e470]:
+          - code [ref=f2e471]: xninetzy/observability/trace.py
+          - text: provides W3C
+          - code [ref=f2e472]: traceparent
+          - text: /
+          - code [ref=f2e473]: tracestate
+          - text: propagation through MCP
+          - code [ref=f2e474]: _meta
+          - text: ". Each request gets:"
+        - list [ref=f2e475]:
+          - listitem [ref=f2e476]:
+            - code [ref=f2e477]: request_id
+            - text: (
+            - code [ref=f2e478]: req-<16-hex>
+            - text: )
+          - listitem [ref=f2e479]:
+            - text: 32-hex
+            - code [ref=f2e480]: trace_id
+          - listitem [ref=f2e481]:
+            - text: 16-hex
+            - code [ref=f2e482]: span_id
+          - listitem [ref=f2e483]:
+            - text: 2-hex
+            - code [ref=f2e484]: trace_flags
+          - listitem [ref=f2e485]:
+            - text: optional
+            - code [ref=f2e486]: tracestate
+        - paragraph [ref=f2e487]:
+          - code [ref=f2e488]: TraceContext.to_meta()
+          - text: is what callers attach to outbound tool calls. Malformed input falls back to a fresh trace; regex
+          - code [ref=f2e489]: _TRACEPARENT_RE
+          - text: enforces the W3C shape.
+        - heading "CAPTCHA / OTP guard" [level=2] [ref=f2e490]
+        - paragraph [ref=f2e491]:
+          - code [ref=f2e492]: xninetzy/os/security/captcha/lockout.py
+          - text: "enforces:"
+        - list [ref=f2e493]:
+          - listitem [ref=f2e494]:
+            - code [ref=f2e495]: XNINETZY_CAPTCHA_OCR_ENABLED
+            - text: (default
+            - code [ref=f2e496]: "false"
+            - text: )
+          - listitem [ref=f2e497]:
+            - code [ref=f2e498]: XNINETZY_CAPTCHA_OCR_MIN_CONFIDENCE
+            - text: (
+            - code [ref=f2e499]: "0.6"
+            - text: )
+          - listitem [ref=f2e500]:
+            - code [ref=f2e501]: XNINETZY_CAPTCHA_OCR_LOCKOUT_THRESHOLD
+            - text: (
+            - code [ref=f2e502]: "3"
+            - text: )
+          - listitem [ref=f2e503]:
+            - code [ref=f2e504]: XNINETZY_CAPTCHA_OCR_LOCKOUT_WINDOW_SECONDS
+            - text: (
+            - code [ref=f2e505]: "600"
+            - text: )
+          - listitem [ref=f2e506]:
+            - code [ref=f2e507]: XNINETZY_CAPTCHA_OCR_COOLDOWN_SECONDS
+            - text: (
+            - code [ref=f2e508]: "3600"
+            - text: )
+        - paragraph [ref=f2e509]:
+          - text: After threshold failures in window,
+          - code [ref=f2e510]: should_allow_ocr()
+          - text: returns
+          - code [ref=f2e511]: "False"
+          - text: for the cooldown window. Owner fallback via WA delivery is controlled by
+          - code [ref=f2e512]: XNINETZY_CAPTCHA_WA_PREFERRED
+          - text: (default
+          - code [ref=f2e513]: "true"
+          - text: ).
+        - heading "Source adapters (Research + Career)" [level=2] [ref=f2e514]
+        - paragraph [ref=f2e515]:
+          - code [ref=f2e516]: xninetzy/os/research/sources/
+          - text: — 30 adapter modules all wrapping
+          - code [ref=f2e517]: SourceAdapter
+          - text: ABC +
+          - code [ref=f2e518]: SourceRecord
+          - text: +
+          - code [ref=f2e519]: RateLimiter
+          - text: +
+          - code [ref=f2e520]: RetryPolicy
+          - text: +
+          - code [ref=f2e521]: CircuitBreakerGuard
+          - text: .
+        - table [ref=f2e522]:
+          - rowgroup [ref=f2e523]:
+            - row [ref=f2e524]:
+              - columnheader "Category" [ref=f2e525]
+              - columnheader "Adapters" [ref=f2e526]
+          - rowgroup [ref=f2e527]:
+            - row [ref=f2e528]:
+              - cell "Academic preprint" [ref=f2e529]
+              - cell "arxiv, openalex, crossref, pubmed, europe_pmc, dblp, semantic_scholar" [ref=f2e530]
+            - row [ref=f2e531]:
+              - cell "General ref" [ref=f2e532]
+              - cell "wikipedia, wikidata, dbpedia" [ref=f2e533]
+            - row [ref=f2e534]:
+              - cell "Tech / community" [ref=f2e535]
+              - cell "hackernews, reddit, rss, github, stackoverflow" [ref=f2e536]
+            - row [ref=f2e537]:
+              - cell "ML registries" [ref=f2e538]
+              - cell "open_llm_leaderboard, papers_with_code, huggingface, kaggle, zenodo" [ref=f2e539]
+            - row [ref=f2e540]:
+              - cell "Security" [ref=f2e541]
+              - cell "nvd" [ref=f2e542]
+            - row [ref=f2e543]:
+              - cell "Patents / geo" [ref=f2e544]
+              - cell "patentsview, osm" [ref=f2e545]
+            - row [ref=f2e546]:
+              - cell "Economics / stats" [ref=f2e547]
+              - cell "world_bank, fred, bps" [ref=f2e548]
+            - row [ref=f2e549]:
+              - cell "Archive" [ref=f2e550]
+              - cell "wayback" [ref=f2e551]
+            - row [ref=f2e552]:
+              - cell "Career" [ref=f2e553]
+              - cell "remoteok, arbeitnow" [ref=f2e554]
+        - paragraph [ref=f2e555]: No paid API key is a hard dependency. LinkedIn / Indeed / JobStreet / Glints are deliberately not integrated.
+        - heading "Authorization model" [level=2] [ref=f2e556]
+        - paragraph [ref=f2e557]:
+          - code [ref=f2e558]: xninetzy/interfaces/mcp_tool_adapter.py::mcp_principal()
+          - text: injects the trusted local-owner principal at startup. Tools receive
+          - code [ref=f2e559]: sender_id
+          - text: /
+          - code [ref=f2e560]: sender_name
+          - text: from the host call, but those values are never authorization evidence on their own. Tools that require owner scope (
+          - code [ref=f2e561]: external_mcp_*
+          - text: ","
+          - code [ref=f2e562]: obsidian_organize_apply
+          - text: ","
+          - code [ref=f2e563]: improvement_approve
+          - text: ", etc.) check via"
+          - code [ref=f2e564]: xninetzy/os/research/permissions.py::is_owner_admin
+          - text: .
+        - paragraph [ref=f2e565]: FINAL-class tools always require HITL approval regardless of declared tier in orchestrator plans.
+        - heading "Release gate" [level=2] [ref=f2e566]
+        - generic [ref=f2e567]:
+          - text: TERMINAL
+          - code [ref=f2e568]:
+            - generic [ref=f2e569]: uv run python -m xninetzy.cli.supervisor release-check
+          - button "Copy code" [ref=f2e570] [cursor=pointer]:
+            - generic [ref=f2e574]: Copy
+        - paragraph [ref=f2e575]: "Six checks must all PASS:"
+        - table [ref=f2e576]:
+          - rowgroup [ref=f2e577]:
+            - row [ref=f2e578]:
+              - columnheader "Check" [ref=f2e579]
+              - columnheader "Verifies" [ref=f2e580]
+          - rowgroup [ref=f2e581]:
+            - row [ref=f2e582]:
+              - cell [ref=f2e583]:
+                - code [ref=f2e584]: tool_registry
+              - cell "343 tools classified, no unknown risk, no missing idempotency" [ref=f2e585]
+            - row [ref=f2e586]:
+              - cell [ref=f2e587]:
+                - code [ref=f2e588]: secret_redaction
+              - cell [ref=f2e589]:
+                - code [ref=f2e590]: redact_secrets
+                - text: strips sample OpenAI / GitHub / Google keys
+            - row [ref=f2e591]:
+              - cell [ref=f2e592]:
+                - code [ref=f2e593]: safe_fetch
+              - cell "SSRF guard rejects non-http(s), private/loopback, oversize" [ref=f2e594]
+            - row [ref=f2e595]:
+              - cell [ref=f2e596]:
+                - code [ref=f2e597]: transport_config
+              - cell "transport ∈ stdio|streamable-http; default loopback" [ref=f2e598]
+            - row [ref=f2e599]:
+              - cell [ref=f2e600]:
+                - code [ref=f2e601]: sdk_pin
+              - cell [ref=f2e602]:
+                - text: resolved
+                - code [ref=f2e603]: mcp
+                - text: version on v1.x
+            - row [ref=f2e604]:
+              - cell [ref=f2e605]:
+                - code [ref=f2e606]: canonical_final_tools
+              - cell "the 3 FINAL tools match the canonical set" [ref=f2e607]
+        - heading "Path conventions" [level=2] [ref=f2e608]
+        - table [ref=f2e609]:
+          - rowgroup [ref=f2e610]:
+            - row [ref=f2e611]:
+              - columnheader "Env var" [ref=f2e612]
+              - columnheader "Default" [ref=f2e613]
+          - rowgroup [ref=f2e614]:
+            - row [ref=f2e615]:
+              - cell [ref=f2e616]:
+                - code [ref=f2e617]: DATA_DIR
+              - cell [ref=f2e618]:
+                - code [ref=f2e619]: ~/.local/share/xninetzy
+            - row [ref=f2e620]:
+              - cell [ref=f2e621]:
+                - code [ref=f2e622]: OUTPUT_DIR
+              - cell [ref=f2e623]:
+                - code [ref=f2e624]: ~/Documents/xninetzy/output
+            - row [ref=f2e625]:
+              - cell [ref=f2e626]:
+                - code [ref=f2e627]: GENERATED_DOCUMENTS_DIR
+              - cell [ref=f2e628]:
+                - code [ref=f2e629]: ~/Documents/xninetzy/generated/documents
+            - row [ref=f2e630]:
+              - cell [ref=f2e631]:
+                - code [ref=f2e632]: RESEARCH_OUTPUT_DIR
+              - cell [ref=f2e633]:
+                - code [ref=f2e634]: ~/Documents/xninetzy/generated/research
+            - row [ref=f2e635]:
+              - cell [ref=f2e636]:
+                - code [ref=f2e637]: UNTRACKED_OUTPUT_DIR
+              - cell [ref=f2e638]:
+                - code [ref=f2e639]: ~/Documents/xninetzy/generated/untracked
+            - row [ref=f2e640]:
+              - cell [ref=f2e641]:
+                - code [ref=f2e642]: HEBAT_DATA_DIR
+              - cell [ref=f2e643]:
+                - code [ref=f2e644]: ~/.local/share/xninetzy/hebat
+            - row [ref=f2e645]:
+              - cell [ref=f2e646]:
+                - code [ref=f2e647]: HEBAT_DOWNLOAD_DIR
+              - cell [ref=f2e648]:
+                - code [ref=f2e649]: ~/Documents
+            - row [ref=f2e650]:
+              - cell [ref=f2e651]:
+                - code [ref=f2e652]: OBSIDIAN_VAULT_HOST_PATH
+              - cell [ref=f2e653]:
+                - code [ref=f2e654]: ~/Documents/xninetzy-vault
+            - row [ref=f2e655]:
+              - cell [ref=f2e656]:
+                - code [ref=f2e657]: OBSIDIAN_VAULT_PATH
+              - cell [ref=f2e658]:
+                - code [ref=f2e659]: /app/obsidian-vault
+            - row [ref=f2e660]:
+              - cell [ref=f2e661]:
+                - code [ref=f2e662]: EXTERNAL_MCP_REGISTRY_PATH
+              - cell [ref=f2e663]:
+                - code [ref=f2e664]: /app/data/external-mcp.json
+        - paragraph [ref=f2e665]:
+          - code [ref=f2e666]: ARTIFACT_ALLOWLIST=true
+          - text: (default) rejects writes outside the four
+          - code [ref=f2e667]: "*_DIR"
+          - text: roots.
+        - heading "Removed in v2.2.0" [level=2] [ref=f2e668]
+        - paragraph [ref=f2e669]: "If any doc references these, the doc is wrong:"
+        - table [ref=f2e670]:
+          - rowgroup [ref=f2e671]:
+            - row [ref=f2e672]:
+              - columnheader "Removed" [ref=f2e673]
+              - columnheader "Replacement" [ref=f2e674]
+          - rowgroup [ref=f2e675]:
+            - row [ref=f2e676]:
+              - cell "WhatsApp engine (Baileys)" [ref=f2e677]
+              - cell [ref=f2e678]:
+                - text: none —
+                - code [ref=f2e679]: /docs/whatsapp/
+                - text: deleted
+            - row [ref=f2e680]:
+              - cell "LangGraph agent loop" [ref=f2e681]
+              - cell "host does reasoning" [ref=f2e682]
+            - row [ref=f2e683]:
+              - cell "Ink CLI binary" [ref=f2e684]
+              - cell [ref=f2e685]:
+                - code [ref=f2e686]: "xninetzy.cli.supervisor {init,start,release-check}"
+            - row [ref=f2e687]:
+              - cell [ref=f2e688]:
+                - code [ref=f2e689]: services/ai
+                - text: HTTP service
+              - cell "MCP server is the only long-running process" [ref=f2e690]
+            - row [ref=f2e691]:
+              - cell [ref=f2e692]:
+                - code [ref=f2e693]: MCP_API_KEY
+                - text: +
+                - code [ref=f2e694]: WA_MCP_API_KEY
+                - text: pairing
+              - cell [ref=f2e695]:
+                - text: single
+                - code [ref=f2e696]: AI_API_KEY
+                - text: ; stdio = OS process boundary
+            - row [ref=f2e697]:
+              - cell [ref=f2e698]:
+                - code [ref=f2e699]: /api/chat
+                - text: slash commands
+              - cell [ref=f2e700]:
+                - code [ref=f2e701]: /api/chat
+                - text: HTTP bridge for non-stdio hosts; slash commands removed
+            - row [ref=f2e702]:
+              - cell "Wall-garden career scrapers" [ref=f2e703]
+              - cell "RemoteOK + ArbeitNow only" [ref=f2e704]
+      - complementary "Page feedback" [ref=f2e705]:
+        - generic [ref=f2e706]:
+          - strong [ref=f2e707]: Was this helpful?
+          - generic [ref=f2e708]: Help us improve the docs.
+        - generic [ref=f2e709]:
+          - button "This page was helpful" [ref=f2e710] [cursor=pointer]:
+            - generic [ref=f2e713]: "Yes"
+          - button "This page needs improvement" [ref=f2e714] [cursor=pointer]:
+            - generic [ref=f2e717]: "No"
+      - navigation "Previous and next pages" [ref=f2e718]:
+        - link "← Previous Introduction" [ref=f2e719] [cursor=pointer]:
+          - /url: /docs/introduction/
+          - generic [ref=f2e720]: ← Previous
+          - strong [ref=f2e721]: Introduction
+        - link "Next → Quick start" [ref=f2e722] [cursor=pointer]:
+          - /url: /docs/getting-started/
+          - generic [ref=f2e723]: Next →
+          - strong [ref=f2e724]: Quick start
+      - generic [ref=f2e728]:
+        - text: Documentation lives in
+        - code [ref=f2e729]: apps/docs/src/pages/docs
+        - text: and can be edited as Markdown.
+  - contentinfo [ref=f2e730]:
+    - generic [ref=f2e731]: XNINETZY / MCP SYSTEM
+    - paragraph [ref=f2e732]: One FastMCP server. 343 tools. Loopback by default.
+    - navigation "Creator links" [ref=f2e733]:
+      - link "Portfolio" [ref=f2e734] [cursor=pointer]:
+        - /url: https://misbahul-muttaqin.vercel.app/
+      - link "GitHub" [ref=f2e735] [cursor=pointer]:
+        - /url: https://github.com/misbahul45

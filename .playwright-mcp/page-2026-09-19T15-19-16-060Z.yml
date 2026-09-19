@@ -1,0 +1,393 @@
+- generic [active] [ref=f1e1]:
+  - banner [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link "Xninetzy documentation home" [ref=f1e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f1e10]:
+          - strong [ref=f1e11]: XNINETZY
+          - generic [ref=f1e12]: documentation
+      - generic [ref=f1e13]:
+        - button "Search documentation" [ref=f1e14] [cursor=pointer]:
+          - generic [ref=f1e18]: Search docs
+          - generic [ref=f1e19]: Ctrl K
+        - link "MCP" [ref=f1e20] [cursor=pointer]:
+          - /url: /docs/mcp/
+        - link "Portfolio" [ref=f1e21] [cursor=pointer]:
+          - /url: https://misbahul-muttaqin.vercel.app/
+        - link "Misbahul45 on GitHub" [ref=f1e22] [cursor=pointer]:
+          - /url: https://github.com/misbahul45
+        - link "Get started" [ref=f1e25] [cursor=pointer]:
+          - /url: /docs/getting-started/
+  - generic [ref=f1e28]:
+    - complementary "Documentation" [ref=f1e29]:
+      - navigation [ref=f1e30]:
+        - generic [ref=f1e31]:
+          - heading "Start" [level=2] [ref=f1e32]
+          - list [ref=f1e33]:
+            - listitem [ref=f1e34]:
+              - link "Introduction core" [ref=f1e35] [cursor=pointer]:
+                - /url: /docs/introduction/
+                - generic [ref=f1e36]:
+                  - generic [ref=f1e37]: Introduction
+                  - generic [ref=f1e38]: core
+            - listitem [ref=f1e40]:
+              - link "MCP system reference new" [ref=f1e41] [cursor=pointer]:
+                - /url: /docs/mcp-system/
+                - generic [ref=f1e42]:
+                  - generic [ref=f1e43]: MCP system reference
+                  - generic [ref=f1e44]: new
+            - listitem [ref=f1e45]:
+              - link "Quick start" [ref=f1e46] [cursor=pointer]:
+                - /url: /docs/getting-started/
+            - listitem [ref=f1e49]:
+              - link "Configuration" [ref=f1e50] [cursor=pointer]:
+                - /url: /docs/configuration/
+            - listitem [ref=f1e53]:
+              - link "Architecture core" [ref=f1e54] [cursor=pointer]:
+                - /url: /docs/architecture/
+                - generic [ref=f1e55]:
+                  - generic [ref=f1e56]: Architecture
+                  - generic [ref=f1e57]: core
+        - generic [ref=f1e58]:
+          - heading "Reference" [level=2] [ref=f1e59]
+          - list [ref=f1e60]:
+            - listitem [ref=f1e61]:
+              - link "Skill catalog updated" [ref=f1e62] [cursor=pointer]:
+                - /url: /docs/skills/
+                - generic [ref=f1e63]:
+                  - generic [ref=f1e64]: Skill catalog
+                  - generic [ref=f1e65]: updated
+            - listitem [ref=f1e66]:
+              - link "Skill repair runbook new" [ref=f1e67] [cursor=pointer]:
+                - /url: /KNOWN_ISSUES.md
+                - generic [ref=f1e68]:
+                  - generic [ref=f1e69]: Skill repair runbook
+                  - generic [ref=f1e70]: new
+            - listitem [ref=f1e71]:
+              - link "Known issues new" [ref=f1e72] [cursor=pointer]:
+                - /url: /KNOWN_ISSUES.md
+                - generic [ref=f1e73]:
+                  - generic [ref=f1e74]: Known issues
+                  - generic [ref=f1e75]: new
+            - listitem [ref=f1e76]:
+              - link "Changelog new" [ref=f1e77] [cursor=pointer]:
+                - /url: /CHANGELOG.md
+                - generic [ref=f1e78]:
+                  - generic [ref=f1e79]: Changelog
+                  - generic [ref=f1e80]: new
+        - generic [ref=f1e81]:
+          - heading "Integrations" [level=2] [ref=f1e82]
+          - list [ref=f1e83]:
+            - listitem [ref=f1e84]:
+              - link "Obsidian" [ref=f1e85] [cursor=pointer]:
+                - /url: /docs/obsidian/
+            - listitem [ref=f1e88]:
+              - link "HEBAT / Moodle" [ref=f1e89] [cursor=pointer]:
+                - /url: /docs/hebat/
+            - listitem [ref=f1e92]:
+              - link "Cyber Campus" [ref=f1e93] [cursor=pointer]:
+                - /url: /docs/cyber-campus/
+            - listitem [ref=f1e96]:
+              - link "OS kernel" [ref=f1e97] [cursor=pointer]:
+                - /url: /docs/os-kernel/
+            - listitem [ref=f1e100]:
+              - link "Learning roadmaps" [ref=f1e101] [cursor=pointer]:
+                - /url: /docs/learning-roadmaps/
+        - generic [ref=f1e104]:
+          - heading "AI & developer tools" [level=2] [ref=f1e105]
+          - list [ref=f1e106]:
+            - listitem [ref=f1e107]:
+              - link "Chat model selection" [ref=f1e108] [cursor=pointer]:
+                - /url: /docs/providers/
+            - listitem [ref=f1e111]:
+              - link "Global MCP core" [ref=f1e112] [cursor=pointer]:
+                - /url: /docs/mcp/
+                - generic [ref=f1e113]:
+                  - generic [ref=f1e114]: Global MCP
+                  - generic [ref=f1e115]: core
+            - listitem [ref=f1e116]:
+              - link "Lightning agent" [ref=f1e117] [cursor=pointer]:
+                - /url: /docs/lightning/
+            - listitem [ref=f1e120]:
+              - link "Shared skills updated" [ref=f1e121] [cursor=pointer]:
+                - /url: /docs/skills/
+                - generic [ref=f1e122]:
+                  - generic [ref=f1e123]: Shared skills
+                  - generic [ref=f1e124]: updated
+        - generic [ref=f1e125]:
+          - heading "Operations" [level=2] [ref=f1e126]
+          - list [ref=f1e127]:
+            - listitem [ref=f1e128]:
+              - link "HTTP API" [ref=f1e129] [cursor=pointer]:
+                - /url: /docs/api/
+            - listitem [ref=f1e132]:
+              - link "Action policy" [ref=f1e133] [cursor=pointer]:
+                - /url: /docs/action-policy/
+            - listitem [ref=f1e136]:
+              - link "Testing" [ref=f1e137] [cursor=pointer]:
+                - /url: /docs/testing/
+            - listitem [ref=f1e140]:
+              - link "Automation" [ref=f1e141] [cursor=pointer]:
+                - /url: /docs/automation/
+            - listitem [ref=f1e144]:
+              - link "Local data" [ref=f1e145] [cursor=pointer]:
+                - /url: /docs/local-data/
+            - listitem [ref=f1e148]:
+              - link "Backup & restore" [ref=f1e149] [cursor=pointer]:
+                - /url: /docs/backup-restore/
+            - listitem [ref=f1e152]:
+              - link "Security" [ref=f1e153] [cursor=pointer]:
+                - /url: /docs/security/
+            - listitem [ref=f1e156]:
+              - link "Troubleshooting" [ref=f1e157] [cursor=pointer]:
+                - /url: /docs/troubleshooting/
+      - generic [ref=f1e160]:
+        - generic [ref=f1e161]: MCP ready
+        - strong [ref=f1e163]: 343 tools. Satu registry.
+        - paragraph [ref=f1e164]: "MCP-only owner server: Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career."
+        - link "Connect a client →" [ref=f1e165] [cursor=pointer]:
+          - /url: /docs/mcp/
+    - main [ref=f1e166]:
+      - navigation "Breadcrumb" [ref=f1e167]:
+        - link "Docs" [ref=f1e168] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f1e169]: /
+        - generic [ref=f1e170]: Start
+      - generic [ref=f1e171]:
+        - generic [ref=f1e172]: Start
+        - heading "Introduction to Xninetzy" [level=1] [ref=f1e175]
+        - paragraph [ref=f1e176]: Xninetzy as a local-first, MCP-only Personal Intelligence and Learning system.
+        - generic [ref=f1e177]:
+          - generic [ref=f1e178]: Overview
+          - generic [ref=f1e179]: beginner
+          - generic [ref=f1e180]: ⏱ 8 min
+      - article [ref=f1e181]:
+        - paragraph [ref=f1e182]:
+          - text: Xninetzy is a
+          - strong [ref=f1e183]: local-first, MCP-native Personal Intelligence and Learning system
+          - text: ". It exposes one MCP interface that connects a host (Claude, Claude Code, Cursor, any other MCP-compatible client) to a shared engine: router, planner, source registry, cache, deduplication, entity-resolution, evidence, citation, and security."
+        - paragraph [ref=f1e184]: There is no second product surface. No REST API, no GraphQL, no CLI as a parallel client, no web dashboard. The MCP server (stdio primary, Streamable HTTP secondary, loopback-bound by default) is the only external interface.
+        - blockquote [ref=f1e185]:
+          - paragraph [ref=f1e186]:
+            - strong [ref=f1e187]: "What Xninetzy is NOT:"
+            - text: not an internet-ready multi-tenant SaaS, not an autonomous server-side agent that acts on its own, not a replacement for vault backups or an LMS, not a scraped-data aggregator of walled-garden job boards. Reasoning, planning, and orchestration belong to the host.
+        - heading "Domains shipped in v2.2.0" [level=2] [ref=f1e188]
+        - table [ref=f1e189]:
+          - rowgroup [ref=f1e190]:
+            - row [ref=f1e191]:
+              - columnheader "Domain" [ref=f1e192]
+              - columnheader "Source adapters / tools" [ref=f1e193]
+              - columnheader "Notes" [ref=f1e194]
+          - rowgroup [ref=f1e195]:
+            - row [ref=f1e196]:
+              - cell "Research" [ref=f1e197]
+              - cell "OpenAlex, arXiv, Crossref, PubMed, Europe PMC, DBLP, Semantic Scholar, Wikipedia, Wikidata, DBpedia, HackerNews, Reddit, RSS, GitHub, Open LLM Leaderboard, PapersWithCode, HuggingFace, Kaggle, Zenodo, NVD, PatentsView, OSM, World Bank, FRED, BPS, StackOverflow, Wayback" [ref=f1e198]
+              - cell [ref=f1e199]:
+                - text: 27 adapters + 4 MCP tools (
+                - code [ref=f1e200]: research_search
+                - text: ","
+                - code [ref=f1e201]: research_fetch
+                - text: ","
+                - code [ref=f1e202]: research_compare_sources
+                - text: ","
+                - code [ref=f1e203]: research_grade_evidence
+                - text: )
+            - row [ref=f1e204]:
+              - cell "Career" [ref=f1e205]
+              - cell "RemoteOK, ArbeitNow" [ref=f1e206]
+              - cell [ref=f1e207]:
+                - text: 17 MCP tools (
+                - code [ref=f1e208]: career_*
+                - text: ); legal free public APIs only; 19 skill bodies under
+                - code [ref=f1e209]: .agents/skills/career/
+            - row [ref=f1e210]:
+              - cell "Knowledge" [ref=f1e211]
+              - cell "FAISS retrieval, SQLite, Obsidian vault" [ref=f1e212]
+              - cell [ref=f1e213]:
+                - text: 4 MCP tools (
+                - code [ref=f1e214]: knowledge_*
+                - text: )
+            - row [ref=f1e215]:
+              - cell "Learning" [ref=f1e216]
+              - cell "Roadmaps, concept graph, mastery formula, SM-2 spaced repetition" [ref=f1e217]
+              - cell [ref=f1e218]:
+                - text: 8 MCP tools (
+                - code [ref=f1e219]: learning_*
+                - text: )
+            - row [ref=f1e220]:
+              - cell "OS kernel" [ref=f1e221]
+              - cell "Capture, inbox, triage, tasks, goals, reminders" [ref=f1e222]
+              - cell [ref=f1e223]:
+                - text: 5 MCP tools (
+                - code [ref=f1e224]: task_*
+                - text: ","
+                - code [ref=f1e225]: goal_*
+                - text: ", etc.)"
+            - row [ref=f1e226]:
+              - cell "Lightning" [ref=f1e227]
+              - cell "CPU-only contextual bandit, episodes, rewards, regression checks" [ref=f1e228]
+              - cell [ref=f1e229]:
+                - text: 15 MCP tools (
+                - code [ref=f1e230]: lightning_*
+                - text: )
+            - row [ref=f1e231]:
+              - cell "Security" [ref=f1e232]
+              - cell "HITL approvals, scope tokens, SSRF guards, secret redaction" [ref=f1e233]
+              - cell [ref=f1e234]:
+                - text: 9 MCP tools (
+                - code [ref=f1e235]: security_*
+                - text: )
+            - row [ref=f1e236]:
+              - cell "External MCP gateway" [ref=f1e237]
+              - cell "Untrusted-by-default registry, allowlist, risk classification" [ref=f1e238]
+              - cell [ref=f1e239]:
+                - text: 5 MCP tools (
+                - code [ref=f1e240]: external_mcp_*
+                - text: )
+            - row [ref=f1e241]:
+              - cell "Tasks extension" [ref=f1e242]
+              - cell "Long-running task handles (SEP-2663)" [ref=f1e243]
+              - cell [ref=f1e244]:
+                - text: 4 MCP tools (
+                - code [ref=f1e245]: tasks_*
+                - text: )
+            - row [ref=f1e246]:
+              - cell "Self-improvement" [ref=f1e247]
+              - cell "Memory lifecycle, episodic recall, proposals" [ref=f1e248]
+              - cell [ref=f1e249]:
+                - text: 7 MCP tools (
+                - code [ref=f1e250]: improvement_*
+                - text: ) + 7 (
+                - code [ref=f1e251]: memory_*
+                - text: )
+        - heading "Design principles" [level=2] [ref=f1e252]
+        - heading "Local-first and single-owner" [level=3] [ref=f1e253]
+        - paragraph [ref=f1e254]: The default configuration targets one owner on a local machine or private network. SQLite, FAISS, HEBAT browser profiles, media, and Obsidian vault stay local. There is no Xninetzy-operated service anywhere in the default path.
+        - heading "MCP is the only public interface" [level=3] [ref=f1e255]
+        - paragraph [ref=f1e256]:
+          - text: Clients connect via
+          - code [ref=f1e257]: stdio
+          - text: (primary) or Streamable HTTP (opt-in, loopback by default). The MCP server injects trusted identity context. Client-supplied
+          - code [ref=f1e258]: sender_id
+          - text: ","
+          - code [ref=f1e259]: sender_name
+          - text: ", and"
+          - code [ref=f1e260]: chat_id
+          - text: values are never authorization evidence.
+        - heading "No server-side agent loop" [level=3] [ref=f1e261]
+        - paragraph [ref=f1e262]: Xninetzy exposes capabilities. It does not decide what to do next, does not chain its own tool calls autonomously, and does not act as a second brain. Reasoning and orchestration belong to the host (Claude / Claude Code / Cursor / etc.).
+        - heading "Human in the loop" [level=3] [ref=f1e263]
+        - paragraph [ref=f1e264]:
+          - code [ref=f1e265]: FINAL
+          - text: "-class tools (e.g."
+          - code [ref=f1e266]: improvement_approve
+          - text: ","
+          - code [ref=f1e267]: portal_krs_final_submit
+          - text: ) require HITL approval server-side. Orchestrator tier gate (
+          - code [ref=f1e268]: _effective_tier
+          - text: ) rejects owner-supplied tier downgrade of FINAL tools.
+        - heading "Capture before commitment" [level=3] [ref=f1e269]
+        - paragraph [ref=f1e270]: The OS Inbox holds ambiguous input until its next action is clear. Promotion to a task or archive runs in one transaction (task + entity link + state transition + event). Reusing an idempotency key never creates a second row.
+        - heading "Provider freedom" [level=3] [ref=f1e271]
+        - paragraph [ref=f1e272]:
+          - text: LLM providers are pluggable. Flaz is the default, not a lock-in. Optional backends (Neo4j, Graphiti, Ollama) are opt-in via a
+          - code [ref=f1e273]: ProviderAdapter
+          - text: interface, never a hard dependency.
+        - heading "Main components" [level=2] [ref=f1e274]
+        - table [ref=f1e275]:
+          - rowgroup [ref=f1e276]:
+            - row [ref=f1e277]:
+              - columnheader "Component" [ref=f1e278]
+              - columnheader "Technology" [ref=f1e279]
+              - columnheader "Responsibility" [ref=f1e280]
+          - rowgroup [ref=f1e281]:
+            - row [ref=f1e282]:
+              - cell "MCP server" [ref=f1e283]
+              - cell [ref=f1e284]:
+                - text: Python, FastMCP (
+                - code [ref=f1e285]: mcp>=1.28.1,<2
+                - text: )
+              - cell "stdio + Streamable HTTP, canonical tool registry, MCP tool exposure" [ref=f1e286]
+            - row [ref=f1e287]:
+              - cell "AI service / app core" [ref=f1e288]
+              - cell "Python, FastAPI, Pydantic v2" [ref=f1e289]
+              - cell "Routing, prompts, provider registry, persistence, knowledge, research, HEBAT, Obsidian, approvals, Lightning" [ref=f1e290]
+            - row [ref=f1e291]:
+              - cell "Documentation" [ref=f1e292]
+              - cell "Astro Starlight" [ref=f1e293]
+              - cell "Static operator and contributor documentation" [ref=f1e294]
+        - paragraph [ref=f1e295]:
+          - text: "There is no WhatsApp engine, no LangGraph agent runtime, no terminal CLI. The repository contains exactly three trees:"
+          - code [ref=f1e296]: xninetzy/
+          - text: ","
+          - code [ref=f1e297]: apps/docs/
+          - text: ","
+          - code [ref=f1e298]: .agents/skills/
+          - text: .
+        - heading "Choose your next path" [level=2] [ref=f1e299]
+        - list [ref=f1e300]:
+          - listitem [ref=f1e301]:
+            - text: "New installation: open"
+            - link "Quick start" [ref=f1e302] [cursor=pointer]:
+              - /url: /docs/getting-started/
+            - text: .
+          - listitem [ref=f1e303]:
+            - text: "Choose a model: open"
+            - link "LLM providers" [ref=f1e304] [cursor=pointer]:
+              - /url: /docs/providers/
+            - text: .
+          - listitem [ref=f1e305]:
+            - text: "Connect a vault: open"
+            - link "Obsidian" [ref=f1e306] [cursor=pointer]:
+              - /url: /docs/obsidian/
+            - text: .
+          - listitem [ref=f1e307]:
+            - text: "Understand capture and daily focus: open"
+            - link "OS kernel" [ref=f1e308] [cursor=pointer]:
+              - /url: /docs/os-kernel/
+            - text: .
+          - listitem [ref=f1e309]:
+            - text: "Use coding clients from any directory: open"
+            - link "Global MCP" [ref=f1e310] [cursor=pointer]:
+              - /url: /docs/mcp/
+            - text: .
+          - listitem [ref=f1e311]:
+            - text: "Review safety boundaries: open"
+            - link "Security" [ref=f1e312] [cursor=pointer]:
+              - /url: /docs/security/
+            - text: .
+          - listitem [ref=f1e313]:
+            - text: "Release-gate status:"
+            - code [ref=f1e314]: uv run python -m xninetzy.cli.supervisor release-check
+            - text: .
+      - complementary "Page feedback" [ref=f1e315]:
+        - generic [ref=f1e316]:
+          - strong [ref=f1e317]: Was this helpful?
+          - generic [ref=f1e318]: Help us improve the docs.
+        - generic [ref=f1e319]:
+          - button "This page was helpful" [ref=f1e320] [cursor=pointer]:
+            - generic [ref=f1e323]: "Yes"
+          - button "This page needs improvement" [ref=f1e324] [cursor=pointer]:
+            - generic [ref=f1e327]: "No"
+      - navigation "Previous and next pages" [ref=f1e328]:
+        - link "Next → MCP system reference" [ref=f1e330] [cursor=pointer]:
+          - /url: /docs/mcp-system/
+          - generic [ref=f1e331]: Next →
+          - strong [ref=f1e332]: MCP system reference
+      - generic [ref=f1e336]:
+        - text: Documentation lives in
+        - code [ref=f1e337]: apps/docs/src/pages/docs
+        - text: and can be edited as Markdown.
+  - contentinfo [ref=f1e338]:
+    - generic [ref=f1e339]: XNINETZY / MCP SYSTEM
+    - paragraph [ref=f1e340]: One FastMCP server. 343 tools. Loopback by default.
+    - navigation "Creator links" [ref=f1e341]:
+      - link "Portfolio" [ref=f1e342] [cursor=pointer]:
+        - /url: https://misbahul-muttaqin.vercel.app/
+      - link "GitHub" [ref=f1e343] [cursor=pointer]:
+        - /url: https://github.com/misbahul45
+  - generic [ref=f1e346]:
+    - button [ref=f1e347]
+    - button [ref=f1e353]
+    - button [ref=f1e357]
+    - button [ref=f1e362]

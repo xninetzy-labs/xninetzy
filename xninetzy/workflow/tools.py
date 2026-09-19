@@ -1,4 +1,4 @@
-"""WhatsApp-facing tools for inspecting / resuming / cancelling workflows."""
+"""-facing tools for inspecting / resuming / cancelling workflows."""
 
 from __future__ import annotations
 
@@ -35,7 +35,7 @@ async def workflow_status(chat_id: str, workflow_id: str | None = None) -> str:
     """Tampilkan status workflow (default: workflow terbaru) beserta tiap langkahnya.
 
     Args:
-        chat_id: Chat WhatsApp (dari context).
+        chat_id: Chat  (dari context).
         workflow_id: ID workflow tertentu (opsional).
     """
     from xninetzy.workflow.store import WorkflowStore
@@ -57,7 +57,7 @@ async def workflow_resume(chat_id: str, workflow_id: str) -> str:
     """Jalankan ulang sebuah workflow berdasarkan ID (MVP: eksekusi ulang inline).
 
     Args:
-        chat_id: Chat WhatsApp (dari context).
+        chat_id: Chat  (dari context).
         workflow_id: ID workflow yang mau dilanjutkan.
     """
     from xninetzy.workflow.store import WorkflowStore
@@ -68,7 +68,7 @@ async def workflow_resume(chat_id: str, workflow_id: str) -> str:
         return f"Workflow `{workflow_id}` tidak ditemukan untuk chat ini."
     msg = row.get("original_user_message") or ""
     logger.info("workflow_resume workflow_id=%s chat_id=%s", workflow_id, chat_id)
-    return await run_workflow(chat_id, msg, from_whatsapp=True)
+    return await run_workflow(chat_id, msg, from_=True)
 
 
 @tool

@@ -21,7 +21,7 @@ _PROMPT_MEDIA_CHARS = 12000
 class MediaUnavailableError(RuntimeError):
     """Raised when media_store does not have the requested media item.
 
-    Replaces the legacy ``WaToolError`` raised when the WhatsApp MCP could not
+    Replaces the legacy ``WaToolError`` raised when the  MCP could not
     download media. With the MCP-only pivot the local file must already exist
     in :mod:`media_store` (populated by the MCP client that uploaded it).
     """
@@ -67,7 +67,7 @@ def _resolve_local(chat_id: str, message_id: str) -> dict:
 async def _read_document(chat_id: str, message_id: str) -> dict:
     """Parse a document already present in media_store.
 
-    The pivot removed WhatsApp download: the MCP client uploads the file and
+    The pivot removed  download: the MCP client uploads the file and
     populates ``media_store`` with a ``local_path``. This helper only reads.
     """
     stored = _resolve_local(chat_id, message_id)

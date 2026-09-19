@@ -171,7 +171,7 @@ def draft_workflow(workflow_request: str) -> str:
 *Tools yang Mungkin Dibutuhkan:*
 • `reminder_create` — penjadwalan
 • `obsidian_create` — penyimpanan catatan
-• `wa_send_text` — notifikasi WhatsApp
+• `wa_send_text` — notifikasi 
 
 *Catatan:*
 Workflow ini masih draft — perlu disesuaikan dengan sistem dan tools yang tersedia.

@@ -1,13 +1,17 @@
 ---
-name: xninetzy-deep-research
-description: Source-grounded deep-research operating system for complex research questions requiring multi-round discovery, evidence synthesis, academic papers, official sources, web research, videos, personal context, claim auditing, contradiction analysis, provenance tracking, and reusable research memory. Use for deep research, literature review, comparative analysis, fact-checking, and current-fact verification where evidence integrity matters.
+
+...
+
+...
+name: "xninetzy-deep-research"
+description: "Source-grounded deep-research operating system for complex research questions requiring multi-round discovery, evidence synthesis, academic papers, official sources, web research, videos, personal context, claim auditing, contradiction analysis, provenance tracking, and reusable research memory. Use for deep research, literature review, comparative analysis, fact-checking, and current-fact verification where evidence integrity matters."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "frame -> orient -> decompose -> search -> triage -> verify -> contrast -> synthesize -> audit -> persist -> deliver"
----
+...
 
 # Xninetzy Deep Research OS
 

@@ -1,10 +1,14 @@
 ---
-name: xninetzy-academic-safety
-description: Apply authorization, confirmation, idempotency, current-state revalidation, and receipt rules to academic workflows.
+
+...
+
+...
+name: "xninetzy-academic-safety"
+description: "Apply authorization, confirmation, idempotency, current-state revalidation, and receipt rules to academic workflows."
 metadata:
-  owner: xninetzy
+  owner: "xninetzy"
   version: "1.0.0"
----
+...
 
 # Academic Safety
 

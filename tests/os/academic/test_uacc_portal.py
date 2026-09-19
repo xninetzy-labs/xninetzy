@@ -44,7 +44,7 @@ async def test_uacc_login_denies_non_admin_before_browser_start(monkeypatch):
     monkeypatch.setattr(portal_tools.LOGIN_COORDINATOR, "start", fake_start)
 
     result = await portal_tools.uacc_login_start.ainvoke(
-        {"chat_id": "chat", "sender_id": "stranger@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "stranger@chat.local"}
     )
 
     assert result == "Login UACC hanya dapat dimulai oleh admin."
@@ -68,7 +68,7 @@ async def test_uacc_captcha_submit_denies_non_admin(monkeypatch):
             "challenge_id": "challenge",
             "captcha_answer": "8",
             "chat_id": "chat",
-            "sender_id": "stranger@s.whatsapp.net",
+            "sender_id": "stranger@chat.local",
         }
     )
 
@@ -107,7 +107,7 @@ async def test_uacc_login_start_forwards_captcha_to_admin(monkeypatch):
     )
 
     result = await portal_tools.uacc_login_start.ainvoke(
-        {"chat_id": "chat", "sender_id": "628123@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "628123@chat.local"}
     )
 
     assert sent == {"site_slug": "uacc", "label": "UACC"}

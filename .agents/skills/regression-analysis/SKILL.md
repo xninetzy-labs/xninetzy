@@ -1,11 +1,11 @@
 ---
-name: regression-analysis
-description: Diagnose regressions by diffing the pre/post behavior of a system, identifying the commit that introduced the change, and proposing a minimal revert or fix. Use when the operator reports a previously-passing test now fails, a metric regressed, or a behavior changed unexpectedly.
+name: "regression-analysis"
+description: "Diagnose regressions by diffing the pre/post behavior of a system, identifying the commit that introduced the change, and proposing a minimal revert or fix. Use when the operator reports a previously-passing test now fails, a metric regressed, or a behavior changed unexpectedly."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: domain
-  priority: P1
+  scope: "domain"
+  priority: "P1"
   required_tools:
     - repo_diff
     - repo_search

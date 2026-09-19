@@ -27,7 +27,7 @@ def task_capture(
         priority: low|medium|high|critical
         due_at: Deadline ISO string atau tanggal (opsional)
         goal_id: ID goal terkait (opsional)
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         idempotency_key: Kunci opsional agar retry tidak membuat task duplikat
     """
     from xninetzy.db.idempotency import idempotent_call
@@ -44,7 +44,7 @@ def task_capture(
     def _create() -> str:
         t = create_task(title, description, priority, due_at, goal_id)
         record_event(
-            chat_id, "task_created", "whatsapp", "task", str(t["id"]), {"title": title}
+            chat_id, "task_created", "", "task", str(t["id"]), {"title": title}
         )
         due = f"\nDeadline: {due_at}" if due_at else ""
         return f"✅ Task dicatat!\n*{title}*\nPriority: {priority} | ID: `{t['id']}`{due}"
@@ -107,7 +107,7 @@ def task_complete(task_id: int, chat_id: str = "system") -> str:
 
     Args:
         task_id: ID task
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.life.task_manager import complete_task, get_task
 
@@ -119,7 +119,7 @@ def task_complete(task_id: int, chat_id: str = "system") -> str:
     record_event(
         chat_id,
         "task_completed",
-        "whatsapp",
+        "",
         "task",
         str(task_id),
         {"title": t["title"]},
@@ -145,7 +145,7 @@ def money_add_transaction(
         tx_type: income|expense
         category: Kategori (makan/transport/belanja/kesehatan/pendidikan/pulsa/kos/hiburan/investasi/lain-lain)
         description: Deskripsi singkat
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.life.money_manager import add_transaction
 
@@ -153,7 +153,7 @@ def money_add_transaction(
     record_event(
         chat_id,
         "money_transaction_logged",
-        "whatsapp",
+        "",
         "transaction",
         str(result["id"]),
         {"amount": amount, "type": tx_type, "category": category},
@@ -219,7 +219,7 @@ def workout_log(
         duration: Durasi dalam menit
         intensity: low|medium|high
         notes: Catatan tambahan
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.life.workout_manager import log_workout
 
@@ -228,7 +228,7 @@ def workout_log(
     record_event(
         chat_id,
         "workout_logged",
-        "whatsapp",
+        "",
         "workout",
         str(result["id"]),
         {"type": workout_type, "duration": duration},
@@ -281,12 +281,12 @@ def habit_log(
         name: Nama habit (akan dibuat otomatis jika belum ada)
         value: Jumlah (default: 1)
         notes: Catatan (opsional)
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.life.habit_manager import log_habit
 
     log_habit(name, value, notes)
-    record_event(chat_id, "habit_logged", "whatsapp", "habit", name, {"value": value})
+    record_event(chat_id, "habit_logged", "", "habit", name, {"value": value})
     return f"✅ Habit *{name}* dicatat (×{value})"
 
 
@@ -320,7 +320,7 @@ def daily_checkin(
         energy: Skor energi 1-5
         focus: Skor fokus 1-5
         summary: Ringkasan hari ini dalam 1-2 kalimat
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     from xninetzy.os.life.journal_manager import checkin
 
@@ -328,7 +328,7 @@ def daily_checkin(
     record_event(
         chat_id,
         "daily_checkin",
-        "whatsapp",
+        "",
         "review",
         str(result["id"]),
         {"mood": mood, "energy": energy},

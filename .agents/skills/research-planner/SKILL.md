@@ -1,16 +1,16 @@
 ---
-name: research-planner
-description: Decompose a research question into a multi-step plan with source selection, evidence strategy, verification, and synthesis stages. Use when a query needs structured research rather than single-shot search.
+name: "research-planner"
+description: "Decompose a research question into a multi-step plan with source selection, evidence strategy, verification, and synthesis stages. Use when a query needs structured research rather than single-shot search."
 metadata:
-  type: meta
-  layer: research-orchestration
+  type: "meta"
+  layer: "research-orchestration"
   consumes:
     - source-selector
     - research_search
     - research_fetch
   produces:
     - research_plan
-  tier: 0
+  tier: "0"
 ---
 
 # research-planner

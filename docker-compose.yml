@@ -1,12 +1,12 @@
 services:
-  ai:
+  xninetzy:
     build:
-      context: ./services/ai
+      context: .
+      dockerfile: Dockerfile
     env_file:
       - .env
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     environment:
-      WA_MCP_BASE_URL: http://wa-enggine:8081
       DATA_DIR: /app/data
       SQLITE_PATH: /app/data/xninetzy.sqlite3
       BACKUP_DIR: /app/data/backups
@@ -18,8 +18,6 @@ services:
       XNINETZY_SKILLS_DIR: /app/data/opencode-config/opencode/skills
       MCP_RUNTIME_MODE: container
       OLLAMA_BASE_URL: ${OLLAMA_DOCKER_BASE_URL:-http://host.docker.internal:11434/v1}
-      # CPU-only AI runtime — pins torch/sentence-transformers to CPU and caps
-      # the thread pools. No GPU is ever requested (no runtime: nvidia / gpus).
       XNINETZY_DEVICE: cpu
       EMBEDDING_DEVICE: cpu
       CUDA_VISIBLE_DEVICES: ""
@@ -29,29 +27,15 @@ services:
       MKL_NUM_THREADS: "${AI_CPU_THREADS:-4}"
       TORCH_NUM_THREADS: "${AI_CPU_THREADS:-4}"
       AI_CPU_THREADS: "${AI_CPU_THREADS:-4}"
-      CODING_AGENT_WORKSPACE: /app/xninetzy
-      CODING_AGENT_ALLOWED_ROOT: /app/xninetzy
-      CODING_AGENT_EXECUTION_MODE: host_bridge
-      CODING_AGENT_HOST_BRIDGE_URL: http://host.docker.internal:8765
-      CODING_AGENT_HOST_BRIDGE_TOKEN: ${CODING_AGENT_HOST_BRIDGE_TOKEN:-}
-      CHAT_FAILOVER_ENABLED: "true"
-      FLAZ_MODEL: deepseek-v4-pro
-      FLAZ_MODELS: deepseek-v4-pro
       XDG_CONFIG_HOME: /app/data/opencode-config
-      CODEX_HOME: /app/data/codex-config
-      CLAUDE_CONFIG_DIR: /app/data/claude-config
-      CODING_AGENT_ENV_ALLOWLIST: "PATH,HOME,USER,LOGNAME,LANG,LC_ALL,TERM,TMPDIR,XDG_CONFIG_HOME,XDG_DATA_HOME,XDG_CACHE_HOME,SSL_CERT_FILE,SSL_CERT_DIR,CODEX_HOME,CLAUDE_CONFIG_DIR,OPENAI_API_KEY,ANTHROPIC_API_KEY,FLAZ_API_KEY,DATA_DIR,SQLITE_PATH,BACKUP_DIR,APP_TIMEZONE,OBSIDIAN_ENABLED,OBSIDIAN_VAULT_PATH,OBSIDIAN_ALLOW_WRITE,OBSIDIAN_ALLOW_DELETE,OBSIDIAN_BACKUP_BEFORE_WRITE,WA_MCP_BASE_URL,WA_MCP_API_KEY,WA_MEDIA_MAX_BYTES,MCP_RUNTIME_MODE,MCP_PRINCIPAL_ID,MCP_PRINCIPAL_NAME,MCP_DEFAULT_CHAT_ID,ADMIN_JID,ADMIN_NAMES,OWNER_ALLOWED_JIDS,HEBAT_USERNAME,HEBAT_PASSWORD,HEBAT_DATA_DIR,HEBAT_DOWNLOAD_DIR,WEB_ANALYSIS_ENCRYPTION_KEY,WEB_ANALYSIS_DATA_DIR,XNINETZY_SKILLS_DIR"
-      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
-      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
       - "127.0.0.1:8000:8000"
+      - "127.0.0.1:8765:8765"
     volumes:
-      - ./services/ai/data:/app/data
-      - ${OBSIDIAN_VAULT_HOST_PATH:?Set OBSIDIAN_VAULT_HOST_PATH}:/app/obsidian-vault
-      - ./:/app/xninetzy
-      - wa-media:/app/data/wa-media
+      - ./data:/app/data
+      - ${OBSIDIAN_VAULT_HOST_PATH:?Set OBSIDIAN_VAULT_HOST_PATH}:/app/obsidian-vault:ro
     healthcheck:
       test: ["CMD", "uv", "run", "--no-dev", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
       interval: 10s
@@ -60,68 +44,11 @@ services:
       start_period: 30s
     restart: unless-stopped
 
-  wa-enggine:
-    build:
-      context: ./services/wa-enggine
-    env_file:
-      - .env
-    environment:
-      WA_AUTH_DIR: /app/sessions
-      AI_BASE_URL: http://ai:8000
-      AI_API_URL: http://ai:8000
-      AI_CHAT_ENDPOINT: /api/chat
-      AI_TIMEOUT_MS: "120000"
-      MCP_SERVER_ENABLED: "true"
-      MCP_HOST: 0.0.0.0
-      MCP_PORT: "8081"
-      WA_PAIRING_WAIT_MS: "90000"
-      WA_PAIRING_RECONNECT_DELAY_MS: "30000"
-      WA_GROUP_TRIGGER_MODE: mention_or_prefix
-      WA_COMMAND_PREFIX: "!"
-      WA_MEDIA_DIR: /app/data/wa-media
-      WA_MEDIA_MAX_BYTES: "26214400"
-      WA_PROCESSING_DIR: /app/sessions/processing
-    ports:
-      - "127.0.0.1:8081:8081"
-    depends_on:
-      ai:
-        condition: service_healthy
-    restart: unless-stopped
-    volumes:
-      - wa-session:/app/sessions
-      - wa-media:/app/data/wa-media
-    healthcheck:
-      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 10s
-
-  cli:
-    build:
-      context: ./apps/cli
-    env_file:
-      - .env
-    profiles:
-      - tools
-    stdin_open: true
-    tty: true
-    environment:
-      XNINETZY_AI_URL: http://ai:8000
-      XNINETZY_CLI_TIMEOUT_MS: "120000"
-
-  # GraphRAG V3 structural projection store. Rebuildable, NOT source-of-truth
-  # (SQLite is). Gated behind the `graph` profile so a default `docker compose
-  # up` never starts it and never requires the secret to exist. Enable with
-  # `docker compose --profile graph up` once GRAPHRAG_V3_ENABLED + NEO4J_ENABLED
-  # are set. Ports are bound to 127.0.0.1 only — never exposed to the network.
   neo4j:
     image: neo4j:5.26-community
     profiles:
       - graph
     environment:
-      # Credential comes from a Docker secret file (format: neo4j/<password>),
-      # never from .env. See .secrets/neo4j_auth (gitignored).
       NEO4J_AUTH_FILE: /run/secrets/neo4j_auth
       NEO4J_server_memory_heap_initial__size: 512m
       NEO4J_server_memory_heap_max__size: 1G
@@ -147,7 +74,5 @@ secrets:
     file: ./.secrets/neo4j_auth
 
 volumes:
-  wa-media:
-  wa-session:
   neo4j-data:
   neo4j-logs:

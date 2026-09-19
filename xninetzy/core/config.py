@@ -214,7 +214,7 @@ class Settings(BaseSettings):
     EXTERNAL_MCP_TIMEOUT_SECONDS: float = 30.0
     EXTERNAL_MCP_MAX_SERVERS: int = 8
 
-    # OCR for WhatsApp images and scanned PDFs
+    # OCR for  images and scanned PDFs
     OCR_ENABLED: bool = True
     OCR_LANGUAGES: str = "eng+ind"
     OCR_MAX_PDF_PAGES: int = 20
@@ -258,7 +258,7 @@ class Settings(BaseSettings):
     UACC_LOGIN_CHALLENGE_TTL_SECONDS: int = 600
     UACC_LOGIN_MAX_ATTEMPTS: int = 3
     UACC_LOGIN_TIMEOUT_MS: int = 30_000
-    # CAPTCHA delivery: WhatsApp preferred, MCP image blocks as fallback
+    # CAPTCHA delivery:  preferred, MCP image blocks as fallback
     XNINETZY_CAPTCHA_WA_PREFERRED: bool = True
     XNINETZY_CAPTCHA_AUTO_OPEN: bool = True
     XNINETZY_CAPTCHA_DIR: str = "/tmp/opencode"
@@ -350,6 +350,14 @@ class Settings(BaseSettings):
     LIGHTNING_EVALUATION_WINDOW_DAYS: int = 7
     LIGHTNING_RETENTION_DAYS: int = 90
     LIGHTNING_MAX_EVENT_CHARS: int = 4000
+
+    AUTO_MEMORY_ENABLED: bool = True
+    AUTO_MEMORY_SAMPLE_RATE: float = 0.10
+    AUTO_MEMORY_MIN_CONTENT_CHARS: int = 80
+    AUTO_GRAPH_ENABLED: bool = True
+    AUTO_GRAPH_WRITE_ONLY: bool = True
+    AUTO_IMPROVE_ENABLED: bool = True
+    AUTO_IMPROVE_ERROR_ONLY: bool = True
 
     def hebat_reminder_hours(self) -> list[int]:
         return [

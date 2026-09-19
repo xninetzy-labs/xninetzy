@@ -142,7 +142,7 @@ async def graph_v3_rebuild(chat_id: str = "system", sender_id: str | None = None
     approval_id = request_approval(chat_id, sender_id, "graph_rebuild", title, summary, {})
     delivered = await notify_admin_approval(approval_id, "graph_rebuild", title, summary)
     delivery = (
-        "Tombol approve/reject dikirim ke WhatsApp admin."
+        "Tombol approve/reject dikirim ke  admin."
         if delivered
         else "Tombol gagal dikirim; cek ADMIN_JID dan WA Engine."
     )

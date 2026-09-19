@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import inspect
+import json
 import time
 from dataclasses import dataclass
 from typing import Any, Iterable
@@ -53,6 +54,167 @@ def mcp_principal(settings: Settings | None = None) -> MCPPrincipal:
     )
 
 
+def _auto_memory_record(tool_name: str, arguments: dict[str, Any], result: Any, owner: str) -> None:
+    settings = get_settings()
+    if not settings.AUTO_MEMORY_ENABLED:
+        return
+    if settings.AUTO_MEMORY_SAMPLE_RATE <= 0:
+        return
+    if tool_name.startswith(("memory_", "lightning_", "improvement_", "graph_", "observability_")):
+        return
+    try:
+        import random
+
+        if random.random() > settings.AUTO_MEMORY_SAMPLE_RATE:
+            return
+        arg_preview = json.dumps(arguments, default=str, ensure_ascii=False)[:400]
+        result_preview = (
+            result if isinstance(result, str) else json.dumps(result, default=str, ensure_ascii=False)
+        )[:600]
+        content = f"mcp:{tool_name} args={arg_preview} out={result_preview}"
+        if len(content) < settings.AUTO_MEMORY_MIN_CONTENT_CHARS:
+            return
+        from xninetzy.os.memory.memory_store import add_memory
+
+        add_memory(user_id=owner, content=content, source="mcp_auto")
+    except Exception:
+        pass
+
+
+def _auto_graph_record(
+    tool_name: str,
+    arguments: dict[str, Any],
+    result: Any,
+    risk_class: str,
+    owner: str,
+) -> None:
+    settings = get_settings()
+    if not settings.AUTO_GRAPH_ENABLED:
+        return
+    if settings.AUTO_GRAPH_WRITE_ONLY and risk_class not in ("write", "final"):
+        return
+    if tool_name.startswith(("graph_", "lightning_", "improvement_", "observability_")):
+        return
+    try:
+        from xninetzy.os.graph.graph_store import add_edge, add_node, search_nodes
+
+        result_text = (
+            result if isinstance(result, str) else json.dumps(result, default=str, ensure_ascii=False)
+        )[:400]
+        topic = f"mcp:{tool_name}"
+        existing = search_nodes(topic, limit=1)
+        if existing:
+            node_id = int(existing[0]["id"])
+        else:
+            node_id = add_node(
+                node_type="mcp_tool_invocation",
+                title=topic,
+                content=f"Auto-recorded MCP tool calls for {tool_name}",
+                metadata={"owner": owner, "risk_class": risk_class},
+            )
+        semantic_type = _semantic_node_type(tool_name) or "mcp_tool_artifact"
+        artifact_id = add_node(
+            node_type=semantic_type,
+            title=f"{tool_name}@{int(time.time() * 1000)}",
+            content=result_text,
+            metadata={
+                "tool": tool_name,
+                "args_preview": json.dumps(arguments, default=str)[:200],
+                "owner": owner,
+                "semantic_node_type": semantic_type,
+            },
+        )
+        add_edge(node_id, artifact_id, "produced_artifact", {"semantic_type": semantic_type})
+        related = search_nodes(tool_name.split("_")[0], limit=3)
+        for rel in related:
+            try:
+                rel_id = int(rel["id"])
+                if rel_id == node_id or rel_id == artifact_id:
+                    continue
+                if rel.get("node_type") in (semantic_type, "mcp_tool_invocation", "mcp_tool_artifact"):
+                    continue
+                add_edge(artifact_id, rel_id, "mentions_topic")
+            except Exception:
+                continue
+    except Exception:
+        pass
+
+
+def _auto_improve_record(
+    tool_name: str,
+    arguments: dict[str, Any],
+    exc: BaseException | None,
+    owner: str,
+) -> None:
+    settings = get_settings()
+    if not settings.AUTO_IMPROVE_ENABLED:
+        return
+    if settings.AUTO_IMPROVE_ERROR_ONLY and exc is None:
+        return
+    if tool_name.startswith(("improvement_", "lightning_", "memory_", "graph_", "observability_")):
+        return
+    try:
+        from xninetzy.tools.ecosystem.improvement_tools import improvement_detect
+
+        signal = (
+            f"tool_error:{type(exc).__name__}:{tool_name}"
+            if exc is not None
+            else f"tool_success_pattern:{tool_name}"
+        )
+        improvement_detect(
+            scope="tool",
+            signal=signal,
+            target_id=tool_name,
+            notes=str(exc)[:500] if exc else "",
+            owner=owner,
+            chat_id=owner,
+            sender_id=owner,
+        )
+    except Exception:
+        pass
+
+
+_DOMAIN_NODE_TYPE: dict[str, str] = {
+    "career": "job_application",
+    "research": "research_paper",
+    "deep_research": "research_topic",
+    "web": "web_evidence",
+    "hebat": "course",
+    "portal": "academic_record",
+    "learning": "learning_concept",
+    "goal": "goal",
+    "task": "task",
+    "habit": "habit",
+    "money": "transaction",
+    "workout": "workout",
+    "memory": "memory_note",
+    "knowledge": "knowledge_chunk",
+    "obsidian": "obsidian_note",
+    "document": "document",
+    "image": "image",
+    "youtube": "media",
+    "media": "media",
+    "repo": "code_symbol",
+    "security": "security_finding",
+    "rule": "rule",
+    "rules": "rule",
+    "graph": "graph_artifact",
+    "skill": "skill",
+    "improvement": "improvement_proposal",
+    "harness": "plan_step",
+    "lightning": "lightning_event",
+    "qa": "qa_submission",
+    "uacc": "uacc_action",
+}
+
+
+def _semantic_node_type(tool_name: str) -> str | None:
+    for prefix, node_type in _DOMAIN_NODE_TYPE.items():
+        if tool_name.startswith(f"{prefix}_"):
+            return node_type
+    return None
+
+
 def _parameter_default(field: Any) -> Any:
     if field.default is PydanticUndefined:
         return inspect.Parameter.empty
@@ -73,6 +235,7 @@ def langchain_tool_as_mcp_callable(
                 arguments[name] = value
         episode_id = None
         started = time.perf_counter()
+        risk_class = "write"
         try:
             settings = get_settings()
             if settings.LIGHTNING_ENABLED and not tool.name.startswith("lightning_episode_"):
@@ -80,6 +243,7 @@ def langchain_tool_as_mcp_callable(
                 from xninetzy.tools.manifest import manifest_for
 
                 manifest = manifest_for(tool.name)
+                risk_class = manifest.risk.value
                 episode = start_episode(
                     owner_scope=trusted_context["sender_id"],
                     interface="mcp",
@@ -119,6 +283,9 @@ def langchain_tool_as_mcp_callable(
                     outcome_code=tool.name,
                     latency_ms=(time.perf_counter() - started) * 1000,
                 )
+            _auto_memory_record(tool.name, arguments, result, trusted_context["sender_id"])
+            _auto_graph_record(tool.name, arguments, result, risk_class, trusted_context["sender_id"])
+            _auto_improve_record(tool.name, arguments, None, trusted_context["sender_id"])
             return result
         except Exception as exc:
             if episode_id:
@@ -144,6 +311,7 @@ def langchain_tool_as_mcp_callable(
                     )
                 except Exception:
                     pass
+            _auto_improve_record(tool.name, arguments, exc, trusted_context["sender_id"])
             raise
 
     parameters = [

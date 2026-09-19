@@ -2,19 +2,11 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from xninetzy.core.coding_agents import (
-    run_coding_agent,
-    runtime_catalog,
-    validate_runtime,
-)
-from xninetzy.core.config import get_settings
 from xninetzy.core.providers import provider_catalog, resolve_profile
 from xninetzy.os.ai_preferences import (
-    get_preference,
     resolve_user_profile,
     save_preference,
 )
-from xninetzy.os.research.permissions import is_owner_admin
 
 
 def _user_key(sender_id: str, chat_id: str) -> str:
@@ -57,79 +49,3 @@ def ai_provider_use(
         chat_model=profile.model,
     )
     return f"✅ LLM diubah ke *{profile.provider}* / `{profile.model}`."
-
-
-@tool
-def coding_agent_list() -> str:
-    """Tampilkan runtime coding-agent lokal yang diizinkan dan tersedia."""
-    lines = ["*Coding agents*"]
-    for info in runtime_catalog().values():
-        if not info.allowed:
-            state = "tidak diizinkan"
-        elif not info.installed:
-            state = "binary tidak ditemukan"
-        else:
-            state = "siap"
-        model = f" — model `{info.model}`" if info.model else ""
-        lines.append(f"• *{info.name}*: {state}{model}")
-    lines.append("\nPilih: `/agent use codex|claude-code|opencode|internal`")
-    return "\n".join(lines)
-
-
-@tool
-def coding_agent_status(sender_id: str = "", chat_id: str = "") -> str:
-    """Tampilkan coding-agent yang dipilih pengguna."""
-    user_id = _user_key(sender_id, chat_id)
-    preference = get_preference(user_id) or {}
-    selected = preference.get("coding_agent") or get_settings().CODING_AGENT_DEFAULT
-    return f"Coding agent aktif: *{selected}*\nLihat pilihan: `/agent list`"
-
-
-@tool
-def coding_agent_use(runtime: str, sender_id: str = "", chat_id: str = "") -> str:
-    """Pilih runtime coding-agent lokal untuk pengguna saat ini."""
-    try:
-        info = validate_runtime(runtime)
-    except ValueError as exc:
-        return f"❌ {exc}"
-    save_preference(_user_key(sender_id, chat_id), coding_agent=info.name)
-    return f"✅ Coding agent diubah ke *{info.name}*."
-
-
-@tool
-async def coding_agent_run(
-    task: str,
-    workspace: str = "",
-    sender_id: str = "",
-    sender_name: str = "",
-    chat_id: str = "",
-) -> str:
-    """Jalankan task coding melalui Codex, Claude Code, atau OpenCode yang dipilih.
-
-    Eksekusi dibatasi workspace, timeout, allowlist runtime, dan kebijakan admin.
-    """
-    settings = get_settings()
-    if settings.CODING_AGENT_ADMIN_ONLY and not is_owner_admin(sender_id, sender_name):
-        return "❌ `/code` hanya dapat dijalankan oleh admin utama."
-
-    user_id = _user_key(sender_id, chat_id)
-    preference = get_preference(user_id) or {}
-    runtime = preference.get("coding_agent") or settings.CODING_AGENT_DEFAULT
-    if runtime == "internal":
-        return "Runtime *internal* memakai agent chat biasa. Pilih `/agent use codex`, `claude-code`, atau `opencode`."
-    try:
-        result = await run_coding_agent(
-            runtime,
-            task,
-            user_id=user_id,
-            chat_id=chat_id or user_id,
-            workspace=workspace or None,
-        )
-    except (OSError, ValueError) as exc:
-        return f"❌ Coding agent gagal dimulai: {exc}"
-
-    header = f"*{runtime}* — {result.status} (`{result.run_id[:8]}`)"
-    body = result.output or result.error or "Tidak ada output."
-    if result.error and result.output:
-        body += f"\n\n_Error:_\n{result.error}"
-    return f"{header}\n\n{body}"

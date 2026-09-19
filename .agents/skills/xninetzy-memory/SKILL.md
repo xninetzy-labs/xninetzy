@@ -1,13 +1,17 @@
 ---
-name: xninetzy-memory
-description: Durable memory operating system for retrieving, writing, consolidating, checkpointing, validating, and resuming scoped Xninetzy context across sessions. Use to preserve durable decisions, requirements, constraints, progress, sources, artifacts, blockers, and next actions while minimizing noise, maintaining provenance, detecting conflicts, preventing stale-state errors, and protecting sensitive information.
+
+...
+
+...
+name: "xninetzy-memory"
+description: "Durable memory operating system for retrieving, writing, consolidating, checkpointing, validating, and resuming scoped Xninetzy context across sessions. Use to preserve durable decisions, requirements, constraints, progress, sources, artifacts, blockers, and next actions while minimizing noise, maintaining provenance, detecting conflicts, preventing stale-state errors, and protecting sensitive information."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "scope -> retrieve -> rank -> validate -> resume -> execute -> checkpoint -> consolidate -> persist -> verify"
----
+...
 
 # Xninetzy Memory OS
 

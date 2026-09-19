@@ -1,13 +1,17 @@
 ---
-name: life-management
-description: Personal operating system for goals, tasks, reminders, habits, routines, workouts, finances, check-ins, inbox capture, daily planning, and weekly reviews. Use when the user asks to capture a commitment, manage a goal or task, set a reminder, log a habit or workout, record a transaction, perform a check-in, or run a daily/weekly review.
+
+...
+
+...
+name: "life-management"
+description: "Personal operating system for goals, tasks, reminders, habits, routines, workouts, finances, check-ins, inbox capture, daily planning, and weekly reviews. Use when the user asks to capture a commitment, manage a goal or task, set a reminder, log a habit or workout, record a transaction, perform a check-in, or run a daily/weekly review."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "inspect -> classify -> reconcile -> prioritize -> act -> record -> verify -> review -> adapt"
----
+...
 
 # Life Management OS
 

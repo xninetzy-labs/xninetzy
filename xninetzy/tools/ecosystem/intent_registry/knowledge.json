@@ -1,0 +1,7 @@
+{
+  "domain": "knowledge",
+  "keywords": {
+    "memory": ["memory_episode_search", "memory_relevance", "memory_promote"],
+    "document": ["unified_search", "knowledge_search", "knowledge_answer"]
+  }
+}

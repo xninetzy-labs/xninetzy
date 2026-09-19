@@ -1,0 +1,7 @@
+{
+  "domain": "observability",
+  "keywords": {
+    "checkpoint": ["observability_checkpoint", "observability_recent_checkpoints"],
+    "metric": ["observability_summary", "observability_query"]
+  }
+}

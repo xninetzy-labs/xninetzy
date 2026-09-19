@@ -22,7 +22,10 @@ SECRET_PATTERN = re.compile(
 )
 EXTERNAL_REFERENCE_PATTERN = re.compile(r"\[[^\]]+\]\(([^)]+)\)")
 RESOURCE_ROOTS = {"agents", "assets", "references", "scripts"}
-FRONTMATTER_PATTERN = re.compile(r"^---\r?\n(.*?)\r?\n---(?:\r?\n|$)", re.DOTALL)
+FRONTMATTER_PATTERN = re.compile(
+    r"^---\r?\n(.*?)\r?\n---\r?(?:\n|\Z)",
+    re.DOTALL,
+)
 ALLOWED_FRONTMATTER = {"name", "description", "license", "compatibility", "metadata"}
 ALIASES = {
     "it": "it-learning",
@@ -161,7 +164,7 @@ def _trust_level(source: str) -> str:
 
 
 def builtin_skill_dir() -> Path:
-    return Path(__file__).resolve().parents[3] / ".agents" / "skills"
+    return Path(__file__).resolve().parents[2] / ".agents" / "skills"
 
 
 def user_skill_dir(settings: Settings | None = None) -> Path:
@@ -182,6 +185,132 @@ def _body_from_content(content: str) -> str:
     return content[match.end() :].strip() if match else ""
 
 
+def _yaml_load_tolerant(fm_raw: str):
+    try:
+        return yaml.safe_load(fm_raw)
+    except yaml.YAMLError:
+        pass
+    folded = _to_folded_block_scalars(fm_raw)
+    try:
+        return yaml.safe_load(folded)
+    except yaml.YAMLError:
+        pass
+    raise SkillValidationError("YAML frontmatter tidak valid")
+
+
+def _to_folded_block_scalars(fm_raw: str) -> str:
+    """Convert multi-line YAML strings into proper folded block scalars.
+
+    Handles three patterns:
+    - `key: "value,` (unclosed quote) + bare continuation lines on the next
+      non-blank line. Convert to `key: >-` and indent continuations by 2.
+    - `key: >` (folded indicator) + bare continuation lines on the next
+      non-blank line. Indent continuations by 2.
+    - `key: |` (literal indicator) + bare continuation lines. Same fix.
+
+    Accepts only top-level scalar keys (name, description, license, compatibility)
+    and `metadata:` sub-keys.
+    """
+    lines = fm_raw.splitlines()
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if ":" not in line:
+            out.append(line)
+            i += 1
+            continue
+        leading = len(line) - len(line.lstrip(" "))
+        if leading != 0:
+            out.append(line)
+            i += 1
+            continue
+        key_part, _, value_part = line.partition(":")
+        value_part = value_part.strip()
+        head_value: str | None = None
+        is_block_decl = False
+        next_continues = False
+        for j_check in range(i + 1, len(lines)):
+            nxt_check = lines[j_check]
+            if not nxt_check.strip():
+                continue
+            if nxt_check.startswith((" ", "\t")):
+                next_continues = True
+                break
+            if ":" in nxt_check:
+                prefix = nxt_check.split(":", 1)[0].strip()
+                if prefix and all(c.isalpha() or c in "_-" for c in prefix):
+                    break
+            next_continues = True
+            break
+        if value_part.startswith('"'):
+            if next_continues:
+                is_block_decl = True
+                head_value = value_part.rstrip(",").rstrip().rstrip('"')
+            else:
+                out.append(line)
+                i += 1
+                continue
+        elif value_part in ("", ">", ">-", "|", "|-", ">+", "|+"):
+            next_is_list = False
+            for j_check in range(i + 1, len(lines)):
+                nxt_check = lines[j_check]
+                if not nxt_check.strip():
+                    continue
+                if nxt_check.startswith(("- ", "* ")):
+                    next_is_list = True
+                break
+            if next_is_list:
+                out.append(line)
+                i += 1
+                continue
+            is_block_decl = True
+            head_value = ""
+        elif next_continues and value_part and not value_part.startswith(("[", "{", "|")):
+            next_is_list = False
+            for j_check in range(i + 1, len(lines)):
+                nxt_check = lines[j_check]
+                if not nxt_check.strip():
+                    continue
+                if nxt_check.startswith((" ", "\t")):
+                    continue
+                if nxt_check.startswith(("- ", "* ")):
+                    next_is_list = True
+                break
+            if not next_is_list:
+                is_block_decl = True
+                head_value = value_part.rstrip(",").rstrip().rstrip('"')
+        if not is_block_decl:
+            out.append(line)
+            i += 1
+            continue
+        out.append(f"{key_part}: >-")
+        if head_value:
+            out.append("  " + head_value.lstrip('"').rstrip('"'))
+        j = i + 1
+        while j < len(lines):
+            nxt = lines[j]
+            if not nxt.strip():
+                j += 1
+                continue
+            if not nxt.startswith((" ", "\t")):
+                if ":" in nxt:
+                    colon_pos = nxt.find(":")
+                    prefix = nxt[:colon_pos].strip()
+                    if prefix and all(c.isalpha() or c in "_-" for c in prefix):
+                        break
+                if nxt.startswith(("- ", "* ")):
+                    break
+                if nxt.startswith("`") or nxt.startswith(">"):
+                    break
+            cleaned = nxt.rstrip().rstrip(",").rstrip('"').lstrip('"')
+            out.append("  " + cleaned)
+            j += 1
+        i = j
+        continue
+    return "\n".join(out)
+
+
 def parse_skill_markdown(
     content: str,
     *,
@@ -196,10 +325,8 @@ def parse_skill_markdown(
     match = FRONTMATTER_PATTERN.match(content)
     if not match:
         raise SkillValidationError("SKILL.md harus diawali YAML frontmatter yang valid.")
-    try:
-        frontmatter = yaml.safe_load(match.group(1))
-    except yaml.YAMLError as exc:
-        raise SkillValidationError(f"YAML frontmatter tidak valid: {exc}") from exc
+    fm_raw = match.group(1)
+    frontmatter = _yaml_load_tolerant(fm_raw)
     if not isinstance(frontmatter, dict):
         raise SkillValidationError("Frontmatter harus berupa mapping YAML.")
     unexpected = set(frontmatter) - ALLOWED_FRONTMATTER

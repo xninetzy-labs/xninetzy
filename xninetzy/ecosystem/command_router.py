@@ -54,7 +54,7 @@ SLASH_COMMANDS: dict[str, str] = {
     "/workflow-status": "workflow_status",
     "/workflow-latest": "workflow_latest",
     "/llm": "ai_provider_status",
-    "/agent": "coding_agent_status",
+    "/agent": "ai_provider_status",
 }
 
 WORKFLOW_RESUME_PATTERN = re.compile(r"^/workflow-resume\s+([\w-]+)$", re.I)
@@ -206,14 +206,13 @@ def parse_command(message: str) -> tuple[str | None, dict]:
         }
 
     if AGENT_LIST_PATTERN.match(stripped):
-        return "coding_agent_list", {}
+        return "ai_provider_list", {}
     m = AGENT_USE_PATTERN.match(stripped)
     if m:
-        return "coding_agent_use", {"runtime": m.group(1).lower()}
+        return "ai_provider_list", {}
 
-    m = CODE_PATTERN.match(stripped)
-    if m:
-        return "coding_agent_run", {"task": m.group(1).strip()}
+    if CODE_PATTERN.match(stripped):
+        return None
 
     m = CAPTURE_PATTERN.match(stripped)
     if m:

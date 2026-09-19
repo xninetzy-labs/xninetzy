@@ -1,11 +1,11 @@
 ---
-name: structured-project-execution
-description: Durable execution state for non-trivial multi-step work (≥ 30 steps). Replaces ad-hoc "carry state in the conversation context" with a state machine: PLAN → IN_PROGRESS → BLOCKED → VERIFIED → DONE, with explicit checkpoints, decisions, artifacts, verifications, and rollback strategies persisted between harness invocations. Use on any engineering / research / security task expected to span more than a single MCP exchange.
+name: "structured-project-execution"
+description: "Durable execution state for non-trivial multi-step work (≥ 30 steps). Replaces ad-hoc \"carry state in the conversation context\" with a state machine: PLAN → IN_PROGRESS → BLOCKED → VERIFIED → DONE, with explicit checkpoints, decisions, artifacts, verifications, and rollback strategies persisted between harness invocations. Use on any engineering / research / security task expected to span more than a single MCP exchange."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: harness
-  priority: P0
+  scope: "harness"
+  priority: "P0"
   required_tools:
     - repo_search
     - write_file

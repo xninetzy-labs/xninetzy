@@ -1,11 +1,11 @@
 ---
-name: tdd-workflow
-description: Forces every code-modification task to go through test → implement → verify, with the test step pre-writing a regression test that fails before any code change. Used for any change touching: deterministic logic, security boundaries, idempotency contracts, MCP tool signatures, repository migration, schema changes. Refuses to advance if the regression test does not exist, does not run, or does not reproduce the bug. Use whenever the operator asks to modify source code, fix a bug, or accept that "the test proves the change".
+name: "tdd-workflow"
+description: "Forces every code-modification task to go through test → implement → verify, with the test step pre-writing a regression test that fails before any code change. Used for any change touching: deterministic logic, security boundaries, idempotency contracts, MCP tool signatures, repository migration, schema changes. Refuses to advance if the regression test does not exist, does not run, or does not reproduce the bug. Use whenever the operator asks to modify source code, fix a bug, or accept that \"the test proves the change\"."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: engineering
-  priority: P0
+  scope: "engineering"
+  priority: "P0"
   required_tools:
     - read_file
     - write_file

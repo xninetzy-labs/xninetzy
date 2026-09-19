@@ -1,9 +1,9 @@
 ---
-name: literature-review
-description: Compose a structured literature review across academic sources. Decomposes a topic into sub-questions, calls research_search + research_fetch per sub-question, then grades + synthesizes.
+name: "literature-review"
+description: "Compose a structured literature review across academic sources. Decomposes a topic into sub-questions, calls research_search + research_fetch per sub-question, then grades + synthesizes."
 metadata:
-  type: workflow
-  layer: research-academic
+  type: "workflow"
+  layer: "research-academic"
   consumes:
     - research-planner
     - source-selector
@@ -13,7 +13,7 @@ metadata:
     - research-critic
   produces:
     - literature_review
-  tier: 0
+  tier: "0"
 ---
 
 # literature-review

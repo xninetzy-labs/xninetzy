@@ -1,11 +1,11 @@
 ---
-name: security-review
-description: Application and code-level security review for Xninetzy itself and the projects it audits. Drives the structured Asset → Entry point → Trust boundary → Input → Processing → Sink → Security control → Failure mode → Exploitability → Impact → Mitigation pipeline. Emits `SecurityFinding` objects with reproduction evidence, severity rationale, and remediation. Operates strictly inside authorized scope. Use whenever the operator asks to audit a code change, a new dependency, a new MCP tool signature, or a third-party code surface.
+name: "security-review"
+description: "Application and code-level security review for Xninetzy itself and the projects it audits. Drives the structured Asset → Entry point → Trust boundary → Input → Processing → Sink → Security control → Failure mode → Exploitability → Impact → Mitigation pipeline. Emits `SecurityFinding` objects with reproduction evidence, severity rationale, and remediation. Operates strictly inside authorized scope. Use whenever the operator asks to audit a code change, a new dependency, a new MCP tool signature, or a third-party code surface."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: domain
-  priority: P1
+  scope: "domain"
+  priority: "P1"
   required_tools:
     - repo_search
     - repo_dependency
@@ -194,19 +194,19 @@ scope_token: <uuid>
 assets: [...]
 findings: [
     SecurityFinding {
-        id: <uuid>
-        title: <short>
-        asset: <module path>
-        location: <file:line>
-        category: <class>
-        evidence: { ... }
-        precondition: <string>
-        reproduction: <runtime_proof_used>
-        impact: <string>
-        confidence: 0.0..1.0
-        severity_rationale: <string>
-        remediation: { code_patch, alternative_mitigations, owner_decision_pending: bool }
-        regression_test: <path>
+  id: <uuid>
+  title: <short>
+  asset: <module path>
+  location: <file:line>
+  category: <class>
+  evidence: { ... }
+  precondition: <string>
+  reproduction: <runtime_proof_used>
+  impact: <string>
+  confidence: 0.0..1.0
+  severity_rationale: <string>
+  remediation: { code_patch, alternative_mitigations, owner_decision_pending: bool }
+  regression_test: <path>
     }
     ...
 ]

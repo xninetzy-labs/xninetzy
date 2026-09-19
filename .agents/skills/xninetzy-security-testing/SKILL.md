@@ -1,8 +1,9 @@
----
 
-name: xninetzy-security-testing
+
+name: "xninetzy-security-testing"
 description: 
-   Authorized security assessment and self-pentesting control-plane for Xninetzy MCP.
+  ---
+Authorized security assessment and self-pentesting control-plane for Xninetzy MCP.
    Orchestrates open-source reconnaissance, attack-surface discovery, HTTP/API security
    testing, DAST, SAST, SCA, secret scanning, container/image analysis, IaC scanning,
    Kubernetes security checks, cloud posture assessment, TLS analysis, mobile assessment,
@@ -11,18 +12,18 @@ description:
    authentication or human verification, never performs destructive exploitation, and
    never treats scanner output as confirmed evidence without validation.
 metadata:
-   owner: misbahul45
-   scope: project
+            owner: "misbahul45"
+            scope: "project"
 authority:
    - AGENTS.md
    - global opencode AGENTS.md
 interfaces:
 - mcp
 - http-mcp-bridge
-language: en
+language: "en"
 version: "2.0.0"
-added: 2026-09-18
-domain: xninetzy.domains.security
+added: "2026-09-18"
+domain: "xninetzy.domains.security"
 lifecycle: >
 intake -> normalize -> authorize -> isolate -> discover -> enumerate ->
 analyze -> correlate -> validate -> prioritize -> report -> regress -> learn
@@ -50,7 +51,6 @@ The core principle is:
 > **Verified partial result > unverified complete result.**
 
 Security testing must be systematic, bounded, reproducible, and explainable.
-
 ---
 
 ## 2. Operating Doctrine

@@ -1,0 +1,11 @@
+{
+  "domain": "security",
+  "keywords": {
+    "audit": ["security_scope", "security_assets", "security_sast", "security_dependencies", "security_headers", "security_threat_model", "security_validate_finding"],
+    "scanning": ["security_scope", "security_assets", "security_sast", "security_headers"],
+    "vulnerability": ["security_sast", "security_dependencies", "security_threat_model", "security_validate_finding"],
+    "penetration": ["security_scope", "security_assets", "security_headers", "security_threat_model"],
+    "exploit": ["security_threat_model", "security_validate_finding"],
+    "pentest": ["security_scope", "security_sast", "security_headers"]
+  }
+}

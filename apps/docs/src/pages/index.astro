@@ -27,6 +27,21 @@ const finalTools = [
   { name: 'portal_krs_war_arm', note: 'KRS War arming requires HITL approval.' },
   { name: 'qa_fill_kuesioner', note: 'QA Kuesioner submission requires HITL approval.' }
 ];
+
+const features = [
+  { icon: '🛰', title: 'MCP only', text: 'One FastMCP server. stdio + Streamable HTTP. No REST, no GraphQL, no parallel CLI.' },
+  { icon: '🧭', title: 'Host-driven loop', text: 'Claude, Claude Code, Cursor, Codex, OpenCode. Reasoning lives in the host.' },
+  { icon: '🛡', title: 'Risk-classified', text: 'READ/DRAFT/WRITE/FINAL risk taxonomy. FINAL tools halt at the HITL gate.' },
+  { icon: '🧠', title: 'Memory fence', text: '`<memory_quarantine>` wraps user memories as data, never as instructions.' },
+  { icon: '🔐', title: 'Secret redaction', text: '8 provider patterns. OpenAI, Anthropic, GitHub, Slack, Google, AWS, PEM keys.' },
+  { icon: '⚡', title: 'Lightning RL', text: 'CPU-only contextual bandit. 15 tools, episode rewards, regression checks.' }
+];
+
+const recentReleases = [
+  { tag: 'v2.2.0', title: 'MCP-only pivot', text: 'Removed Baileys, LangGraph, Ink. 343 tools, 70 skill files, 2 resources, 1 prompt.' },
+  { tag: 'docs', title: 'LangChain-grade site', text: 'On-this-page TOC, callouts, full-text search, copy-code, page feedback.' },
+  { tag: 'tracker', title: 'KNOWN_ISSUES + CHANGELOG', text: '10 issues filed. ISS-20260919-01 SKILL.md YAML damage (BLOCKED by hook).' }
+];
 ---
 
 <BaseLayout>
@@ -108,6 +123,40 @@ const finalTools = [
           </li>
         ))}
       </ul>
+    </section>
+
+    <section class="section feature-grid">
+      <header>
+        <p class="kicker">CAPABILITIES</p>
+        <h2>What ships in v2.2.0.</h2>
+      </header>
+      <div class="feature-cards">
+        {features.map((f) => (
+          <article>
+            <span class="feature-icon" aria-hidden="true">{f.icon}</span>
+            <h3>{f.title}</h3>
+            <p>{f.text}</p>
+          </article>
+        ))}
+      </div>
+    </section>
+
+    <section class="section release-feed">
+      <header>
+        <p class="kicker">WHAT'S NEW</p>
+        <h2>Recent releases.</h2>
+      </header>
+      <ol>
+        {recentReleases.map((r) => (
+          <li>
+            <span class="release-tag">{r.tag}</span>
+            <div>
+              <h3>{r.title}</h3>
+              <p>{r.text}</p>
+            </div>
+          </li>
+        ))}
+      </ol>
     </section>
 
     <section class="section docs-index">
@@ -212,6 +261,21 @@ const finalTools = [
   .final-cta > p:not(.kicker) code { color: var(--orange-bright); background: rgba(249,115,22,.08); padding: .12rem .4rem; border-radius: .3rem; font: .78rem var(--font-mono); }
   .final-cta .creator-links { margin-top: 1.3rem; font: .68rem var(--font-mono); }
   .final-cta .creator-links a { padding: 0; color: var(--purple-bright); background: none; box-shadow: none; }
-  @media(max-width: 900px) { .hero { padding: 6rem 2rem 4rem; grid-template-columns: 1fr; }.orbit-visual { width: min(29rem, 94vw); }.capability-strip { grid-template-columns: 1fr 1fr; }.capability-strip article:nth-child(2) { border-right: 0; }.capability-strip article:nth-child(-n+2) { border-bottom: 1px solid rgba(124,58,237,.16); }.grid { grid-template-columns: 1fr; }.docs-index > header { grid-template-columns: 1fr; gap: .2rem; }.final-card li { grid-template-columns: 1fr; } }
-  @media(max-width: 600px) { .hero { min-height: auto; padding: 4.5rem 1.2rem 3rem; }.orbit-visual { transform: scale(.78); margin-block: -3rem; }.capability-strip { grid-template-columns: 1fr; }.capability-strip article { min-height: auto; border-right: 0; border-bottom: 1px solid rgba(124,58,237,.16); }.section { padding: 4rem 0; }.docs-index { padding-top: 5rem; }.doc-groups { grid-template-columns: 1fr; }.doc-groups > section { padding: 1.5rem 0; border-right: 0; }.docs-index > header { gap: 0; }.final-cta { padding: 7rem 1.2rem; } }
+  @media(max-width: 900px) { .hero { padding: 6rem 2rem 4rem; grid-template-columns: 1fr; }.orbit-visual { width: min(29rem, 94vw); }.capability-strip { grid-template-columns: 1fr 1fr; }.capability-strip article:nth-child(2) { border-right: 0; }.capability-strip article:nth-child(-n+2) { border-bottom: 1px solid rgba(124,58,237,.16); }.grid { grid-template-columns: 1fr; }.feature-cards { grid-template-columns: 1fr 1fr; }.release-feed li { grid-template-columns: 1fr; gap: .35rem; }.docs-index > header { grid-template-columns: 1fr; gap: .2rem; }.final-card li { grid-template-columns: 1fr; } }
+  @media(max-width: 600px) { .hero { min-height: auto; padding: 4.5rem 1.2rem 3rem; }.orbit-visual { transform: scale(.78); margin-block: -3rem; }.capability-strip { grid-template-columns: 1fr; }.capability-strip article { min-height: auto; border-right: 0; border-bottom: 1px solid rgba(124,58,237,.16); }.section { padding: 4rem 0; }.feature-cards { grid-template-columns: 1fr; }.docs-index { padding-top: 5rem; }.doc-groups { grid-template-columns: 1fr; }.doc-groups > section { padding: 1.5rem 0; border-right: 0; }.docs-index > header { gap: 0; }.final-cta { padding: 7rem 1.2rem; } }
+
+  .feature-grid { border-top: 1px solid var(--line); }
+  .feature-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; }
+  .feature-cards article { position: relative; padding: 1.4rem 1.5rem; border: 1px solid var(--line); border-radius: .85rem; background: linear-gradient(160deg, rgba(139,92,246,.07), rgba(0,0,0,.4)); transition: border-color .18s, transform .18s; }
+  .feature-cards article:hover { border-color: var(--purple-bright); transform: translateY(-2px); }
+  .feature-icon { display: inline-block; font-size: 1.4rem; margin-bottom: .65rem; filter: drop-shadow(0 0 12px rgba(139,92,246,.4)); }
+  .feature-cards h3 { margin: 0 0 .35rem; font-size: 1rem; color: #fff; }
+  .feature-cards p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.65; }
+
+  .release-feed ol { list-style: none; margin: 0; padding: 0; display: grid; gap: .85rem; }
+  .release-feed li { display: grid; grid-template-columns: 9rem 1fr; gap: 1.2rem; padding: 1.1rem 1.25rem; border: 1px solid var(--line); border-radius: .75rem; background: rgba(0,0,0,.28); }
+  .release-feed li:hover { border-color: var(--purple); }
+  .release-tag { align-self: start; display: inline-block; padding: .3rem .65rem; border-radius: .35rem; color: var(--purple-bright); background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.32); font: 500 .68rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+  .release-feed h3 { margin: 0 0 .25rem; font-size: 1rem; color: #fff; }
+  .release-feed p { margin: 0; color: var(--muted); font-size: .82rem; line-height: 1.6; }
 </style>

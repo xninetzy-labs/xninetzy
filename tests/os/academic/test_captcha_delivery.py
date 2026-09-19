@@ -136,10 +136,10 @@ async def test_uacc_login_start_returns_blocks_for_mcp_caller(monkeypatch, tmp_p
 
 
 @pytest.mark.asyncio
-async def test_uacc_login_start_whatsapp_metadata_alias_returns_text(monkeypatch, tmp_path):
-    """Legacy ``metadata.channel == "whatsapp"`` callers still get plain text.
+async def test_uacc_login_start__metadata_alias_returns_text(monkeypatch, tmp_path):
+    """Legacy ``metadata.channel == ""`` callers still get plain text.
 
-    The pivot removed WhatsApp delivery, so the text is now the inbox
+    The pivot removed  delivery, so the text is now the inbox
     notification body rather than a WA message — but the return shape stays
     a ``str`` for backwards compat.
     """
@@ -150,7 +150,7 @@ async def test_uacc_login_start_whatsapp_metadata_alias_returns_text(monkeypatch
         {
             "chat_id": "chat",
             "sender_id": "62812345678",
-            "metadata": {"channel": "whatsapp"},
+            "metadata": {"channel": ""},
         }
     )
 

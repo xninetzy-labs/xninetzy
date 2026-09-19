@@ -75,6 +75,8 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     environment: pypi
+    permissions:
+      id-token: write
     steps:
       - uses: actions/download-artifact@v4
         with:
@@ -83,9 +85,7 @@ jobs:
       - name: Verify download
         run: ls -la dist/
       - name: Publish
-        env:
-          UV_PUBLISH_TOKEN: ${{ secrets.UV_PUBLISH_TOKEN }}
-        run: uv publish --token "$UV_PUBLISH_TOKEN"
+        run: uv publish --trusted-publishing always
 
   release:
     name: GitHub Release

@@ -1,10 +1,14 @@
 ---
-name: xninetzy-krs
-description: Plan, validate, prepare, and safely commit KRS selections using curriculum, roster, prerequisites, conflicts, credit limits, and explicit confirmation.
+
+...
+
+...
+name: "xninetzy-krs"
+description: "Plan, validate, prepare, and safely commit KRS selections using curriculum, roster, prerequisites, conflicts, credit limits, and explicit confirmation."
 metadata:
-  owner: xninetzy
+  owner: "xninetzy"
   version: "1.1.0"
----
+...
 
 # KRS
 

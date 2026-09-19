@@ -70,8 +70,8 @@ async def _deliver_captcha(
 ) -> str | list[TextContent | ImageContent]:
     """Persist a CAPTCHA challenge via owner inbox; return MCP image blocks when available.
 
-    Replaces the legacy WhatsApp-channel delivery. Legacy ``metadata.channel``
-    values like ``"whatsapp"`` are still accepted as a no-op alias.
+    Replaces the legacy -channel delivery. Legacy ``metadata.channel``
+    values like ``""`` are still accepted as a no-op alias.
     """
     owner_target = _owner_id(owner_id, _notification_jid() or "owner")
     png = await LOGIN_COORDINATOR.captcha_png(
@@ -84,7 +84,7 @@ async def _deliver_captcha(
         owner_chat_id=owner_target,
         captcha_dir=settings.XNINETZY_CAPTCHA_DIR,
     )
-    if (metadata or {}).get("channel") == "whatsapp":
+    if (metadata or {}).get("channel") == "":
         return result.text  # legacy callers expected plain text
     return result.blocks or [TextContent(type="text", text=result.text)]
 
@@ -95,7 +95,7 @@ async def portal_login_start(
     sender_id: str | None = None,
     metadata: dict | None = None,
 ) -> str | list[TextContent | ImageContent]:
-    """Mulai login Cyber Campus; CAPTCHA dikirim ke WhatsApp owner atau sebagai gambar MCP."""
+    """Mulai login Cyber Campus; CAPTCHA dikirim ke  owner atau sebagai gambar MCP."""
     owner_id = _owner_id(sender_id, chat_id)
     if not is_owner_admin(sender_id or chat_id, None):
         return "Login Cyber Campus hanya dapat dimulai oleh admin."
@@ -211,7 +211,7 @@ async def uacc_login_start(
     sender_id: str | None = None,
     metadata: dict | None = None,
 ) -> str | list[TextContent | ImageContent]:
-    """Mulai login UACC SSO; CAPTCHA dikirim ke WhatsApp owner atau sebagai gambar MCP."""
+    """Mulai login UACC SSO; CAPTCHA dikirim ke  owner atau sebagai gambar MCP."""
     owner_id = _owner_id(sender_id, chat_id)
     if not is_owner_admin(sender_id or chat_id, None):
         return "Login UACC hanya dapat dimulai oleh admin."
@@ -525,12 +525,12 @@ async def portal_grades(
     chat_id: str = "system",
     sender_id: str | None = None,
 ) -> str:
-    """Minta token KHS melalui WhatsApp admin untuk pembacaan nilai sekali pakai."""
+    """Minta token KHS melalui  admin untuk pembacaan nilai sekali pakai."""
     if not is_owner_admin(sender_id or chat_id, None):
         return "Pembacaan nilai hanya dapat dimulai oleh owner."
     jid = _notification_jid()
     if not jid:
-        return "ADMIN_JID WhatsApp belum dikonfigurasi."
+        return "ADMIN_JID  belum dikonfigurasi."
     challenge: dict | None = None
     try:
         challenge = await GRADE_TOKEN_COORDINATOR.start(jid, academic_period)
@@ -557,7 +557,7 @@ async def portal_grades(
         return f"Permintaan token nilai gagal dibuat: {exc}"
     return (
         f"Halaman KHS periode {period.label} sudah dibuka dan permintaan "
-        "verified token sudah dikirim ke WhatsApp admin."
+        "verified token sudah dikirim ke  admin."
     )
 
 
@@ -568,7 +568,7 @@ async def submit_grade_token(
     sender_name: str | None = None,
 ) -> str:
     if not is_owner_admin(sender_id, sender_name):
-        return "Token nilai hanya dapat dikirim oleh WhatsApp admin."
+        return "Token nilai hanya dapat dikirim oleh  admin."
     try:
         if challenge_id:
             clean_token, academic_period = await GRADE_TOKEN_COORDINATOR.consume(
@@ -622,7 +622,7 @@ def portal_krs_watcher_status() -> str:
     """Status watcher slot KRS yang hanya membaca dan mengirim notifikasi.
 
     Tool ini hanya membaca status ketersediaan slot dan mengirim notifikasi
-    WhatsApp. Tidak melakukan klik/submit otomatis pada form KRS; tindakan final
+    . Tidak melakukan klik/submit otomatis pada form KRS; tindakan final
     tetap manual oleh owner instalasi lokal.
     """
     state = KrsWatcherStore().get()
@@ -653,7 +653,7 @@ def portal_krs_watcher_start(
     interval_minutes: int | None = None,
     interval_seconds: int | None = None,
 ) -> str:
-    """Aktifkan watcher slot KRS dengan polling READ-only dan notifikasi WhatsApp."""
+    """Aktifkan watcher slot KRS dengan polling READ-only dan notifikasi ."""
     if interval_seconds is not None and interval_minutes is not None:
         return "Pilih interval_minutes atau interval_seconds, bukan keduanya."
     if interval_seconds is None:
@@ -751,7 +751,7 @@ async def portal_krs_war_arm(
                 "Aktifkan KRS War",
                 f"{plan.semester_label or plan.source_path} ({_plan_summary(plan)})",
             )
-            delivery = "Tombol approval dikirim ke WhatsApp admin." if delivered else "Tombol approval gagal dikirim."
+            delivery = "Tombol approval dikirim ke  admin." if delivered else "Tombol approval gagal dikirim."
             return f"KRS War membutuhkan approval #{requested_id}. {delivery}"
         try:
             validate_approval(approval_id, "portal_krs_war_arm", policy.action_hash)

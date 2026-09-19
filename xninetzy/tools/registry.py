@@ -209,15 +209,11 @@ from xninetzy.tools.ecosystem.helper_tools import (
     helper_get,
     helper_generate_obsidian_docs,
 )
-from xninetzy.tools.ecosystem.tool_catalog_tools import tool_catalog
+from xninetzy.tools.ecosystem.tool_catalog_tools import tool_catalog, tool_rank
 from xninetzy.tools.ecosystem.ai_runtime_tools import (
     ai_provider_list,
     ai_provider_status,
     ai_provider_use,
-    coding_agent_list,
-    coding_agent_status,
-    coding_agent_use,
-    coding_agent_run,
 )
 from xninetzy.tools.ecosystem.pixelrag_tools import (
     pixelrag_capture,
@@ -338,7 +334,6 @@ from xninetzy.os.lightning.tools import (
     lightning_strategy_rank,
 )
 from xninetzy.interfaces.external_mcp import EXTERNAL_MCP_TOOLS
-from xninetzy.interfaces.tasks_extension import TASKS_TOOLS
 from xninetzy.tools.ecosystem.repo_tools import (
     repo_architecture,
     repo_dependency,
@@ -440,7 +435,6 @@ def get_all_tools() -> list[BaseTool]:
             calculate_percentage,
             datetime_now,
             *EXTERNAL_MCP_TOOLS,
-            *TASKS_TOOLS,
             # Obsidian
             obsidian_search_health,
             obsidian_search,
@@ -675,7 +669,7 @@ def get_all_tools() -> list[BaseTool]:
             hitl_request_plan_approval,
             # Admin notifications
             admin_notify_progress,
-            # Media (WhatsApp documents)
+            # Media ( documents)
             media_read_document,
             media_read_image,
             media_read_audio,
@@ -725,14 +719,11 @@ def get_all_tools() -> list[BaseTool]:
             ai_provider_list,
             ai_provider_status,
             ai_provider_use,
-            coding_agent_list,
-            coding_agent_status,
-            coding_agent_use,
-            coding_agent_run,
             # Helper
             helper_get,
             helper_generate_obsidian_docs,
             tool_catalog,
+            tool_rank,
             # S5: Repo introspection
             repo_search,
             repo_symbol,
@@ -909,10 +900,6 @@ def get_tool_groups() -> dict[str, list[str]]:
             "ai_provider_list",
             "ai_provider_status",
             "ai_provider_use",
-            "coding_agent_list",
-            "coding_agent_status",
-            "coding_agent_use",
-            "coding_agent_run",
         ],
         "it_learning": [
             "learning_create_roadmap",

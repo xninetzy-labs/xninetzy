@@ -7,7 +7,7 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 
 from xninetzy.core.config import get_settings
-from xninetzy.core.identity import normalize_whatsapp_jid
+from xninetzy.core.identity import normalize_chat_id
 
 
 class GradeChallengeError(RuntimeError):
@@ -29,9 +29,9 @@ class GradeTokenCoordinator:
         self._lock = asyncio.Lock()
 
     async def start(self, owner_id: str, academic_period: str = "latest") -> dict:
-        normalized_owner = normalize_whatsapp_jid(owner_id)
+        normalized_owner = normalize_chat_id(owner_id)
         if not normalized_owner:
-            raise GradeChallengeError("WhatsApp owner belum dikonfigurasi.")
+            raise GradeChallengeError(" owner belum dikonfigurasi.")
         settings = get_settings()
         now = datetime.now(UTC)
         challenge = GradeChallenge(
@@ -60,7 +60,7 @@ class GradeTokenCoordinator:
         token: str,
     ) -> tuple[str, str]:
         now = datetime.now(UTC)
-        normalized_owner = normalize_whatsapp_jid(owner_id)
+        normalized_owner = normalize_chat_id(owner_id)
         async with self._lock:
             self._purge(now)
             challenge = self._challenges.get(challenge_id)
@@ -84,7 +84,7 @@ class GradeTokenCoordinator:
     async def consume_owner_token(
         self, owner_id: str, token: str
     ) -> tuple[str, str, str]:
-        normalized_owner = normalize_whatsapp_jid(owner_id)
+        normalized_owner = normalize_chat_id(owner_id)
         async with self._lock:
             self._purge(datetime.now(UTC))
             challenge = next(

@@ -41,7 +41,7 @@ def test_parse_tool_error_returns_none_for_plain_text():
 
 @pytest.mark.asyncio
 async def test_prepare_submission_missing_file_is_not_found_error():
-    result = await hebat_tools.hebat_prepare_submission_from_whatsapp_file.ainvoke(
+    result = await hebat_tools.hebat_prepare_submission_from__file.ainvoke(
         {
             "chat_id": "chat-test",
             "local_file_path": "/tmp/tidak-ada-9f3a.pdf",
@@ -60,7 +60,7 @@ async def test_prepare_submission_non_pdf_is_invalid_input_with_valid_values(
     file = tmp_path / "tugas.txt"
     file.write_text("bukan pdf")
 
-    result = await hebat_tools.hebat_prepare_submission_from_whatsapp_file.ainvoke(
+    result = await hebat_tools.hebat_prepare_submission_from__file.ainvoke(
         {
             "chat_id": "chat-test",
             "local_file_path": str(file),

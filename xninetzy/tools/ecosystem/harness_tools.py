@@ -160,6 +160,28 @@ def harness_record_step(
                 json.dumps(tool_args or {}), outcome, _now_iso(),
             ),
         )
+    try:
+        from xninetzy.interfaces.mcp_tool_adapter import (
+            _auto_memory_record,
+            _auto_graph_record,
+            _auto_improve_record,
+        )
+        owner = (sender_id or chat_id or "system").strip() or "system"
+        args_preview = tool_args or {}
+        if outcome == "error":
+            _auto_improve_record(tool_name, args_preview, RuntimeError(outcome), owner)
+        else:
+            _auto_improve_record(tool_name, args_preview, None, owner)
+        if outcome == "ok":
+            _auto_memory_record(tool_name, args_preview, json.dumps(args_preview, default=str)[:600], owner)
+            from xninetzy.tools.manifest import manifest_for
+            try:
+                risk = manifest_for(tool_name).risk.value
+            except Exception:
+                risk = "write"
+            _auto_graph_record(tool_name, args_preview, json.dumps(args_preview, default=str)[:400], risk, owner)
+    except Exception:
+        pass
     return json.dumps({"plan_id": plan_id, "sequence": seq, "tool_name": tool_name}, ensure_ascii=False)
 
 

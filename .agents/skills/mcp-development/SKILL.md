@@ -1,11 +1,11 @@
 ---
-name: mcp-development
-description: Engineering discipline for Xninetzy's MCP tool surface. Enforces the canonical rules: strict Pydantic input/output schemas, FastMCP-compatible metadata (`annotations`, `meta`), explicit risk class via `manifest_for`, principal propagation via `MCPPrincipal`, idempotency on mutations, bounded output size, deterministic error contracts, unit + integration tests, registration through the canonical registry. Use whenever the operator asks to add, modify, or remove an MCP tool, change a tool signature, or audit the registry.
+name: "mcp-development"
+description: "Engineering discipline for Xninetzy's MCP tool surface. Enforces the canonical rules: strict Pydantic input/output schemas, FastMCP-compatible metadata (`annotations`, `meta`), explicit risk class via `manifest_for`, principal propagation via `MCPPrincipal`, idempotency on mutations, bounded output size, deterministic error contracts, unit + integration tests, registration through the canonical registry. Use whenever the operator asks to add, modify, or remove an MCP tool, change a tool signature, or audit the registry."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: domain
-  priority: P1
+  scope: "domain"
+  priority: "P1"
   required_tools:
     - tool_catalog
     - skill_list

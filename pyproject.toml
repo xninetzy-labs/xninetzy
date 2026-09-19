@@ -18,7 +18,7 @@ maintainers = [
     { name = "Xninetzy Labs" },
 ]
 classifiers = [
-    "Development Status :: 5 - Production/Stable",
+    "Development Status :: 4 - Beta",
     "Environment :: Console",
     "Intended Audience :: End Users/Desktop",
     "License :: Other/Proprietary License",
@@ -29,8 +29,6 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
-    "Programming Language :: Python :: 3.14",
-    "Private :: Do Not Upload",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
@@ -40,6 +38,8 @@ dependencies = [
     "pydantic-settings",
     "python-dotenv",
     "langchain-core>=0.3",
+    "langchain-anthropic>=0.3",
+    "langchain-openai>=0.2",
     "playwright>=1.40",
     "httpx>=0.27",
     "beautifulsoup4>=4.12",

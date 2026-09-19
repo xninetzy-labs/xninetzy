@@ -1,0 +1,12 @@
+{
+  "domain": "life",
+  "keywords": {
+    "inbox": ["os_inbox", "os_triage", "task_capture"],
+    "task": ["task_capture", "task_list", "task_today"],
+    "goal": ["goal_create", "goal_list", "goal_review"],
+    "habit": ["habit_log", "habit_today"],
+    "money": ["money_add_transaction", "money_summary"],
+    "workout": ["workout_log", "workout_summary"],
+    "reminder": ["reminder_create", "reminder_list"]
+  }
+}

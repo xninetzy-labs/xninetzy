@@ -1,8 +1,8 @@
 ---
 
-name: cli-creator
+name: "cli-creator"
 
-description: Build durable, composable, agent-friendly command-line interfaces from API
+description: "Build durable, composable, agent-friendly command-line interfaces from API"
 documentation, OpenAPI specifications, SDKs, curl examples, web applications,
 admin tools, local scripts, exports, or shell history. Produces installable
 commands with stable subcommands, deterministic JSON output, discovery and
@@ -12,12 +12,12 @@ smoke tests from outside the source repository, and a companion skill for
 future agent threads.
 
 metadata:
-author: xninetzy
-owner: misbahul45
+author: "xninetzy"
+owner: "misbahul45"
 version: "2.0.0"
-scope: project
-priority: P1
-domain: xninetzy.domains.cli
+scope: "project"
+priority: "P1"
+domain: "xninetzy.domains.cli"
 lifecycle: >
 source -> inventory -> contract -> runtime -> scaffold ->
 implement -> validate -> install -> smoke-test -> document -> companion-skill
@@ -44,14 +44,14 @@ non_goals:
 
 references:
 agent_patterns:
-file: references/agent-cli-patterns.md
+file: "references/agent-cli-patterns.md"
 required_when:
 - designing command surface
 - designing JSON output
 - designing discovery/resolve commands
 - creating companion skill
 security:
-file: ../xninetzy-security-testing/SKILL.md
+file: "../xninetzy-security-testing/SKILL.md"
 required_when:
 - CLI touches security-sensitive endpoints
 - CLI performs authorized security operations
@@ -87,7 +87,6 @@ Core principle:
 Second principle:
 
 > **The CLI is an interface contract, not a collection of scripts.**
-
 ---
 
 # 2. CLI Quality Standard

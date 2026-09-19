@@ -119,7 +119,7 @@ async def deliver_captcha(
 ) -> CaptchaDeliveryResult:
     """Deliver a CAPTCHA challenge to the owner.
 
-    The pivot to MCP-only removed WhatsApp delivery: the envelope is now
+    The pivot to MCP-only removed  delivery: the envelope is now
     persisted to the owner inbox (with image data attached in MCP blocks
     when available). The CAPTCHA PNG is also saved locally so an interactive
     client can render it.

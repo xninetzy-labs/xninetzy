@@ -22,6 +22,15 @@ export const navigation: NavGroup[] = [
     ]
   },
   {
+    title: 'Reference',
+    items: [
+      { title: 'Skill catalog', description: '70 built-in skills, one row each, with repair pointers.', href: '/docs/skills/', badge: 'updated' },
+      { title: 'Skill repair runbook', description: 'Fix broken SKILL.md YAML outside Claude Code.', href: '/KNOWN_ISSUES.md', badge: 'new' },
+      { title: 'Known issues', description: 'Authoritative tracker (ISS-NNN IDs).', href: '/KNOWN_ISSUES.md', badge: 'new' },
+      { title: 'Changelog', description: 'Per-version release notes.', href: '/CHANGELOG.md', badge: 'new' }
+    ]
+  },
+  {
     title: 'Integrations',
     items: [
       { title: 'Obsidian', description: 'Vault, notes, knowledge, and filesystem guards.', href: '/docs/obsidian/' },

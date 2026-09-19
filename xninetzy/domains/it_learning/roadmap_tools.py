@@ -49,7 +49,7 @@ async def learning_create_roadmap(
     )
     return (
         format_roadmap_draft(draft)
-        + f"\n\nApproval #{approval_id} dikirim ke WhatsApp admin."
+        + f"\n\nApproval #{approval_id} dikirim ke  admin."
     )
 
 

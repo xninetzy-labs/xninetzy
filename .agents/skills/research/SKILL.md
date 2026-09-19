@@ -1,11 +1,15 @@
 ---
-name: research
-description: Run evidence-first, multi-source, auditable research from scoping through source verification, claim-evidence mapping, synthesis, adversarial review, and reproducible deliverables. Use whenever the user asks for deep research, literature or systematic-style review, fact-checking, source comparison, technical/product/market/policy/legal/health/historical/educational/implementation research, or artifacts such as a source matrix, bibliography, research report, dataset, diagram, DOCX, PDF, or slides. Do not use for a single stable fact, casual brainstorming, or merely reading one supplied document unless cross-source synthesis is requested.
+
+...
+
+...
+name: "research"
+description: "Run evidence-first, multi-source, auditable research from scoping through source verification, claim-evidence mapping, synthesis, adversarial review, and reproducible deliverables. Use whenever the user asks for deep research, literature or systematic-style review, fact-checking, source comparison, technical/product/market/policy/legal/health/historical/educational/implementation research, or artifacts such as a source matrix, bibliography, research report, dataset, diagram, DOCX, PDF, or slides. Do not use for a single stable fact, casual brainstorming, or merely reading one supplied document unless cross-source synthesis is requested."
 metadata:
   triggers: "deep research riset mendalam evidence source verification literature review systematic scoping rapid review fact check comparative technical product market policy legal health historical education feasibility source matrix claim ledger bibliography citation report"
   lifecycle: "scope-plan-audit-retrieve-verify-extract-analyze-synthesize-review-produce-adapt"
   version: "2.0"
----
+...
 
 # Evidence-first research
 

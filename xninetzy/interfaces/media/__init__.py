@@ -1,4 +1,4 @@
-"""WhatsApp media understanding (documents, images, and audio first).
+""" media understanding (documents, images, and audio first).
 
 Scope: download media that wa-enggine already fetched, parse documents
 (pdf/docx/txt/md/csv/json/xlsx/pptx) and images (OCR) into text, and let the

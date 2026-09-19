@@ -1,13 +1,13 @@
 ---
-name: xninetzy-obsidian-orchestra
-description: Structural and navigational operating system for the canonical Xninetzy Obsidian vault. Use for folder/file conventions, course and project structures, migrations, semester archiving, MOCs, frontmatter normalization, Mermaid visualization, vault health, naming integrity, portal-to-Obsidian ingestion, backlink consistency, and safe structural changes.
+name: "xninetzy-obsidian-orchestra"
+description: "Structural and navigational operating system for the canonical Xninetzy Obsidian vault. Use for folder/file conventions, course and project structures, migrations, semester archiving, MOCs, frontmatter normalization, Mermaid visualization, vault health, naming integrity, portal-to-Obsidian ingestion, backlink consistency, and safe structural changes."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "inspect -> classify -> plan -> preview -> approve -> mutate -> verify -> index -> checkpoint"
----
+...
 
 # Xninetzy Obsidian Orchestra
 

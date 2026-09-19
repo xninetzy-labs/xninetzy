@@ -51,6 +51,12 @@ from xninetzy.os.research.sources.registry import (
     list_adapters,
     register_adapter,
 )
+from xninetzy.os.research.sources.sid import (
+    ResearchSource,
+    assign_sids,
+    selected_sids,
+    to_source_model,
+)
 
 __all__ = [
     "CircuitBreaker",
@@ -58,6 +64,7 @@ __all__ = [
     "HealthStatus",
     "RateLimit",
     "RateLimiter",
+    "ResearchSource",
     "RetryPolicy",
     "SOURCE_REGISTRY",
     "SourceAdapter",
@@ -65,6 +72,7 @@ __all__ = [
     "SourceRecord",
     "arbeitnow",
     "arxiv",
+    "assign_sids",
     "bps",
     "build_breaker",
     "build_rate_limiter",
@@ -92,8 +100,10 @@ __all__ = [
     "remoteok",
     "retry_async",
     "rss",
+    "selected_sids",
     "semantic_scholar",
     "stackoverflow",
+    "to_source_model",
     "wayback",
     "wikidata",
     "wikipedia",

@@ -1,14 +1,14 @@
 ---
-name: contradiction-hunter
-description: Detect contradicting findings across a research result set. Identifies claims where independent sources disagree, and surfaces the disagreement for synthesis.
+name: "contradiction-hunter"
+description: "Detect contradicting findings across a research result set. Identifies claims where independent sources disagree, and surfaces the disagreement for synthesis."
 metadata:
-  type: meta
-  layer: research-orchestration
+  type: "meta"
+  layer: "research-orchestration"
   consumes:
     - evidence-grader
   produces:
     - contradictions
-  tier: 0
+  tier: "0"
 ---
 
 # contradiction-hunter
@@ -49,9 +49,9 @@ contradictions:
   - topic: "<shared keyword / DOI / claim>"
     sources:
       - id: openalex
-        claim: "<quoted snippet>"
+  claim: "<quoted snippet>"
       - id: arxiv
-        claim: "<quoted snippet>"
+  claim: "<quoted snippet>"
     confidence: 0.0-1.0
     possible_explanations:
       - "<dataset / benchmark / year / model size difference>"

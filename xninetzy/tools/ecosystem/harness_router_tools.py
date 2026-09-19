@@ -10,42 +10,50 @@ from langchain_core.tools import tool
 
 from xninetzy.db.migrations import run_migrations
 from xninetzy.db.sqlite import connect
+from xninetzy.tools.ecosystem.intent_registry import get as _intent_registry_get
 from xninetzy.tools.tool_results import to_tool_result
 
 
-_INTENT_KEYWORDS = {
-    "audit": ("security", {"security_scope", "security_assets", "security_sast", "security_dependencies", "security_headers", "security_threat_model", "security_validate_finding"}),
-    "scanning": ("security", {"security_scope", "security_assets", "security_sast", "security_headers"}),
-    "vulnerability": ("security", {"security_sast", "security_dependencies", "security_threat_model", "security_validate_finding"}),
-    "penetration": ("security", {"security_scope", "security_assets", "security_headers", "security_threat_model"}),
-    "exploit": ("security", {"security_threat_model", "security_validate_finding"}),
-    "pentest": ("security", {"security_scope", "security_sast", "security_headers"}),
-    "code": ("engineering", {"repo_search", "repo_symbol", "repo_dependency", "repo_architecture", "repo_risk"}),
-    "refactor": ("engineering", {"repo_search", "repo_symbol", "repo_dependency", "repo_test", "repo_diff"}),
-    "debug": ("engineering", {"repo_search", "repo_symbol", "repo_diff", "repo_test"}),
-    "test": ("engineering", {"repo_test", "repo_search", "repo_symbol"}),
-    "test generation": ("engineering", {"repo_test", "repo_search", "repo_symbol"}),
-    "performance": ("engineering", {"repo_search", "repo_diff", "repo_risk"}),
-    "memory": ("knowledge", {"memory_episode_search", "memory_relevance", "memory_promote"}),
-    "learn": ("learning", {"learning_get_roadmap", "learning_list_study_sessions", "learning_get_study_progress"}),
-    "research": ("research", {"research_light", "deep_research_topic", "web_search", "web_extract", "web_evidence"}),
-    "find paper": ("research", {"research_search_papers", "research_get_paper"}),
-    "document": ("knowledge", {"unified_search", "knowledge_search", "knowledge_answer"}),
-    "image": ("vision", {"image_inspect", "image_preprocess", "image_ocr", "image_regions", "image_compare"}),
-    "screenshot": ("vision", {"image_inspect", "image_preprocess", "image_ocr", "image_layout"}),
-    "ocr": ("vision", {"image_ocr", "image_preprocess", "image_regions"}),
-    "inbox": ("life", {"os_inbox", "os_triage", "task_capture"}),
-    "task": ("life", {"task_capture", "task_list", "task_today"}),
-    "goal": ("life", {"goal_create", "goal_list", "goal_review"}),
-    "habit": ("life", {"habit_log", "habit_today"}),
-    "money": ("life", {"money_add_transaction", "money_summary"}),
-    "workout": ("life", {"workout_log", "workout_summary"}),
-    "reminder": ("life", {"reminder_create", "reminder_list"}),
-    "checkpoint": ("observability", {"observability_checkpoint", "observability_recent_checkpoints"}),
-    "metric": ("observability", {"observability_summary", "observability_query"}),
-    "improvement": ("improvement", {"improvement_propose", "improvement_list", "improvement_evaluate"}),
-    "procedure": ("harness", {"harness_plan", "harness_trace", "harness_review"}),
-}
+def _get_intent_keywords() -> dict[str, tuple[str, set[str]]]:
+    return _intent_registry_get()
+
+
+def _bandit_scores_for(tool_names: list[str], intent_key: str) -> dict[str, float]:
+    """Single-source bandit lookup. Returns {tool_name: score} for matching strategy_id='mcp:<tool>'."""
+    out: dict[str, float] = {}
+    if not tool_names:
+        return out
+    wanted = set(tool_names)
+    try:
+        from xninetzy.os.lightning.rl import context_key
+        from xninetzy.db.sqlite import connect
+
+        ctx = context_key(
+            domain="mcp", intent=intent_key[:120], modality="text",
+            risk_class="read", task_type="routing",
+        )
+        with connect() as conn:
+            rows = conn.execute(
+                "SELECT strategy_id, sample_count, reward_sum, success_count "
+                "FROM agent_strategy_stats WHERE context_key=?",
+                (ctx,),
+            ).fetchall()
+        for row in rows:
+            sid = str(row["strategy_id"])
+            if not sid.startswith("mcp:"):
+                continue
+            tname = sid[4:]
+            if tname not in wanted:
+                continue
+            cnt = int(row["sample_count"])
+            if cnt <= 0:
+                continue
+            mean = float(row["reward_sum"]) / cnt
+            success_rate = int(row["success_count"]) / cnt
+            out[tname] = round(0.6 * mean + 0.4 * success_rate, 4)
+    except Exception:
+        pass
+    return out
 
 
 def _now_iso() -> str:
@@ -91,7 +99,7 @@ def intent_resolve(
         sender_id: Owner principal.
     """
     bounded_top = max(1, min(top_n, 5))
-    ranked = _score_intent(query, _INTENT_KEYWORDS)
+    ranked = _score_intent(query, _get_intent_keywords())
     items = [
         {
             "domain": domain,
@@ -139,6 +147,15 @@ def _score_tools(query: str, available: list[str], scopes: dict[str, list[str]])
             "score": round(name_score, 3),
             "aliases": scopes.get(tool_name, []),
         })
+    if scored:
+        bandit = _bandit_scores_for([s["tool_name"] for s in scored], normalized)
+        if bandit:
+            for item in scored:
+                b = bandit.get(item["tool_name"])
+                if b is None:
+                    continue
+                item["bandit_score"] = b
+                item["score"] = round(item["score"] + 0.5 * b, 4)
     scored.sort(key=lambda item: item["score"], reverse=True)
     return scored
 
@@ -195,32 +212,146 @@ def recovery_choose(
     """
     normalized = failure_class.strip().upper()
     strategies: dict[str, dict[str, Any]] = {
-        "TOOL_NOT_FOUND": {"action": "discover", "tools": ["skill_list", "skill_suggest_for_request", "unified_search"]},
-        "TIMEOUT": {"action": "shrink_scope_then_retry", "tools": ["repo_search", "image_inspect", "knowledge_search"]},
-        "RATE_LIMIT": {"action": "backoff_alternate_source", "tools": ["web_search", "research_search_papers"]},
-        "PARSING_FAILURE": {"action": "alternate_parser", "tools": ["web_extract", "document_analyze", "image_ocr"]},
-        "OCR_FAILURE": {"action": "preprocess_alt_engine", "tools": ["image_preprocess", "image_crop", "image_ocr"]},
-        "VISION_FAILURE": {"action": "smaller_roi_then_retry", "tools": ["image_crop", "image_regions", "image_inspect"]},
-        "WEB_EXTRACTION_FAILURE": {"action": "alternate_source", "tools": ["web_search", "research_web_collect", "web_compare"]},
-        "VERIFICATION_FAILURE": {"action": "gather_more_evidence", "tools": ["repo_search", "web_extract", "knowledge_search", "memory_relevance"]},
-        "BAD_HYPOTHESIS": {"action": "re_research", "tools": ["research_light", "memory_relevance"]},
-        "WRONG_TOOL": {"action": "intent_resolve_then_route", "tools": ["intent_resolve", "memory_relevance"]},
-        "WRONG_ORDER": {"action": "harness_plan", "tools": ["harness_plan", "harness_record_step", "harness_verify"]},
-        "INSUFFICIENT_EVIDENCE": {"action": "deep_research_then_extract", "tools": ["deep_research_topic", "web_extract", "web_evidence"]},
-        "SIDE_EFFECT": {"action": "rollback_then_audit", "tools": ["harness_recover", "improvement_regress"]},
-        "ENVIRONMENT_FAILURE": {"action": "retry_with_different_runtime", "tools": ["action_policy_evaluate", "os_job_status"]},
-        "MODEL_REASONING_FAILURE": {"action": "fallback_template", "tools": ["memory_relevance", "memory_promote"]},
-        "AUTH_FAILURE": {"action": "scope_gate_revalidate", "tools": ["security_scope", "hitl_request_approval"]},
+        "TOOL_NOT_FOUND": {
+            "action": "discover",
+            "steps": [
+                {"tool": "skill_list", "args": {"scope": "all"}, "output_key": "skills"},
+                {"tool": "skill_suggest_for_request", "args": {"request": "{last_error}"}, "depends_on": ["skills"], "output_key": "suggested"},
+                {"tool": "unified_search", "args": {"query": "{attempted_tool}"}, "output_key": "candidates"},
+            ],
+        },
+        "TIMEOUT": {
+            "action": "shrink_scope_then_retry",
+            "steps": [
+                {"tool": "repo_search", "args": {"query": "{attempted_tool}", "limit": 5}, "output_key": "matches"},
+                {"tool": "image_inspect", "args": {"url": "{attempted_tool}"}, "optional": True, "output_key": "preview"},
+            ],
+        },
+        "RATE_LIMIT": {
+            "action": "backoff_alternate_source",
+            "steps": [
+                {"tool": "web_search", "args": {"query": "{attempted_tool}", "max_results": 3}, "output_key": "fallback_results"},
+            ],
+        },
+        "PARSING_FAILURE": {
+            "action": "alternate_parser",
+            "steps": [
+                {"tool": "web_extract", "args": {"url": "{attempted_tool}"}, "output_key": "extracted"},
+                {"tool": "document_analyze", "args": {"path": "{attempted_tool}"}, "optional": True, "output_key": "doc"},
+                {"tool": "image_ocr", "args": {"path": "{attempted_tool}"}, "optional": True, "output_key": "ocr"},
+            ],
+        },
+        "OCR_FAILURE": {
+            "action": "preprocess_alt_engine",
+            "steps": [
+                {"tool": "image_preprocess", "args": {"path": "{attempted_tool}", "mode": "high_contrast"}, "output_key": "preprocessed"},
+                {"tool": "image_ocr", "args": {"path": "{preprocessed.path}"}, "depends_on": ["preprocessed"], "output_key": "ocr_v2"},
+            ],
+        },
+        "VISION_FAILURE": {
+            "action": "smaller_roi_then_retry",
+            "steps": [
+                {"tool": "image_inspect", "args": {"url": "{attempted_tool}"}, "output_key": "regions"},
+                {"tool": "image_crop", "args": {"path": "{attempted_tool}", "region": "{regions[0].bbox}"}, "depends_on": ["regions"], "output_key": "roi"},
+            ],
+        },
+        "WEB_EXTRACTION_FAILURE": {
+            "action": "alternate_source",
+            "steps": [
+                {"tool": "web_search", "args": {"query": "{attempted_tool}", "max_results": 5}, "output_key": "web_alt"},
+                {"tool": "research_web_collect", "args": {"query": "{attempted_tool}"}, "optional": True, "output_key": "research_alt"},
+            ],
+        },
+        "VERIFICATION_FAILURE": {
+            "action": "gather_more_evidence",
+            "steps": [
+                {"tool": "repo_search", "args": {"query": "{attempted_tool}"}, "output_key": "code_evidence"},
+                {"tool": "web_extract", "args": {"url": "{attempted_tool}"}, "optional": True, "output_key": "web_evidence"},
+                {"tool": "memory_relevance", "args": {"claim": "{last_error}"}, "output_key": "memory_evidence"},
+            ],
+        },
+        "BAD_HYPOTHESIS": {
+            "action": "re_research",
+            "steps": [
+                {"tool": "memory_relevance", "args": {"claim": "{attempted_tool}"}, "output_key": "past_lessons"},
+                {"tool": "research_light", "args": {"query": "{attempted_tool}"}, "output_key": "fresh_research"},
+            ],
+        },
+        "WRONG_TOOL": {
+            "action": "intent_resolve_then_route",
+            "steps": [
+                {"tool": "intent_resolve", "args": {"query": "{attempted_tool}"}, "output_key": "resolution"},
+                {"tool": "memory_relevance", "args": {"claim": "{attempted_tool}"}, "optional": True, "output_key": "memory_hint"},
+            ],
+        },
+        "WRONG_ORDER": {
+            "action": "harness_plan",
+            "steps": [
+                {"tool": "harness_plan", "args": {"title": "recovery:{attempted_tool}", "steps": ["resolve", "verify"]}, "output_key": "plan"},
+                {"tool": "harness_execute", "args": {"plan_id": "{plan.plan_id}"}, "depends_on": ["plan"], "output_key": "exec"},
+                {"tool": "harness_verify", "args": {"plan_id": "{plan.plan_id}"}, "depends_on": ["plan"], "output_key": "verified"},
+            ],
+        },
+        "INSUFFICIENT_EVIDENCE": {
+            "action": "deep_research_then_extract",
+            "steps": [
+                {"tool": "deep_research_topic", "args": {"query": "{attempted_tool}"}, "output_key": "research"},
+                {"tool": "web_extract", "args": {"url": "{research.sources[0].url}"}, "depends_on": ["research"], "output_key": "primary"},
+                {"tool": "web_evidence", "args": {"url": "{research.sources[1].url}"}, "depends_on": ["research"], "optional": True, "output_key": "secondary"},
+            ],
+        },
+        "SIDE_EFFECT": {
+            "action": "rollback_then_audit",
+            "steps": [
+                {"tool": "harness_recover", "args": {"plan_id": "{attempted_tool}", "strategy": "rollback"}, "output_key": "rolled_back"},
+                {"tool": "improvement_regress", "args": {"proposal_id": "{attempted_tool}"}, "optional": True, "output_key": "audit"},
+            ],
+        },
+        "ENVIRONMENT_FAILURE": {
+            "action": "retry_with_different_runtime",
+            "steps": [
+                {"tool": "action_policy_evaluate", "args": {"tool_name": "{attempted_tool}"}, "output_key": "policy"},
+            ],
+        },
+        "MODEL_REASONING_FAILURE": {
+            "action": "fallback_template",
+            "steps": [
+                {"tool": "memory_relevance", "args": {"claim": "{attempted_tool}"}, "output_key": "hint"},
+                {"tool": "memory_promote", "args": {"memory_id": "{hint.id}"}, "depends_on": ["hint"], "optional": True, "output_key": "promoted"},
+            ],
+        },
+        "AUTH_FAILURE": {
+            "action": "scope_gate_revalidate",
+            "steps": [
+                {"tool": "security_scope", "args": {"action": "{attempted_tool}"}, "output_key": "scope"},
+                {"tool": "hitl_request_approval", "args": {"action": "{attempted_tool}", "reason": "{last_error}"}, "depends_on": ["scope"], "optional": True, "output_key": "approval"},
+            ],
+        },
     }
     picked = strategies.get(normalized)
     if picked is None:
-        picked = {"action": "classify_first", "tools": ["memory_failure_store", "memory_relevance"]}
+        picked = {
+            "action": "classify_first",
+            "steps": [
+                {"tool": "memory_failure_store", "args": {"failure_class": "{failure_class}", "title": "{attempted_tool}", "context": "{last_error}"}, "output_key": "logged"},
+                {"tool": "memory_relevance", "args": {"claim": "{attempted_tool}"}, "output_key": "similar"},
+            ],
+        }
+    steps = picked["steps"]
+    for step in steps:
+        try:
+            from xninetzy.tools.manifest import manifest_for
+            step["risk"] = manifest_for(step["tool"]).risk.value
+        except Exception:
+            step["risk"] = "read"
     payload = {
         "failure_class": normalized,
         "attempted_tool": attempted_tool,
         "last_error": last_error,
         "strategy": picked["action"],
-        "candidate_tools": picked["tools"],
+        "steps": steps,
+        "executable": True,
+        "step_count": len(steps),
     }
     _ensure_db()
     with connect() as conn:

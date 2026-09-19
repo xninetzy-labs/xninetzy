@@ -1,16 +1,17 @@
----
 
-name: hebat-academic
 
-description: Academic operating system for HEBAT, Moodle, and compatible LMS platforms. Use for course discovery, freshness-aware activity tracking, assignment and deadline identification, learning-material retrieval, file verification, assignment grounding, submission preparation, human-approved submission execution, external submission verification, and learning-state integration.
+name: "hebat-academic"
+
+description: "Academic operating system for HEBAT, Moodle, and compatible LMS platforms. Use for course discovery, freshness-aware activity tracking, assignment and deadline identification, learning-material retrieval, file verification, assignment grounding, submission preparation, human-approved submission execution, external submission verification, and learning-state integration."
 
 metadata:
-        scope: general
-        platform: "HEBAT/Moodle-like LMS"
-        owner: xninetzy
-        language: en
-        version: "3.0.0"
-        lifecycle: "discover -> refresh -> identify -> retrieve -> verify -> understand -> ground -> prepare -> approve -> revalidate -> execute -> confirm -> learn"
+                         ---
+      scope: "general"
+                                platform: "HEBAT/Moodle-like LMS"
+                                owner: "xninetzy"
+                                language: "en"
+                                version: "3.0.0"
+                                lifecycle: "discover -> refresh -> identify -> retrieve -> verify -> understand -> ground -> prepare -> approve -> revalidate -> execute -> confirm -> learn"
 -------------------------------------------------------------------------------------------------------------------------------------------------------------
 
 # HEBAT Academic OS
@@ -51,7 +52,6 @@ The system should reliably answer:
 6. What action requires explicit approval?
 7. What happened after execution?
 8. What learning evidence can be derived from the activity?
-
 ---
 
 # 2. Core Operating Principle

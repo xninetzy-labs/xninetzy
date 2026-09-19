@@ -24,8 +24,8 @@ NOW = datetime(2026, 7, 29, 8, 0, tzinfo=ZoneInfo("Asia/Jakarta"))
 @pytest.fixture(autouse=True)
 def isolated_scheduler(monkeypatch, tmp_path):
     monkeypatch.setenv("SQLITE_PATH", str(tmp_path / "jobs.sqlite3"))
-    monkeypatch.setenv("ADMIN_JID", "628123456789@s.whatsapp.net")
-    monkeypatch.setenv("OS_NOTIFY_CHAT_ID", "628123456789@s.whatsapp.net")
+    monkeypatch.setenv("ADMIN_JID", "628123456789@chat.local")
+    monkeypatch.setenv("OS_NOTIFY_CHAT_ID", "628123456789@chat.local")
     monkeypatch.setenv("OS_SCHEDULER_ENABLED", "true")
     monkeypatch.setenv("MORNING_BRIEFING_ENABLED", "false")
     monkeypatch.setenv("EVENING_CHECKIN_ENABLED", "false")
@@ -149,7 +149,7 @@ async def test_periodic_hebat_sync_has_one_run_per_interval(monkeypatch):
 
     assert first["succeeded"] == 1
     assert second["succeeded"] == 0
-    assert calls == ["628123456789@s.whatsapp.net"]
+    assert calls == ["628123456789@chat.local"]
     assert JobStore().list_recent(1)[0]["status"] == "succeeded"
 
 

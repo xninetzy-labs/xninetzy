@@ -1,11 +1,15 @@
 ---
-name: obsidian-knowledge
-description: Read, search, organize, and safely write the owner's Obsidian vault and grounded knowledge base. Use for finding notes, answering from vault evidence, creating or updating Markdown notes, daily notes, tags, frontmatter, backlinks, MOCs, document ingestion, and connecting permanent knowledge to learning or life state.
+
+...
+
+...
+name: "obsidian-knowledge"
+description: "Read, search, organize, and safely write the owner's Obsidian vault and grounded knowledge base. Use for finding notes, answering from vault evidence, creating or updating Markdown notes, daily notes, tags, frontmatter, backlinks, MOCs, document ingestion, and connecting permanent knowledge to learning or life state."
 metadata:
   triggers: "obsidian vault note markdown knowledge search read create append frontmatter tag backlink moc daily note ingest"
   lifecycle: "find-verify-compose-write-backup-verify"
   version: "1.1"
----
+...
 
 # Obsidian and Knowledge OS
 

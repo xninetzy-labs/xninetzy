@@ -14,7 +14,7 @@ def test_internal_auth_configuration_preserves_values_and_generates_missing_keys
         encoding="utf-8",
     )
     environment.write_text(
-        "FLAZ_API_KEY=keep-this\nHEBAT_NOTIFY_CHAT_ID=628123@s.whatsapp.net\n",
+        "FLAZ_API_KEY=keep-this\nHEBAT_NOTIFY_CHAT_ID=628123@chat.local\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(configure_internal_auth, "ENV_EXAMPLE_PATH", example)
@@ -29,7 +29,7 @@ def test_internal_auth_configuration_preserves_values_and_generates_missing_keys
     assert first["NEW_SETTING"] == "default"
     assert first["AI_API_KEY"]
     assert first["MCP_API_KEY"] == first["WA_MCP_API_KEY"]
-    assert first["ADMIN_JID"] == "628123@s.whatsapp.net"
+    assert first["ADMIN_JID"] == "628123@chat.local"
     assert second == first
     assert environment.stat().st_mode & 0o777 == 0o600
 
@@ -44,7 +44,7 @@ def test_internal_auth_can_enable_cyber_campus_safely(monkeypatch, tmp_path: Pat
     environment.write_text(
         "HEBAT_USERNAME=owner\n"
         "HEBAT_PASSWORD=secret\n"
-        "ADMIN_JID=628123@s.whatsapp.net\n",
+        "ADMIN_JID=628123@chat.local\n",
         encoding="utf-8",
     )
     monkeypatch.setattr(configure_internal_auth, "ENV_EXAMPLE_PATH", example)

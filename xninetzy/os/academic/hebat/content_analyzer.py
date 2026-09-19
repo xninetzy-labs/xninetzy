@@ -1,7 +1,7 @@
 """Analyze a downloaded HEBAT file into text + lightweight summary metadata.
 
 Reuses the shared ``xninetzy.interfaces.media.document_parser`` (PDF/DOCX/PPTX/XLSX/TXT/MD/CSV)
-so there is one parsing implementation across HEBAT and WhatsApp media. Adds
+so there is one parsing implementation across HEBAT and  media. Adds
 HTML handling and a cheap extractive preview; heavy summarization is left to the
 LLM layer. Works on real files — unit-tested with temp files.
 """

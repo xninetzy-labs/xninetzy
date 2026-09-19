@@ -1,13 +1,17 @@
 ---
-name: memory-chat
-description: Cross-session continuity system for persisting compact, self-contained checkpoints, milestones, decisions, corrections, artifacts, external actions, active state, skills used, and precise resume instructions. Use before context-heavy work, after meaningful milestones, at session boundaries, or whenever the user explicitly asks to remember or resume a process.
+
+...
+
+...
+name: "memory-chat"
+description: "Cross-session continuity system for persisting compact, self-contained checkpoints, milestones, decisions, corrections, artifacts, external actions, active state, skills used, and precise resume instructions. Use before context-heavy work, after meaningful milestones, at session boundaries, or whenever the user explicitly asks to remember or resume a process."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "detect -> summarize -> persist -> verify -> scope -> resume -> revalidate -> continue"
----
+...
 
 # Memory Chat OS
 

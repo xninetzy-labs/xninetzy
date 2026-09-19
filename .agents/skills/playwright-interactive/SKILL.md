@@ -1,7 +1,11 @@
 ---
+
+...
+
+...
 name: "playwright-interactive"
 description: "Persistent browser and Electron interaction through `js_repl` for fast iterative UI debugging."
----
+...
 
 # Playwright Interactive Skill
 
@@ -441,8 +445,8 @@ var emitWebScreenshotCssScaled = async function ({ page, clip, quality = 0.85 } 
   const target = clip
     ? { width: clip.width, height: clip.height }
     : await page.evaluate(() => ({
-        width: window.innerWidth,
-        height: window.innerHeight,
+  width: window.innerWidth,
+  height: window.innerHeight,
       }));
 
   const screenshotBuffer = await page.screenshot({
@@ -465,7 +469,7 @@ var emitWebScreenshotCssScaled = async function ({ page, clip, quality = 0.85 } 
       ctx.drawImage(image, 0, 0, targetWidth, targetHeight);
 
       const blob = await new Promise((resolve) =>
-        canvas.toBlob(resolve, "image/jpeg", quality)
+  canvas.toBlob(resolve, "image/jpeg", quality)
       );
 
       return new Uint8Array(await blob.arrayBuffer());

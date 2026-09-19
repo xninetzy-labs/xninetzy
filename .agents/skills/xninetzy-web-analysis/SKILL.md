@@ -1,15 +1,16 @@
----
 
-name: xninetzy-web-analysis
 
-description: Safety-first read-only web and portal analysis operating system for explicitly allowlisted academic portals, authenticated applications, institutional SSO systems, documentation sites, and dynamic public websites. Use for bounded structural discovery, navigation and module mapping, permitted public-page analysis, evidence and provenance tracking, safe knowledge ingestion, public visual capture, freshness-aware cache management, change detection, and cross-session analysis checkpoints. Never use for mutation, form submission, CAPTCHA solving, credential extraction, access-control bypass, or authenticated personal-page visual capture.
+name: "xninetzy-web-analysis"
+
+description: "Safety-first read-only web and portal analysis operating system for explicitly allowlisted academic portals, authenticated applications, institutional SSO systems, documentation sites, and dynamic public websites. Use for bounded structural discovery, navigation and module mapping, permitted public-page analysis, evidence and provenance tracking, safe knowledge ingestion, public visual capture, freshness-aware cache management, change detection, and cross-session analysis checkpoints. Never use for mutation, form submission, CAPTCHA solving, credential extraction, access-control bypass, or authenticated personal-page visual capture."
 
 metadata:
-        scope: general
-        owner: xninetzy
-        language: en
-        version: "3.0.0"
-        lifecycle: "scope -> authorize -> inspect -> classify -> session-check -> refresh -> discover -> filter -> persist -> verify -> checkpoint -> report"
+      ---
+                         scope: "general"
+                                owner: "xninetzy"
+                                language: "en"
+                                version: "3.0.0"
+                                lifecycle: "scope -> authorize -> inspect -> classify -> session-check -> refresh -> discover -> filter -> persist -> verify -> checkpoint -> report"
 -----------------------------------------------------------------------------------------------------------------------------------------------------
 
 # Xninetzy Web Analysis OS
@@ -35,7 +36,6 @@ Its purpose is to build a trustworthy structural representation of an authorized
 The operating principle is:
 
 > **Scope first. Observe only. Preserve provenance. Isolate sessions. Stop at human verification. Verify persistence. Never convert analysis into unauthorized interaction.**
-
 ---
 
 # 2. Core Lifecycle

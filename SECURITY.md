@@ -80,3 +80,50 @@ from any text passed to logs, citations, or tool output:
 
 Structured JSON logs locally by default. OpenTelemetry export is opt-in.
 `request_id`, `trace_id`, `span_id` propagate per W3C Trace Context.
+
+## Memory poisoning threat model
+
+The memory layer (`xninetzy/os/memory/`) stores long-lived user data that
+is later replayed into prompts. Mitigations:
+
+- `<memory_quarantine>` fence in `format_memories_for_prompt`
+  (`xninetzy/os/memory/memory_store.py`) wraps retrieved memories in a
+  block instructing the model to treat them as DATA, not INSTRUCTIONS.
+- System policy overrides any conflicting memory content.
+- Memory write paths are typed (`memory_type` field) and quota-bounded.
+
+Operators: do not bypass `format_memories_for_prompt` when injecting
+memories into a prompt context. Strip the fence and the system loses
+prompt-injection containment.
+
+## Secret redaction taxonomy
+
+`xninetzy/core/security.py:redact_secrets()` strips these patterns from
+any tool output before it leaves the MCP server. Redaction marker:
+`[REDACTED]`. The function is the single sink; do not duplicate the
+regex in callers.
+
+| Pattern | Provider |
+|---|---|
+| `sk-...` (16+ chars) | OpenAI / Anthropic generic |
+| `sk-ant-...` (16+ chars) | Anthropic-specific |
+| `ghp_...`, `github_pat_...` (16+ chars) | GitHub PATs |
+| `xox[abps]-...` (10+ chars) | Slack tokens |
+| `AIza...` (16+ chars) | Google API keys |
+| `AKIA...` (12+ chars) | AWS access key IDs |
+| `-----BEGIN ... PRIVATE KEY-----` | PEM private keys |
+
+Patterns live in `_SECRET_PATTERNS` (`xninetzy/core/security.py:17-26`).
+Add new provider prefixes there, not at call sites.
+
+## CAPTCHA OCR lockout
+
+`XNINETZY_CAPTCHA_OCR_COOLDOWN_SECONDS` (default 3600) gates CAPTCHA OCR
+tools after a lockout. The cooldown is the sole rate-limit policy; no
+per-call captcha solver is enabled by default. Owner fallback via
+`XNINETZY_CAPTCHA_WA_PREFERRED` applies. The guard at
+`xninetzy/os/security/captcha/lockout.py` enforces:
+
+- `XNINETZY_CAPTCHA_OCR_MIN_CONFIDENCE` (default 0.6)
+- `XNINETZY_CAPTCHA_OCR_LOCKOUT_THRESHOLD` (default 3 failures)
+- `XNINETZY_CAPTCHA_OCR_LOCKOUT_WINDOW_SECONDS` (default 600)

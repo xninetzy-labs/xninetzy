@@ -3,6 +3,9 @@ layout: ../../layouts/DocsLayout.astro
 title: Introduction to Xninetzy
 description: Xninetzy as a local-first, MCP-only Personal Intelligence and Learning system.
 section: Start
+badge: Overview
+difficulty: beginner
+readingTime: 8 min
 ---
 
 Xninetzy is a **local-first, MCP-native Personal Intelligence and Learning

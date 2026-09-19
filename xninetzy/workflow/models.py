@@ -80,7 +80,7 @@ class WorkflowState(BaseModel):
     plan_id: str
     chat_id: str
     original_user_message: str
-    from_whatsapp: bool = True
+    from_: bool = True
     artifacts: dict[str, Any] = Field(default_factory=dict)
     summaries: list[str] = Field(default_factory=list)
     downloaded_files: list[str] = Field(default_factory=list)

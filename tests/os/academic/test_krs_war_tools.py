@@ -129,7 +129,7 @@ async def test_arm_sets_armed_and_plan(monkeypatch, store):
     )
 
     result = await portal_tools.portal_krs_war_arm.ainvoke(
-        {"chat_id": "chat", "sender_id": "628123@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "628123@chat.local"}
     )
 
     assert "KRS War Aktif" in result
@@ -148,7 +148,7 @@ async def test_arm_denied_for_non_admin(monkeypatch, store):
     monkeypatch.setattr(portal_tools, "load_krs_plan", unexpected_load)
 
     result = await portal_tools.portal_krs_war_arm.ainvoke(
-        {"chat_id": "chat", "sender_id": "stranger@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "stranger@chat.local"}
     )
 
     assert "admin" in result
@@ -175,7 +175,7 @@ def test_disarm_sets_armed_off(monkeypatch, store):
     monkeypatch.setattr(portal_tools, "is_owner_admin", lambda s, n: True)
 
     result = portal_tools.portal_krs_war_disarm.invoke(
-        {"chat_id": "chat", "sender_id": "628123@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "628123@chat.local"}
     )
 
     assert "dinonaktifkan" in result
@@ -187,7 +187,7 @@ def test_disarm_denied_for_non_admin(monkeypatch, store):
     monkeypatch.setattr(portal_tools, "is_owner_admin", lambda s, n: False)
 
     result = portal_tools.portal_krs_war_disarm.invoke(
-        {"chat_id": "chat", "sender_id": "stranger@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "stranger@chat.local"}
     )
 
     assert "admin" in result
@@ -248,7 +248,7 @@ async def test_dry_run_reports_would_take(monkeypatch, store):
     monkeypatch.setattr(portal_tools, "KrsWatcherStore", FakeWatcherStore)
 
     result = await portal_tools.portal_krs_war_dry_run.ainvoke(
-        {"chat_id": "chat", "sender_id": "628123@s.whatsapp.net"}
+        {"chat_id": "chat", "sender_id": "628123@chat.local"}
     )
 
     assert "Dry Run" in result

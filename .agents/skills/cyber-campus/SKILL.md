@@ -1,8 +1,8 @@
 ---
 
-name: cyber-campus
+name: "cyber-campus"
 
-description: Safety-first academic operating system for authorized Cyber Campus, university SIS,
+description: "Safety-first academic operating system for authorized Cyber Campus, university SIS,"
 and comparable student-information portals. Handles authenticated session checks,
 deterministic navigation, academic-state reads, semester-aware normalization,
 schedule/grade/KRS inspection, course eligibility, quota and prerequisite analysis,
@@ -14,10 +14,10 @@ undocumented write flows; never claims a consequential academic action succeeded
 without authoritative portal confirmation.
 
 metadata:
-scope: general
+scope: "general"
 platform: "Cyber Campus / university SIS"
-owner: xninetzy
-language: en
+owner: "xninetzy"
+language: "en"
 version: "3.0.0"
 lifecycle: >
 discover -> session-check -> bind-context -> navigate -> read ->
@@ -57,7 +57,7 @@ do_not_use_when:
 
 references:
 lifecycle:
-file: references/lifecycle.md
+file: "references/lifecycle.md"
 use_when:
 - lifecycle execution
 - session/context state
@@ -65,7 +65,7 @@ use_when:
 - read/write transitions
 
 krs_staging:
-file: references/krs-staging.md
+file: "references/krs-staging.md"
 use_when:
 - KRS planning
 - dry-run
@@ -75,7 +75,7 @@ use_when:
 - submission
 
 policies:
-file: references/policies.md
+file: "references/policies.md"
 use_when:
 - schemas
 - freshness
@@ -123,7 +123,6 @@ Second principle:
 Third principle:
 
 > **No portal confirmation, no success claim.**
-
 ---
 
 # 1. Domain State Separation

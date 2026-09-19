@@ -1,4 +1,4 @@
-"""Offline tests for WhatsApp audio transcription (HTTP call mocked)."""
+"""Offline tests for  audio transcription (HTTP call mocked)."""
 
 from __future__ import annotations
 

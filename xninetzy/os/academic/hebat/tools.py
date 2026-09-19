@@ -10,7 +10,7 @@ from zoneinfo import ZoneInfo
 from langchain_core.tools import tool
 
 from xninetzy.core.config import get_settings
-from xninetzy.core.identity import configured_owner_jids, normalize_whatsapp_jid
+from xninetzy.core.identity import configured_owner_jids, normalize_chat_id
 from xninetzy.core.logging import logging
 from xninetzy.os.academic.hebat.browser_session import (
     check_session_valid,
@@ -88,16 +88,30 @@ def _resolve_activity_cmid(
 
 def _is_owner_chat(*chat_ids: str | None) -> bool:
     owners = configured_owner_jids()
-    return all(
-        normalize_whatsapp_jid(value) in owners for value in chat_ids if value
-    )
+    owner_digits = {
+        "".join(ch for ch in entry.split("@", 1)[0] if ch.isdigit())
+        for entry in owners
+    }
+    owner_digits.discard("")
+    matches = False
+    for value in chat_ids:
+        if not value:
+            continue
+        normalized = normalize_chat_id(value)
+        if normalized in owners:
+            matches = True
+            continue
+        digits = "".join(ch for ch in normalized.split("@", 1)[0] if ch.isdigit())
+        if digits and digits in owner_digits:
+            matches = True
+    return matches
 
 
 def _is_admin_context(chat_id: str | None) -> bool:
     if not chat_id:
         return False
     raw = chat_id.lower()
-    normalized = normalize_whatsapp_jid(chat_id)
+    normalized = normalize_chat_id(chat_id)
     return (
         raw.startswith("local-")
         or raw.startswith("mcp-direct-")
@@ -186,7 +200,7 @@ async def hebat_login_status(chat_id: str) -> str:
     """Cek apakah session HEBAT/Moodle masih aktif.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     is_valid, profile_name = await check_session_valid(chat_id)
     if is_valid:
@@ -272,10 +286,10 @@ async def hebat_debug_login(chat_id: str = "system") -> str:
 async def hebat_start_login(chat_id: str) -> str:
     """Login ke HEBAT menggunakan kredensial yang sudah dikonfigurasi.
 
-    Tidak meminta password lewat WhatsApp — dibaca dari konfigurasi server.
+    Tidak meminta password lewat  — dibaca dari konfigurasi server.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     try:
         credentials = resolve_campus_credentials("hebat")
@@ -312,7 +326,7 @@ async def hebat_sync_courses(chat_id: str) -> str:
     """Sinkronisasi daftar course dari HEBAT ke database lokal.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     err = _ensure_session_or_msg(chat_id)
     if err:
@@ -366,7 +380,7 @@ async def hebat_sync_course_activities(chat_id: str, course_id: str) -> str:
     """Sinkronisasi section dan activity dari satu course HEBAT.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         course_id: Moodle course ID (angka)
     """
     err = _ensure_session_or_msg(chat_id)
@@ -417,7 +431,7 @@ async def hebat_download_material(
     """Download materi PDF/resource dari HEBAT dan buat ringkasan.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         activity_id_or_url: cmid activity atau URL lengkap
         save_to_obsidian: Simpan ringkasan ke Obsidian vault
     """
@@ -570,7 +584,7 @@ async def hebat_sync_assignments(chat_id: str, course_id: str | None = None) -> 
     """Sinkronisasi semua tugas (assignment) dari HEBAT, buat reminder otomatis.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         course_id: Filter ke satu course (opsional)
     """
     err = _ensure_session_or_msg(chat_id)
@@ -703,7 +717,7 @@ async def hebat_get_assignment_detail(chat_id: str, assignment_id_or_url: str) -
     """Lihat detail lengkap satu tugas HEBAT: instruksi, deadline, status, attachment.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         assignment_id_or_url: cmid assignment atau URL lengkap
     """
     resolved = _resolve_activity_cmid(assignment_id_or_url, activity_type="assign")
@@ -743,19 +757,19 @@ async def hebat_get_assignment_detail(chat_id: str, assignment_id_or_url: str) -
 
 
 @tool
-async def hebat_prepare_submission_from_whatsapp_file(
+async def hebat_prepare_submission_from__file(
     chat_id: str,
     local_file_path: str,
     assignment_query: str,
     source_message_id: str | None = None,
 ) -> str:
-    """Persiapkan upload tugas dari file yang sudah didownload dari WhatsApp.
+    """Persiapkan upload tugas dari file yang sudah didownload dari .
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         local_file_path: Path lokal file yang akan diupload
         assignment_query: Nama atau kata kunci tugas yang dituju
-        source_message_id: Message ID WhatsApp (opsional)
+        source_message_id: Message ID  (opsional)
     """
     s = get_settings()
     path = Path(local_file_path)
@@ -938,7 +952,7 @@ async def hebat_upload_submission(
                 "Upload tugas HEBAT",
                 f"{sub['uploaded_filename']} untuk activity {sub['assignment_id']}.",
             )
-            delivery = "Tombol approval dikirim ke WhatsApp admin." if delivered else "Tombol approval gagal dikirim."
+            delivery = "Tombol approval dikirim ke  admin." if delivered else "Tombol approval gagal dikirim."
             return f"Upload HEBAT membutuhkan approval #{requested_id}. {delivery}"
         try:
             validate_approval(approval_id, "hebat_submit_submission", policy.action_hash)
@@ -1170,7 +1184,7 @@ def hebat_cancel_submission(chat_id: str, confirmation_token: str) -> str:
     """Batalkan pending upload tugas HEBAT.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         confirmation_token: Token yang ingin dibatalkan
     """
     sub = get_submission_by_token(confirmation_token)
@@ -1199,7 +1213,7 @@ async def hebat_remove_submission(chat_id: str, assignment_id_or_url: str, confi
     menghapus apa pun. Aksi eksekusi butuh confirm=true.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         assignment_id_or_url: cmid assignment atau URL lengkap
         confirm: True untuk mengeksekusi penghapusan (default False = dry-run)
     """
@@ -1277,7 +1291,7 @@ def hebat_academic_digest(chat_id: str, days_ahead: int = 7) -> str:
     """Ringkasan tugas mendekati deadline dan materi terbaru dari HEBAT.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
         days_ahead: Berapa hari ke depan yang dilihat (default 7)
     """
     s = get_settings()

@@ -269,7 +269,7 @@ async def capture_krs_signal() -> KrsWatchSignal:
 async def _request_login_captcha() -> None:
     """Request a CAPTCHA challenge and persist it via owner inbox.
 
-    The pivot removed WhatsApp delivery: the CAPTCHA PNG bytes and reply
+    The pivot removed  delivery: the CAPTCHA PNG bytes and reply
     instruction are now stored as an inbox capture the owner can resolve
     through an MCP-aware client.
     """

@@ -1,6 +1,8 @@
 ---
 import BaseLayout from './BaseLayout.astro';
 import Sidebar from '../components/Sidebar.astro';
+import TableOfContents from '../components/TableOfContents.astro';
+import PageFeedback from '../components/PageFeedback.astro';
 import Icon from '../components/Icon.astro';
 import { navigation, pageNeighbors } from '../data/navigation';
 
@@ -9,6 +11,9 @@ type Props = {
     title: string;
     description: string;
     section?: string;
+    badge?: string;
+    difficulty?: 'beginner' | 'intermediate' | 'advanced';
+    readingTime?: string;
   };
 };
 
@@ -30,10 +35,22 @@ const { previous, next } = pageNeighbors(Astro.url.pathname);
         <div class="eyebrow"><span></span><span>{section}</span></div>
         <h1>{frontmatter.title}</h1>
         <p>{frontmatter.description}</p>
+        {(frontmatter.badge || frontmatter.difficulty || frontmatter.readingTime) && (
+          <div class="docs-meta">
+            {frontmatter.badge && <span class="docs-badge">{frontmatter.badge}</span>}
+            {frontmatter.difficulty && (
+              <span class:list={['docs-difficulty', frontmatter.difficulty]}>{frontmatter.difficulty}</span>
+            )}
+            {frontmatter.readingTime && (
+              <span class="docs-time">⏱ {frontmatter.readingTime}</span>
+            )}
+          </div>
+        )}
       </header>
       <article class="prose" data-docs-article>
         <slot />
       </article>
+      <PageFeedback pageTitle={frontmatter.title} />
       <nav class="page-neighbors" aria-label="Previous and next pages">
         {previous ? (
           <a class="previous" href={previous.href}>
@@ -51,5 +68,118 @@ const { previous, next } = pageNeighbors(Astro.url.pathname);
         <span>Documentation lives in <code>apps/docs/src/pages/docs</code> and can be edited as Markdown.</span>
       </div>
     </main>
+    <TableOfContents headings={[]} />
   </div>
 </BaseLayout>
+
+<script>
+  const slugify = (s: string): string =>
+    s.toLowerCase().replace(/[^a-z0-9\s-]/g, '').trim().replace(/\s+/g, '-').slice(0, 64);
+
+  const article = document.querySelector<HTMLElement>('[data-docs-article]');
+  if (article) {
+    const headings = Array.from(article.querySelectorAll<HTMLElement>('h2, h3'));
+    const seen = new Map<string, number>();
+    headings.forEach((h) => {
+      if (!h.id) {
+        const base = slugify(h.textContent || 'section');
+        const n = (seen.get(base) || 0) + 1;
+        seen.set(base, n);
+        h.id = n > 1 ? `${base}-${n}` : base;
+      }
+    });
+    const tocRoot = document.querySelector<HTMLElement>('.toc');
+    if (tocRoot) {
+      const list = tocRoot.querySelector<HTMLOListElement>('.toc-list');
+      if (list && list.childElementCount === 0) {
+        headings.forEach((h) => {
+          if (h.tagName !== 'H2' && h.tagName !== 'H3') return;
+          const li = document.createElement('li');
+          li.className = `toc-depth-${h.tagName === 'H2' ? 2 : 3}`;
+          const a = document.createElement('a');
+          a.href = `#${h.id}`;
+          a.textContent = h.textContent || '';
+          li.appendChild(a);
+          list.appendChild(li);
+        });
+      }
+    }
+
+    const links = Array.from(document.querySelectorAll<HTMLAnchorElement>('.toc-list a'));
+    const map = new Map<string, HTMLAnchorElement>();
+    links.forEach((a) => {
+      const id = a.getAttribute('href')?.slice(1);
+      if (id) map.set(id, a);
+    });
+
+    const onScroll = () => {
+      let active: string | null = null;
+      for (const h of headings) {
+        const top = h.getBoundingClientRect().top;
+        if (top < 120) active = h.id; else break;
+      }
+      links.forEach((a) => a.classList.remove('is-active'));
+      if (active) map.get(active)?.classList.add('is-active');
+    };
+    document.addEventListener('scroll', onScroll, { passive: true });
+    onScroll();
+  }
+
+  document.querySelectorAll<HTMLElement>('article.prose pre code').forEach((code) => {
+    const pre = code.parentElement;
+    if (!pre || pre.dataset.copyReady === '1') return;
+    pre.dataset.copyReady = '1';
+    pre.style.position = pre.style.position || 'relative';
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'code-copy';
+    btn.setAttribute('aria-label', 'Copy code');
+    btn.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 01-2-2V4a2 2 0 012-2h9a2 2 0 012 2v1"/></svg><span>Copy</span>';
+    btn.addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(code.innerText);
+        const span = btn.querySelector('span');
+        if (span) { const o = span.textContent; span.textContent = 'Copied'; setTimeout(() => { if (span.textContent === 'Copied') span.textContent = o; }, 1400); }
+      } catch {}
+    });
+    pre.appendChild(btn);
+  });
+</script>
+
+<style is:global>
+  .toc-list a.is-active {
+    color: var(--text, #fff);
+    border-left-color: var(--purple-bright, #c084fc);
+  }
+  .prose pre .code-copy {
+    position: absolute;
+    top: .55rem;
+    right: .55rem;
+    display: inline-flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .3rem .55rem;
+    font: 500 .7rem var(--font-mono, ui-monospace, monospace);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+    color: var(--muted, #a1a1aa);
+    background: var(--surface-raised, #0a0417);
+    border: 1px solid var(--border-dim, #2e1065);
+    border-radius: .35rem;
+    cursor: pointer;
+    opacity: 0;
+    transition: opacity .15s, color .15s, border-color .15s;
+  }
+  .prose pre:hover .code-copy, .prose pre .code-copy:focus-visible { opacity: 1; }
+  .prose pre .code-copy:hover { color: var(--text, #fff); border-color: var(--purple, #8b5cf6); }
+  .prose pre .code-copy svg { width: .85rem; height: .85rem; }
+  .prose { scroll-behavior: smooth; }
+
+  .docs-meta { display: flex; flex-wrap: wrap; gap: .55rem; margin-top: 1.1rem; align-items: center; }
+  .docs-badge { padding: .25rem .65rem; border-radius: 999px; color: var(--purple-bright); background: rgba(139,92,246,.12); border: 1px solid rgba(139,92,246,.32); font: 500 .65rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+  .docs-difficulty { padding: .25rem .65rem; border-radius: 999px; font: 500 .65rem var(--font-mono); letter-spacing: .12em; text-transform: uppercase; }
+  .docs-difficulty.beginner { color: #34d399; background: rgba(52,211,153,.1); border: 1px solid rgba(52,211,153,.32); }
+  .docs-difficulty.intermediate { color: var(--orange-bright); background: rgba(249,115,22,.1); border: 1px solid rgba(249,115,22,.32); }
+  .docs-difficulty.advanced { color: #f87171; background: rgba(248,113,113,.1); border: 1px solid rgba(248,113,113,.32); }
+  .docs-time { color: var(--dim); font: .7rem var(--font-mono); }
+</style>

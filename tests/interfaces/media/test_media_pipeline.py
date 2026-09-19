@@ -94,13 +94,13 @@ async def test_read_document_uses_stored_local_path(monkeypatch, tmp_path):
 @pytest.mark.asyncio
 async def test_build_media_prompt_context_reads_quoted_document(monkeypatch):
     async def fake_read(chat_id, message_id):
-        assert chat_id == "group@g.us"
+        assert chat_id == "group@group.local"
         assert message_id == "QUOTED-1"
         return {"text": "Isi penting dari PDF.", "error": None, "_meta": {}}
 
     monkeypatch.setattr(media_tools, "_read_document", fake_read)
     context = await media_tools.build_media_prompt_context(
-        "group@g.us",
+        "group@group.local",
         {
             "quotedMedia": {
                 "hasMedia": True,

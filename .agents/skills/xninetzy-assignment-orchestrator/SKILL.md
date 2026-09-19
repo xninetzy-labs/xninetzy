@@ -1,13 +1,17 @@
 ---
-name: xninetzy-assignment-orchestrator
-description: Academic assignment orchestration system for retrieving authoritative requirements, understanding course context, decomposing work, connecting research and learning, building artifacts, validating against requirements and rubrics, performing content and visual QA, and safely preparing or executing submission when explicitly authorized. Use to coordinate academic work end-to-end across HEBAT, Cyber Campus, research, learning, and artifact subsystems.
+
+...
+
+...
+name: "xninetzy-assignment-orchestrator"
+description: "Academic assignment orchestration system for retrieving authoritative requirements, understanding course context, decomposing work, connecting research and learning, building artifacts, validating against requirements and rubrics, performing content and visual QA, and safely preparing or executing submission when explicitly authorized. Use to coordinate academic work end-to-end across HEBAT, Cyber Campus, research, learning, and artifact subsystems."
 metadata:
-  scope: general
-  owner: xninetzy
-  language: en
+  scope: "general"
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "discover -> retrieve -> ground -> matrix -> decompose -> research -> build -> integrate -> validate -> qa -> prepare -> approve -> submit -> verify -> checkpoint"
----
+...
 
 # Xninetzy Assignment Orchestrator
 

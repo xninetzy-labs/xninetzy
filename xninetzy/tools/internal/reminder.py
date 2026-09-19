@@ -13,7 +13,7 @@ def reminder_create(chat_id: str, message: str) -> str:
     "besok jam 8", "2 jam lagi", "nanti jam 14.30", "minggu depan"
 
     Args:
-        chat_id: WhatsApp chat ID untuk mengirim reminder nanti (dari context)
+        chat_id:  chat ID untuk mengirim reminder nanti (dari context)
         message: Pesan berisi deskripsi dan waktu reminder
     """
     try:
@@ -29,7 +29,7 @@ def reminder_list(chat_id: str) -> str:
     """Lihat semua reminder pending untuk chat ini.
 
     Args:
-        chat_id: WhatsApp chat ID (dari context)
+        chat_id:  chat ID (dari context)
     """
     svc = ReminderService()
     reminders = svc.list_pending(chat_id)

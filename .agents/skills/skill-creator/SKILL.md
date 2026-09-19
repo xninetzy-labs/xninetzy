@@ -1,11 +1,11 @@
 ---
-name: skill-creator
-description: Companion to `skill-security-review`. Use whenever you author or modify a SKILL.md, add a new MCP capability, or want to evaluate whether a candidate skill should ship. Drives the loop: create skill → create evals → run with/without → compare → benchmark → improve → publish. Bridges the Lightning RL episode store so every skill mutation is tied to a measured episode outcome rather than anecdote.
+name: "skill-creator"
+description: "Companion to `skill-security-review`. Use whenever you author or modify a SKILL.md, add a new MCP capability, or want to evaluate whether a candidate skill should ship. Drives the loop: create skill → create evals → run with/without → compare → benchmark → improve → publish. Bridges the Lightning RL episode store so every skill mutation is tied to a measured episode outcome rather than anecdote."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: process
-  priority: P0
+  scope: "process"
+  priority: "P0"
   required_tools:
     - read_file
     - write_file

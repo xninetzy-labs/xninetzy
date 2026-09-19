@@ -11,11 +11,11 @@ from xninetzy.os.academic.mahasiswa_portal.grade_token import (
 @pytest.mark.asyncio
 async def test_grade_token_is_owner_bound_and_single_use():
     coordinator = GradeTokenCoordinator()
-    challenge = await coordinator.start("628123:7@s.whatsapp.net")
+    challenge = await coordinator.start("628123:7@chat.local")
 
     token, period = await coordinator.consume(
         challenge["challenge_id"],
-        "628123@s.whatsapp.net",
+        "628123@chat.local",
         "12345",
     )
 
@@ -24,7 +24,7 @@ async def test_grade_token_is_owner_bound_and_single_use():
     with pytest.raises(GradeChallengeError):
         await coordinator.consume(
             challenge["challenge_id"],
-            "628123@s.whatsapp.net",
+            "628123@chat.local",
             "12345",
         )
 
@@ -32,12 +32,12 @@ async def test_grade_token_is_owner_bound_and_single_use():
 @pytest.mark.asyncio
 async def test_grade_token_rejects_cross_owner_input():
     coordinator = GradeTokenCoordinator()
-    challenge = await coordinator.start("628123@s.whatsapp.net")
+    challenge = await coordinator.start("628123@chat.local")
 
     with pytest.raises(PermissionError):
         await coordinator.consume(
             challenge["challenge_id"],
-            "628999@s.whatsapp.net",
+            "628999@chat.local",
             "12345",
         )
 
@@ -45,7 +45,7 @@ async def test_grade_token_rejects_cross_owner_input():
 @pytest.mark.asyncio
 async def test_grade_token_expiry_fails_closed():
     coordinator = GradeTokenCoordinator()
-    challenge = await coordinator.start("628123@s.whatsapp.net")
+    challenge = await coordinator.start("628123@chat.local")
     coordinator._challenges[challenge["challenge_id"]].expires_at = (
         datetime.now(UTC) - timedelta(seconds=1)
     )
@@ -53,7 +53,7 @@ async def test_grade_token_expiry_fails_closed():
     with pytest.raises(GradeChallengeError):
         await coordinator.consume(
             challenge["challenge_id"],
-            "628123@s.whatsapp.net",
+            "628123@chat.local",
             "12345",
         )
 
@@ -61,14 +61,14 @@ async def test_grade_token_expiry_fails_closed():
 @pytest.mark.asyncio
 async def test_grade_token_can_be_cancelled():
     coordinator = GradeTokenCoordinator()
-    challenge = await coordinator.start("628123@s.whatsapp.net")
+    challenge = await coordinator.start("628123@chat.local")
 
     await coordinator.cancel(challenge["challenge_id"])
 
     with pytest.raises(GradeChallengeError):
         await coordinator.consume(
             challenge["challenge_id"],
-            "628123@s.whatsapp.net",
+            "628123@chat.local",
             "12345",
         )
 
@@ -76,26 +76,26 @@ async def test_grade_token_can_be_cancelled():
 @pytest.mark.asyncio
 async def test_grade_token_consume_owner_token_resolves_single_active_challenge():
     coordinator = GradeTokenCoordinator()
-    challenge = await coordinator.start("628123@s.whatsapp.net")
+    challenge = await coordinator.start("628123@chat.local")
 
     challenge_id, token, period = await coordinator.consume_owner_token(
-        "628123@s.whatsapp.net", "12345"
+        "628123@chat.local", "12345"
     )
 
     assert challenge_id == challenge["challenge_id"]
     assert token == "12345"
     assert period == "latest"
     with pytest.raises(GradeChallengeError):
-        await coordinator.consume_owner_token("628123@s.whatsapp.net", "12345")
+        await coordinator.consume_owner_token("628123@chat.local", "12345")
 
 
 @pytest.mark.asyncio
 async def test_grade_token_consume_owner_token_rejects_cross_owner():
     coordinator = GradeTokenCoordinator()
-    await coordinator.start("628123@s.whatsapp.net")
+    await coordinator.start("628123@chat.local")
 
     with pytest.raises(GradeChallengeError):
-        await coordinator.consume_owner_token("628999@s.whatsapp.net", "12345")
+        await coordinator.consume_owner_token("628999@chat.local", "12345")
 
 
 @pytest.mark.asyncio
@@ -103,4 +103,4 @@ async def test_grade_token_consume_owner_token_fails_without_challenge():
     coordinator = GradeTokenCoordinator()
 
     with pytest.raises(GradeChallengeError):
-        await coordinator.consume_owner_token("628123@s.whatsapp.net", "12345")
+        await coordinator.consume_owner_token("628123@chat.local", "12345")

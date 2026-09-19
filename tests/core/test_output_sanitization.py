@@ -4,20 +4,20 @@ from xninetzy.core.security import redact_jids_in_text, sanitize_tool_output
 
 
 def test_masks_user_jid_keeping_domain():
-    out = redact_jids_in_text("Target: 628123456789@s.whatsapp.net siap")
+    out = redact_jids_in_text("Target: 628123456789@chat.local siap")
     assert "628123456789" not in out
-    assert "@s.whatsapp.net" in out
+    assert "@chat.local" in out
     assert out.startswith("Target: 6281")
 
 
 def test_masks_group_jid():
-    out = redact_jids_in_text("grup 120363012345678901@g.us aktif")
+    out = redact_jids_in_text("grup 120363012345678901@group.local aktif")
     assert "120363012345678901" not in out
-    assert "@g.us" in out
+    assert "@group.local" in out
 
 
 def test_masks_device_suffix():
-    out = redact_jids_in_text("pesan dari 628123456789:13@s.whatsapp.net")
+    out = redact_jids_in_text("pesan dari 628123456789:13@chat.local")
     assert "628123456789" not in out
     assert ":13" not in out
 
@@ -40,7 +40,7 @@ def test_masks_status_broadcast():
 
 def test_masks_multiple_jids_in_one_text():
     out = redact_jids_in_text(
-        "dari 628123456789@s.whatsapp.net ke 628987654321@s.whatsapp.net"
+        "dari 628123456789@chat.local ke 628987654321@chat.local"
     )
     assert "628123456789" not in out
     assert "628987654321" not in out
@@ -48,8 +48,8 @@ def test_masks_multiple_jids_in_one_text():
 
 def test_sanitize_recurses_into_containers():
     payload = {
-        "chat": "628123456789@s.whatsapp.net",
-        "items": ["ok", "120363012345678901@g.us"],
+        "chat": "628123456789@chat.local",
+        "items": ["ok", "120363012345678901@group.local"],
         "count": 2,
     }
     cleaned = sanitize_tool_output(payload)

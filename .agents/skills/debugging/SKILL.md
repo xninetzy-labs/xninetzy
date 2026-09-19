@@ -1,18 +1,19 @@
----
 
-name: debugging
 
-description: Evidence-driven debugging workflow for unexpected runtime behavior, incorrect outputs, failed requests, regressions, flaky tests, race conditions, malformed tool results, and production incidents. Collects reproducible evidence before hypotheses, separates symptom from cause, narrows to a primary root cause with contributing factors, requires controlled falsification, emits the smallest verifiable fix, and closes the loop with regression validation and failure-memory learning.
+name: "debugging"
+
+description: "Evidence-driven debugging workflow for unexpected runtime behavior, incorrect outputs, failed requests, regressions, flaky tests, race conditions, malformed tool results, and production incidents. Collects reproducible evidence before hypotheses, separates symptom from cause, narrows to a primary root cause with contributing factors, requires controlled falsification, emits the smallest verifiable fix, and closes the loop with regression validation and failure-memory learning."
 
 metadata:
-   author: xninetzy
-   version: "2.0.0"
-   scope: domain
-   priority: P1
+            author: "xninetzy"
+            version: "2.0.0"
+            scope: "domain"
+            priority: "P1"
 
 required_tools:
 - repo_search
-- repo_symbol
+- repo_s---
+mbol
 - repo_diff
 - observability_query
 - memory_failure_store
@@ -45,10 +46,10 @@ prerequisites:
 - execution scope is known
 
 escalation_routes:
-   cross_module_boundary: architecture-analysis
-   api_boundary: api-security
-   security_signal: xninetzy-security-testing
-   deployment_or_infrastructure: infrastructure-analysis
+            cross_module_boundary: "architecture-analysis"
+            api_boundary: "api-security"
+            security_signal: "xninetzy-security-testing"
+            deployment_or_infrastructure: "infrastructure-analysis"
 -----------------------------------------------------
 
 # debugging
@@ -70,7 +71,6 @@ reproduced or bounded
 → verified
 → recorded
 ```
-
 ---
 
 # 1. Core Invariant

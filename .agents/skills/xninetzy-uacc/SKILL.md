@@ -1,14 +1,18 @@
 ---
-name: xninetzy-uacc
-description: Safety-first operating system for the UNAIR UACC/UnairSatu central SSO portal. Use for authenticated session inspection, manual-CAPTCHA login, owner-bound verification, SSO page discovery, authorized read-only portal analysis, session freshness monitoring, Graph RAG and memory persistence, and audited handling of future write requests without mixing UACC state with Cyber Campus state.
+
+...
+
+...
+name: "xninetzy-uacc"
+description: "Safety-first operating system for the UNAIR UACC/UnairSatu central SSO portal. Use for authenticated session inspection, manual-CAPTCHA login, owner-bound verification, SSO page discovery, authorized read-only portal analysis, session freshness monitoring, Graph RAG and memory persistence, and audited handling of future write requests without mixing UACC state with Cyber Campus state."
 metadata:
-  scope: general
+  scope: "general"
   platform: "UNAIR UACC / UnairSatu SSO"
-  owner: xninetzy
-  language: en
+  owner: "xninetzy"
+  language: "en"
   version: "2.0.0"
   lifecycle: "identify -> isolate -> session-check -> authenticate -> human-verify -> read -> analyze -> persist -> checkpoint -> monitor -> propose/verify"
----
+...
 
 # Xninetzy UACC OS
 

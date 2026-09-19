@@ -1,11 +1,11 @@
 ---
-name: repo-context-packaging
-description: Compact a code repository into a layered context bundle for the harness. Avoids the "model reads 1000 files" antipattern. Produces L0-L4 layers from the architecture down to the relevant symbols, with hard caps on each layer so the bundle stays inside the harness's prompt budget. Use whenever the operator asks for a "deep dive" into a codebase, or whenever a non-trivial code modification will exceed the model's context window.
+name: "repo-context-packaging"
+description: "Compact a code repository into a layered context bundle for the harness. Avoids the \"model reads 1000 files\" antipattern. Produces L0-L4 layers from the architecture down to the relevant symbols, with hard caps on each layer so the bundle stays inside the harness's prompt budget. Use whenever the operator asks for a \"deep dive\" into a codebase, or whenever a non-trivial code modification will exceed the model's context window."
 metadata:
-  author: xninetzy
+  author: "xninetzy"
   version: "1.0.0"
-  scope: domain
-  priority: P1
+  scope: "domain"
+  priority: "P1"
   required_tools:
     - read_file
     - grep_search

@@ -1,0 +1,660 @@
+- generic [active] [ref=f3e1]:
+  - banner [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - link "Xninetzy documentation home" [ref=f3e4] [cursor=pointer]:
+        - /url: /
+        - generic [ref=f3e10]:
+          - strong [ref=f3e11]: XNINETZY
+          - generic [ref=f3e12]: documentation
+      - generic [ref=f3e13]:
+        - button "Search documentation" [ref=f3e14] [cursor=pointer]:
+          - generic [ref=f3e18]: Search docs
+          - generic [ref=f3e19]: Ctrl K
+        - link "MCP" [ref=f3e20] [cursor=pointer]:
+          - /url: /docs/mcp/
+        - link "Portfolio" [ref=f3e21] [cursor=pointer]:
+          - /url: https://misbahul-muttaqin.vercel.app/
+        - link "Misbahul45 on GitHub" [ref=f3e22] [cursor=pointer]:
+          - /url: https://github.com/misbahul45
+        - link "Get started" [ref=f3e25] [cursor=pointer]:
+          - /url: /docs/getting-started/
+  - generic [ref=f3e28]:
+    - complementary "Documentation" [ref=f3e29]:
+      - navigation [ref=f3e30]:
+        - generic [ref=f3e31]:
+          - heading "Start" [level=2] [ref=f3e32]
+          - list [ref=f3e33]:
+            - listitem [ref=f3e34]:
+              - link "Introduction core" [ref=f3e35] [cursor=pointer]:
+                - /url: /docs/introduction/
+                - generic [ref=f3e36]:
+                  - generic [ref=f3e37]: Introduction
+                  - generic [ref=f3e38]: core
+            - listitem [ref=f3e39]:
+              - link "MCP system reference new" [ref=f3e40] [cursor=pointer]:
+                - /url: /docs/mcp-system/
+                - generic [ref=f3e41]:
+                  - generic [ref=f3e42]: MCP system reference
+                  - generic [ref=f3e43]: new
+            - listitem [ref=f3e44]:
+              - link "Quick start" [ref=f3e45] [cursor=pointer]:
+                - /url: /docs/getting-started/
+            - listitem [ref=f3e49]:
+              - link "Configuration" [ref=f3e50] [cursor=pointer]:
+                - /url: /docs/configuration/
+            - listitem [ref=f3e53]:
+              - link "Architecture core" [ref=f3e54] [cursor=pointer]:
+                - /url: /docs/architecture/
+                - generic [ref=f3e55]:
+                  - generic [ref=f3e56]: Architecture
+                  - generic [ref=f3e57]: core
+        - generic [ref=f3e58]:
+          - heading "Reference" [level=2] [ref=f3e59]
+          - list [ref=f3e60]:
+            - listitem [ref=f3e61]:
+              - link "Skill catalog updated" [ref=f3e62] [cursor=pointer]:
+                - /url: /docs/skills/
+                - generic [ref=f3e63]:
+                  - generic [ref=f3e64]: Skill catalog
+                  - generic [ref=f3e65]: updated
+            - listitem [ref=f3e66]:
+              - link "Skill repair runbook new" [ref=f3e67] [cursor=pointer]:
+                - /url: /KNOWN_ISSUES.md
+                - generic [ref=f3e68]:
+                  - generic [ref=f3e69]: Skill repair runbook
+                  - generic [ref=f3e70]: new
+            - listitem [ref=f3e71]:
+              - link "Known issues new" [ref=f3e72] [cursor=pointer]:
+                - /url: /KNOWN_ISSUES.md
+                - generic [ref=f3e73]:
+                  - generic [ref=f3e74]: Known issues
+                  - generic [ref=f3e75]: new
+            - listitem [ref=f3e76]:
+              - link "Changelog new" [ref=f3e77] [cursor=pointer]:
+                - /url: /CHANGELOG.md
+                - generic [ref=f3e78]:
+                  - generic [ref=f3e79]: Changelog
+                  - generic [ref=f3e80]: new
+        - generic [ref=f3e81]:
+          - heading "Integrations" [level=2] [ref=f3e82]
+          - list [ref=f3e83]:
+            - listitem [ref=f3e84]:
+              - link "Obsidian" [ref=f3e85] [cursor=pointer]:
+                - /url: /docs/obsidian/
+            - listitem [ref=f3e88]:
+              - link "HEBAT / Moodle" [ref=f3e89] [cursor=pointer]:
+                - /url: /docs/hebat/
+            - listitem [ref=f3e92]:
+              - link "Cyber Campus" [ref=f3e93] [cursor=pointer]:
+                - /url: /docs/cyber-campus/
+            - listitem [ref=f3e96]:
+              - link "OS kernel" [ref=f3e97] [cursor=pointer]:
+                - /url: /docs/os-kernel/
+            - listitem [ref=f3e100]:
+              - link "Learning roadmaps" [ref=f3e101] [cursor=pointer]:
+                - /url: /docs/learning-roadmaps/
+        - generic [ref=f3e104]:
+          - heading "AI & developer tools" [level=2] [ref=f3e105]
+          - list [ref=f3e106]:
+            - listitem [ref=f3e107]:
+              - link "Chat model selection" [ref=f3e108] [cursor=pointer]:
+                - /url: /docs/providers/
+            - listitem [ref=f3e111]:
+              - link "Global MCP core" [ref=f3e112] [cursor=pointer]:
+                - /url: /docs/mcp/
+                - generic [ref=f3e113]:
+                  - generic [ref=f3e114]: Global MCP
+                  - generic [ref=f3e115]: core
+            - listitem [ref=f3e116]:
+              - link "Lightning agent" [ref=f3e117] [cursor=pointer]:
+                - /url: /docs/lightning/
+            - listitem [ref=f3e120]:
+              - link "Shared skills updated" [ref=f3e121] [cursor=pointer]:
+                - /url: /docs/skills/
+                - generic [ref=f3e122]:
+                  - generic [ref=f3e123]: Shared skills
+                  - generic [ref=f3e124]: updated
+        - generic [ref=f3e125]:
+          - heading "Operations" [level=2] [ref=f3e126]
+          - list [ref=f3e127]:
+            - listitem [ref=f3e128]:
+              - link "HTTP API" [ref=f3e129] [cursor=pointer]:
+                - /url: /docs/api/
+            - listitem [ref=f3e132]:
+              - link "Action policy" [ref=f3e133] [cursor=pointer]:
+                - /url: /docs/action-policy/
+            - listitem [ref=f3e136]:
+              - link "Testing" [ref=f3e137] [cursor=pointer]:
+                - /url: /docs/testing/
+            - listitem [ref=f3e140]:
+              - link "Automation" [ref=f3e141] [cursor=pointer]:
+                - /url: /docs/automation/
+            - listitem [ref=f3e144]:
+              - link "Local data" [ref=f3e145] [cursor=pointer]:
+                - /url: /docs/local-data/
+            - listitem [ref=f3e148]:
+              - link "Backup & restore" [ref=f3e149] [cursor=pointer]:
+                - /url: /docs/backup-restore/
+            - listitem [ref=f3e152]:
+              - link "Security" [ref=f3e153] [cursor=pointer]:
+                - /url: /docs/security/
+            - listitem [ref=f3e156]:
+              - link "Troubleshooting" [ref=f3e157] [cursor=pointer]:
+                - /url: /docs/troubleshooting/
+      - generic [ref=f3e160]:
+        - generic [ref=f3e161]: MCP ready
+        - strong [ref=f3e163]: 343 tools. Satu registry.
+        - paragraph [ref=f3e164]: "MCP-only owner server: Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career."
+        - link "Connect a client →" [ref=f3e165] [cursor=pointer]:
+          - /url: /docs/mcp/
+    - main [ref=f3e166]:
+      - navigation "Breadcrumb" [ref=f3e167]:
+        - link "Docs" [ref=f3e168] [cursor=pointer]:
+          - /url: /
+        - generic [ref=f3e169]: /
+        - generic [ref=f3e170]: Start
+      - generic [ref=f3e171]:
+        - generic [ref=f3e172]: Start
+        - heading "Quick start" [level=1] [ref=f3e175]
+        - paragraph [ref=f3e176]: Install Xninetzy with one curl command or git clone, then connect an MCP host.
+        - generic [ref=f3e177]:
+          - generic [ref=f3e178]: How-to
+          - generic [ref=f3e179]: beginner
+          - generic [ref=f3e180]: ⏱ 5 min
+      - article [ref=f3e181]:
+        - paragraph [ref=f3e182]:
+          - text: Xninetzy runs as a single Python process. The default
+          - code [ref=f3e183]: local
+          - text: mode is just Python — no Docker required, no LLM credentials required. The MCP server runs over stdio by default and is reachable over Streamable HTTP on loopback.
+        - heading "One-line install" [level=2] [ref=f3e184]
+        - heading "Linux / macOS" [level=3] [ref=f3e185]
+        - generic [ref=f3e186]:
+          - text: TERMINAL
+          - code [ref=f3e187]:
+            - generic [ref=f3e188]: curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
+          - button "Copy code" [ref=f3e189] [cursor=pointer]:
+            - generic [ref=f3e193]: Copy
+        - paragraph [ref=f3e194]: "Override the source repo (for mirrors or forks):"
+        - generic [ref=f3e195]:
+          - text: TERMINAL
+          - code [ref=f3e196]:
+            - generic [ref=f3e197]: XNINETZY_REPO_URL=https://raw.githubusercontent.com/your-fork/xninetzy/main \
+            - generic [ref=f3e198]: curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
+          - button "Copy code" [ref=f3e199] [cursor=pointer]:
+            - generic [ref=f3e203]: Copy
+        - paragraph [ref=f3e204]: "The script:"
+        - list [ref=f3e205]:
+          - listitem [ref=f3e206]:
+            - text: detects OS via
+            - code [ref=f3e207]: uname -s
+            - text: and refuses to run on unsupported systems
+          - listitem [ref=f3e208]:
+            - text: ensures
+            - code [ref=f3e209]: git
+            - text: +
+            - code [ref=f3e210]: openssl
+            - text: are present; auto-installs
+            - code [ref=f3e211]: uv
+            - text: (Homebrew on macOS, official installer on Linux) if missing
+          - listitem [ref=f3e212]:
+            - text: clones the repo to
+            - code [ref=f3e213]: ~/xninetzy
+          - listitem [ref=f3e214]:
+            - text: "installs OS-level dependencies via the system package manager:"
+            - list [ref=f3e215]:
+              - listitem [ref=f3e216]:
+                - strong [ref=f3e217]: Debian/Ubuntu
+                - text: ":"
+                - code [ref=f3e218]: tesseract-ocr
+                - text: ","
+                - code [ref=f3e219]: tesseract-ocr-eng
+                - text: ","
+                - code [ref=f3e220]: sqlite3
+                - text: ","
+                - code [ref=f3e221]: libatlas3-base
+                - text: ","
+                - code [ref=f3e222]: liblapack3
+                - text: ","
+                - code [ref=f3e223]: libgomp1
+                - text: ","
+                - code [ref=f3e224]: libxml2
+                - text: ","
+                - code [ref=f3e225]: libxslt1.1
+              - listitem [ref=f3e226]:
+                - strong [ref=f3e227]: Fedora/RHEL
+                - text: ":"
+                - code [ref=f3e228]: tesseract
+                - text: ","
+                - code [ref=f3e229]: sqlite
+                - text: ","
+                - code [ref=f3e230]: atlas
+                - text: ","
+                - code [ref=f3e231]: lapack
+                - text: ","
+                - code [ref=f3e232]: openssl-devel
+              - listitem [ref=f3e233]:
+                - strong [ref=f3e234]: Arch
+                - text: ":"
+                - code [ref=f3e235]: tesseract
+                - text: ","
+                - code [ref=f3e236]: sqlite
+                - text: ","
+                - code [ref=f3e237]: atlas
+                - text: ","
+                - code [ref=f3e238]: lapack
+                - text: ","
+                - code [ref=f3e239]: openssl
+              - listitem [ref=f3e240]:
+                - strong [ref=f3e241]: macOS (brew)
+                - text: ":"
+                - code [ref=f3e242]: tesseract
+                - text: ","
+                - code [ref=f3e243]: sqlite
+          - listitem [ref=f3e244]:
+            - text: runs
+            - code [ref=f3e245]: uv sync --all-extras
+            - text: "to pull the full Python dependency set:"
+            - code [ref=f3e246]: mcp
+            - text: ","
+            - code [ref=f3e247]: fastapi
+            - text: ","
+            - code [ref=f3e248]: uvicorn
+            - text: ","
+            - code [ref=f3e249]: pydantic
+            - text: ","
+            - code [ref=f3e250]: langchain-core
+            - text: ","
+            - code [ref=f3e251]: playwright
+            - text: ","
+            - code [ref=f3e252]: httpx
+            - text: ","
+            - code [ref=f3e253]: beautifulsoup4
+            - text: ","
+            - code [ref=f3e254]: lxml
+            - text: ","
+            - code [ref=f3e255]: pypdf
+            - text: ","
+            - code [ref=f3e256]: numpy
+            - text: ","
+            - code [ref=f3e257]: faiss-cpu
+            - text: ","
+            - code [ref=f3e258]: sentence-transformers
+            - text: ","
+            - code [ref=f3e259]: torch
+            - text: (CPU-only),
+            - code [ref=f3e260]: neo4j
+            - text: ","
+            - code [ref=f3e261]: networkx
+            - text: ","
+            - code [ref=f3e262]: pytesseract
+            - text: ","
+            - code [ref=f3e263]: pdfplumber
+            - text: ","
+            - code [ref=f3e264]: cryptography
+            - text: ","
+            - code [ref=f3e265]: openpyxl
+            - text: ","
+            - code [ref=f3e266]: python-pptx
+            - text: ","
+            - code [ref=f3e267]: python-docx
+            - text: ","
+            - code [ref=f3e268]: pillow
+            - text: ","
+            - code [ref=f3e269]: opencv-python-headless
+            - text: ","
+            - code [ref=f3e270]: ddgs
+          - listitem [ref=f3e271]:
+            - text: installs the Playwright Chromium binary (
+            - code [ref=f3e272]: python -m playwright install chromium --with-deps
+            - text: ) for the HEBAT browser
+          - listitem [ref=f3e273]:
+            - text: sets
+            - code [ref=f3e274]: NEO4J_ENABLED=true
+            - text: and installs Neo4j if
+            - code [ref=f3e275]: XNINETZY_INSTALL_NEO4J=true
+          - listitem [ref=f3e276]:
+            - text: copies
+            - code [ref=f3e277]: .env.example
+            - text: →
+            - code [ref=f3e278]: .env
+            - text: with a random
+            - code [ref=f3e279]: AI_API_KEY
+          - listitem [ref=f3e280]: creates the Obsidian vault directory
+          - listitem [ref=f3e281]: runs the release gate
+        - heading "Windows (PowerShell 5.1+)" [level=3] [ref=f3e282]
+        - generic [ref=f3e283]:
+          - text: TERMINAL
+          - code [ref=f3e284]:
+            - generic [ref=f3e285]: iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
+          - button "Copy code" [ref=f3e286] [cursor=pointer]:
+            - generic [ref=f3e290]: Copy
+        - paragraph [ref=f3e291]: "The script:"
+        - list [ref=f3e292]:
+          - listitem [ref=f3e293]:
+            - text: forces TLS 1.2 (
+            - code [ref=f3e294]: "[Net.ServicePointManager]::SecurityProtocol"
+            - text: )
+          - listitem [ref=f3e295]:
+            - text: installs
+            - code [ref=f3e296]: uv
+            - text: to
+            - code [ref=f3e297]: "%USERPROFILE%\\.local\\bin"
+            - text: if missing
+          - listitem [ref=f3e298]:
+            - text: clones to
+            - code [ref=f3e299]: $HOME\xninetzy
+            - text: (
+            - code [ref=f3e300]: "%USERPROFILE%\\xninetzy"
+            - text: )
+          - listitem [ref=f3e301]:
+            - text: sets hidden attribute on
+            - code [ref=f3e302]: .env
+          - listitem [ref=f3e303]:
+            - text: runs
+            - code [ref=f3e304]: uv sync --all-extras
+            - text: to pull the full Python dependency set (same list as the bash script —
+            - code [ref=f3e305]: mcp
+            - text: ","
+            - code [ref=f3e306]: fastapi
+            - text: ","
+            - code [ref=f3e307]: faiss-cpu
+            - text: ","
+            - code [ref=f3e308]: torch
+            - text: CPU,
+            - code [ref=f3e309]: sentence-transformers
+            - text: ","
+            - code [ref=f3e310]: neo4j
+            - text: ","
+            - code [ref=f3e311]: playwright
+            - text: ","
+            - code [ref=f3e312]: langchain-core
+            - text: ","
+            - code [ref=f3e313]: pytesseract
+            - text: ","
+            - code [ref=f3e314]: pdfplumber
+            - text: ","
+            - code [ref=f3e315]: cryptography
+            - text: ","
+            - code [ref=f3e316]: ddgs
+            - text: ", etc.)"
+          - listitem [ref=f3e317]:
+            - text: installs the Playwright Chromium binary (
+            - code [ref=f3e318]: python -m playwright install chromium
+            - text: ) for the HEBAT browser
+          - listitem [ref=f3e319]:
+            - text: sets
+            - code [ref=f3e320]: NEO4J_ENABLED=true
+            - text: and installs Neo4j via choco if
+            - code [ref=f3e321]: $env:XNINETZY_INSTALL_NEO4J = 'true'
+          - listitem [ref=f3e322]: runs the release gate
+        - paragraph [ref=f3e323]:
+          - text: "Note: Windows scripts skip the apt/dnf package step. SQLite ships in Python on Windows. Tesseract is required only if you opt into OCR (set"
+          - code [ref=f3e324]: XNINETZY_CAPTCHA_OCR_ENABLED=true
+          - text: ); install it from
+          - link "https://github.com/UB-Mannheim/tesseract/wiki" [ref=f3e325] [cursor=pointer]:
+            - /url: https://github.com/UB-Mannheim/tesseract/wiki
+          - text: if needed.
+        - paragraph [ref=f3e326]: "Use a non-default branch:"
+        - generic [ref=f3e327]:
+          - text: TERMINAL
+          - code [ref=f3e328]:
+            - generic [ref=f3e329]: XNINETZY_BRANCH=v2.2.0 curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
+          - button "Copy code" [ref=f3e330] [cursor=pointer]:
+            - generic [ref=f3e334]: Copy
+        - generic [ref=f3e335]:
+          - text: TERMINAL
+          - code [ref=f3e336]:
+            - generic [ref=f3e337]: $env:XNINETZY_BRANCH = 'v2.2.0'
+            - generic [ref=f3e338]: iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
+          - button "Copy code" [ref=f3e339] [cursor=pointer]:
+            - generic [ref=f3e343]: Copy
+        - paragraph [ref=f3e344]: "Use the Docker compose path instead:"
+        - generic [ref=f3e345]:
+          - text: TERMINAL
+          - code [ref=f3e346]:
+            - generic [ref=f3e347]: XNINETZY_INSTALL_MODE=docker curl -fsSL https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.sh | bash
+          - button "Copy code" [ref=f3e348] [cursor=pointer]:
+            - generic [ref=f3e352]: Copy
+        - generic [ref=f3e353]:
+          - text: TERMINAL
+          - code [ref=f3e354]:
+            - generic [ref=f3e355]: $env:XNINETZY_INSTALL_MODE = 'docker'
+            - generic [ref=f3e356]: iwr -useb https://raw.githubusercontent.com/xninetzy-labs/xninetzy/main/scripts/install-mcp.ps1 | iex
+          - button "Copy code" [ref=f3e357] [cursor=pointer]:
+            - generic [ref=f3e361]: Copy
+        - heading "Manual install" [level=2] [ref=f3e362]
+        - paragraph [ref=f3e363]: "If you’d rather drive each step yourself:"
+        - generic [ref=f3e364]:
+          - text: TERMINAL
+          - code [ref=f3e365]:
+            - generic [ref=f3e366]: git clone https://github.com/xninetzy-labs/xninetzy
+            - generic [ref=f3e367]: cd xninetzy
+            - generic [ref=f3e368]: uv sync --all-extras
+            - generic [ref=f3e369]: cp .env.example .env
+            - generic [ref=f3e370]: chmod 600 .env
+          - button "Copy code" [ref=f3e371] [cursor=pointer]:
+            - generic [ref=f3e375]: Copy
+        - paragraph [ref=f3e376]:
+          - text: Edit
+          - code [ref=f3e377]: .env
+          - text: "and set at minimum:"
+        - generic [ref=f3e378]:
+          - text: TERMINAL
+          - code [ref=f3e379]:
+            - generic [ref=f3e380]: AI_API_KEY=<openssl rand -hex 32>
+            - generic [ref=f3e381]: OBSIDIAN_VAULT_HOST_PATH=/absolute/path/to/your/vault
+          - button "Copy code" [ref=f3e382] [cursor=pointer]:
+            - generic [ref=f3e386]: Copy
+        - paragraph [ref=f3e387]:
+          - text: Xninetzy is MCP-only. The host (Claude, Claude Code, Codex, OpenCode, Cursor) supplies the chat model. No LLM credentials belong in this file unless you also run the optional
+          - code [ref=f3e388]: /api/chat
+          - text: HTTP bridge with a private provider.
+        - heading "Prerequisites" [level=2] [ref=f3e389]
+        - list [ref=f3e390]:
+          - listitem [ref=f3e391]: Python 3.11 or later.
+          - listitem [ref=f3e392]:
+            - code [ref=f3e393]: uv
+            - text: (recommended) or
+            - code [ref=f3e394]: pip
+            - text: .
+          - listitem [ref=f3e395]: Git.
+          - listitem [ref=f3e396]: An absolute path to an Obsidian vault (optional).
+        - paragraph [ref=f3e397]: "Verify:"
+        - generic [ref=f3e398]:
+          - text: TERMINAL
+          - code [ref=f3e399]:
+            - generic [ref=f3e400]: python --version
+            - generic [ref=f3e401]: command -v uv
+            - generic [ref=f3e402]: git --version
+          - button "Copy code" [ref=f3e403] [cursor=pointer]:
+            - generic [ref=f3e407]: Copy
+        - heading "Initialize" [level=2] [ref=f3e408]
+        - generic [ref=f3e409]:
+          - text: TERMINAL
+          - code [ref=f3e410]:
+            - generic [ref=f3e411]: uv run python -m xninetzy.cli.supervisor init
+          - button "Copy code" [ref=f3e412] [cursor=pointer]:
+            - generic [ref=f3e416]: Copy
+        - paragraph [ref=f3e417]:
+          - text: This checks Python version,
+          - code [ref=f3e418]: uv
+          - text: ","
+          - code [ref=f3e419]: docker
+          - text: (optional),
+          - code [ref=f3e420]: tesseract
+          - text: (optional), and creates
+          - code [ref=f3e421]: ~/.local/share/xninetzy
+          - text: ","
+          - code [ref=f3e422]: ~/Documents/xninetzy/output
+          - text: ","
+          - code [ref=f3e423]: ~/Documents/xninetzy-vault
+          - text: .
+        - heading "Start the MCP server" [level=2] [ref=f3e424]
+        - generic [ref=f3e425]:
+          - text: TERMINAL
+          - code [ref=f3e426]:
+            - generic [ref=f3e427]: uv run python -m xninetzy.cli.supervisor start
+          - button "Copy code" [ref=f3e428] [cursor=pointer]:
+            - generic [ref=f3e432]: Copy
+        - paragraph [ref=f3e433]: "The server listens on stdio by default. For Streamable HTTP:"
+        - generic [ref=f3e434]:
+          - text: TERMINAL
+          - code [ref=f3e435]:
+            - generic [ref=f3e436]: XNINETZY_MCP_TRANSPORT=streamable-http \
+            - generic [ref=f3e437]: XNINETZY_MCP_HTTP_HOST=127.0.0.1 \
+            - generic [ref=f3e438]: XNINETZY_MCP_HTTP_PORT=8765 \
+            - generic [ref=f3e439]: uv run python -m xninetzy.cli.supervisor start
+          - button "Copy code" [ref=f3e440] [cursor=pointer]:
+            - generic [ref=f3e444]: Copy
+        - paragraph [ref=f3e445]:
+          - text: then connect to
+          - code [ref=f3e446]: http://127.0.0.1:8765/mcp
+          - text: .
+        - heading "Connect an MCP host" [level=2] [ref=f3e447]
+        - heading "Claude Code" [level=3] [ref=f3e448]
+        - generic [ref=f3e449]:
+          - text: TERMINAL
+          - code [ref=f3e450]:
+            - generic [ref=f3e451]: claude mcp add --scope user xninetzy \
+            - generic [ref=f3e452]: "-e PYTHONUNBUFFERED=1 -- \\"
+            - generic [ref=f3e453]: /home/you/.local/bin/uv run \
+            - generic [ref=f3e454]: "--directory /home/you/code/xninetzy \\"
+            - generic [ref=f3e455]: python -m xninetzy.interfaces.mcp_server
+          - button "Copy code" [ref=f3e456] [cursor=pointer]:
+            - generic [ref=f3e460]: Copy
+        - heading "Codex CLI" [level=3] [ref=f3e461]
+        - generic [ref=f3e462]:
+          - text: TERMINAL
+          - code [ref=f3e463]:
+            - generic [ref=f3e464]: codex mcp add xninetzy -- \
+            - generic [ref=f3e465]: /home/you/.local/bin/uv run \
+            - generic [ref=f3e466]: "--directory /home/you/code/xninetzy \\"
+            - generic [ref=f3e467]: python -m xninetzy.interfaces.mcp_server
+          - button "Copy code" [ref=f3e468] [cursor=pointer]:
+            - generic [ref=f3e472]: Copy
+        - heading "OpenCode" [level=3] [ref=f3e473]
+        - paragraph [ref=f3e474]:
+          - text: Edit
+          - code [ref=f3e475]: ~/.config/opencode/opencode.jsonc
+          - text: ":"
+        - generic [ref=f3e476]:
+          - text: TERMINAL
+          - code [ref=f3e477]:
+            - generic [ref=f3e478]: "{"
+            - generic [ref=f3e479]: "\"$schema\": \"https://opencode.ai/config.json\","
+            - generic [ref=f3e480]: "\"mcp\": {"
+            - generic [ref=f3e481]: "\"xninetzy\": {"
+            - generic [ref=f3e482]: "\"type\": \"local\","
+            - generic [ref=f3e483]: "\"command\": ["
+            - generic [ref=f3e484]: "\"/home/you/.local/bin/uv\","
+            - generic [ref=f3e485]: "\"run\","
+            - generic [ref=f3e486]: "\"--directory\","
+            - generic [ref=f3e487]: "\"/home/you/code/xninetzy\","
+            - generic [ref=f3e488]: "\"python\","
+            - generic [ref=f3e489]: "\"-m\","
+            - generic [ref=f3e490]: "\"xninetzy.interfaces.mcp_server\""
+            - generic [ref=f3e491]: "],"
+            - generic [ref=f3e492]: "\"enabled\": true,"
+            - generic [ref=f3e493]: "\"timeout\": 120000"
+            - generic [ref=f3e494]: "}"
+            - generic [ref=f3e495]: "}"
+            - generic [ref=f3e496]: "}"
+          - button "Copy code" [ref=f3e497] [cursor=pointer]:
+            - generic [ref=f3e501]: Copy
+        - paragraph [ref=f3e502]:
+          - text: See
+          - link "Global MCP" [ref=f3e503] [cursor=pointer]:
+            - /url: /docs/mcp/
+          - text: for full host connection reference.
+        - heading "Verify" [level=2] [ref=f3e504]
+        - generic [ref=f3e505]:
+          - text: TERMINAL
+          - code [ref=f3e506]:
+            - generic [ref=f3e507]: uv run python -m xninetzy.cli.supervisor release-check
+          - button "Copy code" [ref=f3e508] [cursor=pointer]:
+            - generic [ref=f3e512]: Copy
+        - paragraph [ref=f3e513]: "Expected output:"
+        - generic [ref=f3e514]:
+          - text: TERMINAL
+          - code [ref=f3e515]:
+            - generic [ref=f3e516]: "[PASS ] tool_registry 343 tools classified"
+            - generic [ref=f3e517]: "[PASS ] secret_redaction 3/3 sample secrets redacted"
+            - generic [ref=f3e518]: "[PASS ] safe_fetch 3/3 SSRF guard scenarios blocked"
+            - generic [ref=f3e519]: "[PASS ] transport_config transport=stdio host=127.0.0.1"
+            - generic [ref=f3e520]: "[PASS ] sdk_pin mcp resolved=1.28.1"
+            - generic [ref=f3e521]: "[PASS ] canonical_final_tools 3 FINAL tools match canonical set"
+            - generic [ref=f3e522]: "overall: PASS"
+          - button "Copy code" [ref=f3e523] [cursor=pointer]:
+            - generic [ref=f3e527]: Copy
+        - paragraph [ref=f3e528]:
+          - text: If
+          - code [ref=f3e529]: tool_registry
+          - text: reports fewer than 343 tools, an import failed. Check the install log for missing optional dependencies.
+        - heading "SDK-style install (future)" [level=2] [ref=f3e530]
+        - paragraph [ref=f3e531]:
+          - code [ref=f3e532]: pip install xninetzy-mcp
+          - text: and
+          - code [ref=f3e533]: uvx xninetzy
+          - text: are not yet published. Today the canonical install paths are the curl one-liner, the manual
+          - code [ref=f3e534]: git clone
+          - text: +
+          - code [ref=f3e535]: uv sync
+          - text: ", and the Docker compose path. Publishing to PyPI would require flipping"
+          - code [ref=f3e536]: pyproject.toml
+          - text: ’s
+          - code [ref=f3e537]: tool.uv.package = true
+          - text: and adding a
+          - code [ref=f3e538]: "[build-system]"
+          - text: table — tracked as a follow-up.
+        - heading "Next steps" [level=2] [ref=f3e539]
+        - list [ref=f3e540]:
+          - listitem [ref=f3e541]:
+            - link "MCP system reference" [ref=f3e542] [cursor=pointer]:
+              - /url: /docs/mcp-system/
+            - text: — canonical truth on transports, registry, gateway
+          - listitem [ref=f3e543]:
+            - link "Configuration" [ref=f3e544] [cursor=pointer]:
+              - /url: /docs/configuration/
+            - text: — every env var explained
+          - listitem [ref=f3e545]:
+            - link "Obsidian" [ref=f3e546] [cursor=pointer]:
+              - /url: /docs/obsidian/
+            - text: — connect your vault
+          - listitem [ref=f3e547]:
+            - link "Global MCP" [ref=f3e548] [cursor=pointer]:
+              - /url: /docs/mcp/
+            - text: — full MCP host connection guide
+          - listitem [ref=f3e549]:
+            - link "Security" [ref=f3e550] [cursor=pointer]:
+              - /url: /docs/security/
+            - text: — review safety boundaries
+      - complementary "Page feedback" [ref=f3e551]:
+        - generic [ref=f3e552]:
+          - strong [ref=f3e553]: Was this helpful?
+          - generic [ref=f3e554]: Help us improve the docs.
+        - generic [ref=f3e555]:
+          - button "This page was helpful" [ref=f3e556] [cursor=pointer]:
+            - generic [ref=f3e559]: "Yes"
+          - button "This page needs improvement" [ref=f3e560] [cursor=pointer]:
+            - generic [ref=f3e563]: "No"
+      - navigation "Previous and next pages" [ref=f3e564]:
+        - link "← Previous MCP system reference" [ref=f3e565] [cursor=pointer]:
+          - /url: /docs/mcp-system/
+          - generic [ref=f3e566]: ← Previous
+          - strong [ref=f3e567]: MCP system reference
+        - link "Next → Configuration" [ref=f3e568] [cursor=pointer]:
+          - /url: /docs/configuration/
+          - generic [ref=f3e569]: Next →
+          - strong [ref=f3e570]: Configuration
+      - generic [ref=f3e574]:
+        - text: Documentation lives in
+        - code [ref=f3e575]: apps/docs/src/pages/docs
+        - text: and can be edited as Markdown.
+  - contentinfo [ref=f3e576]:
+    - generic [ref=f3e577]: XNINETZY / MCP SYSTEM
+    - paragraph [ref=f3e578]: One FastMCP server. 343 tools. Loopback by default.
+    - navigation "Creator links" [ref=f3e579]:
+      - link "Portfolio" [ref=f3e580] [cursor=pointer]:
+        - /url: https://misbahul-muttaqin.vercel.app/
+      - link "GitHub" [ref=f3e581] [cursor=pointer]:
+        - /url: https://github.com/misbahul45

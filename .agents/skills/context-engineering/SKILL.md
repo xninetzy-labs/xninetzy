@@ -1,8 +1,8 @@
 ---
 
-name: context-engineering
+name: "context-engineering"
 
-description: Adaptive context-construction control-plane for the Xninetzy MCP harness.
+description: "Adaptive context-construction control-plane for the Xninetzy MCP harness."
 Builds the smallest sufficient context for each task from user intent, recent
 observations, tool metadata, skills, memory, repository context, historical
 episodes, and external evidence. Uses progressive disclosure, relevance and
@@ -13,12 +13,12 @@ irrelevant repository loading, and unsupported conclusions. Use on every
 non-trivial request before execution.
 
 metadata:
-author: xninetzy
-owner: misbahul45
+author: "xninetzy"
+owner: "misbahul45"
 version: "2.0.0"
-scope: harness
-priority: P0
-domain: xninetzy.harness.context
+scope: "harness"
+priority: "P0"
+domain: "xninetzy.harness.context"
 lifecycle: >
 observe -> intent -> decompose -> route -> retrieve -> rank ->
 budget -> pack -> verify -> execute -> compress -> persist-state
@@ -69,7 +69,7 @@ prerequisites:
 
 references:
 memory:
-file: ../memory-management/SKILL.md
+file: "../memory-management/SKILL.md"
 use_when:
 - semantic memory
 - episodic memory
@@ -77,7 +77,7 @@ use_when:
 - memory persistence
 
 repository:
-file: ../repo-context-packaging/SKILL.md
+file: "../repo-context-packaging/SKILL.md"
 use_when:
 - repository context
 - code retrieval
@@ -85,18 +85,17 @@ use_when:
 - symbol context
 
 execution:
-file: ../structured-project-execution/SKILL.md
+file: "../structured-project-execution/SKILL.md"
 use_when:
 - Task object
 - durable state
 - execution planning
 
 orchestration:
-file: ../multi-agent-orchestration/SKILL.md
+file: "../multi-agent-orchestration/SKILL.md"
 use_when:
 - delegated context construction
 - sub-agent context isolation
-
 ---
 
 # context-engineering

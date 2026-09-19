@@ -3,6 +3,9 @@ layout: ../../layouts/DocsLayout.astro
 title: MCP system reference
 description: "Canonical reference for the Xninetzy MCP server: transports, registry, gateway, tasks, trace, and security."
 section: Start
+badge: Reference
+difficulty: intermediate
+readingTime: 15 min
 ---
 
 The MCP server is the only public interface Xninetzy exposes. Every

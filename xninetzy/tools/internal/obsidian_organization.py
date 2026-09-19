@@ -86,7 +86,7 @@ async def obsidian_organize_apply(
         "Terapkan foldering canonical Obsidian",
         f"Memindahkan {len(moves)} note setelah backup dan validasi hash sumber.",
     )
-    delivery = "Tombol approval dikirim ke WhatsApp admin." if delivered else "Approval tersimpan; pengiriman tombol admin gagal."
+    delivery = "Tombol approval dikirim ke  admin." if delivered else "Approval tersimpan; pengiriman tombol admin gagal."
     return f"Approval foldering #{approval_id} dibuat. {delivery}"
 
 

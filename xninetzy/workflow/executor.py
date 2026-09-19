@@ -178,7 +178,7 @@ def _is_final(plan: WorkflowPlan, result: WorkflowActionResult) -> bool:
 
 
 async def run_workflow(
-    chat_id: str, user_message: str, *, context: dict | None = None, from_whatsapp: bool = True
+    chat_id: str, user_message: str, *, context: dict | None = None, from_: bool = True
 ) -> str:
     """High-level entry: build a plan, execute it, return the final reply text."""
     from xninetzy.workflow.plan import build_workflow_plan
@@ -187,7 +187,7 @@ async def run_workflow(
     plan = await build_workflow_plan(chat_id, user_message, context)
     notifier = (
         WorkflowNotifier(chat_id)
-        if (from_whatsapp and settings.WORKFLOW_NOTIFY_ENABLED)
+        if (from_ and settings.WORKFLOW_NOTIFY_ENABLED)
         else None
     )
     store = None
@@ -199,7 +199,7 @@ async def run_workflow(
 
     state = WorkflowState(
         plan_id=plan.id, chat_id=chat_id, original_user_message=user_message,
-        from_whatsapp=from_whatsapp,
+        from_=from_,
     )
     executor = WorkflowExecutor(notifier=notifier, store=store)
     result = await executor.execute(plan, state)

@@ -15,7 +15,10 @@ const pathname = normalizePath(Astro.url.pathname);
           {group.items.map((item) => (
             <li>
               <a href={item.href} aria-current={pathname === item.href ? 'page' : undefined}>
-                <span>{item.title}</span>
+                <span class="sidebar-label">
+                  <span class="sidebar-title">{item.title}</span>
+                  {item.badge && <span class:list={['sidebar-badge', item.badge]}>{item.badge}</span>}
+                </span>
                 {pathname === item.href && <i aria-hidden="true"></i>}
               </a>
             </li>
@@ -26,8 +29,35 @@ const pathname = normalizePath(Astro.url.pathname);
   </nav>
   <div class="sidebar-card">
     <span class="signal"><i></i> MCP ready</span>
-    <strong>168 tools. Satu registry.</strong>
-    <p>Access Obsidian, HEBAT, tasks, and research from coding agents.</p>
+    <strong>343 tools. Satu registry.</strong>
+    <p>MCP-only owner server: Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career.</p>
     <a href="/docs/mcp/">Connect a client →</a>
   </div>
 </aside>
+
+<style>
+  .sidebar-label { display: inline-flex; align-items: center; gap: .45rem; min-width: 0; }
+  .sidebar-title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .sidebar-badge {
+    padding: .12rem .4rem;
+    border-radius: 999px;
+    font: 500 .55rem var(--font-mono);
+    letter-spacing: .12em;
+    text-transform: uppercase;
+  }
+  .sidebar-badge.core {
+    color: var(--purple-bright);
+    background: rgba(139,92,246,.16);
+    border: 1px solid rgba(139,92,246,.32);
+  }
+  .sidebar-badge.updated {
+    color: var(--orange-bright);
+    background: rgba(249,115,22,.14);
+    border: 1px solid rgba(249,115,22,.32);
+  }
+  .sidebar-badge.new {
+    color: #34d399;
+    background: rgba(52,211,153,.14);
+    border: 1px solid rgba(52,211,153,.32);
+  }
+</style>

@@ -2,7 +2,7 @@ export type NavItem = {
   title: string;
   description: string;
   href: string;
-  eyebrow?: string;
+  badge?: 'new' | 'updated' | 'core';
 };
 
 export type NavGroup = {
@@ -14,38 +14,40 @@ export const navigation: NavGroup[] = [
   {
     title: 'Start',
     items: [
-      { title: 'Introduction', description: 'Xninetzy concepts and capabilities.', href: '/docs/introduction/' },
+      { title: 'Introduction', description: 'Xninetzy concepts and capabilities.', href: '/docs/introduction/', badge: 'core' },
+      { title: 'MCP system reference', description: 'Transports, registry, gateway, tasks, trace, security.', href: '/docs/mcp-system/', badge: 'new' },
       { title: 'Quick start', description: 'Run the stack for the first time.', href: '/docs/getting-started/' },
-      { title: 'Configuration', description: 'Environment and persistence.', href: '/docs/configuration/' },
-      { title: 'Architecture', description: 'Services, data flow, and system boundaries.', href: '/docs/architecture/' }
+      { title: 'Configuration', description: 'Environment, paths, and safety knobs.', href: '/docs/configuration/' },
+      { title: 'Architecture', description: 'Services, data flow, and system boundaries.', href: '/docs/architecture/', badge: 'core' }
     ]
   },
   {
     title: 'Integrations',
     items: [
-      { title: 'WhatsApp', description: 'Chat, groups, media, and commands.', href: '/docs/whatsapp/' },
       { title: 'Obsidian', description: 'Vault, notes, knowledge, and filesystem guards.', href: '/docs/obsidian/' },
       { title: 'HEBAT / Moodle', description: 'Courses, activities, files, and assignments.', href: '/docs/hebat/' },
+      { title: 'Cyber Campus', description: 'Portal tools, grade tokens, and KRS War.', href: '/docs/cyber-campus/' },
       { title: 'OS kernel', description: 'Capture, triage, and the attention queue.', href: '/docs/os-kernel/' },
-      { title: 'Learning roadmap', description: 'Adaptive planning and source linkage.', href: '/docs/learning-roadmaps/' }
+      { title: 'Learning roadmaps', description: 'Adaptive planning, concepts, and recall.', href: '/docs/learning-roadmaps/' }
     ]
   },
   {
     title: 'AI & developer tools',
     items: [
       { title: 'LLM providers', description: 'Flaz and other providers.', href: '/docs/providers/' },
-      { title: 'Global MCP', description: 'Codex, Claude, and OpenCode.', href: '/docs/mcp/' },
-      { title: 'Coding agents', description: 'Run coding runtimes from WhatsApp.', href: '/docs/coding-agents/' },
+      { title: 'Global MCP', description: 'Codex, Claude Code, and OpenCode.', href: '/docs/mcp/', badge: 'core' },
+      { title: 'Coding agents', description: 'Run coding runtimes from MCP clients.', href: '/docs/coding-agents/' },
       { title: 'Lightning agent', description: 'Rewards, strategy ranking, and regression.', href: '/docs/lightning/' },
-      { title: 'Shared skills', description: 'Built-in and open-source skills shared across interfaces.', href: '/docs/skills/' }
+      { title: 'Shared skills', description: 'Built-in and open-source skills across clients.', href: '/docs/skills/', badge: 'updated' }
     ]
   },
   {
     title: 'Operations',
     items: [
-      { title: 'HTTP API', description: 'AI and WhatsApp engine endpoints.', href: '/docs/api/' },
+      { title: 'HTTP API', description: 'FastAPI surface for /api/chat, reminders, debug.', href: '/docs/api/' },
+      { title: 'Action policy', description: 'Auto, approval, manual, and final gates.', href: '/docs/action-policy/' },
       { title: 'Testing', description: 'Test suites and quality gates.', href: '/docs/testing/' },
-      { title: 'Automation', description: 'Briefings, reviews, job leases, and freshness.', href: '/docs/automation/' },
+      { title: 'Automation', description: 'Briefings, reviews, leases, and freshness.', href: '/docs/automation/' },
       { title: 'Local data', description: 'Private per-installation SQLite data.', href: '/docs/local-data/' },
       { title: 'Backup & restore', description: 'Snapshots, verification, retention, and recovery.', href: '/docs/backup-restore/' },
       { title: 'Security', description: 'Hardening and threat boundaries.', href: '/docs/security/' },

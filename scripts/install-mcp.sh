@@ -157,10 +157,16 @@ if [ "$MODE" = "docker" ]; then
   docker compose up -d --build
   docker compose ps
   echo
+  echo "Running setup-mcp.sh to bootstrap .env..."
+  bash scripts/setup-mcp.sh --no-validate || true
+  echo
   echo "Xninetzy MCP running in Docker at $INSTALL_DIR"
   echo "Connect via stdio or http://127.0.0.1:8765/mcp (set XNINETZY_MCP_TRANSPORT=streamable-http)."
   exit 0
 fi
+
+echo "Running setup-mcp.sh to bootstrap .env and validate release gate..."
+bash scripts/setup-mcp.sh
 
 echo "Installing system dependencies (sqlite3, tesseract OCR, libatlas for FAISS)..."
 case "$OS" in

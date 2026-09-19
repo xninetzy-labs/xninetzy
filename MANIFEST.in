@@ -1,0 +1,34 @@
+include LICENSE
+include README.md
+include pyproject.toml
+include uv.lock
+recursive-include xninetzy *.py
+recursive-include xninetzy *.pyi
+recursive-include xninetzy py.typed
+recursive-include apps/docs/src *.md
+recursive-include apps/docs/src *.astro
+recursive-include apps/docs/src *.css
+recursive-include apps/docs/src *.ts
+recursive-include apps/docs/src/data *.ts
+recursive-include docs *.md
+recursive-include docs *.mmd
+recursive-include docs *.png
+recursive-include .agents/skills *.md
+recursive-include .agents/skills *.svg
+recursive-include .agents/skills *.png
+recursive-include scripts *.py
+recursive-include scripts *.sh
+recursive-include scripts *.ps1
+recursive-include tests *.py
+recursive-include tests *.md
+global-exclude __pycache__
+global-exclude *.pyc
+global-exclude *.pyo
+global-exclude .DS_Store
+global-exclude *.egg-info
+prune .venv
+prune dist
+prune build
+prune node_modules
+prune apps/docs/dist
+prune apps/docs/.astro

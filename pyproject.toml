@@ -1,8 +1,38 @@
+[build-system]
+requires = ["hatchling>=1.26"]
+build-backend = "hatchling.build"
+
 [project]
 name = "xninetzy-mcp"
-version = "2.2.0"
-description = "Xninetzy MCP server — Model Context Protocol AI service (MCP-only pivot)"
+version = "1.0.0"
+description = "Xninetzy MCP server — local-first, MCP-only Personal Intelligence and Learning system."
+readme = "README.md"
 requires-python = ">=3.11"
+license = "LicenseRef-Xninetzy-Source-Available-2.2.0"
+license-files = ["LICENSE"]
+keywords = ["mcp", "model-context-protocol", "fastmcp", "obsidian", "hebat", "academic", "knowledge", "local-first"]
+authors = [
+    { name = "Misbahul Muttaqin", email = "misbahul45@users.noreply.github.com" },
+]
+maintainers = [
+    { name = "Xninetzy Labs" },
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Environment :: Console",
+    "Intended Audience :: End Users/Desktop",
+    "License :: Other/Proprietary License",
+    "Operating System :: POSIX :: Linux",
+    "Operating System :: MacOS",
+    "Operating System :: Microsoft :: Windows",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Private :: Do Not Upload",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "fastapi",
     "uvicorn[standard]",
@@ -35,9 +65,47 @@ dependencies = [
     "opencv-python-headless>=5.0.0.93",
 ]
 
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
+    "ruff>=0.9",
+]
+neo4j = [
+    "neo4j>=5.26",
+]
+torch-cpu = []
+
+[project.urls]
+Homepage = "https://github.com/xninetzy-labs/xninetzy"
+Repository = "https://github.com/xninetzy-labs/xninetzy"
+Issues = "https://github.com/xninetzy-labs/xninetzy/issues"
+Documentation = "https://xninetzy.vercel.app/docs/"
+"MCP Reference" = "https://xninetzy.vercel.app/docs/mcp-system/"
+
 [project.scripts]
-xninetzy-cli = "xninetzy.cli.orchestrator:main"
 xninetzy = "xninetzy.cli.supervisor:main"
+xninetzy-cli = "xninetzy.cli.orchestrator:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["xninetzy"]
+include = [
+    "xninetzy/**/*.py",
+    "xninetzy/py.typed",
+]
+
+[tool.hatch.build.targets.sdist]
+include = [
+    "xninetzy",
+    "README.md",
+    "LICENSE",
+    "scripts",
+    "tests",
+    "docs",
+]
+
+[tool.uv]
+package = true
 
 [dependency-groups]
 dev = [
@@ -46,20 +114,6 @@ dev = [
     "ruff>=0.9",
 ]
 
-[build-system]
-requires = ["hatchling"]
-build-backend = "hatchling.build"
-
-[tool.hatch.build.targets.wheel]
-packages = ["xninetzy"]
-
-[tool.uv]
-package = true
-
-# CPU-only PyTorch. Pinning torch to the official CPU wheel index keeps the
-# resolver off the default PyPI torch build, which on linux drags in the entire
-# CUDA stack (triton + nvidia-* ≈ several GB). sentence-transformers inherits
-# this CPU torch instead of resolving its own CUDA one.
 [tool.uv.sources]
 torch = { index = "pytorch-cpu" }
 
@@ -75,3 +129,8 @@ addopts = "-ra"
 markers = [
     "integration: heavier tests that may download models or hit the network",
 ]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = [".venv", "build", "dist", "apps/docs/dist", "apps/docs/.astro"]

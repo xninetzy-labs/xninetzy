@@ -1,6 +1,16 @@
 from __future__ import annotations
 
-"""Install every skill in `.agents/skills/` into supported agent harnesses.
+import argparse
+import os
+import shutil
+import sys
+from datetime import UTC, datetime
+from pathlib import Path
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SKILL_SOURCE_ROOT = REPO_ROOT / ".agents" / "skills"
+
+__doc__ = """Install every skill in `.agents/skills/` into supported agent harnesses.
 
 Targets (env-driven via XNINETZY_SKILL_INSTALL_TARGETS, default: opencode,claude,codex):
 
@@ -22,16 +32,6 @@ replaces them with symlinks to the built-in source. This guarantees that
 the owner-mode Xninetzy experience in opencode / claude / codex always
 loads the current Xninetzy skill set rather than a stale mirror.
 """
-
-import argparse
-import os
-import shutil
-import sys
-from datetime import UTC, datetime
-from pathlib import Path
-
-REPO_ROOT = Path(__file__).resolve().parents[1]
-SKILL_SOURCE_ROOT = REPO_ROOT / ".agents" / "skills"
 
 DEFAULT_TARGETS: tuple[str, ...] = ("opencode", "claude", "codex")
 

@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import ast
 import pathlib
-import re
 import sys
 from typing import Iterable
 

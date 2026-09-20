@@ -211,6 +211,19 @@ def get_episode(episode_id: str, owner_scope: str) -> dict | None:
     return dict(row) if row else None
 
 
+def list_episode_actions(episode_id: str, owner_scope: str) -> list[dict]:
+    _ensure()
+    with connect() as conn:
+        rows = conn.execute(
+            "SELECT a.* FROM agent_episode_actions a "
+            "JOIN agent_episodes e ON e.episode_id = a.episode_id "
+            "WHERE a.episode_id=? AND e.owner_scope=? "
+            "ORDER BY a.ordinal ASC, a.action_id ASC",
+            (episode_id, _owner(owner_scope)),
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def record_action(
     *,
     episode_id: str,
@@ -714,3 +727,54 @@ def list_recent_errors(*, owner_scope: str, limit: int = 20) -> list[dict]:
             (_owner(owner_scope), max(1, min(limit, 100))),
         ).fetchall()
     return [dict(row) for row in rows]
+
+
+def tool_latency_aggregation(
+    owner_scope: str,
+    window_days: int = 7,
+    top_n: int = 25,
+) -> list[dict]:
+    """Hitung p50 + p95 latency per tool dari agent_episode_actions (windowed)."""
+    _ensure()
+    owner = _owner(owner_scope)
+    since = (datetime.now(UTC) - timedelta(days=max(1, window_days))).isoformat()
+    bound = max(1, min(top_n, 200))
+    with connect() as conn:
+        rows = conn.execute(
+            """
+            SELECT a.action_name, a.latency_ms
+            FROM agent_episode_actions a
+            JOIN agent_episodes e ON e.episode_id = a.episode_id
+            WHERE e.owner_scope = ?
+              AND e.started_at >= ?
+              AND a.action_type = 'mcp_tool'
+              AND a.latency_ms IS NOT NULL
+              AND a.latency_ms > 0
+            """,
+            (owner, since),
+        ).fetchall()
+    by_tool: dict[str, list[float]] = {}
+    for row in rows:
+        name = row["action_name"]
+        ms = float(row["latency_ms"])
+        by_tool.setdefault(name, []).append(ms)
+    out: list[dict] = []
+    for name, samples in by_tool.items():
+        samples.sort()
+        n = len(samples)
+        if n == 0:
+            continue
+        p50 = samples[min(n - 1, int(0.50 * (n - 1)))]
+        p95 = samples[min(n - 1, int(0.95 * (n - 1)))]
+        out.append(
+            {
+                "tool": name,
+                "sample_count": n,
+                "latency_avg_ms": round(sum(samples) / n, 3),
+                "latency_p50_ms": round(p50, 3),
+                "latency_p95_ms": round(p95, 3),
+                "latency_max_ms": round(samples[-1], 3),
+            }
+        )
+    out.sort(key=lambda item: item["latency_p95_ms"], reverse=True)
+    return out[:bound]

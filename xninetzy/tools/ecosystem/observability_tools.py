@@ -260,3 +260,12 @@ def observability_recent_checkpoints(
         items,
         limit=bounded_limit,
     )
+
+
+@tool
+def observability_perf_snapshot() -> str:
+    """Snapshot latency p50/p95/avg per tool dari measure() context manager."""
+    import json
+    from xninetzy.observability.perf import snapshot as _snapshot
+
+    return json.dumps(_snapshot(), ensure_ascii=False, sort_keys=True)

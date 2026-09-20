@@ -66,7 +66,7 @@ def resolve_invocation_route(
     requested_min_tier = (
         request.min_trust_tier if request.min_trust_tier is not None else policy_min_tier
     )
-    effective_min_tier = min(policy_min_tier, requested_min_tier)
+    effective_min_tier = max(policy_min_tier, requested_min_tier)
     decision = resolve_route(
         request_id=request.request_id,
         intent=request.intent,

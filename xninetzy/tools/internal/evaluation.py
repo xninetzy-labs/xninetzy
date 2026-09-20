@@ -443,6 +443,89 @@ def evaluation_self_audit() -> dict:
 
 
 @tool
+def xninetzy_self_test() -> str:
+    """Jalankan paket diagnostik: self-audit + skill healthcheck + manifest ringkasan.
+
+    Cocok untuk smoke-test cepat tanpa menjalankan pytest penuh.
+    """
+    snapshot = build_self_audit()
+    from xninetzy.skills.tools import skill_healthcheck
+    from xninetzy.tools.manifest import manifest_for
+    from xninetzy.tools.registry import get_tool_names
+
+    try:
+        skill_report = skill_healthcheck.invoke({})
+        skill_summary = {
+            "valid": 0,
+            "invalid": 0,
+            "warnings": 0,
+            "raw_excerpt": skill_report.splitlines()[0] if skill_report else "",
+        }
+        for line in skill_report.splitlines() if skill_report else []:
+            low = line.lower().lstrip("❌✅ ")
+            if low.startswith("invalid"):
+                try:
+                    skill_summary["invalid"] = int(line.rsplit(":", 1)[1].strip())
+                except ValueError:
+                    pass
+            elif low.startswith("valid"):
+                try:
+                    skill_summary["valid"] = int(line.rsplit(":", 1)[1].strip())
+                except ValueError:
+                    pass
+            elif low.startswith("warning"):
+                try:
+                    skill_summary["warnings"] = int(line.rsplit(":", 1)[1].strip())
+                except ValueError:
+                    pass
+    except Exception as exc:
+        skill_summary = {"error": type(exc).__name__, "message": str(exc)[:200]}
+
+    feature_pack_counts: dict[str, int] = {}
+    risk_counts: dict[str, int] = {}
+    for name in get_tool_names():
+        try:
+            manifest = manifest_for(name)
+            feature_pack_counts[manifest.feature_pack.value] = (
+                feature_pack_counts.get(manifest.feature_pack.value, 0) + 1
+            )
+            risk_counts[manifest.risk.value] = risk_counts.get(manifest.risk.value, 0) + 1
+        except Exception:
+            pass
+
+    payload = {
+        "status": "ok",
+        "tools_total": snapshot.total_tools,
+        "groups_total": snapshot.total_groups,
+        "evaluation_modules_exposed": [
+            kind for kind, exposed in zip(
+                ["audit", "benchmark", "context_eval", "hallucination", "memory_eval",
+                 "outcome", "root_cause", "routing_eval", "scoring", "security_eval",
+                 "self_audit", "signal_gen", "skill_eval", "tool_eval",
+                 "catalog_audit", "integration"],
+                [
+                    "audit", "benchmark", "context_eval", "hallucination", "memory_eval",
+                    "outcome", "root_cause", "routing_eval", "scoring", "security_eval",
+                    "self_audit", "signal_gen", "skill_eval", "tool_eval",
+                    "catalog_audit", "integration",
+                ],
+            ) if kind in snapshot.evaluation_layers
+        ],
+        "feature_pack": feature_pack_counts,
+        "risk": risk_counts,
+        "skill_health": skill_summary,
+        "learning_engines_exposed": [
+            engine for engine in snapshot.learning_engines
+            if engine in ("benchmark_engine", "evolution_engine", "experiment_engine",
+                          "pattern_engine", "statistics")
+        ],
+    }
+    import json
+
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True)
+
+
+@tool
 def evaluation_run_pipeline_cycle(
     requests_json: str,
     security_indicators: list[str] | None = None,
@@ -609,4 +692,75 @@ __all__ = [
     "evaluation_self_audit",
     "evaluation_skill",
     "evaluation_tool",
+    "xninetzy_self_test",
+]
+
+
+@tool
+def xninetzy_health_snapshot() -> str:
+    """Snapshot ringkas: provider cache + memory + retention count + perf sample."""
+    import json
+    from xninetzy.context.gateway.provider_cache import cache_stats
+    from xninetzy.observability.perf import snapshot as perf_snapshot
+    from xninetzy.os.memory._context_cache import stats as context_stats
+    from xninetzy.os.tool_retry_budget import stats as retry_stats
+
+    from xninetzy.core.config import get_settings
+    from xninetzy.db.sqlite import connect
+
+    settings = get_settings()
+    with connect() as conn:
+        memory_total = conn.execute(
+            "SELECT COUNT(*) c FROM memories WHERE is_active=1"
+        ).fetchone()["c"]
+        improvement_total = conn.execute(
+            "SELECT COUNT(*) c FROM improvement_proposals WHERE status='pending'"
+        ).fetchone()["c"]
+        episode_total = conn.execute(
+            "SELECT COUNT(*) c FROM agent_episodes"
+        ).fetchone()["c"]
+
+    payload = {
+        "provider_cache": cache_stats(),
+        "memory_context_cache": context_stats(),
+        "retry_budget": retry_stats(),
+        "perf_snapshot": perf_snapshot(),
+        "settings": {
+            "memory_retention_days": settings.MEMORY_RETENTION_DAYS,
+            "memory_per_user_cap": settings.MEMORY_PER_USER_CAP,
+            "improvement_retention_days": settings.IMPROVEMENT_RETENTION_DAYS,
+            "external_mcp_trust_max_age_days": settings.EXTERNAL_MCP_TRUST_MAX_AGE_DAYS,
+            "tool_retry_budget_per_hour": settings.TOOL_RETRY_BUDGET_PER_HOUR,
+            "lightning_read_sample_rate": settings.LIGHTNING_READ_SAMPLE_RATE,
+        },
+        "row_counts": {
+            "memories_active": memory_total,
+            "improvement_proposals_pending": improvement_total,
+            "agent_episodes": episode_total,
+        },
+    }
+    return json.dumps(payload, ensure_ascii=False, sort_keys=True, default=str)
+
+
+__all__ = [
+    "evaluation_outcome",
+    "evaluation_context",
+    "evaluation_memory",
+    "evaluation_routing",
+    "evaluation_skill",
+    "evaluation_tool",
+    "evaluation_security",
+    "evaluation_hallucination",
+    "evaluation_root_cause",
+    "evaluation_score",
+    "evaluation_run_benchmark",
+    "evaluation_compare_benchmark",
+    "evaluation_extract_signals",
+    "evaluation_audit_trail",
+    "evaluation_self_audit",
+    "evaluation_run_pipeline_cycle",
+    "evaluation_audit_tool_catalog",
+    "evaluation_audit_skill_catalog",
+    "xninetzy_self_test",
+    "xninetzy_health_snapshot",
 ]

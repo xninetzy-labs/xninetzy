@@ -350,6 +350,7 @@ class Settings(BaseSettings):
     LIGHTNING_EVALUATION_WINDOW_DAYS: int = 7
     LIGHTNING_RETENTION_DAYS: int = 90
     LIGHTNING_MAX_EVENT_CHARS: int = 4000
+    LIGHTNING_READ_SAMPLE_RATE: float = 0.10
 
     AUTO_MEMORY_ENABLED: bool = True
     AUTO_MEMORY_SAMPLE_RATE: float = 0.10
@@ -358,6 +359,15 @@ class Settings(BaseSettings):
     AUTO_GRAPH_WRITE_ONLY: bool = True
     AUTO_IMPROVE_ENABLED: bool = True
     AUTO_IMPROVE_ERROR_ONLY: bool = True
+
+    MEMORY_RETENTION_DAYS: int = 90
+    MEMORY_PER_USER_CAP: int = 5000
+    MEMORY_RETENTION_IMPORTANCE_FLOOR: float = 0.8
+    IMPROVEMENT_RETENTION_DAYS: int = 90
+
+    EXTERNAL_MCP_TRUST_MAX_AGE_DAYS: int = 30
+
+    TOOL_RETRY_BUDGET_PER_HOUR: int = 5
 
     def hebat_reminder_hours(self) -> list[int]:
         return [

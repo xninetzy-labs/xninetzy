@@ -157,3 +157,44 @@ def skill_install(
         f"✅ Skill `{skill.name}` {labels[action]}.{warning_text} "
         "Skill langsung tersedia untuk LangGraph dan MCP melalui skill_list/skill_get."
     )
+
+
+@tool
+def skill_repair_now(target: str = "", dry_run: bool = True) -> str:
+    """Jalankan repair frontmatter YAML untuk satu skill (target kosong = semua).
+
+    Hasil ditulis ke `data/repaired_skills/<name>/SKILL.md` agar tidak konflik
+    dengan auto-linter yang menimpa file di `.agents/skills/` saat sesi Claude.
+    Bandingkan file asal dan repaired secara manual lalu replace bila sesuai.
+    """
+    import subprocess
+    from pathlib import Path
+
+    repo_root = Path(__file__).resolve().parents[2]
+    script = repo_root / "scripts" / "repair_skill_yaml.py"
+    if not script.is_file():
+        return f"❌ Script tidak ditemukan: {script}"
+    args = ["python", str(script)]
+    if dry_run:
+        args.append("--dry-run")
+    if target:
+        args.extend(["--target", target])
+    try:
+        completed = subprocess.run(
+            args,
+            cwd=str(repo_root),
+            capture_output=True,
+            text=True,
+            check=False,
+            timeout=60,
+        )
+    except subprocess.TimeoutExpired:
+        return "❌ Repair timeout setelah 60 detik."
+    head = completed.stdout.splitlines()[-3:] if completed.stdout else []
+    tail = completed.stderr.splitlines()[-3:] if completed.stderr else []
+    summary = (
+        f"returncode={completed.returncode}\n"
+        f"stdout_tail: {' | '.join(head) or '(empty)'}\n"
+        f"stderr_tail: {' | '.join(tail) or '(empty)'}"
+    )
+    return f"🧹 Repair {'dry-run' if dry_run else 'in-place'} selesai.\n{summary}"

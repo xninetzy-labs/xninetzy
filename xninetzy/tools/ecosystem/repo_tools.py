@@ -783,3 +783,81 @@ def repo_risk(
         ],
     }
     return json.dumps(payload, ensure_ascii=False)
+
+
+@tool
+def repo_file_outline(
+    path: str,
+    root: str = "self",
+    max_symbols: int = 40,
+    chat_id: str = "system",
+    sender_id: str = "",
+) -> str:
+    """Ringkasan satu file: top-level symbols + 5 baris pertama (untuk context agent).
+
+    Args:
+        path: Path relatif terhadap root.
+        root: Path atau alias repo (default self).
+        max_symbols: Maks jumlah symbol yang dikembalikan (cap 100).
+        chat_id: Chat ID (dari context).
+        sender_id: Owner principal (dari context).
+    """
+    base = _resolve_root(root)
+    bounded = max(1, min(max_symbols, 100))
+    target = (base / path).resolve() if not Path(path).is_absolute() else Path(path).resolve()
+    if not target.exists() or not target.is_file():
+        return json.dumps(
+            {"path": path, "found": False, "reason": "missing"},
+            ensure_ascii=False,
+        )
+    if base not in target.parents and target != base:
+        return json.dumps(
+            {"path": path, "found": False, "reason": "outside_root"},
+            ensure_ascii=False,
+        )
+    text = _safe_read(target, _DEFAULT_LIMITS["repo_search"]["max_file_bytes"])
+    rel = _rel(base, target)
+    symbols: list[dict] = []
+    if target.suffix == ".py":
+        try:
+            tree = ast.parse(text, filename=str(target))
+        except SyntaxError as exc:
+            tree = None
+            parse_error = str(exc)
+        else:
+            parse_error = None
+        if tree is not None:
+            for node in tree.body:
+                if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef)):
+                    continue
+                symbols.append(
+                    {
+                        "name": node.name,
+                        "kind": (
+                            "class"
+                            if isinstance(node, ast.ClassDef)
+                            else "async_function"
+                            if isinstance(node, ast.AsyncFunctionDef)
+                            else "function"
+                        ),
+                        "line": node.lineno,
+                        "signature": _render_signature(node),
+                        "doc_summary": ((ast.get_docstring(node) or "").splitlines() or [""])[0][:160],
+                    }
+                )
+                if len(symbols) >= bounded:
+                    break
+    else:
+        parse_error = None
+    preview_lines = text.splitlines()[:5]
+    payload = {
+        "path": rel,
+        "found": True,
+        "size_bytes": target.stat().st_size,
+        "language": "python" if target.suffix == ".py" else target.suffix.lstrip(".") or "text",
+        "symbol_count": len(symbols),
+        "symbols": symbols,
+        "preview": preview_lines,
+        "parse_error": (locals().get("parse_error") if locals().get("parse_error") else None),
+    }
+    return json.dumps(payload, ensure_ascii=False)

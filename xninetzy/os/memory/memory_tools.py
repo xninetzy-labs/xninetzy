@@ -66,7 +66,16 @@ def memory_forget(memory_id: int, sender_id: str = "", chat_id: str = "") -> str
 @tool
 def memory_get_context(query: str, sender_id: str = "", chat_id: str = "") -> str:
     """Ambil memory relevan sebagai konteks (dipakai agent sebelum menjawab)."""
-    rows = search_memories(_uid(sender_id, chat_id), query, limit=5)
+    from xninetzy.os.memory._context_cache import get_cached, put_cached
+
+    owner = _uid(sender_id, chat_id)
+    cached = get_cached(query, owner)
+    if cached is not None:
+        return cached
+    rows = search_memories(owner, query, limit=5)
     if not rows:
-        return "Tidak ada memory relevan."
-    return "\n".join(f"• [{m['memory_type']}] {m['content']}" for m in rows)
+        payload = "Tidak ada memory relevan."
+    else:
+        payload = "\n".join(f"• [{m['memory_type']}] {m['content']}" for m in rows)
+    put_cached(query, owner, payload)
+    return payload

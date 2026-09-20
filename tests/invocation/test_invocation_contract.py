@@ -241,3 +241,36 @@ def test_resolve_invocation_route_includes_unverified_for_policy_gate(
 
 def test_invocation_forbidden_kinds_default_empty():
     assert isinstance(INVOCATION_FORBIDDEN_KINDS, frozenset)
+
+
+def test_resolve_invocation_route_picks_strictest_of_policy_and_request(
+    tmp_path, monkeypatch
+):
+    db = tmp_path / "inv.db"
+    monkeypatch.setenv("SQLITE_PATH", str(db))
+    from xninetzy.core import config as cfg
+    from xninetzy.db.migrations import run_migrations
+    from xninetzy.context.capability_graph.graph import seed_from_registry
+
+    cfg.get_settings.cache_clear()
+    run_migrations()
+    seed_from_registry()
+    upsert_provider(
+        provider_id="known-ext",
+        transport=TRANSPORT_STDIO,
+        endpoint="cmd",
+        trust_tier=TRUST_TIER_KNOWN_EXTERNAL,
+        risk_class="low",
+        capabilities=("do_thing",),
+    )
+    req = _make_request(
+        capability="do_thing",
+        side_effect=SIDE_EFFECT_READ_ONLY,
+        min_trust_tier=TRUST_TIER_UNVERIFIED,
+    )
+    route = resolve_invocation_route(req, include_local_self=False)
+    assert route.min_trust_tier == TRUST_TIER_UNVERIFIED
+    assert route.decision.chosen is None
+    assert not any(
+        cand.provider_id == "known-ext" for cand in route.decision.candidates
+    )

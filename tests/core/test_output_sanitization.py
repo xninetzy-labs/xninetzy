@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from xninetzy.core.security import redact_jids_in_text, sanitize_tool_output
+from xninetzy.core.security import (
+    redact_jids_in_text,
+    sanitize_tool_output,
+    strip_trusted_context,
+)
 
 
 def test_masks_user_jid_keeping_domain():
@@ -63,3 +67,33 @@ def test_sanitize_passthrough_non_string_scalars():
     assert sanitize_tool_output(5) == 5
     assert sanitize_tool_output(None) is None
     assert sanitize_tool_output(3.14) == 3.14
+
+
+def test_strip_trusted_context_removes_identity_keys():
+    payload = {
+        "ok": True,
+        "chat_id": "private-owner-1",
+        "sender_id": "owner-1",
+        "sender_name": "Local owner",
+        "data": {"chat_type": "private", "value": 42},
+    }
+    cleaned = strip_trusted_context(payload)
+    assert "chat_id" not in cleaned
+    assert "sender_id" not in cleaned
+    assert "sender_name" not in cleaned
+    assert cleaned["ok"] is True
+    assert cleaned["data"]["value"] == 42
+    assert "chat_type" not in cleaned["data"]
+
+
+def test_strip_trusted_context_preserves_non_identity_keys():
+    payload = {"chat_id": "x", "tool": "demo", "result": [1, 2, 3]}
+    cleaned = strip_trusted_context(payload)
+    assert cleaned == {"tool": "demo", "result": [1, 2, 3]}
+
+
+def test_strip_trusted_context_handles_lists_and_nesting():
+    payload = [{"chat_id": "a", "k": "v"}, {"sender_id": "b", "nested": {"chat_type": "p"}}]
+    cleaned = strip_trusted_context(payload)
+    assert cleaned[0] == {"k": "v"}
+    assert cleaned[1] == {"nested": {}}

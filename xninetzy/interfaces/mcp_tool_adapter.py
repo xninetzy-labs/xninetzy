@@ -11,7 +11,8 @@ from mcp.server.fastmcp import FastMCP
 from pydantic_core import PydanticUndefined
 
 from xninetzy.core.config import Settings, get_settings
-from xninetzy.core.security import sanitize_tool_output
+from xninetzy.core.security import sanitize_tool_output, strip_trusted_context
+from xninetzy.observability.perf import measure
 
 
 TRUSTED_CONTEXT_FIELDS = frozenset(
@@ -60,7 +61,7 @@ def _auto_memory_record(tool_name: str, arguments: dict[str, Any], result: Any, 
         return
     if settings.AUTO_MEMORY_SAMPLE_RATE <= 0:
         return
-    if tool_name.startswith(("memory_", "lightning_", "improvement_", "graph_", "observability_")):
+    if tool_name.startswith(("memory_", "lightning_", "improvement_", "graph_", "observability_", "harness_", "repo_", "web_analysis_")):
         return
     try:
         import random
@@ -77,8 +78,18 @@ def _auto_memory_record(tool_name: str, arguments: dict[str, Any], result: Any, 
         from xninetzy.os.memory.memory_store import add_memory
 
         add_memory(user_id=owner, content=content, source="mcp_auto")
-    except Exception:
-        pass
+    except Exception as exc:
+        try:
+            from xninetzy.observability.trace import emit
+
+            emit(
+                "mcp_auto_memory_record_error",
+                tool_name=tool_name,
+                error_type=type(exc).__name__,
+                error=str(exc)[:200],
+            )
+        except Exception:
+            pass
 
 
 def _auto_graph_record(
@@ -136,8 +147,18 @@ def _auto_graph_record(
                 add_edge(artifact_id, rel_id, "mentions_topic")
             except Exception:
                 continue
-    except Exception:
-        pass
+    except Exception as exc:
+        try:
+            from xninetzy.observability.trace import emit
+
+            emit(
+                "mcp_auto_graph_record_error",
+                tool_name=tool_name,
+                error_type=type(exc).__name__,
+                error=str(exc)[:200],
+            )
+        except Exception:
+            pass
 
 
 def _auto_improve_record(
@@ -170,8 +191,18 @@ def _auto_improve_record(
             chat_id=owner,
             sender_id=owner,
         )
-    except Exception:
-        pass
+    except Exception as impro_exc:
+        try:
+            from xninetzy.observability.trace import emit
+
+            emit(
+                "mcp_auto_improve_record_error",
+                tool_name=tool_name,
+                error_type=type(impro_exc).__name__,
+                error=str(impro_exc)[:200],
+            )
+        except Exception:
+            pass
 
 
 _DOMAIN_NODE_TYPE: dict[str, str] = {
@@ -238,12 +269,21 @@ def langchain_tool_as_mcp_callable(
         risk_class = "write"
         try:
             settings = get_settings()
-            if settings.LIGHTNING_ENABLED and not tool.name.startswith("lightning_episode_"):
+            record_episode = settings.LIGHTNING_ENABLED and not tool.name.startswith("lightning_")
+            if record_episode:
                 from xninetzy.os.lightning.rl import start_episode
                 from xninetzy.tools.manifest import manifest_for
 
                 manifest = manifest_for(tool.name)
                 risk_class = manifest.risk.value
+                if risk_class == "read":
+                    rate = settings.LIGHTNING_READ_SAMPLE_RATE
+                    if rate <= 0:
+                        record_episode = False
+                    elif rate < 1.0:
+                        import random
+                        record_episode = random.random() < rate
+            if record_episode:
                 episode = start_episode(
                     owner_scope=trusted_context["sender_id"],
                     interface="mcp",
@@ -252,7 +292,7 @@ def langchain_tool_as_mcp_callable(
                     context={
                         "domain": "mcp",
                         "intent": tool.name,
-                        "risk_class": manifest.risk.value,
+                        "risk_class": risk_class,
                     },
                     strategy_id=f"mcp:{tool.name}",
                     idempotency_key=(
@@ -262,8 +302,10 @@ def langchain_tool_as_mcp_callable(
                     ),
                 )
                 episode_id = episode["episode_id"]
-            result = await tool.ainvoke(arguments)
+            with measure(f"mcp_tool:{tool.name}"):
+                result = await tool.ainvoke(arguments)
             result = sanitize_tool_output(result)
+            result = strip_trusted_context(result)
             if episode_id:
                 from xninetzy.os.lightning.rl import record_action, record_outcome
 

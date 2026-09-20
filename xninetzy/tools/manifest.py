@@ -29,6 +29,7 @@ class ToolManifest:
     feature_pack: FeaturePack
     risk: RiskClass
     stability: ToolStability
+    version: str
     requires_approval: bool
     requires_idempotency: bool
     requires_evidence: bool
@@ -38,7 +39,7 @@ class ToolManifest:
 
 
 def _feature_pack(name: str) -> FeaturePack:
-    if name.startswith(("hebat_", "portal_", "qa_")):
+    if name.startswith(("hebat_", "portal_", "qa_", "uacc_")):
         return FeaturePack.ACADEMIC_UNAIR
     if name.startswith(("web_", "youtube_", "research_", "deep_research", "pixelrag_")):
         return FeaturePack.RESEARCH
@@ -58,6 +59,7 @@ def manifest_for(name: str) -> ToolManifest:
         feature_pack=_feature_pack(name),
         risk=risk,
         stability=ToolStability.STABLE,
+        version="1.0.0",
         requires_approval=risk is RiskClass.FINAL,
         requires_idempotency=risk in (RiskClass.WRITE, RiskClass.FINAL),
         requires_evidence=_requires_evidence(name),

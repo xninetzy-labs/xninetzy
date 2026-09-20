@@ -2,12 +2,12 @@
 
 > Local-first, MCP-only Personal Intelligence and Learning system. One
 > FastMCP server, stdio primary, Streamable HTTP loopback by default.
-> 343 tools under one canonical registry.
+> 410 tools under one canonical registry.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![MCP](https://img.shields.io/badge/MCP-stdio%20%2B%20Streamable%20HTTP-6C47FF)
 ![SDK](https://img.shields.io/badge/mcp-1.28.1%20(v1.x)-1C3C3C)
-![Tools](https://img.shields.io/badge/tools-343-009688)
+![Tools](https://img.shields.io/badge/tools-410-009688)
 ![CPU](https://img.shields.io/badge/CPU--only-2496ED)
 ![License](https://img.shields.io/badge/license-Xninetzy--SAL%20v2.2.0-6C47FF)
 
@@ -27,7 +27,7 @@ host (Claude / Claude Code / Cursor / Codex / OpenCode)
   ▼
 xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
   │
-  ├── xninetzy.tools.registry.get_all_tools()   (343 tools)
+  ├── xninetzy.tools.registry.get_all_tools()   (410 tools)
   │     └── xninetzy.tools.manifest.manifest_for(name)
   │           ├── feature_pack: core | academic-unair | research | coding
   │           ├── risk:         read | draft | write | final
@@ -59,7 +59,7 @@ xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
 | Area | Capabilities |
 |---|---|
 | MCP server | FastMCP("xninetzy", stateless_http, json_response) over stdio + Streamable HTTP on loopback |
-| Tool registry | 343 tools classified by risk (read/draft/write/final), feature pack (core/academic-unair/research/coding), idempotency, stability |
+| Tool registry | 410 tools classified by risk (read/draft/write/final), feature pack (core/academic-unair/research/coding), idempotency, stability |
 | Obsidian | list, search, read, create, append, frontmatter, tags, headings, backlinks, todos, MOC, daily note, vault init / organize / verify |
 | HEBAT / Moodle | login (Playwright Chromium), course sync, activity sync, material download, PDF read, assignment digest, submission with HITL approval |
 | Cyber Campus | profile, academic status, schedule, grades, KRS capabilities, KRS War arm/disarm/execute (FINAL), grade-token submission |
@@ -259,7 +259,7 @@ the canonical tool registry and authorization model.
 │   │   ├── tasks_extension.py           # SEP-2663
 │   │   └── api/                         # FastAPI HTTP bridge (secondary)
 │   ├── tools/
-│   │   ├── registry.py                  # get_all_tools() — 343 tools
+│   │   ├── registry.py                  # get_all_tools() — 410 tools
 │   │   ├── manifest.py                  # risk + feature_pack + idempotency
 │   │   └── release_check.py             # 6 release-gate checks
 │   ├── os/
@@ -304,7 +304,7 @@ uv run python -m xninetzy.cli.supervisor release-check
 Expected output:
 
 ```text
-  [PASS   ] tool_registry            343 tools classified
+  [PASS   ] tool_registry            410 tools classified
   [PASS   ] secret_redaction         3/3 sample secrets redacted
   [PASS   ] safe_fetch               3/3 SSRF guard scenarios blocked
   [PASS   ] transport_config         transport=stdio host=127.0.0.1

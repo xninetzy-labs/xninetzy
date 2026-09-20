@@ -193,6 +193,21 @@ async def run_os_job_tick(
                 jobs.mark_succeeded(claimed["id"], result, current)
                 stats["succeeded"] += 1
                 continue
+            if spec.job_type == "retention_prune":
+                from xninetzy.os.retention import (
+                    prune_improvement_signals,
+                    prune_memories,
+                )
+
+                memory_summary = prune_memories()
+                improvement_summary = prune_improvement_signals()
+                jobs.mark_succeeded(
+                    claimed["id"],
+                    f"memory={memory_summary}; improvement={improvement_summary}",
+                    current,
+                )
+                stats["succeeded"] += 1
+                continue
             message = build_scheduled_message(spec.job_type, target, current, spec.key)
             if not jobs.start_delivery(claimed["id"], message, current):
                 stats["skipped"] += 1

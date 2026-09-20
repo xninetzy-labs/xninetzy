@@ -66,3 +66,24 @@ def sanitize_tool_output(value: Any) -> Any:
     if isinstance(value, tuple):
         return tuple(sanitize_tool_output(item) for item in value)
     return value
+
+
+TRUSTED_CONTEXT_DROPPED_KEYS = frozenset(
+    {"chat_id", "sender_id", "sender_name", "chat_type", "group_name"}
+)
+
+
+def strip_trusted_context(value: Any) -> Any:
+    """Drop trusted-context keys from dict outputs that would leak server identity."""
+    if isinstance(value, dict):
+        cleaned = {
+            key: strip_trusted_context(item)
+            for key, item in value.items()
+            if key not in TRUSTED_CONTEXT_DROPPED_KEYS
+        }
+        return cleaned
+    if isinstance(value, list):
+        return [strip_trusted_context(item) for item in value]
+    if isinstance(value, tuple):
+        return tuple(strip_trusted_context(item) for item in value)
+    return value

@@ -6,6 +6,8 @@ from langchain_core.tools import tool
 
 from xninetzy.os.lightning.rl import (
     finish_episode,
+    get_episode,
+    list_episode_actions,
     list_recent_errors,
     record_action,
     record_outcome,
@@ -13,6 +15,7 @@ from xninetzy.os.lightning.rl import (
     start_episode,
     strategy_rank,
     regression_check,
+    tool_latency_aggregation,
 )
 from xninetzy.os.lightning.learning_feed import (
     enrich_strategy_rank,
@@ -390,5 +393,43 @@ def lightning_healthcheck(
             "approval_flow": "owner-only",
             "auto_apply": False,
         },
+        ensure_ascii=False,
+    )
+
+
+@tool
+def lightning_episode_get(
+    episode_id: str,
+    include_actions: bool = False,
+    sender_id: str = "",
+    chat_id: str = "",
+) -> str:
+    """Ambil satu episode berdasarkan ID; opsional sertakan daftar action."""
+    owner = _uid(sender_id, chat_id)
+    episode = get_episode(episode_id, owner_scope=owner)
+    if episode is None:
+        return json.dumps({"episode_id": episode_id, "found": False}, ensure_ascii=False)
+    payload: dict = {"found": True, "episode": episode}
+    if include_actions:
+        payload["actions"] = list_episode_actions(episode_id, owner_scope=owner)
+    return json.dumps(payload, ensure_ascii=False)
+
+
+@tool
+def lightning_tool_latency(
+    window_days: int = 7,
+    top_n: int = 25,
+    sender_id: str = "",
+    chat_id: str = "",
+) -> str:
+    """Agregasi latency p50/p95 per tool dari agent_episode_actions (owner-scoped)."""
+    owner = _uid(sender_id, chat_id)
+    rows = tool_latency_aggregation(
+        owner_scope=owner,
+        window_days=max(1, window_days),
+        top_n=max(1, min(top_n, 200)),
+    )
+    return json.dumps(
+        {"window_days": window_days, "tool_count": len(rows), "tools": rows},
         ensure_ascii=False,
     )

@@ -117,10 +117,15 @@ All paths resolve through `xninetzy.core.config.expand_path` at runtime.
 
 Skills live at `.agents/skills/<name>/SKILL.md`. The Agent Skills contract
 requires YAML frontmatter at the top of every `SKILL.md` (no code-block
-wrapper, no leading markdown title). 70 built-in skill files (69 skill
-directories + 1 top-level SKILL.md) cover the project's MCP surface;
-install more via `skill_validate` → `skill_install`. See
-`docs/runbooks/skill-repair.md` for the frontmatter-damage recovery flow.
+wrapper, no leading markdown title). 121 SKILL.md files exist on disk
+under `.agents/skills/`; only those with valid frontmatter + non-empty
+body are loaded by `skill_list`. As of 2026-09-20, 78 of the 121 are
+invalid (mostly multi-line `description:` without block scalar). Run
+`python scripts/repair_skill_yaml.py` to generate repaired copies under
+`data/repaired_skills/`; review and replace originals manually because
+the in-session auto-linter fights in-place writes. Install new skills via
+`skill_validate` → `skill_install`. See `docs/runbooks/skill-repair.md`
+for the frontmatter-damage recovery flow.
 
 Skill frontmatter integrity is enforced by
 `tests/governance/test_skill_frontmatter.py`; repair flow lives at
@@ -128,8 +133,9 @@ Skill frontmatter integrity is enforced by
 
 ## 6b. MCP resources & prompts
 
-The MCP server exposes 2 resources and 1 prompt in addition to the 343
-tools (see `xninetzy/interfaces/mcp_server.py`):
+The MCP server exposes 2 resources and 1 prompt in addition to the 408
+tools (see `xninetzy/interfaces/mcp_server.py`; count via
+`python -c "from xninetzy.tools.registry import get_tool_names; print(len(get_tool_names()))"`):
 
 - Resource `xninetzy://skills/index` — read-only skill catalog snapshot
 - Resource `xninetzy://tools/catalog` — read-only tool catalog snapshot

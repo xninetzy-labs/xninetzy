@@ -185,6 +185,22 @@ def external_mcp_add(
         return {"success": False, "message": "Batas jumlah MCP eksternal tercapai."}
     servers[name] = server
     _save_servers(servers)
+    try:
+        from xninetzy.tools.registry import refresh_external_mcp_tools
+
+        refresh_external_mcp_tools()
+    except Exception as error:
+        try:
+            from xninetzy.observability.trace import emit
+
+            emit(
+                "external_mcp_refresh_failed",
+                name=name,
+                error_type=type(error).__name__,
+                error=str(error)[:200],
+            )
+        except Exception:
+            pass
     return {"success": True, "server": _server_payload(server)}
 
 
@@ -261,6 +277,33 @@ async def external_mcp_call(
     server = _load_servers().get(name)
     if server is None or not server.enabled:
         return {"success": False, "message": "MCP eksternal tidak ditemukan atau dinonaktifkan."}
+    max_age = get_settings().EXTERNAL_MCP_TRUST_MAX_AGE_DAYS
+    if max_age > 0:
+        if not server.last_reviewed_at:
+            return {
+                "success": False,
+                "message": (
+                    f"Server '{server.name}' belum pernah divalidasi (last_reviewed_at kosong)."
+                ),
+            }
+        try:
+            reviewed = datetime.fromisoformat(server.last_reviewed_at)
+        except ValueError:
+            return {
+                "success": False,
+                "message": f"Server '{server.name}' memiliki last_reviewed_at tidak valid.",
+            }
+        if reviewed.tzinfo is None:
+            reviewed = reviewed.replace(tzinfo=timezone.utc)
+        age_days = (datetime.now(timezone.utc) - reviewed).days
+        if age_days > max_age:
+            return {
+                "success": False,
+                "message": (
+                    f"Server '{server.name}' kadaluarsa: terakhir divalidasi {age_days} hari lalu "
+                    f"(batas {max_age})."
+                ),
+            }
     if server.allowed_tools and tool_name not in server.allowed_tools:
         return {
             "success": False,

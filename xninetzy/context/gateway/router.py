@@ -22,7 +22,7 @@ from xninetzy.context.gateway.trust import (
 from xninetzy.db.sqlite import connect
 
 
-MIN_TRUST_TIER_DEFAULT: int = TRUST_TIER_BLOCKED
+EXCLUDE_TIER_THRESHOLD: int = TRUST_TIER_BLOCKED
 HEALTH_PENALTY_DOWN: float = -1.0
 HEALTH_PENALTY_DEGRADED: float = -0.25
 HEALTH_BONUS_OK: float = 0.1
@@ -171,7 +171,7 @@ def resolve_route(
     query: str,
     context_key: str,
     providers: list[ProviderRecord] | None = None,
-    min_trust_tier: int = MIN_TRUST_TIER_DEFAULT,
+    min_trust_tier: int = EXCLUDE_TIER_THRESHOLD,
     include_local_self: bool = True,
     now: str | None = None,
 ) -> RouterDecision:

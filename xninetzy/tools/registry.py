@@ -66,6 +66,8 @@ from xninetzy.tools.internal.evaluation import (
     evaluation_self_audit,
     evaluation_skill,
     evaluation_tool,
+    xninetzy_health_snapshot,
+    xninetzy_self_test,
 )
 from xninetzy.tools.internal.learning import (
     learning_create_ab_test,
@@ -217,6 +219,7 @@ from xninetzy.tools.ecosystem.life_tools import (
     daily_checkin,
     daily_review_generate,
     life_dashboard,
+    retention_prune_now,
 )
 from xninetzy.tools.ecosystem.knowledge_tools import (
     knowledge_ingest_text,
@@ -308,6 +311,7 @@ from xninetzy.skills.tools import (
     skill_get,
     skill_install,
     skill_list,
+    skill_repair_now,
     skill_resource_list,
     skill_resource_read,
     skill_suggest_for_request,
@@ -402,7 +406,9 @@ from xninetzy.os.lightning.tools import (
     lightning_approve,
     lightning_errors,
     lightning_episode_finish,
+    lightning_episode_get,
     lightning_episode_start,
+    lightning_tool_latency,
     lightning_feedback,
     lightning_healthcheck,
     lightning_improve,
@@ -422,6 +428,7 @@ from xninetzy.tools.ecosystem.repo_tools import (
     repo_architecture,
     repo_dependency,
     repo_diff,
+    repo_file_outline,
     repo_risk,
     repo_search,
     repo_symbol,
@@ -493,6 +500,7 @@ from xninetzy.tools.ecosystem.improvement_tools import (
 from xninetzy.tools.ecosystem.observability_tools import (
     observability_checkpoint,
     observability_emit,
+    observability_perf_snapshot,
     observability_query,
     observability_recent_checkpoints,
     observability_summary,
@@ -508,6 +516,21 @@ from xninetzy.tools.ecosystem.harness_router_tools import (
 )
 
 _ALL_TOOLS: list[BaseTool] | None = None
+
+
+def refresh_external_mcp_tools() -> int:
+    """Reset cached registry so newly added external MCP tools are picked up."""
+    global _ALL_TOOLS
+    from xninetzy.interfaces.external_mcp import EXTERNAL_MCP_TOOLS
+
+    new_external = list(EXTERNAL_MCP_TOOLS)
+    if _ALL_TOOLS is not None:
+        existing_external = {
+            tool.name for tool in _ALL_TOOLS if tool.name.startswith(("external_mcp_",))
+        }
+        filtered = [tool for tool in _ALL_TOOLS if tool.name not in existing_external]
+        _ALL_TOOLS = filtered + new_external
+    return len(new_external)
 
 
 def get_all_tools() -> list[BaseTool]:
@@ -566,6 +589,8 @@ def get_all_tools() -> list[BaseTool]:
             evaluation_run_pipeline_cycle,
             evaluation_audit_tool_catalog,
             evaluation_audit_skill_catalog,
+            xninetzy_health_snapshot,
+            xninetzy_self_test,
             # Learning layer
             learning_detect_patterns,
             learning_create_ab_test,
@@ -702,6 +727,7 @@ def get_all_tools() -> list[BaseTool]:
             daily_checkin,
             daily_review_generate,
             life_dashboard,
+            retention_prune_now,
             os_job_status,
             action_policy_evaluate,
             os_capture,
@@ -783,6 +809,7 @@ def get_all_tools() -> list[BaseTool]:
             skill_resource_list,
             skill_resource_read,
             skill_healthcheck,
+            skill_repair_now,
             # Learning Roadmap
             learning_create_roadmap,
             learning_list_roadmaps,
@@ -858,6 +885,8 @@ def get_all_tools() -> list[BaseTool]:
             memory_get_context,
             # Lightning self-improvement
             lightning_episode_start,
+            lightning_episode_get,
+            lightning_tool_latency,
             lightning_record_action,
             lightning_record_outcome,
             lightning_episode_finish,
@@ -889,6 +918,7 @@ def get_all_tools() -> list[BaseTool]:
             repo_dependency,
             repo_test,
             repo_diff,
+            repo_file_outline,
             repo_architecture,
             repo_risk,
             # S5: Vision / OpenCV / PIL / OCR
@@ -953,6 +983,7 @@ def get_all_tools() -> list[BaseTool]:
             observability_summary,
             observability_checkpoint,
             observability_recent_checkpoints,
+            observability_perf_snapshot,
             # S7: Harness router / state machine / recovery / claim ledger
             intent_resolve,
             evidence_normalize,
@@ -1045,6 +1076,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "repo_dependency",
             "repo_test",
             "repo_diff",
+            "repo_file_outline",
             "repo_architecture",
             "repo_risk",
         ],
@@ -1107,8 +1139,9 @@ def get_tool_groups() -> dict[str, list[str]]:
             "observability_summary",
             "observability_checkpoint",
             "observability_recent_checkpoints",
+            "observability_perf_snapshot",
         ],
-        "os_kernel": ["os_capture", "os_inbox", "os_triage", "os_today", "os_job_status"],
+        "os_kernel": ["os_capture", "os_inbox", "os_triage", "os_today", "os_job_status", "retention_prune_now"],
         "policy": ["action_policy_evaluate"],
         "ai_runtime": [
             "ai_provider_list",
@@ -1178,6 +1211,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "skill_resource_list",
             "skill_resource_read",
             "skill_healthcheck",
+            "skill_repair_now",
         ],
         "notes": [
             "obsidian_search_health",
@@ -1242,6 +1276,8 @@ def get_tool_groups() -> dict[str, list[str]]:
         ],
         "lightning": [
             "lightning_episode_start",
+            "lightning_episode_get",
+            "lightning_tool_latency",
             "lightning_record_action",
             "lightning_record_outcome",
             "lightning_episode_finish",

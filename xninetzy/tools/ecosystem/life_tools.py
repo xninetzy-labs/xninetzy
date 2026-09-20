@@ -454,3 +454,70 @@ def life_dashboard(chat_id: str = "system") -> str:
         pass
 
     return "\n".join(lines)
+
+
+@tool
+def retention_prune_now(
+    memory_retention_days: int = 0,
+    improvement_retention_days: int = 0,
+    per_user_cap: int = 0,
+    idempotency_key: str = "",
+) -> str:
+    """Jalankan prune retensi sekarang. Memotong memory lama + improvement yang sudah final.
+
+    Args:
+        memory_retention_days: Override MEMORY_RETENTION_DAYS (0 = pakai setting).
+        improvement_retention_days: Override IMPROVEMENT_RETENTION_DAYS (0 = pakai setting).
+        per_user_cap: Override MEMORY_PER_USER_CAP (0 = pakai setting).
+        idempotency_key: Kunci opsional agar retry tidak menggandakan prune.
+    """
+    if idempotency_key:
+        from xninetzy.db.idempotency import idempotent_call
+
+        def _execute() -> str:
+            return _run_prune(
+                memory_retention_days=memory_retention_days,
+                improvement_retention_days=improvement_retention_days,
+                per_user_cap=per_user_cap,
+            )
+
+        result, executed = idempotent_call(
+            scope="retention_prune_now",
+            idempotency_key=idempotency_key,
+            payload={
+                "memory_retention_days": memory_retention_days,
+                "improvement_retention_days": improvement_retention_days,
+                "per_user_cap": per_user_cap,
+            },
+            execute=_execute,
+        )
+        if executed:
+            return result
+        return f"⏭️ Prune sudah dijalankan (replay hasil tersimpan).\n{result}"
+    return _run_prune(
+        memory_retention_days=memory_retention_days,
+        improvement_retention_days=improvement_retention_days,
+        per_user_cap=per_user_cap,
+    )
+
+
+def _run_prune(
+    memory_retention_days: int,
+    improvement_retention_days: int,
+    per_user_cap: int,
+) -> str:
+    from xninetzy.os.retention import prune_improvement_signals, prune_memories
+
+    memory_summary = prune_memories(
+        retention_days=memory_retention_days or None,
+        per_user_cap=per_user_cap or None,
+    )
+    improvement_summary = prune_improvement_signals(
+        retention_days=improvement_retention_days or None,
+    )
+    return (
+        f"🧹 Retention prune selesai.\n"
+        f"- memory: deactivated_old={memory_summary.get('deactivated_old', 0)}, "
+        f"capped={memory_summary.get('capped', 0)}\n"
+        f"- improvement: retired={improvement_summary.get('retired', 0)}"
+    )

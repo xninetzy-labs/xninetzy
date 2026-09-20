@@ -9,11 +9,12 @@ from xninetzy.context.gateway.registry import (
 )
 
 
-_CACHE_TTL_SECONDS: float = 2.0
+_CACHE_TTL_SECONDS: float = 60.0
 _CACHE_MAX_SIZE: int = 256
 
 
 _CACHE: dict[str, tuple[float, tuple[ProviderRecord, ...]]] = {}
+_METRICS: dict[str, int] = {"hits": 0, "misses": 0, "evictions": 0}
 
 
 def _now() -> float:
@@ -30,11 +31,15 @@ def cached_list_providers(
     if entry is not None:
         stored_at, payload = entry
         if now - stored_at < ttl_seconds:
+            _METRICS["hits"] += 1
             return payload
+        _CACHE.pop(cache_key, None)
+    _METRICS["misses"] += 1
     records = list_providers()
     frozen = tuple(records)
-    if len(_CACHE) >= _CACHE_MAX_SIZE:
+    if cache_key not in _CACHE and len(_CACHE) >= _CACHE_MAX_SIZE:
         _CACHE.clear()
+        _METRICS["evictions"] += 1
     _CACHE[cache_key] = (now, frozen)
     return frozen
 
@@ -51,4 +56,7 @@ def cache_stats() -> dict[str, Any]:
         "entries": len(_CACHE),
         "max_size": _CACHE_MAX_SIZE,
         "ttl_seconds": _CACHE_TTL_SECONDS,
+        "hits": _METRICS["hits"],
+        "misses": _METRICS["misses"],
+        "evictions": _METRICS["evictions"],
     }

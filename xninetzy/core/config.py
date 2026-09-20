@@ -487,7 +487,19 @@ class Settings(BaseSettings):
 
 @lru_cache
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    try:
+        from xninetzy.os.lightning.patch_executor import load_context_config_overrides
+        overrides = load_context_config_overrides()
+        for name, value in overrides.items():
+            if hasattr(settings, name) and not name.startswith("_"):
+                try:
+                    setattr(settings, name, value)
+                except Exception:
+                    pass
+    except Exception:
+        pass
+    return settings
 
 
 _PATH_KEYS = frozenset({

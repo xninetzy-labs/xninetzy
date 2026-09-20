@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from collections import Counter
 from datetime import UTC, datetime
+from typing import Any
 
 from xninetzy.os.lightning.feedback_parser import classify_feedback
 from xninetzy.os.lightning.rl import record_feedback_event
@@ -139,6 +140,8 @@ def apply_proposal(
     proposal_pk: int,
     sender_id: str | None,
     sender_name: str | None,
+    *,
+    min_candidate_improvement: float = 0.05,
 ) -> str:
     if not is_owner_admin(sender_id, sender_name):
         return "Maaf, approve/reject proposal hanya untuk admin."
@@ -163,14 +166,39 @@ def apply_proposal(
     except Exception:
         patch = {}
 
+    baseline_metrics = _safe_json_loads(proposal.get("baseline_metrics_json"))
+    candidate_metrics = _safe_json_loads(proposal.get("candidate_metrics_json"))
+    if (
+        baseline_metrics
+        and candidate_metrics
+        and not _passes_benchmark_gate(
+            baseline_metrics, candidate_metrics, min_candidate_improvement
+        )
+    ):
+        set_proposal_status(
+            proposal_pk,
+            "rejected",
+            reviewed_by=sender_name or sender_id,
+            rollout_state="rejected_benchmark",
+        )
+        return (
+            f"⛔ Proposal #{proposal_pk} ditolak otomatis — "
+            f"candidate tidak melewati benchmark gate "
+            f"(improve < {min_candidate_improvement})."
+        )
+
     applied_note = "status diperbarui; area ini memerlukan implementasi manual."
     rollout_state = "approved"
-    if proposal["target_area"] == "rule" and patch.get("rule_content"):
-        from xninetzy.os.rules.store import add_rule
+    from xninetzy.os.lightning.patch_executor import execute_patch
 
-        rule_user = patch.get("user_id") or proposal.get("user_id") or "default"
-        rule = add_rule(rule_user, patch["rule_content"], priority=60)
-        applied_note = f"aturan baru #{rule['id']} ditambahkan: “{patch['rule_content']}”"
+    exec_result = execute_patch(
+        target_area=proposal["target_area"],
+        patch=patch,
+        rollback=_safe_json_loads(proposal.get("rollback_json")),
+        owner_scope=proposal.get("user_id") or "default",
+    )
+    if exec_result.get("applied"):
+        applied_note = f"applied: {exec_result}"
         rollout_state = "active"
 
     set_proposal_status(
@@ -179,7 +207,121 @@ def apply_proposal(
         reviewed_by=sender_name or sender_id,
         rollout_state=rollout_state,
     )
+    _log_rollback(
+        proposal_pk=proposal_pk,
+        proposal_id=proposal.get("proposal_id", ""),
+        action="approve",
+        payload={"patch": patch, "baseline": baseline_metrics, "candidate": candidate_metrics},
+        executed_by=sender_name or sender_id or "admin",
+    )
     return f"✅ Proposal #{proposal_pk} disetujui — {applied_note}"
+
+
+def _safe_json_loads(raw: Any) -> dict[str, Any]:
+    import json
+
+    if not raw:
+        return {}
+    try:
+        loaded = json.loads(raw)
+    except (TypeError, ValueError):
+        return {}
+    return loaded if isinstance(loaded, dict) else {}
+
+
+def _passes_benchmark_gate(
+    baseline: dict[str, Any],
+    candidate: dict[str, Any],
+    min_improvement: float,
+) -> bool:
+    if not baseline or not candidate:
+        return True
+    deltas: list[float] = []
+    for key in baseline:
+        if key not in candidate:
+            continue
+        try:
+            base_val = float(baseline[key])
+            cand_val = float(candidate[key])
+        except (TypeError, ValueError):
+            continue
+        deltas.append(cand_val - base_val)
+    if not deltas:
+        return True
+    return max(deltas) >= min_improvement
+
+
+def _log_rollback(
+    *,
+    proposal_pk: int,
+    proposal_id: str,
+    action: str,
+    payload: dict[str, Any],
+    executed_by: str,
+) -> None:
+    import json
+    from datetime import datetime, timezone
+
+    from xninetzy.db.sqlite import connect
+
+    try:
+        with connect() as conn:
+            conn.execute(
+                """
+                INSERT INTO lightning_rollback_log
+                  (proposal_id, proposal_pk, action, payload_json, executed_at, executed_by)
+                VALUES (?, ?, ?, ?, ?, ?)
+                """,
+                (
+                    proposal_id,
+                    proposal_pk,
+                    action,
+                    json.dumps(payload, ensure_ascii=False),
+                    datetime.now(timezone.utc).isoformat(),
+                    executed_by,
+                ),
+            )
+    except Exception:
+        pass
+
+
+def rollback_proposal(
+    proposal_pk: int,
+    sender_id: str | None,
+    sender_name: str | None,
+) -> str:
+    if not is_owner_admin(sender_id, sender_name):
+        return "Maaf, rollback proposal hanya untuk admin."
+    proposal = get_proposal(proposal_pk)
+    if not proposal:
+        return f"Proposal #{proposal_pk} tidak ditemukan."
+    if proposal["status"] not in ("approved", "active"):
+        return f"Proposal #{proposal_pk} status {proposal['status']} — rollback ditolak."
+    rollback = _safe_json_loads(proposal.get("rollback_json"))
+    applied = "logged only"
+    from xninetzy.os.lightning.patch_executor import execute_rollback
+
+    rb = execute_rollback(
+        target_area=proposal["target_area"],
+        rollback=rollback,
+        owner_scope=proposal.get("user_id") or "default",
+    )
+    if rb.get("rolled_back"):
+        applied = f"rolled_back: {rb}"
+    set_proposal_status(
+        proposal_pk,
+        "rolled_back",
+        reviewed_by=sender_name or sender_id,
+        rollout_state="rolled_back",
+    )
+    _log_rollback(
+        proposal_pk=proposal_pk,
+        proposal_id=proposal.get("proposal_id", ""),
+        action="rollback",
+        payload={"rollback": rollback},
+        executed_by=sender_name or sender_id or "admin",
+    )
+    return f"↩️ Proposal #{proposal_pk} di-rollback — {applied}"
 
 
 def reject_proposal(

@@ -12,6 +12,7 @@ from xninetzy.context.orchestrator.pipeline import (
     PipelineOutcome,
     execute_invocation,
     execute_pipeline,
+    execute_pipeline_with_evaluation,
 )
 
 PACKAGE_MARKER: str = "xninetzy.context.orchestrator"
@@ -24,6 +25,7 @@ __all__ = [
     "PipelineOutcome",
     "execute_invocation",
     "execute_pipeline",
+    "execute_pipeline_with_evaluation",
     "register_invokable",
     "resolve_invokable",
     "unregister_invokable",

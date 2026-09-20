@@ -18,7 +18,7 @@ MCP / Codex / Claude Code / OpenCode
 
 ## Built-in Xninetzy skills
 
-The catalog at `.agents/skills/` holds 68 skill bodies, including:
+The catalog at `.agents/skills/` holds 78 skill directories (116 `SKILL.md` files including nested), including:
 
 - `xninetzy-os`: OS principles and boundaries;
 - `it-learning`: roadmaps, concepts, sessions, mastery, and recall;

@@ -56,6 +56,58 @@ REQUIRED_ORCHESTRATOR_FILES: dict[str, bool] = {
     "xninetzy/context/orchestrator/pipeline.py": True,
 }
 
+REQUIRED_REASONING_FILES: dict[str, bool] = {
+    "xninetzy/context/reasoning/__init__.py": True,
+    "xninetzy/context/reasoning/depth.py": True,
+    "xninetzy/context/reasoning/critic.py": True,
+    "xninetzy/context/reasoning/stop.py": True,
+}
+
+REQUIRED_PROCESS_ENGINEERING_FILES: dict[str, bool] = {
+    "xninetzy/context/process_engineering/__init__.py": True,
+    "xninetzy/context/process_engineering/model.py": True,
+    "xninetzy/context/process_engineering/validate.py": True,
+    "xninetzy/context/process_engineering/bpmn_io.py": True,
+    "xninetzy/context/process_engineering/providers.py": True,
+    "xninetzy/context/process_engineering/simulation.py": True,
+    "xninetzy/context/process_engineering/mining.py": True,
+    "xninetzy/context/process_engineering/execution.py": True,
+}
+
+REQUIRED_OPTIMIZATION_FILES: dict[str, bool] = {
+    "xninetzy/context/capability_graph/match_cache.py": True,
+    "xninetzy/context/gateway/provider_cache.py": True,
+    "xninetzy/context/exam_qa/assertions.py": True,
+}
+
+REQUIRED_EVALUATION_FILES: dict[str, bool] = {
+    "xninetzy/context/evaluation/__init__.py": True,
+    "xninetzy/context/evaluation/outcome.py": True,
+    "xninetzy/context/evaluation/context_eval.py": True,
+    "xninetzy/context/evaluation/memory_eval.py": True,
+    "xninetzy/context/evaluation/routing_eval.py": True,
+    "xninetzy/context/evaluation/skill_eval.py": True,
+    "xninetzy/context/evaluation/tool_eval.py": True,
+    "xninetzy/context/evaluation/security_eval.py": True,
+    "xninetzy/context/evaluation/hallucination.py": True,
+    "xninetzy/context/evaluation/root_cause.py": True,
+    "xninetzy/context/evaluation/benchmark.py": True,
+    "xninetzy/context/evaluation/scoring.py": True,
+    "xninetzy/context/evaluation/signal_gen.py": True,
+    "xninetzy/context/evaluation/audit.py": True,
+    "xninetzy/context/evaluation/integration.py": True,
+    "xninetzy/context/evaluation/catalog_audit.py": True,
+    "xninetzy/context/evaluation/self_audit.py": True,
+}
+
+REQUIRED_LEARNING_FILES: dict[str, bool] = {
+    "xninetzy/context/learning/__init__.py": True,
+    "xninetzy/context/learning/pattern_engine.py": True,
+    "xninetzy/context/learning/experiment_engine.py": True,
+    "xninetzy/context/learning/benchmark_engine.py": True,
+    "xninetzy/context/learning/evolution_engine.py": True,
+}
+
 ALLOWED_IMPORT_PREFIXES = (
     "xninetzy.context",
     "xninetzy.core",
@@ -107,6 +159,11 @@ def test_context_package_skeleton_exists():
         **REQUIRED_INVOCATION_FILES,
         **REQUIRED_POLICY_FILES,
         **REQUIRED_ORCHESTRATOR_FILES,
+        **REQUIRED_REASONING_FILES,
+        **REQUIRED_PROCESS_ENGINEERING_FILES,
+        **REQUIRED_OPTIMIZATION_FILES,
+        **REQUIRED_EVALUATION_FILES,
+        **REQUIRED_LEARNING_FILES,
     }
     for relative in sorted(combined):
         target = Path(relative)

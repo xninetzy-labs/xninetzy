@@ -81,24 +81,36 @@ def match_capability(
     *,
     top_k: int = 5,
     min_score: float = 0.1,
+    exact_alias_boost: float = 0.5,
 ) -> list[MatchResult]:
-    tokens = _tokenize(query)
+    from xninetzy.context.capability_graph.match_cache import (
+        clear_cache,
+        tokenize_cached,
+    )
+
+    tokens = set(tokenize_cached(query))
     if not tokens:
         return []
     alias_keys = sorted(tokens)
     with connect() as conn:
         candidates = _candidate_pool(conn, alias_keys, tokens)
     if not candidates:
-        return []
+        clear_cache()
     scored: list[MatchResult] = []
+    query_lower = (query or "").lower().strip()
     for row in candidates:
         alias = str(row["alias"])
-        alias_tokens = _tokenize(alias)
+        alias_tokens = set(tokenize_cached(alias))
         jaccard = _jaccard(tokens, alias_tokens)
         contains_bonus = 0.25 if any(token in alias.lower() for token in tokens) else 0.0
+        exact_bonus = (
+            exact_alias_boost
+            if query_lower and alias.lower() == query_lower
+            else 0.0
+        )
         weight = float(row["weight"])
-        score = (jaccard + contains_bonus) * weight
-        method = "jaccard" if jaccard > 0 else "contains"
+        score = (jaccard + contains_bonus + exact_bonus) * weight
+        method = "exact" if exact_bonus > 0 else "jaccard" if jaccard > 0 else "contains"
         if score < min_score:
             continue
         scored.append(
@@ -111,4 +123,4 @@ def match_capability(
             )
         )
     scored.sort(key=lambda match: match.score, reverse=True)
-    return scored[:top_k]
+    return scored[:max(1, top_k)]

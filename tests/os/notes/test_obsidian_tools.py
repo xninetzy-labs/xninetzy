@@ -222,7 +222,6 @@ def test_obsidian_save_note_falls_back_on_duplicate_with_timestamp(isolated_vaul
     second = obsidian_save_note.invoke({"title": "Dup", "content": "second", "folder": "Notes"})
     assert "Disimpan" in first
     assert "timestamp" in second
-<<<<<<< Updated upstream
 
 
 def test_obsidian_read_blocks_dotbackup_path(isolated_vault):
@@ -247,5 +246,3 @@ def test_obsidian_read_allows_tilde_filenames(isolated_vault):
     result = obsidian_read.invoke({"path": "~important.md"})
     assert "ok" in result
     assert "tidak aman" not in result.lower()
-=======
->>>>>>> Stashed changes

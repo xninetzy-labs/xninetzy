@@ -14,9 +14,16 @@ from xninetzy.os.lightning.rl import (
     strategy_rank,
     regression_check,
 )
+from xninetzy.os.lightning.learning_feed import (
+    enrich_strategy_rank,
+    learning_benchmark_snapshot,
+    ab_test_snapshot,
+    evolution_proposal_snapshot,
+)
 from xninetzy.os.lightning.service import (
     apply_proposal,
     reject_proposal,
+    rollback_proposal,
     review_recent,
     submit_feedback,
 )
@@ -172,15 +179,58 @@ def lightning_reward_summary(
 def lightning_strategy_rank(
     context: dict | None = None,
     limit: int = 5,
+    include_learning_state: bool = True,
     sender_id: str = "",
     chat_id: str = "",
 ) -> dict:
-    """Ranking strategy contextual bandit."""
-    return strategy_rank(
+    """Ranking strategy contextual bandit (enriched with learning engine state)."""
+    result = strategy_rank(
         owner_scope=_uid(sender_id, chat_id),
         context=context or {},
         limit=limit,
     )
+    if include_learning_state:
+        return enrich_strategy_rank(
+            owner_scope=_uid(sender_id, chat_id),
+            rank_result=result,
+        )
+    return result
+
+
+@tool
+def lightning_learning_state(
+    include_benchmarks: bool = True,
+    include_ab_tests: bool = True,
+    include_proposals: bool = True,
+    sender_id: str = "",
+    chat_id: str = "",
+) -> dict:
+    """Tampilkan snapshot state learning engine (benchmarks, A/B tests, evolution proposals)."""
+    owner = _uid(sender_id, chat_id)
+    payload: dict = {"owner_scope": owner}
+    if include_benchmarks:
+        payload["benchmarks"] = list(learning_benchmark_snapshot(owner_scope=owner))
+    if include_ab_tests:
+        payload["ab_tests"] = list(ab_test_snapshot(owner_scope=owner))
+    if include_proposals:
+        payload["evolution_proposals"] = list(evolution_proposal_snapshot(owner_scope=owner))
+    return payload
+
+
+@tool
+def lightning_rollback_proposal(
+    proposal_pk: int = 0,
+    sender_id: str = "",
+    chat_id: str = "",
+) -> dict:
+    """Rollback a previously approved evolution proposal (admin-only)."""
+    return {
+        "result": rollback_proposal(
+            proposal_pk=proposal_pk,
+            sender_id=sender_id or None,
+            sender_name=sender_id or None,
+        )
+    }
 
 
 @tool

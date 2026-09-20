@@ -530,6 +530,16 @@ def strategy_rank(
     )
     exploration = float(getattr(get_settings(), "LIGHTNING_EXPLORATION_RATE", 0.10))
     minimum = int(getattr(get_settings(), "LIGHTNING_MIN_SAMPLES_PER_STRATEGY", 20))
+    learning_boosts: dict[str, float] = {}
+    try:
+        from xninetzy.os.lightning.learning_feed import ab_test_snapshot
+        for test in ab_test_snapshot(owner_scope=owner):
+            if test["status"] == "accepted" and test["winner"]:
+                sid = str(test["winner"])
+                boost = float(test["candidate_avg"]) - float(test["baseline_avg"])
+                learning_boosts[sid] = max(learning_boosts.get(sid, 0.0), boost)
+    except Exception:
+        learning_boosts = {}
     with connect() as conn:
         rows = conn.execute(
             "SELECT * FROM agent_strategy_stats WHERE owner_scope=? AND context_key=?",
@@ -548,6 +558,7 @@ def strategy_rank(
                 "sample_count": count,
                 "mean_reward": round(mean, 6),
                 "ucb_score": round(score, 6),
+                "learning_boost": round(learning_boosts.get(row["strategy_id"], 0.0), 6),
                 "success_rate": round(int(row["success_count"]) / max(count, 1), 6),
                 "grounded_rate": round(int(row["grounded_count"]) / max(count, 1), 6),
                 "error_count": int(row["error_count"]),
@@ -555,13 +566,19 @@ def strategy_rank(
                 "exploration_required": count < minimum,
             }
         )
-    ranked.sort(key=lambda item: (-item["ucb_score"], item["strategy_id"]))
+    ranked.sort(
+        key=lambda item: (
+            -(item["ucb_score"] + item["learning_boost"]),
+            item["strategy_id"],
+        )
+    )
     return {
         "context_key": ctx,
         "strategies": ranked[: max(1, min(limit, 50))],
         "cold_start": not bool(ranked),
         "exploration_rate": exploration,
         "minimum_samples": minimum,
+        "learning_boost_applied": bool(any(s["learning_boost"] > 0 for s in ranked)),
     }
 
 

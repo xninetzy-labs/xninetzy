@@ -28,6 +28,15 @@ HEALTH_PENALTY_DEGRADED: float = -0.25
 HEALTH_BONUS_OK: float = 0.1
 
 
+def _is_capability_enabled(capability: str) -> bool:
+    """Check capability_toggles (TTL cached); default enabled if absent."""
+    try:
+        from xninetzy.os.lightning.capability_cache import capability_toggle_lookup
+    except Exception:
+        return True
+    return capability_toggle_lookup(capability)
+
+
 @dataclass(frozen=True, slots=True)
 class RouterCandidate:
     provider_id: str
@@ -214,6 +223,24 @@ def resolve_route(
             "total_providers": len(pool),
         }
     )
+    if not _is_capability_enabled(primary.capability):
+        decision = RouterDecision(
+            request_id=request_id,
+            intent=intent,
+            context_key=context_key,
+            chosen=None,
+            candidates=(),
+            fallback_used=True,
+            stage_trace=tuple(stage_trace) + (
+                {
+                    "stage": "capability_toggle",
+                    "capability": primary.capability,
+                    "enabled": False,
+                },
+            ),
+        )
+        _persist_decision(decision, stamp)
+        return decision
     candidates: list[RouterCandidate] = []
     if include_local_self:
         candidates.append(_local_self_candidate(primary.capability, primary))

@@ -227,16 +227,21 @@ uv run python -m xninetzy.cli.supervisor release-check
 Expected output:
 
 ```text
-  [PASS   ] tool_registry            343 tools classified
+  [PASS   ] tool_registry            385 tools classified
   [PASS   ] secret_redaction         3/3 sample secrets redacted
   [PASS   ] safe_fetch               3/3 SSRF guard scenarios blocked
   [PASS   ] transport_config         transport=stdio host=127.0.0.1
   [PASS   ] sdk_pin                  mcp resolved=1.28.1
   [PASS   ] canonical_final_tools    3 FINAL tools match canonical set
+
 overall: PASS
 ```
 
-If `tool_registry` reports fewer than 343 tools, an import failed.
+The `release-check` subcommand delegates to `scripts/mcp_audit.py --json`
+and emits one `[PASS] / [FAIL]` line per check. The audit script is the
+canonical contract; this wrapper exists for ergonomic invocation.
+
+If `tool_registry` reports fewer than 385 tools, an import failed.
 Check the install log for missing optional dependencies.
 
 ## SDK-style install (future)

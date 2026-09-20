@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from xninetzy.context.gateway.registry import ProviderRecord, list_providers
+from xninetzy.context.gateway.provider_cache import cached_list_providers
+from xninetzy.context.gateway.registry import ProviderRecord
 from xninetzy.context.gateway.router import (
     RouterDecision,
     resolve_route,
@@ -60,7 +61,7 @@ def resolve_invocation_route(
     providers: list[ProviderRecord] | None = None,
     include_local_self: bool = False,
 ) -> InvocationRoute:
-    pool = providers if providers is not None else list_providers()
+    pool = providers if providers is not None else list(cached_list_providers())
     policy_min_tier = _min_trust_for_side_effect(request.side_effect)
     requested_min_tier = (
         request.min_trust_tier if request.min_trust_tier is not None else policy_min_tier

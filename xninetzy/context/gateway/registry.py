@@ -106,6 +106,11 @@ def upsert_provider(
     stamp = now or _utcnow()
     payload_meta = json.dumps(metadata or {}, ensure_ascii=False, sort_keys=True)
     payload_caps = json.dumps(list(capabilities), ensure_ascii=False)
+    try:
+        from xninetzy.context.gateway.provider_cache import invalidate_cache
+        invalidate_cache()
+    except ImportError:
+        pass
     with connect() as conn:
         conn.execute(
             """

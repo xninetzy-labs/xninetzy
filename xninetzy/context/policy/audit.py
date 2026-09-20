@@ -148,9 +148,12 @@ def complete_audit_entry(
             """,
             (outcome, latency_ms, error, stamp, audit_id),
         )
-    entry = get_audit_entry(audit_id)
-    assert entry is not None
-    return entry
+        row = conn.execute(
+            "SELECT * FROM audit_invocations WHERE id=?",
+            (audit_id,),
+        ).fetchone()
+    assert row is not None
+    return _row_to_entry(row)
 
 
 def get_audit_entry(audit_id: int) -> AuditLedgerEntry | None:

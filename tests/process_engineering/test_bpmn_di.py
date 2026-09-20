@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import json
-from datetime import datetime, timezone
 
 from xninetzy.context.process_engineering.model import (
     ARTIFACT_STATUS_DRAFT,

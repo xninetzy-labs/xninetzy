@@ -5,7 +5,6 @@ from xninetzy.context.process_engineering.model import (
     ProcessEdge,
     ProcessModel,
     ProcessNode,
-    validate_process_model,
 )
 from xninetzy.context.process_engineering.validate import (
     validate_against_diagram,

@@ -1291,6 +1291,68 @@ def _migrate_capability_registry(conn) -> None:
         "CREATE INDEX IF NOT EXISTS idx_process_artifacts_status ON process_artifacts(status)",
         "CREATE INDEX IF NOT EXISTS idx_process_artifacts_updated ON process_artifacts(updated_at)",
         """
+        CREATE TABLE IF NOT EXISTS test_runs (
+            run_id TEXT PRIMARY KEY,
+            scenario_id TEXT NOT NULL,
+            phase TEXT NOT NULL DEFAULT 'planned',
+            score REAL,
+            started_at TEXT,
+            updated_at TEXT,
+            payload_json TEXT NOT NULL DEFAULT '{}',
+            UNIQUE(run_id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_test_runs_scenario ON test_runs(scenario_id)",
+        "CREATE INDEX IF NOT EXISTS idx_test_runs_phase ON test_runs(phase)",
+        """
+        CREATE TABLE IF NOT EXISTS test_steps (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT NOT NULL,
+            step_index INTEGER NOT NULL,
+            phase TEXT NOT NULL,
+            from_phase TEXT,
+            at TEXT NOT NULL,
+            note TEXT,
+            UNIQUE(run_id, step_index)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_test_steps_run ON test_steps(run_id)",
+        """
+        CREATE TABLE IF NOT EXISTS evidence_artifacts (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            run_id TEXT NOT NULL,
+            question_id TEXT NOT NULL,
+            expected_answer TEXT NOT NULL,
+            actual_answer TEXT NOT NULL,
+            score REAL NOT NULL DEFAULT 0,
+            captured_at TEXT NOT NULL,
+            payload_json TEXT NOT NULL DEFAULT '{}',
+            UNIQUE(run_id, question_id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_evidence_run ON evidence_artifacts(run_id)",
+        """
+        CREATE TABLE IF NOT EXISTS test_accounts (
+            account_id TEXT PRIMARY KEY,
+            label TEXT NOT NULL,
+            scopes TEXT NOT NULL DEFAULT '[]',
+            created_at TEXT NOT NULL,
+            UNIQUE(account_id)
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS exam_authorization (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            account_id TEXT NOT NULL,
+            scenario_id TEXT NOT NULL,
+            approval_id INTEGER,
+            granted_at TEXT NOT NULL,
+            UNIQUE(account_id, scenario_id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_exam_auth_account ON exam_authorization(account_id)",
+        "CREATE INDEX IF NOT EXISTS idx_exam_auth_scenario ON exam_authorization(scenario_id)",
+        """
         CREATE TABLE IF NOT EXISTS audit_invocations (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             request_id TEXT NOT NULL,
@@ -1315,6 +1377,88 @@ def _migrate_capability_registry(conn) -> None:
         "CREATE INDEX IF NOT EXISTS idx_audit_invocations_idempotency ON audit_invocations(idempotency_key)",
         "CREATE INDEX IF NOT EXISTS idx_audit_invocations_context ON audit_invocations(context_key)",
         "CREATE INDEX IF NOT EXISTS idx_audit_invocations_started ON audit_invocations(started_at)",
+        """
+        CREATE TABLE IF NOT EXISTS learning_benchmarks (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            owner_scope TEXT NOT NULL DEFAULT 'system',
+            category TEXT NOT NULL DEFAULT 'system',
+            description TEXT NOT NULL DEFAULT '',
+            target_metrics_json TEXT NOT NULL DEFAULT '[]',
+            last_score REAL NOT NULL DEFAULT 0.0,
+            baseline_score REAL NOT NULL DEFAULT 0.0,
+            delta REAL NOT NULL DEFAULT 0.0,
+            last_run_at TEXT NOT NULL,
+            UNIQUE(owner_scope, name)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_learning_benchmarks_owner ON learning_benchmarks(owner_scope)",
+        """
+        CREATE TABLE IF NOT EXISTS ab_tests (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            test_id TEXT NOT NULL UNIQUE,
+            owner_scope TEXT NOT NULL DEFAULT 'system',
+            baseline TEXT NOT NULL,
+            candidate TEXT NOT NULL,
+            metric_name TEXT NOT NULL,
+            status TEXT NOT NULL DEFAULT 'active',
+            winner TEXT,
+            baseline_avg REAL,
+            candidate_avg REAL,
+            confidence REAL NOT NULL DEFAULT 0.0,
+            sample_total INTEGER NOT NULL DEFAULT 0,
+            observations_json TEXT NOT NULL DEFAULT '[]',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_ab_tests_owner ON ab_tests(owner_scope)",
+        "CREATE INDEX IF NOT EXISTS idx_ab_tests_status ON ab_tests(status)",
+        """
+        CREATE TABLE IF NOT EXISTS lightning_rollback_log (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            proposal_id TEXT NOT NULL,
+            proposal_pk INTEGER NOT NULL,
+            action TEXT NOT NULL,
+            payload_json TEXT NOT NULL DEFAULT '{}',
+            executed_at TEXT NOT NULL,
+            executed_by TEXT NOT NULL DEFAULT 'system'
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_lightning_rollback_proposal ON lightning_rollback_log(proposal_pk)",
+        """
+        CREATE TABLE IF NOT EXISTS context_evolution_proposals (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            proposal_id TEXT NOT NULL UNIQUE,
+            title TEXT NOT NULL,
+            problem TEXT NOT NULL,
+            proposed_change TEXT NOT NULL,
+            expected_impact TEXT NOT NULL,
+            risk_level TEXT NOT NULL DEFAULT 'medium',
+            confidence REAL NOT NULL DEFAULT 0.0,
+            evidence_refs_json TEXT NOT NULL DEFAULT '[]',
+            stage TEXT NOT NULL DEFAULT 'proposed',
+            created_at TEXT NOT NULL,
+            updated_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_context_evolution_stage ON context_evolution_proposals(stage)",
+        """
+        CREATE TABLE IF NOT EXISTS context_config_overrides (
+            name TEXT PRIMARY KEY,
+            value_json TEXT NOT NULL,
+            updated_at TEXT NOT NULL,
+            updated_by TEXT NOT NULL DEFAULT 'system'
+        )
+        """,
+        """
+        CREATE TABLE IF NOT EXISTS capability_toggles (
+            capability TEXT PRIMARY KEY,
+            enabled INTEGER NOT NULL DEFAULT 1,
+            updated_at TEXT NOT NULL,
+            updated_by TEXT NOT NULL DEFAULT 'system'
+        )
+        """,
     ]
     for statement in statement_groups:
         conn.execute(statement)

@@ -5,7 +5,7 @@ import { navigation } from '../data/navigation';
 
 const capabilities = [
   { number: '01', title: 'FastMCP server', text: 'FastMCP("xninetzy", stateless_http, json_response) over stdio with Streamable HTTP on loopback by default.' },
-  { number: '02', title: 'Canonical registry', text: '343 tools classified by risk (read/draft/write/final), feature pack, and idempotency requirement.' },
+  { number: '02', title: 'Canonical registry', text: '385 tools classified by risk (read/draft/write/final), feature pack, and idempotency requirement.' },
   { number: '03', title: 'Idempotent writes', text: 'Every write and final tool carries an idempotency key. Replays return the original result, never a duplicate.' },
   { number: '04', title: 'Host-driven loop', text: 'Claude, Claude Code, Cursor, Codex, and OpenCode connect through the same registry. The MCP server exposes capability; the host decides what to do next.' }
 ];
@@ -16,10 +16,10 @@ const transports = [
 ];
 
 const registry = [
-  { bucket: 'core', count: 259, detail: 'Obsidian, reminders, life OS, knowledge, Lightning, skills, security, automation, repo, vision, harness, improvement, memory.' },
+  { bucket: 'core', count: 305, detail: 'Obsidian, reminders, life OS, knowledge, Lightning, skills, security, automation, repo, vision, harness, improvement, memory.' },
   { bucket: 'academic-unair', count: 40, detail: 'HEBAT, Cyber Campus, UACC, QA Kuesioner, KRS War.' },
   { bucket: 'research', count: 37, detail: 'deep_research, web_evidence, pixelrag, research_search/fetch/compare/grade.' },
-  { bucket: 'coding', count: 7, detail: 'coding-agent orchestration, harness routing, repo inspection.' }
+  { bucket: 'coding', count: 3, detail: 'coding-agent orchestration, harness routing, repo inspection.' }
 ];
 
 const finalTools = [
@@ -38,7 +38,7 @@ const features = [
 ];
 
 const recentReleases = [
-  { tag: 'v2.2.0', title: 'MCP-only pivot', text: 'Removed Baileys, LangGraph, Ink. 343 tools, 70 skill files, 2 resources, 1 prompt.' },
+  { tag: 'v2.2.0', title: 'MCP-only pivot', text: 'Removed Baileys, LangGraph, Ink. 385 tools, 78 skill directories, 2 resources, 1 prompt.' },
   { tag: 'docs', title: 'LangChain-grade site', text: 'On-this-page TOC, callouts, full-text search, copy-code, page feedback.' },
   { tag: 'tracker', title: 'KNOWN_ISSUES + CHANGELOG', text: '10 issues filed. ISS-20260919-01 SKILL.md YAML damage (BLOCKED by hook).' }
 ];
@@ -50,7 +50,7 @@ const recentReleases = [
       <div class="hero-glow" aria-hidden="true"></div>
       <div class="hero-content">
         <p class="signal"><span></span> MCP SYSTEM / ONLINE</p>
-        <h1>FastMCP server.<br /><em>343 tools. One registry.</em></h1>
+        <h1>FastMCP server.<br /><em>385 tools. One registry.</em></h1>
         <p class="lead">Xninetzy exposes a single MCP server to your host. stdio primary, Streamable HTTP loopback by default. The registry carries Obsidian, HEBAT, Cyber Campus, Lightning, Knowledge, Career, reminders, skills — every capability as an MCP tool.</p>
         <div class="hero-actions">
           <a class="primary" href="/docs/getting-started/">Start the MCP server <Icon name="arrow" /></a>
@@ -96,7 +96,7 @@ const recentReleases = [
     <section class="section registry-grid">
       <header>
         <p class="kicker">REGISTRY</p>
-        <h2>343 tools classified by feature pack.</h2>
+        <h2>385 tools classified by feature pack.</h2>
       </header>
       <div class="grid">
         {registry.map((r) => (

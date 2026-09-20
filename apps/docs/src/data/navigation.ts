@@ -57,6 +57,8 @@ export const navigation: NavGroup[] = [
       { title: 'Testing', description: 'Test suites and quality gates.', href: '/docs/testing/' },
       { title: 'Automation', description: 'Briefings, reviews, leases, and freshness.', href: '/docs/automation/' },
       { title: 'Data intelligence', description: 'Profile, quality, tables, dashboards.', href: '/docs/data-intelligence/' },
+      { title: 'Personal OS', description: 'Projects, open loops, skills, reviews.', href: '/docs/personal-os/' },
+      { title: 'Obsidian ops', description: 'Vault health, graph, canvas, templates, daily notes.', href: '/docs/obsidian-ops/' },
       { title: 'Learning & evolution', description: 'Evaluation, learning, lightning, patches, rollback.', href: '/docs/learning-system/' },
       { title: 'Local data', description: 'Private per-installation SQLite data.', href: '/docs/local-data/' },
       { title: 'Backup & restore', description: 'Snapshots, verification, retention, and recovery.', href: '/docs/backup-restore/' },

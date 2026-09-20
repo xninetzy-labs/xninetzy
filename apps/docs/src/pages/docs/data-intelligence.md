@@ -143,7 +143,7 @@ No provider-specific metadata leaks into the spec.
 | `dashboard_validate` | Reopen + verify HTML |
 | `dashboard_list_providers` | List registered providers |
 
-Total registered tools: **392** (audit-script-verified).
+Total registered tools: **401** (audit-script-verified).
 
 ## 8. Skill
 

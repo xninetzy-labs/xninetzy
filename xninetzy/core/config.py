@@ -485,21 +485,33 @@ class Settings(BaseSettings):
     ALLOW_AUTONOMOUS_DELETE: bool = False
 
 
+_SETTINGS_BUILDING = False
+
+
 @lru_cache
 def get_settings() -> Settings:
-    settings = Settings()
+    global _SETTINGS_BUILDING
+    if _SETTINGS_BUILDING:
+        return Settings()
+    _SETTINGS_BUILDING = True
     try:
-        from xninetzy.os.lightning.patch_executor import load_context_config_overrides
-        overrides = load_context_config_overrides()
-        for name, value in overrides.items():
-            if hasattr(settings, name) and not name.startswith("_"):
-                try:
-                    setattr(settings, name, value)
-                except Exception:
-                    pass
-    except Exception:
-        pass
-    return settings
+        settings = Settings()
+        try:
+            from xninetzy.os.lightning.patch_executor import (
+                load_context_config_overrides,
+            )
+            overrides = load_context_config_overrides()
+            for name, value in overrides.items():
+                if hasattr(settings, name) and not name.startswith("_"):
+                    try:
+                        setattr(settings, name, value)
+                    except Exception:
+                        pass
+        except Exception:
+            pass
+        return settings
+    finally:
+        _SETTINGS_BUILDING = False
 
 
 _PATH_KEYS = frozenset({

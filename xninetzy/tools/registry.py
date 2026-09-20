@@ -24,6 +24,17 @@ from xninetzy.tools.internal.data_analysis import (
     data_validate_xlsx,
 )
 from xninetzy.tools.internal.datetime_info import datetime_now
+from xninetzy.tools.internal.personal_os import (
+    personal_open_loop_create,
+    personal_open_loop_list,
+    personal_open_loop_resolve,
+    personal_project_create,
+    personal_project_list,
+    personal_project_status,
+    personal_review_run,
+    personal_skill_advance,
+    personal_skill_register,
+)
 from xninetzy.tools.internal.reasoning import (
     reasoning_classify_depth,
     reasoning_clear_strategy,
@@ -96,6 +107,13 @@ from xninetzy.tools.internal.obsidian import (
     obsidian_set_frontmatter,
     obsidian_todos,
     obsidian_update_section,
+)
+from xninetzy.tools.internal.obsidian_ops import (
+    obsidian_canvas_inspect,
+    obsidian_daily_notes_list,
+    obsidian_graph_analysis,
+    obsidian_template_list,
+    obsidian_vault_health,
 )
 from xninetzy.tools.internal.obsidian_organization import (
     obsidian_folder_status,
@@ -508,6 +526,15 @@ def get_all_tools() -> list[BaseTool]:
             dashboard_generate,
             dashboard_validate,
             dashboard_list_providers,
+            personal_project_create,
+            personal_project_list,
+            personal_project_status,
+            personal_open_loop_create,
+            personal_open_loop_list,
+            personal_open_loop_resolve,
+            personal_skill_register,
+            personal_skill_advance,
+            personal_review_run,
             *EXTERNAL_MCP_TOOLS,
             # Reasoning
             reasoning_classify_depth,
@@ -577,6 +604,11 @@ def get_all_tools() -> list[BaseTool]:
             obsidian_generate_moc,
             obsidian_add_tags,
             obsidian_set_frontmatter,
+            obsidian_vault_health,
+            obsidian_graph_analysis,
+            obsidian_canvas_inspect,
+            obsidian_template_list,
+            obsidian_daily_notes_list,
             obsidian_vault_init,
             obsidian_folder_status,
             obsidian_organize_preview,

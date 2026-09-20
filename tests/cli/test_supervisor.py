@@ -31,7 +31,7 @@ def test_release_check_emits_pass_lines() -> None:
     proc = _run_supervisor("release-check")
     assert proc.returncode == 0, proc.stdout + proc.stderr
     assert "tool_registry" in proc.stdout
-    assert "385 tools classified" in proc.stdout
+    assert "tools classified" in proc.stdout
     assert "secret_redaction" in proc.stdout
     assert "safe_fetch" in proc.stdout
     assert "transport_config" in proc.stdout

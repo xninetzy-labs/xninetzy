@@ -1,17 +1,6 @@
 ---
-
 name: "api-security"
-description: "Evidence-driven API security assessment for authorized HTTP, REST, GraphQL, MCP,"
-WebSocket, and gRPC surfaces. Audits authentication, authorization, object/property/
-function access, input validation, rate limiting, CORS, security headers, TLS,
-SSRF exposure, injection boundaries, resource exhaustion, API inventory drift,
-schema enforcement, business-logic controls, secret exposure, and trust boundaries.
-Use when an API, MCP tool, WebSocket route, gRPC method, authentication middleware,
-authorization policy, schema, CORS policy, rate limiter, security header, or trust
-boundary is added or changed, or when the operator requests an API security review.
-Never expands authorized scope, never bypasses authentication or human verification,
-never performs destructive testing, and never treats a scanner signal as a verified
-vulnerability without supporting evidence.
+description: "Evidence-driven API security assessment for authorized HTTP, REST, GraphQL, MCP, WebSocket, and gRPC surfaces. Audits authentication, authorization, object/property/ function access, input validation, rate limiting, CORS, security headers, TLS, SSRF exposure, injection boundaries, resource exhaustion, API inventory drift, schema enforcement, business-logic controls, secret exposure, and trust boundaries. Use when an API, MCP tool, WebSocket route, gRPC method, authentication middleware, authorization policy, schema, CORS policy, rate limiter, security header, or trust boundary is added or changed, or when the operator requests an API security review. Never expands authorized scope, never bypasses authentication or human verification, never performs destructive testing, and never treats a scanner signal as a verified vulnerability without supporting evidence."
 
 metadata:
 author: "xninetzy"
@@ -141,6 +130,7 @@ The primary principle is:
 
 A middleware existing in source code does not prove that the endpoint is actually protected.
 ---
+
 
 # 1. Security Model
 

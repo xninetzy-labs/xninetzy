@@ -1,15 +1,7 @@
 ---
-
 name: "cli-creator"
 
-description: "Build durable, composable, agent-friendly command-line interfaces from API"
-documentation, OpenAPI specifications, SDKs, curl examples, web applications,
-admin tools, local scripts, exports, or shell history. Produces installable
-commands with stable subcommands, deterministic JSON output, discovery and
-ID-resolution flows, pagination, authentication/config management, safe
-read/write boundaries, dry-run or draft support, raw API escape hatches,
-smoke tests from outside the source repository, and a companion skill for
-future agent threads.
+description: "Build durable, composable, agent-friendly command-line interfaces from API documentation, OpenAPI specifications, SDKs, curl examples, web applications, admin tools, local scripts, exports, or shell history. Produces installable commands with stable subcommands, deterministic JSON output, discovery and ID-resolution flows, pagination, authentication/config management, safe read/write boundaries, dry-run or draft support, raw API escape hatches, smoke tests from outside the source repository, and a companion skill for future agent threads."
 
 metadata:
 author: "xninetzy"
@@ -88,6 +80,7 @@ Second principle:
 
 > **The CLI is an interface contract, not a collection of scripts.**
 ---
+
 
 # 2. CLI Quality Standard
 

@@ -1,38 +1,25 @@
 ---
-name: "security-review"
-description: "Application and code-level security review for Xninetzy itself and the projects it audits. Drives the structured Asset → Entry point → Trust boundary → Input → Processing → Sink → Security control → Failure mode → Exploitability → Impact → Mitigation pipeline. Emits `SecurityFinding` objects with reproduction evidence, severity rationale, and remediation. Operates strictly inside authorized scope. Use whenever the operator asks to audit a code change, a new dependency, a new MCP tool signature, or a third-party code surface."
+name: security-review
+description: Application and code-level security review for Xninetzy itself and the
+  projects it audits. Drives the structured Asset → Entry point → Trust boundary →
+  Input → Processing → Sink → Security control → Failure mode → Exploitability → Impact
+  → Mitigation pipeline. Emits `SecurityFinding` objects with reproduction evidence,
+  severity rationale, and remediation. Operates strictly inside authorized scope.
+  Use whenever the operator asks to audit a code change, a new dependency, a new MCP
+  tool signature, or a third-party code surface.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools:
-    - repo_search
-    - repo_dependency
-    - grep_search
-    - read_file
-    - security_scope
-    - security_assets
-    - security_sast
-    - security_dependencies
-    - security_threat_model
-    - security_validate_finding
-    - security_regression
-  optional_tools:
-    - hitl_request_approval
-    - os_inbox
-    - lightning_record_action
-    - memory_security_store
-  trigger_conditions:
-    - the operator asks for a security audit
-    - a PR or branch is about to be merged
-    - a new dependency is added
-    - a new MCP tool is registered
-  prerequisites:
-    - explicit authorized scope (via `security_scope`)
-    - target surface identified
-    - background research / reference files loaded if applicable
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '["repo_search","repo_dependency","grep_search","read_file","security_scope","security_assets","security_sast","security_dependencies","security_threat_model","security_validate_finding","security_regression"]'
+  optional_tools: '["hitl_request_approval","os_inbox","lightning_record_action","memory_security_store"]'
+  trigger_conditions: '["the operator asks for a security audit","a PR or branch is
+    about to be merged","a new dependency is added","a new MCP tool is registered"]'
+  prerequisites: '["explicit authorized scope (via `security_scope`)","target surface
+    identified","background research / reference files loaded if applicable"]'
 ---
+
 
 # security-review
 

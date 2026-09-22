@@ -1,33 +1,25 @@
 ---
-name: "memory-management"
-description: "Lifecycle governance for Xninetzy memory layers. Restricts what gets stored, where it lives (working / episodic / semantic / procedural / failure / tool / skill / security / research), when it gets promoted across layers, and when it retires. Avoids memory pollution from speculation, temporary noise, raw tool dumps, redundant facts, or unsupported claims. Use on every `memory_add`, after every successful or failed complex episode, and on a periodic cadence to retire stale entries."
+name: memory-management
+description: Lifecycle governance for Xninetzy memory layers. Restricts what gets
+  stored, where it lives (working / episodic / semantic / procedural / failure / tool
+  / skill / security / research), when it gets promoted across layers, and when it
+  retires. Avoids memory pollution from speculation, temporary noise, raw tool dumps,
+  redundant facts, or unsupported claims. Use on every `memory_add`, after every successful
+  or failed complex episode, and on a periodic cadence to retire stale entries.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "harness"
-  priority: "P0"
-  required_tools:
-    - memory_add
-    - memory_search
-    - memory_forget
-    - memory_list
-    - memory_update_tool
-    - lightning_record_action
-    - lightning_record_outcome
-    - lightning_episode_finish
-  optional_tools:
-    - action_policy_evaluate
-    - os_inbox
-    - hitl_request_approval
-  trigger_conditions:
-    - a complex episode completes (success or failure)
-    - the operator asks to capture a preference, rule, or fact
-    - a periodic retention sweep runs (default weekly)
-    - a memory retrieval returns results that look stale
-  prerequisites:
-    - storage layer is identified
-    - policy table for memory scoping is loaded (in `xninetzy/os/memory/`)
+  author: xninetzy
+  version: 1.0.0
+  scope: harness
+  priority: P0
+  required_tools: '["memory_add","memory_search","memory_forget","memory_list","memory_update_tool","lightning_record_action","lightning_record_outcome","lightning_episode_finish"]'
+  optional_tools: '["action_policy_evaluate","os_inbox","hitl_request_approval"]'
+  trigger_conditions: '["a complex episode completes (success or failure)","the operator
+    asks to capture a preference, rule, or fact","a periodic retention sweep runs
+    (default weekly)","a memory retrieval returns results that look stale"]'
+  prerequisites: '["storage layer is identified","policy table for memory scoping
+    is loaded (in `xninetzy/os/memory/`)"]'
 ---
+
 
 # memory-management
 

@@ -1,17 +1,7 @@
 ---
-
 name: "cyber-campus"
 
-description: "Safety-first academic operating system for authorized Cyber Campus, university SIS,"
-and comparable student-information portals. Handles authenticated session checks,
-deterministic navigation, academic-state reads, semester-aware normalization,
-schedule/grade/KRS inspection, course eligibility, quota and prerequisite analysis,
-staged KRS planning, approval-bound mutations, immediate preflight revalidation,
-idempotent writes where supported, post-write reconciliation, submission verification,
-receipt capture, and auditable evidence collection. Never bypasses CAPTCHA, OTP, MFA,
-access controls, or hidden portal protections; never invents portal identifiers or
-undocumented write flows; never claims a consequential academic action succeeded
-without authoritative portal confirmation.
+description: "Safety-first academic operating system for authorized Cyber Campus, university SIS, and comparable student-information portals. Handles authenticated session checks, deterministic navigation, academic-state reads, semester-aware normalization, schedule/grade/KRS inspection, course eligibility, quota and prerequisite analysis, staged KRS planning, approval-bound mutations, immediate preflight revalidation, idempotent writes where supported, post-write reconciliation, submission verification, receipt capture, and auditable evidence collection. Never bypasses CAPTCHA, OTP, MFA, access controls, or hidden portal protections; never invents portal identifiers or undocumented write flows; never claims a consequential academic action succeeded without authoritative portal confirmation."
 
 metadata:
 scope: "general"
@@ -124,6 +114,7 @@ Third principle:
 
 > **No portal confirmation, no success claim.**
 ---
+
 
 # 1. Domain State Separation
 

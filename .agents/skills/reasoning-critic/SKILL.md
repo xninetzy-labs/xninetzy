@@ -1,15 +1,16 @@
 ---
-name: "reasoning-critic"
-description: "Critic pass for reasoning outputs. Detects expectation mismatch, unsupported claims, missing evidence codes, and contradictions. Returns a verdict with severity-tagged defects."
+name: reasoning-critic
+description: Critic pass for reasoning outputs. Detects expectation mismatch, unsupported
+  claims, missing evidence codes, and contradictions. Returns a verdict with severity-tagged
+  defects.
 metadata:
-  type: "meta"
-  layer: "cognitive"
-  consumes:
-    - tool: reasoning_critique
-  produces:
-    - critic_verdict
-  tier: "0"
+  type: meta
+  layer: cognitive
+  consumes: '[{"tool":"reasoning_critique"}]'
+  produces: '["critic_verdict"]'
+  tier: '0'
 ---
+
 
 # reasoning-critic
 

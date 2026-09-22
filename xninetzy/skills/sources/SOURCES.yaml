@@ -1,0 +1,52 @@
+sources:
+  - id: storm-style-research
+    name: Stanford OVAL STORM-style research methodology
+    repository: https://github.com/stanford-oval/storm
+    license: MIT
+    packageVersion: n/a
+    sourceCommit: n/a
+    status: REFERENCE_ONLY
+    importedModules: []
+    localModifications: []
+    usageNotes: |
+      STORM concepts (perspective discovery, question generation, simulated
+      conversation, evidence-grounded synthesis, outline construction) are
+      referenced for the ResearchEngine design but the official knowledge-storm
+      package is not vendored or installed. All implementation is native.
+
+  - id: writing-domain-skills
+    name: Writing/proposal/academic skill reference patterns
+    sources:
+      - https://github.com/anthropics/skills
+      - https://github.com/WenyuChiou/academic-writing-skills
+      - https://github.com/Norman-bury/research-writing-skill
+      - https://github.com/Kaos599/professional-skills
+      - https://github.com/softaworks/writing-clearly-and-concisely
+      - https://github.com/appautomaton/consultant
+      - https://github.com/peterbamuhigire/proposal-skills
+      - https://github.com/borghei/Claude-Skills
+    license: mixed (per-source)
+    packageVersion: n/a
+    status: REFERENCE_ONLY
+    importedModules: []
+    localModifications: []
+    usageNotes: |
+      Reference patterns only. All 22 SKILL.md bodies under
+      .agents/skills/{professional-writer,academic-writer,proposal-writer,...}
+      are authored natively for Xninetzy. No source files vendored.
+
+  - id: learning-companion
+    name: Learning Companion design patterns
+    sources:
+      - active recall / spaced repetition research literature
+      - hint ladder / scaffolding research literature
+      - misconception-driven feedback literature
+    license: n/a
+    packageVersion: n/a
+    status: REFERENCE_ONLY
+    importedModules: []
+    localModifications: []
+    usageNotes: |
+      Pedagogy + Mastery engines implement hint ladder L0-L7, mastery state
+      classification (UNKNOWN -> TRANSFERABLE), misconception detection,
+      dependency detection, and independence tracking natively.

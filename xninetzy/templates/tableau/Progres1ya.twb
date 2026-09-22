@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<workbook xmlns:user="http://www.tableausoftware.com/xml/user" original-version="18.1" source-build="2026.2.1" source-platform="linux" version="18.1">
+    <preferences>
+    <preference name="ui.encoding.shelf.height" value="24"/>
+    <preference name="ui.shelf.height" value="26"/>
+  </preferences>
+    <document-format-change-manifest><DocumentFormatChangeManifestEntry url="http://.tableau.com/manifest/2026.2.1"/></document-format-change-manifest>
+  <datasources>
+    <datasource name="federated.orders" caption="federated.orders" version="18.1">
+      <connection class="textscan" directory="/tmp/tmpgv6zdn9q" filename="/tmp/tmpgv6zdn9q/orders.csv"/>
+      <column name="[order_id]" caption="order_id" datatype="string" role="dimension"/>
+      <column name="[customer_state]" caption="customer_state" datatype="string" role="dimension"/>
+      <column name="[price]" caption="price" datatype="string" role="dimension"/>
+      <column name="[is_late]" caption="is_late" datatype="string" role="dimension"/>
+    </datasource>
+    <datasource name="federated.reviews" caption="federated.reviews" version="18.1">
+      <connection class="textscan" directory="/tmp/tmpgv6zdn9q" filename="/tmp/tmpgv6zdn9q/reviews.csv"/>
+      <column name="[order_id]" caption="order_id" datatype="string" role="dimension"/>
+      <column name="[review_score]" caption="review_score" datatype="string" role="dimension"/>
+      <column name="[comment]" caption="comment" datatype="string" role="dimension"/>
+    </datasource>
+  </datasources>
+  <worksheets>
+    <worksheet name="Figure1"><title>Figure 1</title><table><panes><pane><mark class="Bar"/></pane></panes></table></worksheet>
+    <worksheet name="Figure2"><title>Figure 2</title><table><panes><pane><mark class="Bar"/></pane></panes></table></worksheet>
+    <worksheet name="Figure3"><title>Figure 3</title><table><panes><pane><mark class="Bar"/></pane></panes></table></worksheet>
+    <worksheet name="Figure4"><title>Figure 4</title><table><panes><pane><mark class="Bar"/></pane></panes></table></worksheet>
+    <worksheet name="Figure5"><title>Figure 5</title><table><panes><pane><mark class="Bar"/></pane></panes></table></worksheet>
+  </worksheets>
+  <dashboards>
+    <dashboard name="Dashboard"><zones><zone name="Figure1" x="0" y="0" w="100" h="100"/></zones></dashboard>
+    <dashboard name="StoryTelling" type="storyboard"><zones><zone name="Figure1" x="0" y="0" w="100" h="100"/></zones></dashboard>
+  </dashboards>
+</workbook>

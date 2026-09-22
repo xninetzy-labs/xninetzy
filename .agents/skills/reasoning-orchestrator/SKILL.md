@@ -1,21 +1,16 @@
 ---
-name: "reasoning-orchestrator"
-description: "Cross-cutting reasoning layer for XNINETZY. Decides thinking depth, runs the critic pass, and applies the stopping rule before/after every non-trivial task. Used by research, exam_qa, process_engineering, developer, security, and quant domains."
+name: reasoning-orchestrator
+description: Cross-cutting reasoning layer for XNINETZY. Decides thinking depth, runs
+  the critic pass, and applies the stopping rule before/after every non-trivial task.
+  Used by research, exam_qa, process_engineering, developer, security, and quant domains.
 metadata:
-  type: "meta"
-  layer: "cognitive"
-  consumes:
-    - tool: reasoning_classify_depth
-    - tool: reasoning_critique
-    - tool: reasoning_should_stop
-    - tool: reasoning_record_history
-    - tool: reasoning_set_strategy
-  produces:
-    - reasoning_depth
-    - critic_verdict
-    - stop_decision
-  tier: "0"
+  type: meta
+  layer: cognitive
+  consumes: '[{"tool":"reasoning_classify_depth"},{"tool":"reasoning_critique"},{"tool":"reasoning_should_stop"},{"tool":"reasoning_record_history"},{"tool":"reasoning_set_strategy"}]'
+  produces: '["reasoning_depth","critic_verdict","stop_decision"]'
+  tier: '0'
 ---
+
 
 # reasoning-orchestrator
 

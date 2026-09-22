@@ -101,7 +101,7 @@ class Settings(BaseSettings):
     KILO_MODEL: str = ""
 
     CHAT_FAILOVER_ENABLED: bool = False
-    CHAT_FAILOVER_RUNTIME: str = "opencode"
+    CHAT_FAILOVER_RUNTIME: str = "claude-code"
     CHAT_FAILOVER_MODEL: str = ""
     CHAT_FAILOVER_TIMEOUT_SECONDS: float = 120.0
     CHAT_FAILOVER_MAX_OUTPUT_CHARS: int = 8_000

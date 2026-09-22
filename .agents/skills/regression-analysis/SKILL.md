@@ -1,31 +1,23 @@
 ---
-name: "regression-analysis"
-description: "Diagnose regressions by diffing the pre/post behavior of a system, identifying the commit that introduced the change, and proposing a minimal revert or fix. Use when the operator reports a previously-passing test now fails, a metric regressed, or a behavior changed unexpectedly."
+name: regression-analysis
+description: Diagnose regressions by diffing the pre/post behavior of a system, identifying
+  the commit that introduced the change, and proposing a minimal revert or fix. Use
+  when the operator reports a previously-passing test now fails, a metric regressed,
+  or a behavior changed unexpectedly.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools:
-    - repo_diff
-    - repo_search
-    - repo_symbol
-    - repo_test
-    - repo_risk
-  optional_tools:
-    - lightning_record_action
-    - observability_emit
-    - memory_failure_store
-    - hitl_request_approval
-  trigger_conditions:
-    - a previously-passing test now fails
-    - a metric regressed vs. its baseline
-    - the operator says "this used to work"
-    - a canary rollout needs a rollback decision
-  prerequisites:
-    - failing test or metric trace reachable
-    - pre-regression baseline reachable (commit / snapshot / metric window)
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '["repo_diff","repo_search","repo_symbol","repo_test","repo_risk"]'
+  optional_tools: '["lightning_record_action","observability_emit","memory_failure_store","hitl_request_approval"]'
+  trigger_conditions: '["a previously-passing test now fails","a metric regressed
+    vs. its baseline","the operator says \"this used to work\"","a canary rollout
+    needs a rollback decision"]'
+  prerequisites: '["failing test or metric trace reachable","pre-regression baseline
+    reachable (commit / snapshot / metric window)"]'
 ---
+
 
 # regression-analysis
 

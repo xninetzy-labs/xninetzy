@@ -4,7 +4,7 @@ import inspect
 import json
 import time
 from dataclasses import dataclass
-from typing import Any, Iterable
+from typing import Any, Callable, Iterable
 
 from langchain_core.tools import BaseTool
 from mcp.server.fastmcp import FastMCP
@@ -246,6 +246,33 @@ def _semantic_node_type(tool_name: str) -> str | None:
     return None
 
 
+def _resolve_tool_entry(
+    tool: Any,
+    principal: MCPPrincipal | None,
+) -> tuple[str, str, Callable[..., Any]]:
+    if isinstance(tool, BaseTool):
+        name = tool.name
+        description = tool.description or ""
+        return name, description, langchain_tool_as_mcp_callable(tool, principal)
+    if callable(tool):
+        name = getattr(tool, "__name__", "") or ""
+        description = (getattr(tool, "__doc__", "") or "").strip()
+        ctx = (principal or mcp_principal()).as_tool_context()
+
+        def _callable(fn: Callable[..., Any] = tool, ctx_: dict[str, Any] = ctx) -> Callable[..., Any]:
+            def wrapper(**kwargs: Any) -> Any:
+                merged = dict(kwargs)
+                for key, value in ctx_.items():
+                    if key not in merged:
+                        merged[key] = value
+                return fn(**merged)
+
+            return wrapper
+
+        return name, description, _callable()
+    raise TypeError(f"Unsupported tool entry: {type(tool).__name__}")
+
+
 def _parameter_default(field: Any) -> Any:
     if field.default is PydanticUndefined:
         return inspect.Parameter.empty
@@ -374,22 +401,21 @@ def langchain_tool_as_mcp_callable(
 
 def expose_xninetzy_tools(
     server: FastMCP,
-    tools: Iterable[BaseTool] | None = None,
+    tools: Iterable[Any] | None = None,
     principal: MCPPrincipal | None = None,
 ) -> tuple[str, ...]:
-    """Expose every tool from the central Xninetzy registry through MCP."""
-
     if tools is None:
         from xninetzy.tools.registry import get_all_tools
 
         tools = get_all_tools()
 
+    exposed: list[str] = []
     for tool in tools:
-        if server._tool_manager.get_tool(tool.name) is not None:
-            server._tool_manager.remove_tool(tool.name)
-        server.add_tool(
-            langchain_tool_as_mcp_callable(tool, principal),
-            name=tool.name,
-            description=tool.description or "",
-        )
-    return tuple(sorted(tool.name for tool in server._tool_manager.list_tools()))
+        name, description, fn = _resolve_tool_entry(tool, principal)
+        if not name:
+            continue
+        if server._tool_manager.get_tool(name) is not None:
+            server._tool_manager.remove_tool(name)
+        server.add_tool(fn, name=name, description=description)
+        exposed.append(name)
+    return tuple(sorted(exposed))

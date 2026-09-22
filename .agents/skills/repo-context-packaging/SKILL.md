@@ -1,32 +1,24 @@
 ---
-name: "repo-context-packaging"
-description: "Compact a code repository into a layered context bundle for the harness. Avoids the \"model reads 1000 files\" antipattern. Produces L0-L4 layers from the architecture down to the relevant symbols, with hard caps on each layer so the bundle stays inside the harness's prompt budget. Use whenever the operator asks for a \"deep dive\" into a codebase, or whenever a non-trivial code modification will exceed the model's context window."
+name: repo-context-packaging
+description: Compact a code repository into a layered context bundle for the harness.
+  Avoids the "model reads 1000 files" antipattern. Produces L0-L4 layers from the
+  architecture down to the relevant symbols, with hard caps on each layer so the bundle
+  stays inside the harness's prompt budget. Use whenever the operator asks for a "deep
+  dive" into a codebase, or whenever a non-trivial code modification will exceed the
+  model's context window.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools:
-    - read_file
-    - grep_search
-    - glob_files
-    - repo_search
-    - repo_symbol
-    - repo_dependency
-    - repo_architecture
-    - repo_test
-  optional_tools:
-    - knowledge_search
-    - memory_search
-    - lightning_record_action
-  trigger_conditions:
-    - the operator asks "explain this codebase"
-    - a structured-project-execution milestone starts
-    - verification of a cross-file change requires architectural confirmation
-  prerequisites:
-    - repository root
-    - target intent
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '["read_file","grep_search","glob_files","repo_search","repo_symbol","repo_dependency","repo_architecture","repo_test"]'
+  optional_tools: '["knowledge_search","memory_search","lightning_record_action"]'
+  trigger_conditions: '["the operator asks \"explain this codebase\"","a structured-project-execution
+    milestone starts","verification of a cross-file change requires architectural
+    confirmation"]'
+  prerequisites: '["repository root","target intent"]'
 ---
+
 
 # repo-context-packaging
 

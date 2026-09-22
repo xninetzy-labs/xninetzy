@@ -19,7 +19,7 @@ host (Claude / Claude Code / Cursor / Codex / OpenCode)
   ▼
 xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
   │
-  ├── xninetzy.tools.registry.get_all_tools()   (406 tools)
+  ├── xninetzy.tools.registry.get_all_tools()   (446 tools)
   │     │
   │     └── xninetzy.tools.manifest.manifest_for(name)
   │           ├── feature_pack: core | academic-unair | research | coding
@@ -62,16 +62,16 @@ canonical FINAL-tool set drifts.
 
 | Metric | Value |
 |---|---|
-| Total tools | **406** |
-| Risk = `read` | 23 |
+| Total tools | **455** |
+| Risk = `read` | 26 |
 | Risk = `draft` | 13 |
-| Risk = `write` | 367 |
+| Risk = `write` | 413 |
 | Risk = `final` | **3** |
-| Feature pack = `core` | 326 |
-| Feature pack = `academic-unair` | 40 |
-| Feature pack = `research` | 37 |
+| Feature pack = `core` | 363 |
+| Feature pack = `academic-unair` | 46 |
+| Feature pack = `research` | 43 |
 | Feature pack = `coding` | 3 |
-| Stability | 406/406 `stable` |
+| Stability | 455/455 `stable` |
 
 Risk classifier (`xninetzy/os/policy/action_policy.py::classify_risk`):
 
@@ -240,7 +240,7 @@ Six checks must all PASS:
 
 | Check | Verifies |
 |---|---|
-| `tool_registry` | 406 tools classified, no unknown risk, no missing idempotency |
+| `tool_registry` | 455 tools classified, no unknown risk, no missing idempotency |
 | `secret_redaction` | `redact_secrets` strips sample OpenAI / GitHub / Google keys |
 | `safe_fetch` | SSRF guard rejects non-http(s), private/loopback, oversize |
 | `transport_config` | transport ∈ stdio\|streamable-http; default loopback |

@@ -192,6 +192,31 @@ from xninetzy.os.academic.qa_portal.tools import (
 from xninetzy.os.jobs.tools import os_job_status
 from xninetzy.os.policy.tools import action_policy_evaluate
 from xninetzy.os.inbox.tools import os_capture, os_inbox, os_today, os_triage
+from xninetzy.tools.ecosystem.kaggle_tools import (
+    kaggle_auth_status,
+    kaggle_capabilities,
+    kaggle_dataset_get,
+    kaggle_dataset_register,
+    kaggle_dataset_search,
+    kaggle_dataset_validate,
+)
+from xninetzy.os.auth.tools.auth_tools import (
+    auth_capabilities,
+    auth_connections_list,
+    auth_identity_get,
+    auth_providers_list,
+    auth_session_cancel,
+    auth_session_create,
+    auth_session_revoke,
+    auth_session_status,
+    browser_capabilities,
+    browser_close_tool,
+    browser_connect_cdp_tool,
+    browser_connect_remote_tool,
+    browser_session_status,
+    oauth_provider_get,
+    oauth_provider_list,
+)
 from xninetzy.tools.ecosystem.web_analysis_tools import (
     web_analysis_refresh,
     web_analysis_status,
@@ -264,6 +289,22 @@ from xninetzy.tools.ecosystem.research_v2_tools import (
     research_fetch,
     research_grade_evidence,
     research_search,
+)
+from xninetzy.tools.ecosystem.storm_tools import storm_tools
+from xninetzy.tools.ecosystem.learning_companion_tools import learning_companion_tools
+from xninetzy.tools.ecosystem.skill_routing_tools import skill_routing_tools
+from xninetzy.tools.ecosystem.tableau_tools import TABLEAU_TOOLS
+from xninetzy.os.mcp_external.tools import (
+    EXTERNAL_MCP_TOOLS as _EXTERNAL_MCP_TOOLS,
+    external_mcp_list_tool,
+    external_mcp_shutdown_tool,
+    playwright_attach_session_tool,
+    playwright_detect_tool,
+    playwright_disable_tool,
+    playwright_enable_tool,
+    playwright_install_tool,
+    playwright_status_tool,
+    playwright_up_tool,
 )
 from xninetzy.tools.ecosystem.career_tools import (
     career_company_research,
@@ -734,6 +775,29 @@ def get_all_tools() -> list[BaseTool]:
             os_inbox,
             os_triage,
             os_today,
+            # Auth + browser gateway
+            auth_capabilities,
+            auth_providers_list,
+            auth_connections_list,
+            auth_session_create,
+            auth_session_status,
+            auth_session_cancel,
+            auth_session_revoke,
+            auth_identity_get,
+            browser_capabilities,
+            browser_session_status,
+            browser_connect_cdp_tool,
+            browser_connect_remote_tool,
+            browser_close_tool,
+            oauth_provider_list,
+            oauth_provider_get,
+            # Kaggle integration
+            kaggle_capabilities,
+            kaggle_auth_status,
+            kaggle_dataset_search,
+            kaggle_dataset_get,
+            kaggle_dataset_register,
+            kaggle_dataset_validate,
             # Knowledge OS
             knowledge_ingest_text,
             knowledge_ingest_file,
@@ -773,6 +837,10 @@ def get_all_tools() -> list[BaseTool]:
             research_fetch,
             research_compare_sources,
             research_grade_evidence,
+            *storm_tools,
+            *learning_companion_tools,
+            *skill_routing_tools,
+            *TABLEAU_TOOLS,
             career_search_jobs,
             career_search_internships,
             career_skill_gap,
@@ -912,6 +980,16 @@ def get_all_tools() -> list[BaseTool]:
             helper_generate_obsidian_docs,
             tool_catalog,
             tool_rank,
+            # External MCP bridge (Playwright MCP opt-in)
+            playwright_detect_tool,
+            playwright_install_tool,
+            playwright_enable_tool,
+            playwright_up_tool,
+            playwright_status_tool,
+            playwright_attach_session_tool,
+            playwright_disable_tool,
+            external_mcp_list_tool,
+            external_mcp_shutdown_tool,
             # S5: Repo introspection
             repo_search,
             repo_symbol,
@@ -993,11 +1071,31 @@ def get_all_tools() -> list[BaseTool]:
             tool_route,
             task_state_record,
         ]
+        from langchain_core.tools import tool as _langchain_tool
+
+        normalized: list[BaseTool] = []
+        for item in _ALL_TOOLS:
+            if isinstance(item, BaseTool):
+                normalized.append(item)
+            elif callable(item) and not hasattr(item, "name"):
+                normalized.append(
+                    _langchain_tool(
+                        description=f"{getattr(item, '__name__', 'tool')} (xninetzy wrapper)",
+                    )(item)
+                )
+            else:
+                normalized.append(item)
+        _ALL_TOOLS = normalized
     return _ALL_TOOLS
 
 
 def get_tool_names() -> list[str]:
-    return [t.name for t in get_all_tools()]
+    names: list[str] = []
+    for t in get_all_tools():
+        name = getattr(t, "name", None) or getattr(t, "__name__", None)
+        if name is not None:
+            names.append(name)
+    return names
 
 
 def get_tool_descriptions() -> list[dict]:

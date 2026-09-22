@@ -1,16 +1,7 @@
 ---
-
 name: "context-engineering"
 
-description: "Adaptive context-construction control-plane for the Xninetzy MCP harness."
-Builds the smallest sufficient context for each task from user intent, recent
-observations, tool metadata, skills, memory, repository context, historical
-episodes, and external evidence. Uses progressive disclosure, relevance and
-freshness ranking, contradiction detection, provenance, token budgets, cache-aware
-packing, context compaction, state-aware recomputation, and evidence sufficiency
-checks. Prevents full tool-catalog dumps, stale-context leakage, redundant memory,
-irrelevant repository loading, and unsupported conclusions. Use on every
-non-trivial request before execution.
+description: "Adaptive context-construction control-plane for the Xninetzy MCP harness. Builds the smallest sufficient context for each task from user intent, recent observations, tool metadata, skills, memory, repository context, historical episodes, and external evidence. Uses progressive disclosure, relevance and freshness ranking, contradiction detection, provenance, token budgets, cache-aware packing, context compaction, state-aware recomputation, and evidence sufficiency checks. Prevents full tool-catalog dumps, stale-context leakage, redundant memory, irrelevant repository loading, and unsupported conclusions. Use on every non-trivial request before execution."
 
 metadata:
 author: "xninetzy"
@@ -97,6 +88,7 @@ use_when:
 - delegated context construction
 - sub-agent context isolation
 ---
+
 
 # context-engineering
 

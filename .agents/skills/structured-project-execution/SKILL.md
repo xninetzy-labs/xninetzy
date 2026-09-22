@@ -1,33 +1,26 @@
 ---
-name: "structured-project-execution"
-description: "Durable execution state for non-trivial multi-step work (≥ 30 steps). Replaces ad-hoc \"carry state in the conversation context\" with a state machine: PLAN → IN_PROGRESS → BLOCKED → VERIFIED → DONE, with explicit checkpoints, decisions, artifacts, verifications, and rollback strategies persisted between harness invocations. Use on any engineering / research / security task expected to span more than a single MCP exchange."
+name: structured-project-execution
+description: 'Durable execution state for non-trivial multi-step work (≥ 30 steps).
+  Replaces ad-hoc "carry state in the conversation context" with a state machine:
+  PLAN → IN_PROGRESS → BLOCKED → VERIFIED → DONE, with explicit checkpoints, decisions,
+  artifacts, verifications, and rollback strategies persisted between harness invocations.
+  Use on any engineering / research / security task expected to span more than a single
+  MCP exchange.'
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "harness"
-  priority: "P0"
-  required_tools:
-    - repo_search
-    - write_file
-    - read_file
-    - todo_tool
-    - lightning_episode_start
-    - lightning_episode_finish
-    - lightning_record_action
-    - hitl_request_approval
-  optional_tools:
-    - os_inbox
-    - memory_add
-    - memory_search
-  trigger_conditions:
-    - the operator asks for a project of ≥ 30 steps, multi-PR, or multi-week work
-    - the operator asks for a security audit, repository migration, or large refactor
-    - any task whose previous attempt lost state across harness invocations
-  prerequisites:
-    - target project / goal
-    - target branch / working directory
-    - approval status (auto vs HITL-gated)
+  author: xninetzy
+  version: 1.0.0
+  scope: harness
+  priority: P0
+  required_tools: '["repo_search","write_file","read_file","todo_tool","lightning_episode_start","lightning_episode_finish","lightning_record_action","hitl_request_approval"]'
+  optional_tools: '["os_inbox","memory_add","memory_search"]'
+  trigger_conditions: '["the operator asks for a project of ≥ 30 steps, multi-PR,
+    or multi-week work","the operator asks for a security audit, repository migration,
+    or large refactor","any task whose previous attempt lost state across harness
+    invocations"]'
+  prerequisites: '["target project / goal","target branch / working directory","approval
+    status (auto vs HITL-gated)"]'
 ---
+
 
 # structured-project-execution
 

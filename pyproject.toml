@@ -4,13 +4,23 @@ build-backend = "hatchling.build"
 
 [project]
 name = "xninetzy-mcp"
-version = "1.0.0"
-description = "Xninetzy MCP server — local-first, MCP-only Personal Intelligence and Learning system."
+version = "2.2.0"
+description = "Xninetzy Intelligence MCP server — local-first MCP gateway exposing 400+ tools over FastMCP."
 readme = "README.md"
 requires-python = ">=3.11"
-license = "LicenseRef-Xninetzy-Source-Available-2.2.0"
 license-files = ["LICENSE"]
-keywords = ["mcp", "model-context-protocol", "fastmcp", "obsidian", "hebat", "academic", "knowledge", "local-first"]
+keywords = [
+    "mcp",
+    "model-context-protocol",
+    "fastmcp",
+    "obsidian",
+    "academic",
+    "knowledge",
+    "local-first",
+    "agent-tools",
+    "memory",
+    "research",
+]
 authors = [
     { name = "Misbahul Muttaqin", email = "misbahul45@users.noreply.github.com" },
 ]
@@ -20,6 +30,7 @@ maintainers = [
 classifiers = [
     "Development Status :: 4 - Beta",
     "Environment :: Console",
+    "Intended Audience :: Developers",
     "Intended Audience :: End Users/Desktop",
     "License :: Other/Proprietary License",
     "Operating System :: POSIX :: Linux",
@@ -29,52 +40,79 @@ classifiers = [
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
     "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Typing :: Typed",
 ]
+
 dependencies = [
-    "fastapi",
-    "uvicorn[standard]",
-    "pydantic>=2.0",
-    "pydantic-settings",
-    "python-dotenv",
-    "langchain-core>=0.3",
-    "langchain-anthropic>=0.3",
-    "langchain-openai>=0.2",
-    "playwright>=1.40",
+    "fastapi>=0.110",
+    "uvicorn[standard]>=0.27",
+    "pydantic>=2.5",
+    "pydantic-settings>=2.1",
+    "python-dotenv>=1.0",
+    "mcp>=1.28.1,<2",
+    "pyyaml>=6.0.3",
+    "cryptography>=43.0",
     "httpx>=0.27",
     "beautifulsoup4>=4.12",
     "lxml>=5.0",
-    "pypdf>=4.0",
-    "numpy>=2.4.6",
-    "faiss-cpu>=1.8",
-    "python-docx>=1.1",
-    "openpyxl>=3.1",
-    "python-pptx>=0.6",
-    "pillow>=10.0",
-    "pytesseract>=0.3.13",
-    "pypdfium2>=4.30",
-    "pdfplumber>=0.11",
-    "cryptography>=43.0",
-    "mcp>=1.28.1,<2",
-    "pyyaml>=6.0.3",
-    "sentence-transformers>=3.0",
-    "torch>=2.2",
-    "neo4j>=5.26",
     "networkx>=3.3",
     "ddgs>=6.0",
-    "opencv-python-headless>=5.0.0.93",
 ]
 
 [project.optional-dependencies]
+ai = [
+    "langchain-core>=0.3",
+    "langchain-anthropic>=0.3",
+    "langchain-openai>=0.2",
+    "sentence-transformers>=3.0",
+    "faiss-cpu>=1.8",
+    "numpy>=2.0",
+]
+embeddings = [
+    "sentence-transformers>=3.0",
+    "faiss-cpu>=1.8",
+    "numpy>=2.0",
+]
+graph = [
+    "neo4j>=5.26",
+]
+documents = [
+    "python-docx>=1.1",
+    "openpyxl>=3.1",
+    "python-pptx>=0.6",
+    "pypdf>=4.0",
+    "pdfplumber>=0.11",
+    "pypdfium2>=4.30",
+]
+browser = [
+    "playwright>=1.40",
+    "opencv-python-headless>=5.0.0.93",
+    "pillow>=10.0",
+    "pytesseract>=0.3.13",
+]
+torch-cpu = [
+    "torch>=2.2",
+]
+all = [
+    "xninetzy-mcp[ai]",
+    "xninetzy-mcp[graph]",
+    "xninetzy-mcp[documents]",
+    "xninetzy-mcp[browser]",
+    "xninetzy-mcp[torch-cpu]",
+]
 dev = [
     "pytest>=8.0",
     "pytest-asyncio>=0.23",
     "ruff>=0.9",
+    "mypy>=1.8",
 ]
-neo4j = [
-    "neo4j>=5.26",
+test = [
+    "pytest>=8.0",
+    "pytest-asyncio>=0.23",
 ]
-torch-cpu = []
 
 [project.urls]
 Homepage = "https://github.com/xninetzy-labs/xninetzy"
@@ -82,6 +120,8 @@ Repository = "https://github.com/xninetzy-labs/xninetzy"
 Issues = "https://github.com/xninetzy-labs/xninetzy/issues"
 Documentation = "https://xninetzy.vercel.app/docs/"
 "MCP Reference" = "https://xninetzy.vercel.app/docs/mcp-system/"
+Changelog = "https://github.com/xninetzy-labs/xninetzy/blob/main/CHANGELOG.md"
+Security = "https://github.com/xninetzy-labs/xninetzy/blob/main/SECURITY.md"
 
 [project.scripts]
 xninetzy = "xninetzy.cli.supervisor:main"
@@ -92,6 +132,11 @@ packages = ["xninetzy"]
 include = [
     "xninetzy/**/*.py",
     "xninetzy/py.typed",
+    "xninetzy/**/*.json",
+]
+exclude = [
+    "xninetzy/**/tests/**",
+    "xninetzy/**/__pycache__/**",
 ]
 
 [tool.hatch.build.targets.sdist]
@@ -99,9 +144,19 @@ include = [
     "xninetzy",
     "README.md",
     "LICENSE",
+    "CHANGELOG.md",
+    "SECURITY.md",
+    "MANIFEST.in",
+    "pyproject.toml",
     "scripts",
-    "tests",
-    "docs",
+]
+exclude = [
+    "xninetzy/**/tests/**",
+    "xninetzy/**/__pycache__/**",
+    "tests/**",
+    "apps/**",
+    "docs/**",
+    ".agents/**",
 ]
 
 [tool.uv]
@@ -129,8 +184,11 @@ addopts = "-ra"
 markers = [
     "integration: heavier tests that may download models or hit the network",
 ]
+filterwarnings = [
+    "ignore::DeprecationWarning:mcp.*",
+]
 
 [tool.ruff]
 line-length = 100
 target-version = "py311"
-extend-exclude = [".venv", "build", "dist", "apps/docs/dist", "apps/docs/.astro"]
+extend-exclude = [".venv", "build", "dist", "apps/docs/dist", "apps/docs/.astro", "apps/docs/node_modules"]

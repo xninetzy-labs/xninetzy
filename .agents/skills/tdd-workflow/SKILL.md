@@ -1,36 +1,26 @@
 ---
-name: "tdd-workflow"
-description: "Forces every code-modification task to go through test → implement → verify, with the test step pre-writing a regression test that fails before any code change. Used for any change touching: deterministic logic, security boundaries, idempotency contracts, MCP tool signatures, repository migration, schema changes. Refuses to advance if the regression test does not exist, does not run, or does not reproduce the bug. Use whenever the operator asks to modify source code, fix a bug, or accept that \"the test proves the change\"."
+name: tdd-workflow
+description: 'Forces every code-modification task to go through test → implement →
+  verify, with the test step pre-writing a regression test that fails before any code
+  change. Used for any change touching: deterministic logic, security boundaries,
+  idempotency contracts, MCP tool signatures, repository migration, schema changes.
+  Refuses to advance if the regression test does not exist, does not run, or does
+  not reproduce the bug. Use whenever the operator asks to modify source code, fix
+  a bug, or accept that "the test proves the change".'
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "engineering"
-  priority: "P0"
-  required_tools:
-    - read_file
-    - write_file
-    - grep_search
-    - glob_files
-    - bash_run
-    - ruff_check
-    - pytest_run
-  optional_tools:
-    - lightning_episode_start
-    - lightning_record_action
-    - repo_search
-    - repo_test
-    - repo_diff
-    - os_inbox
-    - hitl_request_approval
-  trigger_conditions:
-    - the operator asks for any code change
-    - the operator reports a bug
-    - verification of a previous change is requested
-  prerequisites:
-    - failing regression test that reproduces the issue OR a written red-test for the new behavior
-    - project root + test runner known
-    - lint available (`ruff`)
+  author: xninetzy
+  version: 1.0.0
+  scope: engineering
+  priority: P0
+  required_tools: '["read_file","write_file","grep_search","glob_files","bash_run","ruff_check","pytest_run"]'
+  optional_tools: '["lightning_episode_start","lightning_record_action","repo_search","repo_test","repo_diff","os_inbox","hitl_request_approval"]'
+  trigger_conditions: '["the operator asks for any code change","the operator reports
+    a bug","verification of a previous change is requested"]'
+  prerequisites: '["failing regression test that reproduces the issue OR a written
+    red-test for the new behavior","project root + test runner known","lint available
+    (`ruff`)"]'
 ---
+
 
 # tdd-workflow
 

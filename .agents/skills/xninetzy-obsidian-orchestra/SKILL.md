@@ -1,7 +1,6 @@
 ---
 name: "xninetzy-obsidian-orchestra"
-description: "Structural and navigational operating system for the canonical Xninetzy Obsidian vault. Use for folder/file conventions, course and project structures, migrations, semester archiving, MOCs, frontmatter normalization, Mermaid visualization, vault health, naming integrity, portal-to-Obsidian ingestion, backlink consistency, and safe structural changes."
-metadata:
+description: "Structural and navigational operating system for the canonical Xninetzy Obsidian vault. Use for folder/file conventions, course and project structures, migrations, semester archiving, MOCs, frontmatter normalization, Mermaid visualization, vault health, naming integrity, portal-to-Obsidian ingestion, backlink consistency, and safe structural changes. metadata:"
   scope: "general"
   owner: "xninetzy"
   language: "en"
@@ -203,6 +202,7 @@ Every managed note should have minimal frontmatter:
 
 ```yaml
 ---
+
 type: note|concept|material|assignment|daily|moc
 course: COURSE_CODE
 course_name: FULL_NAME

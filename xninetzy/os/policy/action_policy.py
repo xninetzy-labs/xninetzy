@@ -40,6 +40,7 @@ _FINAL_ACTIONS = frozenset(
         "hebat_submit_submission",
         "hebat_submit_submission_direct",
         "qa_submit_kuesioner",
+        "tableau_publish_workbook",
     }
 )
 _READ_PREFIXES = ("read", "list", "get", "check", "search", "status")

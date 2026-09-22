@@ -1,21 +1,15 @@
 ---
 name: personal-os
-description: Use when the user wants to manage goals, projects, open loops, skills, or run a daily/weekly review. Enforces project→next_action and open-loop lifecycle rules. Do NOT use for one-off reminders or chat memory — those have their own tools.
+description: Use when the user wants to manage goals, projects, open loops, skills,
+  or run a daily/weekly review. Enforces project→next_action and open-loop lifecycle
+  rules. Do NOT use for one-off reminders or chat memory — those have their own tools.
 metadata:
   type: workflow
   domain: personal_os
-  capabilities:
-    - personal_project_create
-    - personal_project_list
-    - personal_project_status
-    - personal_open_loop_create
-    - personal_open_loop_list
-    - personal_open_loop_resolve
-    - personal_skill_register
-    - personal_skill_advance
-    - personal_review_run
+  capabilities: '["personal_project_create","personal_project_list","personal_project_status","personal_open_loop_create","personal_open_loop_list","personal_open_loop_resolve","personal_skill_register","personal_skill_advance","personal_review_run"]'
   version: 1.0.0
 ---
+
 
 # Personal OS Workflow
 

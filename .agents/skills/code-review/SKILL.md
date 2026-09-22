@@ -1,16 +1,7 @@
 ---
-
 name: "code-review"
 
-description: "Evidence-driven pre-merge code review against the repository's declared rules,"
-architecture, API contracts, security boundaries, tests, and engineering
-invariants. Reviews a branch, commit range, or pull request at file and symbol
-level; detects rule violations, behavior regressions, error-propagation problems,
-retry/idempotency defects, API contract drift, architecture/layer violations,
-security-sensitive changes, missing or misleading tests, dependency risk,
-observability gaps, and unnecessary scope expansion. Produces a diff-anchored,
-severity-tiered review with evidence, suggested fixes, coverage gaps, regression
-risks, and a deterministic review verdict. Never silently rewrites the patch.
+description: "Evidence-driven pre-merge code review against the repository's declared rules, architecture, API contracts, security boundaries, tests, and engineering invariants. Reviews a branch, commit range, or pull request at file and symbol level; detects rule violations, behavior regressions, error-propagation problems, retry/idempotency defects, API contract drift, architecture/layer violations, security-sensitive changes, missing or misleading tests, dependency risk, observability gaps, and unnecessary scope expansion. Produces a diff-anchored, severity-tiered review with evidence, suggested fixes, coverage gaps, regression risks, and a deterministic review verdict. Never silently rewrites the patch."
 
 metadata:
 author: "xninetzy"
@@ -103,6 +94,7 @@ non_goals:
 * treating passing CI as proof of correctness
 * generic style criticism without repository evidence
 ---
+
 
 # code-review
 

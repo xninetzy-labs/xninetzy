@@ -1,16 +1,15 @@
 ---
-name: "paper-analysis"
-description: "Analyze a single paper from a DOI / arXiv ID / S2 paper ID. Extract metadata, methodology, claims, and limitations. Outputs structured analysis card."
+name: paper-analysis
+description: Analyze a single paper from a DOI / arXiv ID / S2 paper ID. Extract metadata,
+  methodology, claims, and limitations. Outputs structured analysis card.
 metadata:
-  type: "workflow"
-  layer: "research-academic"
-  consumes:
-    - research_fetch
-    - research_grade_evidence
-  produces:
-    - paper_card
-  tier: "0"
+  type: workflow
+  layer: research-academic
+  consumes: '["research_fetch","research_grade_evidence"]'
+  produces: '["paper_card"]'
+  tier: '0'
 ---
+
 
 # paper-analysis
 

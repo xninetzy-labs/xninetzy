@@ -1,34 +1,24 @@
 ---
-name: "playwright-mcp-workflows"
-description: "Procedural guardrails for Playwright MCP browser automation, UI QA, screenshot inspection, and end-to-end testing against authorized targets. Pairs Playwright MCP with Xninetzy's `web_analysis` and `vision` capability families so the harness can drive the browser, capture visual evidence, compare before/after, and verify business rules. Use when the operator asks to test a web flow, take a screenshot for review, scrape data from a permitted site, or verify a feature gate."
+name: playwright-mcp-workflows
+description: Procedural guardrails for Playwright MCP browser automation, UI QA, screenshot
+  inspection, and end-to-end testing against authorized targets. Pairs Playwright
+  MCP with Xninetzy's `web_analysis` and `vision` capability families so the harness
+  can drive the browser, capture visual evidence, compare before/after, and verify
+  business rules. Use when the operator asks to test a web flow, take a screenshot
+  for review, scrape data from a permitted site, or verify a feature gate.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools:
-    - web_discover
-    - web_fetch
-    - web_analysis_refresh
-    - image_inspect
-    - image_preprocess
-    - image_ocr
-    - image_compare
-    - web_source_ledger
-  optional_tools:
-    - security_scope
-    - hitl_request_approval
-    - knowledge_ingest
-    - os_inbox
-  trigger_conditions:
-    - the operator asks to test or QA a web flow
-    - the operator asks for a screenshot review or visual diff
-    - Playwright MCP is available
-  prerequisites:
-    - explicit authorized target (use `security_scope`)
-    - Playwright MCP server reachable
-    - output directory writable
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '["web_discover","web_fetch","web_analysis_refresh","image_inspect","image_preprocess","image_ocr","image_compare","web_source_ledger"]'
+  optional_tools: '["security_scope","hitl_request_approval","knowledge_ingest","os_inbox"]'
+  trigger_conditions: '["the operator asks to test or QA a web flow","the operator
+    asks for a screenshot review or visual diff","Playwright MCP is available"]'
+  prerequisites: '["explicit authorized target (use `security_scope`)","Playwright
+    MCP server reachable","output directory writable"]'
 ---
+
 
 # playwright-mcp-workflows
 

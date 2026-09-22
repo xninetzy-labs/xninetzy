@@ -1,32 +1,21 @@
 ---
-name: "secret-audit"
-description: "Hunt for accidentally-committed secrets (API keys, tokens, private keys, .env leaks) inside authorized scope. Use after a commit, before a release, or when the operator asks \"did we leak anything?\"."
+name: secret-audit
+description: Hunt for accidentally-committed secrets (API keys, tokens, private keys,
+  .env leaks) inside authorized scope. Use after a commit, before a release, or when
+  the operator asks "did we leak anything?".
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools:
-    - repo_search
-    - repo_symbol
-    - security_scope
-    - security_sast
-    - security_validate_finding
-    - lightning_record_action
-  optional_tools:
-    - repo_diff
-    - security_assets
-    - hitl_request_approval
-    - memory_security_store
-  trigger_conditions:
-    - a commit lands on a shared branch
-    - a PR is about to be merged
-    - the operator asks to audit before release
-    - an external secret-scanner reports a hit
-  prerequisites:
-    - explicit authorized scope (via `security_scope`)
-    - target repo path reachable
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '["repo_search","repo_symbol","security_scope","security_sast","security_validate_finding","lightning_record_action"]'
+  optional_tools: '["repo_diff","security_assets","hitl_request_approval","memory_security_store"]'
+  trigger_conditions: '["a commit lands on a shared branch","a PR is about to be merged","the
+    operator asks to audit before release","an external secret-scanner reports a hit"]'
+  prerequisites: '["explicit authorized scope (via `security_scope`)","target repo
+    path reachable"]'
 ---
+
 
 # secret-audit
 

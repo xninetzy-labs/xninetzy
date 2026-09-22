@@ -43,16 +43,17 @@ def _tool_snapshot() -> dict[str, object]:
     bad_risk: list[str] = []
     missing_idem: list[str] = []
     for tool in tools:
-        manifest = manifest_for(tool.name)
+        name = getattr(tool, "name", None) or getattr(tool, "__name__", None) or str(tool)
+        manifest = manifest_for(name)
         risks[manifest.risk.value] += 1
         packs[manifest.feature_pack.value] += 1
         stabilities[manifest.stability.value] += 1
         if manifest.risk.value == "final":
-            finals.append(tool.name)
+            finals.append(name)
         if manifest.risk.value not in {"read", "draft", "write", "final"}:
-            bad_risk.append(tool.name)
+            bad_risk.append(name)
         if manifest.risk.value in {"write", "final"} and not manifest.requires_idempotency:
-            missing_idem.append(tool.name)
+            missing_idem.append(name)
     return {
         "total": len(tools),
         "risk": dict(risks),

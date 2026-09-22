@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import asdict, dataclass
 from enum import StrEnum
+from typing import Optional
 
 from xninetzy.os.policy.action_policy import RiskClass, classify_risk
 
@@ -21,6 +22,7 @@ class FeaturePack(StrEnum):
 _POLICY_ACTIONS = {
     "hebat_upload_submission": "hebat_submit_submission",
     "qa_fill_kuesioner": "qa_submit_kuesioner",
+    "tableau_publish_workbook": "tableau_publish_workbook",
 }
 
 @dataclass(frozen=True, slots=True)
@@ -33,9 +35,16 @@ class ToolManifest:
     requires_approval: bool
     requires_idempotency: bool
     requires_evidence: bool
+    deprecated: bool = False
+    replacement: Optional[str] = None
+    max_output_bytes: int = 32_768
 
-    def as_dict(self) -> dict[str, str | bool]:
-        return asdict(self)
+    def as_dict(self) -> dict[str, object]:
+        payload = asdict(self)
+        if not self.deprecated:
+            payload.pop("deprecated", None)
+            payload.pop("replacement", None)
+        return payload
 
 
 def _feature_pack(name: str) -> FeaturePack:

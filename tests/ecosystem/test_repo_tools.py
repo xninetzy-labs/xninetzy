@@ -92,6 +92,31 @@ def test_repo_diff_returns_structure_on_existing_ref():
     assert "truncated" in out
 
 
+def test_repo_diff_rejects_option_like_ref():
+    out = _invoke(repo_diff, base="--output=/tmp/x", target="HEAD", limit=5)
+    assert "invalid git ref" in out.get("error", "")
+
+
+def test_repo_diff_rejects_output_injection(tmp_path):
+    victim = tmp_path / "victim.txt"
+    victim.write_text("SENTINEL", encoding="utf-8")
+    out = _invoke(
+        repo_diff,
+        base=f"--output={victim}",
+        target="/../HEAD",
+        limit=5,
+        include_sample=True,
+    )
+    assert "error" in out
+    assert victim.read_text(encoding="utf-8") == "SENTINEL"
+
+
+def test_repo_diff_rejects_refs_with_equals_or_traversal():
+    for bad in ("a=b", "HEAD..HEAD", "HEAD~1 --output=x"):
+        out = _invoke(repo_diff, base=bad, target="HEAD", limit=5)
+        assert "invalid git ref" in out.get("error", ""), bad
+
+
 def test_repo_architecture_emits_binding_files():
     out = _invoke(repo_architecture, depth=2, limit=20)
     assert out["node_count"] >= 1

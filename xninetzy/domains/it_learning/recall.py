@@ -193,6 +193,86 @@ def due_recall_cards(
     return [dict(row) for row in rows]
 
 
+def recall_forecast(
+    roadmap_id: int | None = None,
+    days: int = 14,
+    now: datetime | None = None,
+) -> dict:
+    init_db()
+    horizon = min(max(int(days), 1), int(get_settings().LEARNING_FORECAST_MAX_DAYS))
+    current = _now(now)
+    today = current.date()
+    conditions = ["status='active'"]
+    params: list[object] = []
+    if roadmap_id is not None:
+        conditions.append("roadmap_id=?")
+        params.append(roadmap_id)
+    with connect() as conn:
+        rows = conn.execute(
+            f"SELECT due_at FROM learning_recall_cards WHERE {' AND '.join(conditions)}",
+            params,
+        ).fetchall()
+    buckets: dict[str, int] = {}
+    for offset in range(horizon):
+        buckets[(today + timedelta(days=offset)).isoformat()] = 0
+    overdue = 0
+    total = 0
+    for row in rows:
+        raw = row["due_at"]
+        if not raw:
+            continue
+        total += 1
+        try:
+            due_date = datetime.fromisoformat(raw).date()
+        except ValueError:
+            continue
+        if due_date < today:
+            overdue += 1
+            continue
+        key = due_date.isoformat()
+        if key in buckets:
+            buckets[key] += 1
+    upcoming = sum(buckets.values())
+    return {
+        "roadmap_id": roadmap_id,
+        "generated_at": current.isoformat(),
+        "horizon_days": horizon,
+        "overdue": overdue,
+        "due_today": buckets.get(today.isoformat(), 0),
+        "upcoming_in_horizon": upcoming,
+        "active_cards": total,
+        "by_day": [{"date": day, "count": count} for day, count in sorted(buckets.items())],
+    }
+
+
+@tool
+def learning_recall_forecast(roadmap_id: int | None = None, days: int = 14) -> str:
+    """Perkiraan beban review recall: overdue, due hari ini, dan distribusi per hari.
+
+    Membantu merencanakan sesi belajar dengan melihat berapa kartu recall yang
+    jatuh tempo tiap hari ke depan (tanpa membocorkan jawaban).
+
+    Args:
+        roadmap_id: Batasi ke satu roadmap (opsional).
+        days: Horizon perkiraan dalam hari (1-60).
+    """
+    forecast = recall_forecast(roadmap_id, days)
+    lines = [
+        "*Recall Forecast*",
+        f"Overdue: {forecast['overdue']}",
+        f"Due hari ini: {forecast['due_today']}",
+        f"Dalam {forecast['horizon_days']} hari: {forecast['upcoming_in_horizon']}",
+        f"Total kartu aktif: {forecast['active_cards']}",
+        "",
+    ]
+    for entry in forecast["by_day"]:
+        if entry["count"]:
+            lines.append(f"{entry['date']}: {entry['count']}")
+    if forecast["overdue"] == 0 and forecast["upcoming_in_horizon"] == 0:
+        lines.append("Tidak ada review terjadwal dalam horizon ini.")
+    return "\n".join(lines)
+
+
 def keyword_coverage(answer: str, keywords: list[str]) -> float:
     normalized_answer = f" {_normalize(answer)} "
     matches = sum(1 for keyword in keywords if f" {keyword} " in normalized_answer)
@@ -234,6 +314,8 @@ def _next_schedule(card: dict, quality: int, current: datetime) -> dict:
             interval = 6
         else:
             interval = max(1, round(previous_interval * ease))
+    max_interval = max(1, int(get_settings().LEARNING_MAX_INTERVAL_DAYS))
+    interval = min(interval, max_interval)
     return {
         "ease_factor": round(ease, 4),
         "repetitions": repetitions,

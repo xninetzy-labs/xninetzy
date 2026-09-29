@@ -97,6 +97,10 @@ tableau = [
     "tableauserverclient>=0.25",
     "tableauhyperapi>=0.0.15927",
 ]
+moviepy = [
+    "moviepy>=2.0",
+    "imageio-ffmpeg>=0.5",
+]
 torch-cpu = [
     "torch>=2.2",
 ]
@@ -106,6 +110,7 @@ all = [
     "xninetzy-mcp[documents]",
     "xninetzy-mcp[browser]",
     "xninetzy-mcp[torch-cpu]",
+    "xninetzy-mcp[moviepy]",
 ]
 dev = [
     "pytest>=8.0",

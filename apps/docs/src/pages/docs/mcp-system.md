@@ -19,7 +19,7 @@ host (Claude / Claude Code / Cursor / Codex / OpenCode)
   ▼
 xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
   │
-  ├── xninetzy.tools.registry.get_all_tools()   (508 tools)
+  ├── xninetzy.tools.registry.get_all_tools()   (544 tools)
   │     │
   │     └── xninetzy.tools.manifest.manifest_for(name)
   │           ├── feature_pack: core | academic-unair | research | coding
@@ -241,7 +241,7 @@ Six checks must all PASS:
 
 | Check | Verifies |
 |---|---|
-| `tool_registry` | 508 tools classified, no unknown risk, no missing idempotency |
+| `tool_registry` | 544 tools classified, no unknown risk, no missing idempotency |
 | `secret_redaction` | `redact_secrets` strips sample OpenAI / GitHub / Google keys |
 | `safe_fetch` | SSRF guard rejects non-http(s), private/loopback, oversize |
 | `transport_config` | transport ∈ stdio\|streamable-http; default loopback |

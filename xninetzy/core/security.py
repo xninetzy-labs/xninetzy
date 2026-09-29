@@ -15,13 +15,23 @@ JID_PATTERN = CHAT_ID_PATTERN
 
 
 _SECRET_PATTERNS: tuple[str, ...] = (
-    r"sk-[A-Za-z0-9_\-]{16,}",
     r"sk-ant-[A-Za-z0-9_\-]{16,}",
+    r"sk-[A-Za-z0-9_\-]{16,}",
     r"ghp_[A-Za-z0-9]{16,}",
+    r"gho_[A-Za-z0-9]{16,}",
+    r"ghs_[A-Za-z0-9]{16,}",
     r"github_pat_[A-Za-z0-9_]{16,}",
-    r"xox[abps]-[A-Za-z0-9\-]{10,}",
+    r"xox[abpsr]-[A-Za-z0-9\-]{10,}",
+    r"xapp-[0-9]-[A-Za-z0-9\-]{10,}",
     r"AIza[A-Za-z0-9_\-]{16,}",
+    r"ya29\.[A-Za-z0-9_\-]{20,}",
     r"AKIA[0-9A-Z]{12,}",
+    r"(?:sk|rk|pk)_(?:live|test)_[A-Za-z0-9]{16,}",
+    r"whsec_[A-Za-z0-9]{16,}",
+    r"hf_[A-Za-z0-9]{16,}",
+    r"glpat-[A-Za-z0-9_\-]{16,}",
+    r"eyJ[A-Za-z0-9_\-]{10,}\.eyJ[A-Za-z0-9_\-]{10,}\.[A-Za-z0-9_\-]{10,}",
+    r"[Bb]earer\s+[A-Za-z0-9._\-]{20,}",
     r"-----BEGIN [A-Z ]*PRIVATE KEY-----",
 )
 _SECRET_RE = re.compile("|".join(f"(?:{p})" for p in _SECRET_PATTERNS))

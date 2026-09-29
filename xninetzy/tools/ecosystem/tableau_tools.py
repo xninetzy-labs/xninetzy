@@ -52,7 +52,9 @@ def _load_workbook(path: Path) -> Workbook:
 
 
 def _persist_workbook(workbook: Workbook, target: Path) -> dict[str, Any]:
-    target.parent.mkdir(parents=True, exist_ok=True)
+    from xninetzy.core.paths import resolve_artifact_output
+
+    target = resolve_artifact_output(target, create_parents=True)
     body = compile_workbook(workbook)
     target.write_bytes(body)
     return {
@@ -328,6 +330,9 @@ def tableau_story_create(
 ) -> dict[str, Any]:
     path = Path(workbook_path)
     workbook = _load_workbook(path)
+    from xninetzy.core.paths import resolve_artifact_output
+
+    path = resolve_artifact_output(path, create_parents=True)
     workbook.story_points = [(caption, f"sp{i + 1}") for i, caption in enumerate(points)]
     body = compile_workbook(workbook)
     path.write_bytes(body)
@@ -338,9 +343,10 @@ def tableau_story_create(
 def tableau_twb_export(workbook_path: str, target_path: str | None = None) -> dict[str, Any]:
     path = Path(workbook_path)
     workbook = _load_workbook(path)
-    target = Path(target_path) if target_path else path
+    from xninetzy.core.paths import resolve_artifact_output
+
+    target = resolve_artifact_output(target_path if target_path else path, create_parents=True)
     body = compile_workbook(workbook)
-    target.parent.mkdir(parents=True, exist_ok=True)
     target.write_bytes(body)
     return {"path": str(target), "bytes": len(body)}
 
@@ -354,10 +360,13 @@ def tableau_twbx_package(
     workspace = workspace_root()
     path = Path(workbook_path)
     res_paths = [Path(r) for r in (resources or [])]
+    from xninetzy.core.paths import resolve_artifact_output
+
     if output_path is None:
         out = workspace / "twbx" / f"{safe_field_token(path.stem)}.twbx"
     else:
         out = Path(output_path)
+    out = resolve_artifact_output(out, create_parents=True)
     result = package_twbx(twb_path=path, resources=res_paths, output_path=out)
     return {
         "package_path": str(result.package_path),

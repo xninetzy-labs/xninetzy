@@ -4,7 +4,15 @@ export type EasingName =
   | "ease_out"
   | "ease_in_out"
   | "cubic_bezier"
-  | "spring_deterministic";
+  | "spring_deterministic"
+  | "ease_in_back"
+  | "ease_out_back"
+  | "ease_in_out_back"
+  | "ease_out_elastic"
+  | "ease_out_bounce"
+  | "ease_out_expo"
+  | "ease_out_circ"
+  | "anticipate";
 
 export type Keyframe = {
   property: string;

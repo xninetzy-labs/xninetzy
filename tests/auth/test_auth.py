@@ -257,3 +257,16 @@ def test_callback_server_binds_and_receives_code() -> None:
     finally:
         stop_callback_server()
     assert callback_server_status()["running"] is False
+
+
+def test_url_policy_blocks_encoded_loopback() -> None:
+    assert is_private_address("http://2130706433/")
+    assert is_private_address("http://0x7f000001/")
+    assert is_private_address("http://[::ffff:127.0.0.1]/")
+
+
+def test_url_policy_allows_encoded_public() -> None:
+    import ipaddress
+
+    public = int(ipaddress.ip_address("8.8.8.8"))
+    assert not is_private_address(f"http://{public}/")

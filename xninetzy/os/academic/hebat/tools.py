@@ -108,23 +108,6 @@ def _is_owner_chat(*chat_ids: str | None) -> bool:
     return matches
 
 
-def _is_admin_context(chat_id: str | None) -> bool:
-    if not chat_id:
-        return False
-    raw = chat_id.lower()
-    normalized = normalize_chat_id(chat_id)
-    return (
-        raw.startswith("local-")
-        or raw.startswith("mcp-direct-")
-        or raw.startswith("admin-")
-        or raw == "system"
-        or raw.endswith("@admin.local")
-        or normalized == "187241037"
-        or "owner" in raw
-        or "admin" in raw
-    )
-
-
 def _now(s=None) -> datetime:
     s = s or get_settings()
     return datetime.now(ZoneInfo(s.APP_TIMEZONE))
@@ -1171,33 +1154,24 @@ async def _upload_direct_admin(
         "upload_mode": "direct_admin_mcp",
         "file_size": file_size,
     }
-    policy = evaluate_action("hebat_submit_submission", payload)
+    policy = evaluate_action("hebat_submit_submission_direct", payload)
     if not policy.allowed:
         return tool_error(ToolErrorCode.POLICY_HELD, f"Upload ditahan policy: {policy.reason}")
 
-    if not _is_owner_chat(chat_id) and not _is_admin_context(chat_id):
-        return tool_error(
-            ToolErrorCode.POLICY_HELD,
-            "Mode direct admin hanya untuk owner. chat_id kamu bukan owner.",
-        )
-
-    is_admin = _is_admin_context(chat_id)
-
-    if approval_id is None and not is_admin:
-        requested_id = request_approval(
-            chat_id,
-            chat_id,
-            "hebat_submit_submission_direct",
-            "Upload tugas HEBAT (Direct Admin)",
-            f"File: {filename} ({file_size / 1024:.1f} KB) untuk cmid {cmid}.",
-            payload,
-        )
-        return (
-            f"Upload HEBAT direct-admin membutuhkan approval #{requested_id}. "
-            f"Setelah approve, ulangi pemanggilan dengan approval_id={requested_id}."
-        )
-
-    if approval_id is not None and not is_admin:
+    if policy.requires_approval and not _is_owner_chat(chat_id):
+        if approval_id is None:
+            requested_id = request_approval(
+                chat_id,
+                chat_id,
+                "hebat_submit_submission_direct",
+                "Upload tugas HEBAT (Direct Admin)",
+                f"File: {filename} ({file_size / 1024:.1f} KB) untuk cmid {cmid}.",
+                payload,
+            )
+            return (
+                f"Upload HEBAT direct-admin membutuhkan approval #{requested_id}. "
+                f"Setelah approve, ulangi pemanggilan dengan approval_id={requested_id}."
+            )
         try:
             validate_approval(approval_id, "hebat_submit_submission_direct", policy.action_hash)
         except ValueError as exc:

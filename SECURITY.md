@@ -105,15 +105,21 @@ regex in callers.
 
 | Pattern | Provider |
 |---|---|
-| `sk-...` (16+ chars) | OpenAI / Anthropic generic |
+| `sk-...` (16+ chars) | OpenAI / generic |
 | `sk-ant-...` (16+ chars) | Anthropic-specific |
-| `ghp_...`, `github_pat_...` (16+ chars) | GitHub PATs |
-| `xox[abps]-...` (10+ chars) | Slack tokens |
+| `ghp_...`, `gho_...`, `ghs_...`, `github_pat_...` (16+ chars) | GitHub tokens / PATs |
+| `glpat-...` (16+ chars) | GitLab PATs |
+| `xox[abpsr]-...` (10+ chars), `xapp-...` | Slack tokens |
 | `AIza...` (16+ chars) | Google API keys |
+| `ya29....` (20+ chars) | Google OAuth access tokens |
 | `AKIA...` (12+ chars) | AWS access key IDs |
+| `sk_live_`, `sk_test_`, `rk_live_`, `pk_live_...`, `whsec_...` | Stripe keys / webhook secrets |
+| `hf_...` (16+ chars) | Hugging Face tokens |
+| `eyJ....eyJ....` | JSON Web Tokens (JWT) |
+| `Bearer <token>` (20+ chars) | Generic bearer auth headers |
 | `-----BEGIN ... PRIVATE KEY-----` | PEM private keys |
 
-Patterns live in `_SECRET_PATTERNS` (`xninetzy/core/security.py:17-26`).
+Patterns live in `_SECRET_PATTERNS` (`xninetzy/core/security.py`).
 Add new provider prefixes there, not at call sites.
 
 ## CAPTCHA OCR lockout

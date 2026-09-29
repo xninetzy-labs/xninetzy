@@ -18,18 +18,48 @@ def is_blocked_scheme(url: str) -> bool:
     return parsed.scheme.lower() in _BLOCKED_SCHEMES
 
 
+def _coerce_ip(host: str):
+    try:
+        return ipaddress.ip_address(host)
+    except ValueError:
+        pass
+    if host.isdigit():
+        value = int(host)
+        if 0 <= value <= 0xFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFF:
+            try:
+                return ipaddress.ip_address(value)
+            except ValueError:
+                return None
+    if host.startswith("0x"):
+        try:
+            value = int(host, 16)
+        except ValueError:
+            return None
+        if 0 <= value <= 0xFFFFFFFF:
+            return ipaddress.ip_address(value)
+    return None
+
+
 def is_private_address(url: str) -> bool:
     parsed = urlparse(url)
-    host = (parsed.hostname or "").lower()
+    host = (parsed.hostname or "").lower().strip("[]")
     if not host:
         return True
-    if host in {"localhost", "localhost.localdomain"}:
+    if host in {"localhost", "localhost.localdomain"} or host.endswith(".localhost"):
         return True
-    try:
-        ip = ipaddress.ip_address(host)
-        return ip.is_private or ip.is_loopback or ip.is_link_local
-    except ValueError:
+    ip = _coerce_ip(host)
+    if ip is None:
         return False
+    if getattr(ip, "version", None) == 6 and getattr(ip, "ipv4_mapped", None):
+        ip = ip.ipv4_mapped
+    return bool(
+        ip.is_private
+        or ip.is_loopback
+        or ip.is_link_local
+        or ip.is_multicast
+        or ip.is_reserved
+        or ip.is_unspecified
+    )
 
 
 def is_allowed_origin(url: str, allowed_origins: tuple[str, ...]) -> bool:

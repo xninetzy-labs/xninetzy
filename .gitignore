@@ -162,6 +162,9 @@ creds.json
 **/creds.json
 sessions/
 **/sessions/
+# Xninetzy auth session state machine is a real source package, not runtime data.
+!xninetzy/os/auth/sessions/
+!xninetzy/os/auth/sessions/*.py
 
 # ---------------------------
 # Docker / Compose

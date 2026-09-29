@@ -291,14 +291,14 @@ _DEFAULT_POLICIES: tuple[SourcePolicy, ...] = (
         notes="Dealls official API only; no browser scraping.",
     ),    SourcePolicy(
         source_id="jobstreet_id",
-        status=PolicyStatus.ALLOWED,
-        allowed_transports=("BROWSER",),
+        status=PolicyStatus.BLOCKED,
+        allowed_transports=(),
         automation_scope=AutomationScope.READ,
-        scraping_policy="ALLOWED",
-        max_pages_per_run=3,
-        max_jobs_per_run=50,
+        scraping_policy="BLOCKED",
+        max_pages_per_run=0,
+        max_jobs_per_run=0,
         requires_user_login=True,
-        notes="JobStreet/SEEK Asia ToS restricts automated collection. ALLOWED only with owner-gated browser + logged-in session. Proceed with owner awareness only.",
+        notes="JobStreet/SEEK Asia ToS explicitly restricts automated access; compliance class NEVER and CLAUDE.md forbids JobStreet scraping. Blocked: no scraping transport permitted.",
     ),
 )
 

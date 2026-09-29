@@ -140,6 +140,22 @@ _RISK_RULES: list[tuple[str, str, str, str]] = [
 ]
 
 
+_GIT_REF_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./^~@{}\-]{0,200}$")
+
+
+def _validate_git_ref(ref: str) -> str | None:
+    candidate = (ref or "").strip() or "HEAD"
+    if candidate.startswith("-"):
+        return None
+    if any(character.isspace() for character in candidate):
+        return None
+    if "=" in candidate or ".." in candidate:
+        return None
+    if not _GIT_REF_RE.fullmatch(candidate):
+        return None
+    return candidate
+
+
 def _resolve_root(root: str) -> Path:
     candidate = (root or "").strip()
     if not candidate or candidate in _SCOPE_ALIASES:
@@ -564,9 +580,15 @@ def repo_diff(
     import subprocess
 
     bounded_limit = max(1, min(limit, 200))
-    target_ref = target.strip() or "HEAD"
-    base_ref = base.strip() or "HEAD"
-    cmd = ["git", "diff", "--numstat", f"{base_ref}...{target_ref}"]
+    target_ref = _validate_git_ref(target)
+    base_ref = _validate_git_ref(base)
+    if base_ref is None or target_ref is None:
+        return json.dumps(
+            {"error": "invalid git ref: refs must not be option-like or contain '=', '..', or whitespace"},
+            ensure_ascii=False,
+        )
+    range_expr = f"{base_ref}...{target_ref}"
+    cmd = ["git", "diff", "--numstat", "--end-of-options", range_expr]
     try:
         proc = subprocess.run(
             cmd, cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=20
@@ -603,7 +625,7 @@ def repo_diff(
 
     if include_sample and hunks:
         sample_proc = subprocess.run(
-            ["git", "diff", "--no-color", f"{base_ref}...{target_ref}"],
+            ["git", "diff", "--no-color", "--end-of-options", range_expr],
             cwd=str(REPO_ROOT), capture_output=True, text=True, timeout=30,
         )
         if sample_proc.returncode == 0:

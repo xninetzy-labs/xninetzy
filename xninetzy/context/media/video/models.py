@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import math
-import uuid
 from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any, Mapping
@@ -76,6 +75,14 @@ class Easing(StrEnum):
     EASE_IN_OUT = "ease_in_out"
     CUBIC_BEZIER = "cubic_bezier"
     SPRING_DETERMINISTIC = "spring_deterministic"
+    EASE_IN_BACK = "ease_in_back"
+    EASE_OUT_BACK = "ease_out_back"
+    EASE_IN_OUT_BACK = "ease_in_out_back"
+    EASE_OUT_ELASTIC = "ease_out_elastic"
+    EASE_OUT_BOUNCE = "ease_out_bounce"
+    EASE_OUT_EXPO = "ease_out_expo"
+    EASE_OUT_CIRC = "ease_out_circ"
+    ANTICIPATE = "anticipate"
 
 
 class RendererSelectionReason(StrEnum):
@@ -106,6 +113,20 @@ class Resolution:
 
     def to_dict(self) -> dict[str, int]:
         return {"width": self.width, "height": self.height}
+
+
+_PRESET_RESOLUTIONS: dict[CompositionPreset, tuple[int, int]] = {
+    CompositionPreset.YOUTUBE_LANDSCAPE: (1920, 1080),
+    CompositionPreset.SHORTS_VERTICAL: (1080, 1920),
+    CompositionPreset.INSTAGRAM_VERTICAL: (1080, 1920),
+    CompositionPreset.SQUARE_SOCIAL: (1080, 1080),
+    CompositionPreset.PRESENTATION: (1920, 1080),
+}
+
+
+def resolution_for_preset(preset: CompositionPreset) -> Resolution:
+    width, height = _PRESET_RESOLUTIONS.get(preset, (1280, 720))
+    return Resolution(width, height)
 
 
 @dataclass(frozen=True, slots=True)
@@ -158,6 +179,44 @@ def easing_value(easing: Easing | str, t: float, *args: float) -> float:
         decay = math.exp(-0.6 * 6.0 * t)
         osc = math.cos(8.0 * t)
         return 1.0 - decay * osc
+    if name == "ease_in_back":
+        c1 = 1.70158
+        c3 = c1 + 1.0
+        return c3 * t * t * t - c1 * t * t
+    if name == "anticipate":
+        s = 2.0
+        return t * t * ((s + 1.0) * t - s)
+    if name == "ease_out_back":
+        c1 = 1.70158
+        c3 = c1 + 1.0
+        u = t - 1.0
+        return 1.0 + c3 * u * u * u + c1 * u * u
+    if name == "ease_in_out_back":
+        c2 = 1.70158 * 1.525
+        if t < 0.5:
+            return (pow(2.0 * t, 2) * ((c2 + 1.0) * 2.0 * t - c2)) / 2.0
+        return (pow(2.0 * t - 2.0, 2) * ((c2 + 1.0) * (2.0 * t - 2.0) + c2) + 2.0) / 2.0
+    if name == "ease_out_elastic":
+        c4 = (2.0 * math.pi) / 3.0
+        return pow(2.0, -10.0 * t) * math.sin((10.0 * t - 0.75) * c4) + 1.0
+    if name == "ease_out_bounce":
+        n1 = 7.5625
+        d1 = 2.75
+        u = t
+        if u < 1.0 / d1:
+            return n1 * u * u
+        if u < 2.0 / d1:
+            u -= 1.5 / d1
+            return n1 * u * u + 0.75
+        if u < 2.5 / d1:
+            u -= 2.25 / d1
+            return n1 * u * u + 0.9375
+        u -= 2.625 / d1
+        return n1 * u * u + 0.984375
+    if name == "ease_out_expo":
+        return 1.0 - pow(2.0, -10.0 * t)
+    if name == "ease_out_circ":
+        return math.sqrt(1.0 - (t - 1.0) * (t - 1.0))
     raise ValueError(f"unknown easing: {name}")
 
 
@@ -232,6 +291,9 @@ CANONICAL_PRIMITIVES: frozenset[str] = frozenset(
         "CameraPush", "CameraPull", "KenBurns",
         "LowerThird", "TitleCard", "Callout", "CodeHighlight",
         "BrowserFrame", "DeviceFrame",
+        "Bounce", "Elastic", "Rotate", "Flip3D", "Swing",
+        "Wiggle", "Shake", "Orbit", "Parallax", "PathMove",
+        "MotionBlurStreak", "GlowPulse", "PulseScale",
     }
 )
 

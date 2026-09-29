@@ -20,15 +20,12 @@ from xninetzy.context.media.video.models import (
     Easing,
     MotionPreset,
     Resolution,
-    TrackKind,
+    resolution_for_preset,
     VideoAsset,
     VideoComposition,
     VideoProject,
     VideoScene,
-    VideoTrack,
-    VideoClip,
 )
-from xninetzy.context.media.video.motion import resolve_primitive
 
 
 @dataclass(frozen=True, slots=True)
@@ -72,17 +69,7 @@ _TEMPLATE_COMPOSITION_ID = {
 
 
 def _resolution_from_preset(preset: CompositionPreset) -> Resolution:
-    if preset == CompositionPreset.YOUTUBE_LANDSCAPE:
-        return Resolution(1920, 1080)
-    if preset == CompositionPreset.SHORTS_VERTICAL:
-        return Resolution(1080, 1920)
-    if preset == CompositionPreset.INSTAGRAM_VERTICAL:
-        return Resolution(1080, 1920)
-    if preset == CompositionPreset.SQUARE_SOCIAL:
-        return Resolution(1080, 1080)
-    if preset == CompositionPreset.PRESENTATION:
-        return Resolution(1920, 1080)
-    return Resolution(1280, 720)
+    return resolution_for_preset(preset)
 
 
 def project_demo_template(ctx: TemplateContext) -> VideoProject:

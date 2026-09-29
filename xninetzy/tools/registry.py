@@ -361,6 +361,9 @@ from xninetzy.tools.ecosystem.career_dashboard_tools import (
     career_observability_dashboard,
     career_recover_stuck_applications,
 )
+from xninetzy.tools.ecosystem.career_scraping_tools import (
+    career_scraping_tools as _CAREER_SCRAPING_TOOLS,
+)
 from xninetzy.tools.ecosystem.optimization_tools import (
     deepeval_evaluate,
     dspy_compile,
@@ -444,6 +447,7 @@ from xninetzy.domains.it_learning.concept_graph import (
 from xninetzy.domains.it_learning.recall import (
     learning_create_recall_card,
     learning_due_recall,
+    learning_recall_forecast,
     learning_submit_recall_answer,
 )
 from xninetzy.os.notifications.admin_notifier import admin_notify_progress
@@ -457,6 +461,9 @@ from xninetzy.interfaces.media.media_tools import (
 )
 from xninetzy.tools.ecosystem.media_video_tools import (
     media_video_tools as _MEDIA_VIDEO_TOOLS,
+)
+from xninetzy.tools.ecosystem.moviepy_tools import (
+    moviepy_tools as _MOVIEPY_TOOLS,
 )
 from xninetzy.workflow.tools import (
     workflow_status,
@@ -931,6 +938,7 @@ def get_all_tools() -> list[BaseTool]:
             career_close_application,
             career_observability_dashboard,
             career_recover_stuck_applications,
+            *_CAREER_SCRAPING_TOOLS,
             tasks_create,
             tasks_get,
             tasks_list,
@@ -974,6 +982,7 @@ def get_all_tools() -> list[BaseTool]:
             learning_get_concept_map,
             learning_create_recall_card,
             learning_due_recall,
+            learning_recall_forecast,
             learning_submit_recall_answer,
             # Graph RAG
             graph_add_node,
@@ -1009,6 +1018,7 @@ def get_all_tools() -> list[BaseTool]:
             media_ingest_to_knowledge,
             # Media (video creator / editor — deterministic, CPU-only)
             *_MEDIA_VIDEO_TOOLS,
+            *_MOVIEPY_TOOLS,
             # Multi-action workflow
             workflow_status,
             workflow_latest,
@@ -1339,6 +1349,7 @@ def get_tool_groups() -> dict[str, list[str]]:
             "learning_start_study_session",
             "learning_complete_study_session",
             "learning_list_study_sessions",
+            "learning_recall_forecast",
         ],
         "knowledge": ["knowledge_ingest_text", "knowledge_search", "knowledge_answer", "knowledge_evaluate_retrieval"],
         "unified_search": ["unified_search"],
@@ -1399,6 +1410,11 @@ def get_tool_groups() -> dict[str, list[str]]:
             "career_close_application",
             "career_observability_dashboard",
             "career_recover_stuck_applications",
+            "career_scrape_diagnose",
+            "career_scrape_run",
+            "career_clear_cache",
+            "career_validate_source",
+            "career_source_health",
         ],
         "graph": ["graph_search", "graph_get_context", "graph_explain_topic_map"],
         "skills": [
@@ -1516,5 +1532,10 @@ def get_tool_groups() -> dict[str, list[str]]:
             "video_session_start",
             "video_session_stop",
             "video_renderer_health",
+            "video_platform_targets",
+            "video_validate_for_platform",
+            "moviepy_status",
+            "moviepy_reframe",
+            "moviepy_concat",
         ],
     }

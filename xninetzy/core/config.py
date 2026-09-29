@@ -407,6 +407,9 @@ class Settings(BaseSettings):
         return max(1, int(self.HEBAT_SYNC_CONCURRENCY))
 
     # Knowledge / Vector memory
+    LEARNING_MAX_INTERVAL_DAYS: int = 365
+    LEARNING_FORECAST_MAX_DAYS: int = 60
+
     KNOWLEDGE_ENABLED: bool = True
     VECTOR_STORE: str = "faiss"
     VECTOR_DATA_DIR: str = "/app/data/vector"

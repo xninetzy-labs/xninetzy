@@ -33,6 +33,53 @@ export function easingValue(easing: EasingName, t: number, ...args: number[]): n
     const osc = Math.cos(8 * t);
     return 1 - decay * osc;
   }
+  if (easing === "ease_in_back") {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    return c3 * t * t * t - c1 * t * t;
+  }
+  if (easing === "anticipate") {
+    const s = 2;
+    return t * t * ((s + 1) * t - s);
+  }
+  if (easing === "ease_out_back") {
+    const c1 = 1.70158;
+    const c3 = c1 + 1;
+    const u = t - 1;
+    return 1 + c3 * u * u * u + c1 * u * u;
+  }
+  if (easing === "ease_in_out_back") {
+    const c2 = 1.70158 * 1.525;
+    return t < 0.5
+      ? (Math.pow(2 * t, 2) * ((c2 + 1) * 2 * t - c2)) / 2
+      : (Math.pow(2 * t - 2, 2) * ((c2 + 1) * (2 * t - 2) + c2) + 2) / 2;
+  }
+  if (easing === "ease_out_elastic") {
+    const c4 = (2 * Math.PI) / 3;
+    return Math.pow(2, -10 * t) * Math.sin((10 * t - 0.75) * c4) + 1;
+  }
+  if (easing === "ease_out_bounce") {
+    const n1 = 7.5625;
+    const d1 = 2.75;
+    let u = t;
+    if (u < 1 / d1) return n1 * u * u;
+    if (u < 2 / d1) {
+      u -= 1.5 / d1;
+      return n1 * u * u + 0.75;
+    }
+    if (u < 2.5 / d1) {
+      u -= 2.25 / d1;
+      return n1 * u * u + 0.9375;
+    }
+    u -= 2.625 / d1;
+    return n1 * u * u + 0.984375;
+  }
+  if (easing === "ease_out_expo") {
+    return 1 - Math.pow(2, -10 * t);
+  }
+  if (easing === "ease_out_circ") {
+    return Math.sqrt(1 - (t - 1) * (t - 1));
+  }
   throw new Error(`unknown easing: ${easing}`);
 }
 

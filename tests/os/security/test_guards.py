@@ -66,3 +66,37 @@ async def test_safe_fetch_blocks_localhost_by_default() -> None:
     with pytest.raises(SecurityError) as exc:
         await safe_fetch("http://127.0.0.1:8080/admin")
     assert exc.value.code == "SSRF_BLOCKED"
+
+
+def test_host_is_private_blocks_decimal_ipv4() -> None:
+    assert _host_is_private("2130706433") is True
+
+
+def test_host_is_private_blocks_hex_ipv4() -> None:
+    assert _host_is_private("0x7f000001") is True
+
+
+def test_host_is_private_blocks_ipv4_mapped_ipv6() -> None:
+    assert _host_is_private("::ffff:127.0.0.1") is True
+    assert _host_is_private("[::1]") is True
+
+
+def test_host_is_private_blocks_metadata_decimal() -> None:
+    import ipaddress
+
+    metadata_decimal = str(int(ipaddress.ip_address("169.254.169.254")))
+    assert _host_is_private(metadata_decimal) is True
+
+
+def test_host_is_private_allows_public_encoded() -> None:
+    import ipaddress
+
+    public_decimal = str(int(ipaddress.ip_address("8.8.8.8")))
+    assert _host_is_private(public_decimal) is False
+
+
+@pytest.mark.asyncio
+async def test_safe_fetch_blocks_decimal_loopback() -> None:
+    with pytest.raises(SecurityError) as exc:
+        await safe_fetch("http://2130706433/admin")
+    assert exc.value.code == "SSRF_BLOCKED"

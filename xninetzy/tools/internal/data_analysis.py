@@ -42,8 +42,14 @@ def data_generate_xlsx(
     """Generate an XLSX artifact from a list of row dicts. Returns artifact
     metadata including path, checksum, schema, and row count. The file is
     written to ``output_path`` before this function returns."""
+    from xninetzy.core.paths import ArtifactPathError, resolve_artifact_output
+
+    try:
+        safe_path = resolve_artifact_output(output_path, create_parents=True)
+    except ArtifactPathError as exc:
+        return {"error": str(exc)}
     artifact = generate_xlsx_artifact(
-        path=output_path,
+        path=str(safe_path),
         name=name,
         rows=rows,
         source=source,
@@ -99,6 +105,12 @@ def dashboard_generate(
         new_widget_id,
     )
 
+    from xninetzy.core.paths import ArtifactPathError, resolve_artifact_output
+
+    try:
+        output_path = str(resolve_artifact_output(output_path, create_parents=True))
+    except ArtifactPathError as exc:
+        return {"error": str(exc)}
     registry = get_default_registry()
     provider = registry.get(provider_id)
     if provider is None:

@@ -113,15 +113,23 @@ def video_project_create(
         idempotency_key: Kunci opsional agar retry tidak duplikat
     """
 
-    from xninetzy.context.media.video.models import CompositionPreset
+    from xninetzy.context.media.video.models import (
+        CompositionPreset,
+        resolution_for_preset,
+    )
 
     def _create() -> str:
         engine = _engine()
         preset_enum = CompositionPreset(preset) if preset else CompositionPreset.CUSTOM
+        target_width, target_height = width, height
+        if preset_enum is not CompositionPreset.CUSTOM:
+            preset_resolution = resolution_for_preset(preset_enum)
+            target_width = preset_resolution.width
+            target_height = preset_resolution.height
         composition = engine.create_composition(
             name=name,
-            width=width,
-            height=height,
+            width=target_width,
+            height=target_height,
             fps=fps,
             duration_seconds=duration_seconds,
             preset=preset_enum,
@@ -1064,6 +1072,36 @@ def video_renderer_health() -> str:
     return _ok(out)
 
 
+@tool
+def video_platform_targets() -> str:
+    """Daftar spesifikasi platform sosial media (aspect, fps, durasi, resolusi)."""
+    from xninetzy.context.media.video.social import PLATFORM_SPECS
+
+    return _ok({name: spec.to_dict() for name, spec in sorted(PLATFORM_SPECS.items())})
+
+
+@tool
+def video_validate_for_platform(project_id: str, platform: str) -> str:
+    """Cek apakah VideoProject siap upload ke platform (tiktok, instagram_reels,
+    instagram_feed, youtube_shorts, youtube_landscape, x_twitter).
+
+    Memvalidasi aspect ratio, fps, durasi, dan resolusi komposisi utama terhadap
+    spesifikasi platform sebelum render/upload. Mengembalikan ok + errors/warnings.
+
+    Args:
+        project_id: ID VideoProject.
+        platform: Nama platform target.
+    """
+    from xninetzy.context.media.video.social import validate_for_platform
+
+    store, _ = _storage()
+    project = store.get(project_id)
+    if project is None:
+        return _ok({"ok": False, "errors": [f"unknown project_id {project_id!r}"]})
+    report = validate_for_platform(project, platform)
+    return _ok(report.to_dict())
+
+
 media_video_tools = [
     video_project_create,
     video_project_inspect,
@@ -1081,4 +1119,6 @@ media_video_tools = [
     video_session_start,
     video_session_stop,
     video_renderer_health,
+    video_platform_targets,
+    video_validate_for_platform,
 ]

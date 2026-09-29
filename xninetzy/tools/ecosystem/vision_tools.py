@@ -186,7 +186,17 @@ def image_preprocess(
         applied.append("deskew")
 
     work = _ensure_uint8(work)
-    out = Path(output_path).expanduser() if output_path else resolved.with_name(f"{resolved.stem}__prep.png")
+    if output_path:
+        from xninetzy.core.paths import ArtifactPathError, resolve_artifact_output
+
+        try:
+            out = resolve_artifact_output(
+                output_path, create_parents=True, extra_roots=(resolved.parent,)
+            )
+        except ArtifactPathError as exc:
+            return json.dumps({"error": str(exc)}, ensure_ascii=False)
+    else:
+        out = resolved.with_name(f"{resolved.stem}__prep.png")
     out.parent.mkdir(parents=True, exist_ok=True)
     if work.ndim == 2:
         Image.fromarray(work, mode="L").save(out)
@@ -260,7 +270,17 @@ def image_crop(
     if x1 <= x0 or y1 <= y0:
         return json.dumps({"error": "empty crop region", "bounds": [x0, y0, x1, y1]}, ensure_ascii=False)
     crop = arr[y0:y1, x0:x1]
-    out = Path(output_path).expanduser() if output_path else resolved.with_name(f"{resolved.stem}__crop.png")
+    if output_path:
+        from xninetzy.core.paths import ArtifactPathError, resolve_artifact_output
+
+        try:
+            out = resolve_artifact_output(
+                output_path, create_parents=True, extra_roots=(resolved.parent,)
+            )
+        except ArtifactPathError as exc:
+            return json.dumps({"error": str(exc)}, ensure_ascii=False)
+    else:
+        out = resolved.with_name(f"{resolved.stem}__crop.png")
     out.parent.mkdir(parents=True, exist_ok=True)
     Image.fromarray(crop, mode="RGB").save(out)
     payload = {

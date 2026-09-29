@@ -10,11 +10,14 @@ from xninetzy.db.migrations import run_migrations
 from xninetzy.db.sqlite import connect, init_db
 from xninetzy.domains.it_learning.concept_graph import concept_map
 from xninetzy.domains.it_learning.recall import (
+    _next_schedule,
     create_recall_card,
     due_recall_cards,
     keyword_coverage,
     learning_due_recall,
+    learning_recall_forecast,
     learning_submit_recall_answer,
+    recall_forecast,
     recall_quality,
     recall_summary,
     submit_recall_answer,
@@ -267,3 +270,55 @@ def test_answered_recall_releases_today_plan_until_next_due_date():
 
     assert plan["mode"] != "recall"
     assert plan["recall_card_id"] is None
+
+
+def test_next_schedule_clamps_to_max_interval(monkeypatch):
+    monkeypatch.setenv("LEARNING_MAX_INTERVAL_DAYS", "7")
+    get_settings.cache_clear()
+    try:
+        card = {
+            "ease_factor": 2.5,
+            "repetitions": 5,
+            "interval_days": 100,
+            "lapse_count": 0,
+        }
+        schedule = _next_schedule(card, quality=5, current=_clock())
+        assert schedule["interval_days"] == 7
+    finally:
+        get_settings.cache_clear()
+
+
+def test_recall_forecast_counts_due_today_and_overdue():
+    roadmap_id, _concept_id, _card_id = _card(now=_clock())
+    forecast = recall_forecast(roadmap_id, days=14, now=_clock())
+    assert forecast["active_cards"] == 1
+    assert forecast["due_today"] == 1
+    assert forecast["overdue"] == 0
+    assert forecast["horizon_days"] == 14
+
+    later = recall_forecast(roadmap_id, days=14, now=_clock(day=30))
+    assert later["overdue"] == 1
+    assert later["due_today"] == 0
+
+
+def test_recall_forecast_buckets_future_review_after_success():
+    roadmap_id, _concept_id, card_id = _card(now=_clock())
+    submit_recall_answer(
+        card_id,
+        "data berlabel model prediksi",
+        5,
+        "attempt-forecast",
+        "owner",
+        _clock(),
+    )
+    forecast = recall_forecast(roadmap_id, days=14, now=_clock())
+    upcoming_days = [entry for entry in forecast["by_day"] if entry["count"] > 0]
+    assert forecast["due_today"] == 0
+    assert upcoming_days, "expected at least one future review day"
+
+
+def test_learning_recall_forecast_tool_hides_answers():
+    _card(now=_clock())
+    out = learning_recall_forecast.invoke({"days": 14})
+    assert "Recall Forecast" in out
+    assert "Model belajar dari data berlabel" not in out

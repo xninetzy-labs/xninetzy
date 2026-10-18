@@ -64,7 +64,7 @@ def test_compile_workbook_preserves_source(parsed_template: object) -> None:
 
 def test_compile_workbook_appends_worksheet(parsed_template: object) -> None:
     spec = parse_visualization(
-        {"type": "bar", "rows": ["federated.col1"], "measure": "value"}
+        {"type": "bar", "cols": ["customer_state"], "measure": "price"}
     )
     body = compile_workbook(
         parsed_template,

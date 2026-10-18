@@ -101,8 +101,8 @@ def video_project_create(
 
     Args:
         name: Nama project (mis. "My App Demo")
-        width: Lebar composition (default 1920)
-        height: Tinggi composition (default 1080)
+        width: Lebar composition (default 1920; nilai non-default menimpa preset)
+        height: Tinggi composition (default 1080; nilai non-default menimpa preset)
         fps: Frame rate composition (default 30)
         duration_seconds: Durasi total (default 30.0; max 600.0)
         preset: youtube_landscape | shorts_vertical | instagram_vertical |
@@ -122,7 +122,7 @@ def video_project_create(
         engine = _engine()
         preset_enum = CompositionPreset(preset) if preset else CompositionPreset.CUSTOM
         target_width, target_height = width, height
-        if preset_enum is not CompositionPreset.CUSTOM:
+        if preset_enum is not CompositionPreset.CUSTOM and (width, height) == (1920, 1080):
             preset_resolution = resolution_for_preset(preset_enum)
             target_width = preset_resolution.width
             target_height = preset_resolution.height

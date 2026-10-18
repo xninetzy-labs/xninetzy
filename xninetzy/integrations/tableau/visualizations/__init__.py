@@ -3,7 +3,7 @@ from __future__ import annotations
 from typing import Any
 
 from xninetzy.integrations.tableau.errors import TableauIntegrationError
-from xninetzy.integrations.tableau.ir import VisualizationSpec
+from xninetzy.integrations.tableau.ir import DATE_LEVELS, VisualizationSpec
 
 
 SUPPORTED_VISUALIZATIONS = frozenset(
@@ -21,6 +21,18 @@ SUPPORTED_VISUALIZATIONS = frozenset(
         "table",
     }
 )
+
+
+def _parse_date_level(value: Any) -> str | None:
+    if value is None or value == "":
+        return None
+    level = str(value).lower().strip()
+    if level not in DATE_LEVELS:
+        raise TableauIntegrationError(
+            f"VIZ_OPTION_UNSUPPORTED: date_level '{value}' tidak didukung. Didukung: {sorted(DATE_LEVELS)}",
+            code="VIZ_TYPE_ERROR",
+        )
+    return level
 
 
 def parse_visualization(spec: dict[str, Any]) -> VisualizationSpec:
@@ -47,6 +59,7 @@ def parse_visualization(spec: dict[str, Any]) -> VisualizationSpec:
         label=spec.get("label"),
         top_n=int(spec["top_n"]) if spec.get("top_n") is not None else None,
         trend_line=bool(spec.get("trend_line", False)),
+        date_level=_parse_date_level(spec.get("date_level")),
     )
 
 

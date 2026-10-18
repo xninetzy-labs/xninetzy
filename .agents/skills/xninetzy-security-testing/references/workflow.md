@@ -1,139 +1,145 @@
 # Workflow examples for `xninetzy-security-testing`
 
-Seven concrete scenarios, with the exact MCP tool sequence the orchestrator should run.
+Every tool named here is registered in `xninetzy/tools/registry.py`. A tool that is not registered is never called; report `TOOL_MISSING` instead. `tests/governance/test_security_skill_registry.py` enforces this.
 
-## 1. Owner wants a quick posture check on their personal site
+Available today:
+
+- scope and network: `security_scope`, `security_assets`, `security_headers`, `security_api_inventory`, `security_http_probe`
+- static: `security_sast`, `security_dependencies`, `security_authz_matrix`, `security_role_paths`, `security_compose_review`, `security_nginx_review`, `scaling_review`
+- scanner gateway: `security_check_tools`, `security_run_gitleaks`, `security_run_trivy`, `security_run_osv`, `security_run_semgrep`, `security_sbom`, `security_run_zap`, `security_run_schemathesis`
+- findings: `security_threat_model`, `security_validate_finding`, `security_finding_record`, `security_finding_update`, `security_correlate`, `security_regression`, `security_report`
+- performance and data stores: `perf_plan`, `perf_run_k6`, `perf_profile`, `perf_compare`, `perf_capacity`, `redis_review`, `postgres_review`
+
+Scanner tools run only from images that are already installed locally; a missing image returns `TOOL_MISSING` and is never pulled. Nuclei is not integrated. Say so in the report; do not simulate a scanner that did not run.
+
+## 1. Quick posture check on the owner's public site
 
 ```text
 owner: scan https://misbah.dev
 orchestrator:
-  1. security_check_tools                       → confirm nuclei + trivy installed
-  2. security_declare_target(
-       target="https://misbah.dev",
-       scan_type="passive"
-     )                                          → session_id=sec-1a2b3c
-  3. security_run_nuclei(
-       target="https://misbah.dev",
-       templates="technologies,exposures",
-       rate_limit=10
-     )                                          → nuclei passive JSON in /tmp/xninetzy-nuclei/
-  4. security_list_scans(limit=10)               → audit log entry visible
-  5. security_generate_report(scan_id="")        → Markdown summary
+  1. security_scope(
+       targets=["https://misbah.dev"],
+       rationale="posture check of my own site"
+     )                                  → scope_token=sec-...
+  2. security_headers(scope_token, target="https://misbah.dev")
+  3. security_assets(scope_token, target="https://misbah.dev")
+  4. security_api_inventory(scope_token, target="https://misbah.dev")
+  5. security_threat_model(scope_token, inventory_summary=<steps 2-4 as JSON>)
 ```
 
-`scan_type="passive"` because the owner only wants fingerprinting — no auth bypass, no payload fuzzing.
+Steps 2-4 are bounded, read-only GET requests.
 
-## 2. Owner wants a full OWASP ZAP baseline on their staging app
+## 2. Owner's own stack on this machine (owner lab)
 
 ```text
-owner: jalankan zap baseline di staging.perusahaan-saya.id
+owner: scan my dev stack at http://localhost:8080
 orchestrator:
-  1. security_check_tools                       → confirm zap-baseline.py installed
-  2. security_declare_target(
-       target="https://staging.perusahaan-saya.id",
-       scan_type="passive"
-     )                                          → session_id issued
-  3. security_run_zap(
-       target="https://staging.perusahaan-saya.id",
-       mode="baseline",
-       timeout_seconds=600
-     )                                          → report di /tmp/xninetzy-zap/
+  1. security_scope(
+       targets=["http://localhost:8080"],
+       rationale="my own dev stack",
+       kind="owner_lab",
+       attestation="I own and operate this stack",
+       request_budget=5000
+     )                                  → scope_token, TTL capped at 8 h
+  2. security_headers / security_assets / security_api_inventory with that scope_token
 ```
 
-OWASP ZAP **baseline** is designed for passive + light active scanning during CI/CD; it does not brute-force credentials or fuzz inputs.
+Rules of `owner_lab`:
 
-## 3. Owner wants authenticated active scan on their intranet app
+- only `localhost`, `127.0.0.1`, `[::1]`; any other host is rejected;
+- profile `passive` by default; `active` needs `active_attestation` as well;
+- request budget and rate cap per scope; every request is re-checked, so redirects to other hosts and DNS rebinding to a non-loopback address fail;
+- `docker_network` is not supported yet.
 
-```text
-owner: saya butuh zap full scan di http://10.0.5.23:8080
-orchestrator:
-  1. (refuse if on universal protection list — intranet is not)
-  2. security_declare_target(
-       target="http://10.0.5.23:8080",
-       scan_type="active",
-       attestation="I am the owner of 10.0.5.23 internal staging server"
-     )                                          → session_id issued (gated)
-  3. security_run_zap(
-       target="http://10.0.5.23:8080",
-       mode="full",
-       attestation="I am the owner of 10.0.5.23 internal staging server",
-       timeout_seconds=1800
-     )                                          → full active scan
-```
+Do not use `XNINETZY_ALLOW_PRIVATE_TARGETS`: it is deprecated, logs a warning and opens every private host for every tool.
 
-The `attestation` regex (English or Bahasa Indonesia) is the second authorization layer for any active scan against a private IP.
-
-## 4. Owner wants SAST scan of their codebase
+## 3. SAST of the owner's codebase
 
 ```text
 owner: scan kerentanan di repo saya ~/code/myapp
 orchestrator:
-  1. security_run_sast(
-       repo_path="/home/owner/code/myapp",
-       semgrep_config="p/security-audit"
-     )                                          → semgrep + gitleaks local-only
+  1. security_scope(targets=["file:///home/owner/code/myapp"], rationale="own repo")
+  2. security_sast(scope_token, root="/home/owner/code/myapp")
 ```
 
-100% local — no target on a network, so no attestation needed.
+`security_sast` defaults to the `light` regex engine (`confidence` 0.3). Findings are leads, not verified vulnerabilities. With no `glob` it detects the languages present (`.py`, `.ts`, `.tsx`, `.js`, `.jsx`, `.mjs`, `.go`, `.rb`, `.php`, `.java`) and scans each; the chosen patterns come back in `globs`. `engine="semgrep"` delegates to `security_run_semgrep` and returns `TOOL_MISSING` when Docker or the pinned image is absent; any other engine is rejected. Test and fixture files are skipped for credential rules unless `include_tests=true`. Python-only rules do not run on other languages. Each run is recorded as `sast-light`, and `security_dependencies` records `dependency-inventory`, so `security_report` lists them.
 
-## 5. Owner wants dependency vulnerability scan on their Docker image
+## 4. Dependency inventory
 
 ```text
-owner: scan image docker saya myorg/myapp:1.4.2
+owner: apa saja dependency di monorepo saya
 orchestrator:
-  1. security_run_trivy(
-       scan_path="myorg/myapp:1.4.2",
-       scan_type="image",
-       severity="HIGH,CRITICAL",
-       output_format="sarif"
-     )                                          → SARIF report di /tmp/xninetzy-trivy/
+  1. security_scope(targets=["file:///home/owner/code/monorepo"], rationale="own repo")
+  2. security_dependencies(scope_token, root="/home/owner/code/monorepo")
 ```
 
-Trivy pulls the image locally (no network egress beyond the image registry).
+Walks the tree (respecting `.gitignore`) and reads `package-lock.json`, `bun.lock`, `pnpm-lock.yaml`, `yarn.lock`, `uv.lock`, `poetry.lock`, `requirements*.txt`, `Cargo.lock`, `pubspec.lock`, `go.sum`, `composer.lock`. The result always has `vulnerabilities: "NOT_ASSESSED"`: it is an inventory. Never present it as a vulnerability scan.
 
-## 6. Owner wants a full recon→report cycle
+## 5. Record, correlate and regress findings
 
 ```text
-owner: saya mau pentest lengkap di https://app.perusahaan-saya.id
 orchestrator:
-  1. security_check_tools                       → inventory
-  2. security_declare_target(
-       target="https://app.perusahaan-saya.id",
-       scan_type="full_pentest",
-       attestation="Saya adalah pemilik https://app.perusahaan-saya.id"
-     )                                          → session_id issued
-  3. security_run_pentest(
-       target="https://app.perusahaan-saya.id",
-       profile="standard",
-       attestation="Saya adalah pemilik https://app.perusahaan-saya.id",
-       timeout_seconds=900
-     )                                          → 5-step orchestrated report
-  4. security_generate_report()                  → Markdown summary across 5 entries
+  1. security_validate_finding(scope_token, title, asset, location, category, evidence, severity, confidence)
+  2. security_correlate(hits=[...], persist=True, scope_token)      → de-duplicated findings
+  3. security_finding_record(title, asset, severity, category, evidence, remediation, scope_token)
+  4. security_regression(scope_token, finding_id, test_id="tests/security/test_x.py", status="proposed")
 ```
 
-`profile="standard"` runs Nuclei passive + ZAP baseline + Trivy FS + Semgrep + Gitleaks. `profile="aggressive"` upgrades to vulnerabilities + zap full (needs stronger attestation).
+Evidence must never contain secret values; store rule id, file, line and a hash prefix.
 
-## 7. Refusal example — third-party / protected host
+## 6. Full cycle on an owned application
+
+```text
+owner: saya mau audit lengkap app saya
+orchestrator:
+  1. security_scope(...)            for the URL, or owner_lab for localhost
+  2. security_scope(...)            a second, file:// scope for the repository
+  3. security_headers, security_assets, security_api_inventory
+  4. security_sast, security_dependencies
+  5. security_threat_model
+  6. security_validate_finding for each verified issue, then security_correlate
+  7. security_finding_record + security_regression for each fixed issue
+```
+
+Call `security_report(scope_token)` for the consolidated report. It lists every tool that did not run as `NOT_ASSESSED`; keep those under limitations.
+
+## 7. Refusal example: third-party or protected host
 
 ```text
 owner: scan fst.unair.ac.id
 orchestrator:
-  → refuse immediately.
-  → reason: target matches BLOCKED_HOST_SUFFIXES (".ac.id")
-  → offer alternative: "if you own this faculty site and have written authorization,
-    run `security_declare_target` after adding the host to the local bypass — otherwise
-    use a self-hosted dev mirror"
+  → security_scope refuses: "target dilindungi (institusi pihak ketiga)"
+  → hosts ending in .ac.id, .go.id and .mil.id are refused
+  → offer alternative: a self-hosted mirror, run through owner_lab
 ```
 
-This refusal is **hard-coded** in `xninetzy/domains/security/scope.py` and **cannot** be overridden by the owner over chat.
+The refusal is in `_normalize_target` (`xninetzy/tools/ecosystem/security_tools.py`), applies to every scope kind, and cannot be overridden from chat or by `XNINETZY_ALLOW_PRIVATE_TARGETS`.
 
-## Audit log patterns
+## 8. Scanner gateway on the owner's repository
 
-The audit log is **purely in-memory**, holds at most 500 entries FIFO, and never persists to disk by design. To export:
-
-```bash
-xc_secret = os.environ['XNINETZY_INTERNAL_TOKEN']   # noqa
-# (no public export tool — fetch via debug endpoint if available)
+```text
+owner: cek secret dan CVE di repo saya
+orchestrator:
+  1. security_scope(targets=["file:///home/owner/code/myapp"], rationale="own repo")
+  2. security_check_tools()                         → per-scanner READY/DEGRADED/MISSING/UNHEALTHY
+  3. security_run_gitleaks(scope_token, root="/home/owner/code/myapp", persist=True)
+  4. security_run_trivy(scope_token, root="/home/owner/code/myapp", persist=True)
+  5. security_run_osv(scope_token, root="/home/owner/code/myapp", persist=True)
+  6. security_report(scope_token)
 ```
 
-Practically the log is for in-session review via `security_list_scans` and `security_generate_report` only. Long-term persistence is a future v1.1 feature gated by the owner.
+A scanner whose image is not installed returns `TOOL_MISSING` with the `docker pull` command; tell the owner to pull it, do not run it yourself. Secrets are never returned: only rule id, file, line and a hash prefix.
+
+## 9. Load test and capacity on an owner lab
+
+```text
+owner: load test API saya di localhost:3000
+orchestrator:
+  1. security_scope(targets=["http://localhost:3000"], kind="owner_lab", attestation="...", request_budget=20000)
+  2. perf_plan(scope_token, target="http://localhost:3000", endpoints=[...])   → k6 script, nothing executed
+  3. perf_run_k6(scope_token, ...)          → runs in the k6 container under the memory watchdog
+  4. perf_compare(baseline, candidate)  /  perf_capacity(...)
+```
+
+`perf_run_k6` requires an `owner_lab` scope, reserves the request budget up front, and aborts the run when available memory falls under the watchdog floor.
+

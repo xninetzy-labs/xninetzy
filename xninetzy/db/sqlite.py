@@ -587,6 +587,18 @@ def init_db() -> None:
         )
         """,
         """
+        CREATE TABLE IF NOT EXISTS security_scope_labs (
+          scope_token TEXT PRIMARY KEY,
+          profile TEXT NOT NULL,
+          request_budget INTEGER NOT NULL,
+          requests_used INTEGER NOT NULL DEFAULT 0,
+          rate_per_second REAL NOT NULL,
+          attestation_sha TEXT NOT NULL,
+          created_at TEXT NOT NULL,
+          FOREIGN KEY (scope_token) REFERENCES security_scopes(scope_token)
+        )
+        """,
+        """
         CREATE TABLE IF NOT EXISTS security_findings (
           id INTEGER PRIMARY KEY AUTOINCREMENT,
           scope_token TEXT,
@@ -608,6 +620,34 @@ def init_db() -> None:
           FOREIGN KEY (scope_token) REFERENCES security_scopes(scope_token)
         )
         """,
+        """
+        CREATE TABLE IF NOT EXISTS security_finding_lifecycle (
+          finding_id INTEGER PRIMARY KEY,
+          scope_token TEXT NOT NULL,
+          fingerprint TEXT NOT NULL,
+          first_seen TEXT NOT NULL,
+          last_seen TEXT NOT NULL,
+          seen_count INTEGER NOT NULL DEFAULT 1,
+          fix_ref TEXT,
+          status_reason TEXT,
+          FOREIGN KEY (finding_id) REFERENCES security_findings(id)
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_security_lifecycle_fp ON security_finding_lifecycle(scope_token, fingerprint)",
+        """
+        CREATE TABLE IF NOT EXISTS security_scan_runs (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          scope_token TEXT NOT NULL,
+          tool TEXT NOT NULL,
+          target TEXT,
+          status TEXT NOT NULL,
+          hit_count INTEGER NOT NULL DEFAULT 0,
+          detail_json TEXT,
+          version TEXT,
+          created_at TEXT NOT NULL
+        )
+        """,
+        "CREATE INDEX IF NOT EXISTS idx_security_scan_runs_scope ON security_scan_runs(scope_token)",
         "CREATE INDEX IF NOT EXISTS idx_security_findings_scope ON security_findings(scope_token)",
         "CREATE INDEX IF NOT EXISTS idx_security_findings_status ON security_findings(status)",
         "CREATE INDEX IF NOT EXISTS idx_security_findings_severity ON security_findings(severity)",

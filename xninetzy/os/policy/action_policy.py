@@ -71,6 +71,21 @@ _RISK_OVERRIDES: dict[str, RiskClass] = {
     "career_company_research": RiskClass.DRAFT,
     "career_interview_prep": RiskClass.DRAFT,
     "career_resume_analysis": RiskClass.DRAFT,
+    "security_compose_review": RiskClass.READ,
+    "security_nginx_review": RiskClass.READ,
+    "security_role_paths": RiskClass.READ,
+    "security_check_tools": RiskClass.READ,
+    "scaling_review": RiskClass.READ,
+    "perf_compare": RiskClass.READ,
+    "perf_capacity": RiskClass.READ,
+    "redis_review": RiskClass.READ,
+    "postgres_review": RiskClass.READ,
+    "security_authz_matrix": RiskClass.DRAFT,
+    "perf_plan": RiskClass.DRAFT,
+    "process_bpmn_validate": RiskClass.READ,
+    "process_bpmn_import": RiskClass.READ,
+    "process_bpmn_generate": RiskClass.DRAFT,
+    "process_bpmn_convert": RiskClass.DRAFT,
 }
 
 

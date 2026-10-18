@@ -1,13 +1,19 @@
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Any
 
 from langchain_core.tools import tool
 
 from xninetzy.integrations.tableau.compiler import (
+    add_story,
     compile_datasource_from_csv,
     compile_workbook,
+    default_layout,
+    render_dashboard,
+    render_datasource,
+    render_worksheet,
     safe_field_token,
 )
 from xninetzy.integrations.tableau.errors import TableauIntegrationError
@@ -31,6 +37,7 @@ from xninetzy.integrations.tableau.server import (
     publish_workbook as _publish_workbook_server,
     refresh_workbook as _refresh_workbook_server,
 )
+from xninetzy.integrations.tableau import xsd
 from xninetzy.integrations.tableau.validator import validate_workbook
 from xninetzy.integrations.tableau.visualizations import (
     SUPPORTED_VISUALIZATIONS,
@@ -51,7 +58,7 @@ def _load_workbook(path: Path) -> Workbook:
     return parse_workbook(path)
 
 
-def _persist_workbook(workbook: Workbook, target: Path) -> dict[str, Any]:
+def _persist_workbook(workbook: Workbook, target: Path, schema_version: str | None = None) -> dict[str, Any]:
     from xninetzy.core.paths import resolve_artifact_output
 
     target = resolve_artifact_output(target, create_parents=True)
@@ -63,21 +70,66 @@ def _persist_workbook(workbook: Workbook, target: Path) -> dict[str, Any]:
         "datasources": workbook.datasource_names(),
         "worksheets": workbook.worksheet_names(),
         "dashboards": workbook.dashboard_names(),
+        "validation": _validation_summary(target, schema_version),
     }
 
 
-def _render_datasource_xml(ds, csv_path: str) -> str:
-    cols = "\n".join(
-        f'      <column name="{f.name}" caption="{f.caption}" '
-        f'datatype="{f.datatype}" role="{f.role}"/>'
-        for f in ds.fields
-    )
-    return (
-        f'    <datasource name="{ds.name}" caption="{ds.caption}" version="18.1">\n'
-        f'      <connection class="textscan" filename="{csv_path}"/>\n'
-        f"{cols}\n"
-        f"    </datasource>"
-    )
+def _validation_summary(path: Path, schema_version: str | None = None) -> dict[str, Any]:
+    report = validate_workbook(path, schema_version)
+    return {
+        "valid": report.valid,
+        "xsd": report.checks.get("xsd"),
+        "xsd_version": report.metadata.get("xsd_version"),
+        "error_count": len(report.errors),
+        "errors": report.errors[:5],
+        "warnings": report.warnings[:5],
+    }
+
+
+def _failure(exc: TableauIntegrationError) -> dict[str, Any]:
+    return {"error": exc.code, "message": str(exc)}
+
+
+def _clean_sheet_name(raw: object, fallback: str) -> str:
+    name = "".join(ch for ch in str(raw or "") if ch.isprintable()).strip()[:100]
+    return name or fallback
+
+
+def _rename_field_tokens(fragment: str, mapping: dict[str, str]) -> str:
+    from lxml import etree
+
+    element = etree.fromstring(fragment.encode("utf-8"))
+    patterns = [
+        (re.compile(r"\[((?:[A-Za-z]+:)?)" + re.escape(old) + r"((?::[a-z]{2})?)\]"), new)
+        for old, new in mapping.items()
+    ]
+
+    def apply(value: str) -> str:
+        for pattern, new in patterns:
+            value = pattern.sub(lambda m, n=new: f"[{m.group(1)}{n}{m.group(2)}]", value)
+        return value
+
+    for node in element.iter():
+        for key, value in list(node.attrib.items()):
+            updated = apply(value)
+            if updated != value:
+                node.set(key, updated)
+        if node.text and node.text.strip():
+            node.text = apply(node.text)
+    return etree.tostring(element, encoding="unicode")
+
+
+def _referenced_fields(workbook: Workbook, datasource: str) -> set[str]:
+    from lxml import etree
+
+    names: set[str] = set()
+    for fragment in workbook.worksheets_xml.values():
+        element = etree.fromstring(fragment.encode("utf-8"))
+        for dependencies in element.iter("datasource-dependencies"):
+            if dependencies.get("datasource") == datasource:
+                names.update(column.get("name", "") for column in dependencies.findall("column"))
+    names.discard("")
+    return names
 
 
 @tool(description="List Tableau integration capabilities and supported visualization types.")
@@ -141,26 +193,9 @@ def tableau_workbook_validate(workbook_path: str) -> dict[str, Any]:
     return report.to_dict()
 
 
-def _render_worksheet_xml(name: str, spec, ds_name: str) -> str:
-    rows_field = (
-        f'      <rows>[{safe_field_token(spec.rows[0])}]</rows>\n' if spec.rows else "  <rows/>\n"
-    )
-    cols_field = (
-        f'      <cols>[{safe_field_token(spec.cols[0])}]</cols>\n' if spec.cols else "  <cols/>\n"
-    )
-    return (
-        f'    <worksheet name="{name}"><title>{name}</title>'
-        f"<table><view>"
-        f'<datasources><datasource name="{ds_name}"/></datasources>'
-        f"{rows_field}{cols_field}"
-        f"</view>"
-        f'<panes><pane><mark class="{spec.mark_class()}"/></pane></panes>'
-        f"</table></worksheet>"
-    )
-
-
 @tool(description=(
     "Generate a fresh Tableau workbook (.twb) from CSVs and visualization specs. "
+    "The CSV is profiled so numeric columns become measures; output is validated against the official Tableau TWB XSD. "
     "Idempotent when given the same name and content."
 ))
 def tableau_workbook_generate(
@@ -171,25 +206,26 @@ def tableau_workbook_generate(
     output_subdir: str | None = None,
     story_points: list[str] | None = None,
     template_name: str | None = None,
+    tableau_version: str = "26.2",
 ) -> dict[str, Any]:
+    if tableau_version not in xsd.supported_versions():
+        return {"error": "unsupported_version", "supported": list(xsd.supported_versions()), "requested": tableau_version}
     workspace = workspace_root()
     sub = safe_workspace_subdir(output_subdir or name)
     target_dir = workspace / "workbooks" / sub
     target_dir.mkdir(parents=True, exist_ok=True)
 
-    workbook = Workbook(metadata=WorkbookMetadata(source_platform="linux"))
-    ds_specs: list[tuple[str, Path]] = []
+    workbook = Workbook(metadata=WorkbookMetadata())
     for csv_path in csv_paths:
         cp = Path(csv_path)
         if not cp.is_file():
             return {"error": "missing_csv", "csv_path": str(cp)}
-        ds_name = f"federated.{safe_field_token(cp.stem)}"
-        if len(csv_paths) == 1:
-            ds_name = name or ds_name
-        ds = compile_datasource_from_csv(cp, name=ds_name)
+        ds_name = name if len(csv_paths) == 1 else f"federated.{safe_field_token(cp.stem)}"
+        try:
+            ds = compile_datasource_from_csv(cp, name=ds_name, profile=profile_csv(cp))
+        except TableauIntegrationError as exc:
+            return _failure(exc)
         workbook.datasources.append(ds)
-        workbook.datasource_xml[ds.name] = _render_datasource_xml(ds, str(cp))
-        ds_specs.append((ds_name, cp))
 
     if template_name:
         try:
@@ -201,49 +237,74 @@ def tableau_workbook_generate(
         except FileNotFoundError:
             pass
 
-    for idx, viz_dict in enumerate(visualizations or []):
-        spec = parse_visualization(viz_dict)
-        ws_name = safe_field_token(viz_dict.get("name") or f"ws_{idx + 1}")
-        if any(w.name == ws_name for w in workbook.worksheets):
-            ws_name = f"{ws_name}_{idx + 1}"
-        ds_name = (
-            ds_specs[0][0]
-            if ds_specs
-            else (workbook.datasources[0].name if workbook.datasources else "federated.primary")
-        )
-        workbook.worksheets.append(
-            Worksheet(name=ws_name, title=ws_name, mark_class=spec.mark_class())
-        )
-        workbook.worksheets_xml[ws_name] = _render_worksheet_xml(ws_name, spec, ds_name)
-
-    db_name = safe_field_token(dashboard_title) or "Dashboard"
-    workbook.dashboards.append(Dashboard(name=db_name))
-    workbook.dashboards_xml[db_name] = (
-        f'    <dashboard name="{db_name}"><zones>'
-        + "".join(
-            f'<zone name="{ws.name}" x="0" y="{i * 100}" w="200" h="100"/>'
-            for i, ws in enumerate(workbook.worksheets)
-        )
-        + "</zones></dashboard>"
-    )
-    workbook.story_points = [(caption, f"sp{i + 1}") for i, caption in enumerate(story_points or [])]
+    try:
+        specs = [
+            (_clean_sheet_name(viz.get("name"), f"ws_{idx + 1}"), parse_visualization(viz))
+            for idx, viz in enumerate(visualizations or [])
+        ]
+        names: set[str] = set()
+        ordered: list[tuple[str, Any]] = []
+        for idx, (ws_name, spec) in enumerate(specs):
+            if ws_name in names:
+                ws_name = f"{ws_name}_{idx + 1}"
+            names.add(ws_name)
+            ordered.append((ws_name, spec))
+        compile_workbook(workbook, worksheets_to_add=tuple(ordered))
+        if workbook.worksheets:
+            db_name = _clean_sheet_name(dashboard_title, "Dashboard")
+            if db_name in names:
+                db_name = f"{db_name} Dashboard"
+            workbook.dashboards.append(Dashboard(name=db_name))
+            workbook.dashboards_xml[db_name] = render_dashboard(db_name, default_layout(workbook.worksheet_names()))
+        if story_points:
+            add_story(workbook, "Story 1", list(story_points))
+    except TableauIntegrationError as exc:
+        return _failure(exc)
 
     target = target_dir / f"{safe_field_token(name) or 'workbook'}.twb"
-    info = _persist_workbook(workbook, target)
+    info = _persist_workbook(workbook, target, tableau_version)
     info["idempotency_key"] = f"{name}:{','.join(str(p) for p in csv_paths)}"
     return info
 
 
-@tool(description="Replace a workbook's primary datasource with a new CSV, mapping fields.")
+@tool(description=(
+    "Replace a workbook's primary datasource with a new CSV. field_map renames fields (old -> new) in every worksheet; "
+    "the write is refused when worksheets still reference fields the new CSV does not have (unless allow_missing_fields=true)."
+))
 def tableau_datasource_replace(
-    workbook_path: str, csv_path: str, field_map: dict[str, str] | None = None
+    workbook_path: str,
+    csv_path: str,
+    field_map: dict[str, str] | None = None,
+    allow_missing_fields: bool = False,
 ) -> dict[str, Any]:
     path = Path(workbook_path)
     workbook = _load_workbook(path)
-    new_ds = compile_datasource_from_csv(csv_path, name=workbook.datasources[0].name)
+    if not workbook.datasources:
+        return {"error": "no_datasource", "path": str(path)}
+    old = workbook.datasources[0]
+    try:
+        new_ds = compile_datasource_from_csv(csv_path, name=old.name, profile=profile_csv(csv_path))
+    except TableauIntegrationError as exc:
+        return _failure(exc)
+    new_ds.caption = old.caption or new_ds.caption
+    mapping = {str(k).strip("[]"): str(v).strip("[]") for k, v in (field_map or {}).items() if k and v}
+    unknown_targets = sorted(v for v in mapping.values() if new_ds.find_field(v) is None)
+    if unknown_targets:
+        return {"error": "field_map_target_missing", "fields": unknown_targets, "available": [f.caption for f in new_ds.fields]}
+    if mapping:
+        for key in list(workbook.worksheets_xml):
+            workbook.worksheets_xml[key] = _rename_field_tokens(workbook.worksheets_xml[key], mapping)
+        for key in list(workbook.dashboards_xml):
+            workbook.dashboards_xml[key] = _rename_field_tokens(workbook.dashboards_xml[key], mapping)
+    missing = sorted(name for name in _referenced_fields(workbook, old.name) if new_ds.find_field(name) is None)
+    if missing and not allow_missing_fields:
+        return {"error": "fields_missing_in_new_datasource", "fields": missing, "hint": "berikan field_map atau allow_missing_fields=true"}
     workbook.datasources[0] = new_ds
-    workbook.datasource_xml[new_ds.name] = _render_datasource_xml(new_ds, csv_path)
-    return _persist_workbook(workbook, path)
+    workbook.datasource_xml[new_ds.name] = render_datasource(new_ds)
+    result = _persist_workbook(workbook, path)
+    result["missing_fields"] = missing
+    result["renamed_fields"] = mapping
+    return result
 
 
 @tool(description="Append a new worksheet to an existing workbook based on a visualization spec.")
@@ -252,14 +313,18 @@ def tableau_worksheet_create(
 ) -> dict[str, Any]:
     path = Path(workbook_path)
     workbook = _load_workbook(path)
-    spec = parse_visualization(visualization)
     if any(w.name == worksheet_name for w in workbook.worksheets):
         return {"error": "duplicate_worksheet", "name": worksheet_name}
-    ds_name = workbook.datasources[0].name
-    workbook.worksheets.append(
-        Worksheet(name=worksheet_name, title=worksheet_name, mark_class=spec.mark_class())
-    )
-    workbook.worksheets_xml[worksheet_name] = _render_worksheet_xml(worksheet_name, spec, ds_name)
+    if not workbook.datasources:
+        return {"error": "no_datasource", "path": str(path)}
+    try:
+        spec = parse_visualization(visualization)
+        workbook.worksheets.append(
+            Worksheet(name=worksheet_name, title=worksheet_name, mark_class=spec.mark_class())
+        )
+        workbook.worksheets_xml[worksheet_name] = render_worksheet(worksheet_name, spec, workbook.datasources[0])
+    except TableauIntegrationError as exc:
+        return _failure(exc)
     return _persist_workbook(workbook, path)
 
 
@@ -271,11 +336,13 @@ def tableau_worksheet_modify(
     workbook = _load_workbook(path)
     if not any(w.name == worksheet_name for w in workbook.worksheets):
         return {"error": "not_found", "worksheet": worksheet_name}
-    spec = parse_visualization(visualization)
-    ds_name = workbook.datasources[0].name
-    workbook.worksheets_xml[worksheet_name] = _render_worksheet_xml(
-        worksheet_name, spec, ds_name
-    )
+    if not workbook.datasources:
+        return {"error": "no_datasource", "path": str(path)}
+    try:
+        spec = parse_visualization(visualization)
+        workbook.worksheets_xml[worksheet_name] = render_worksheet(worksheet_name, spec, workbook.datasources[0])
+    except TableauIntegrationError as exc:
+        return _failure(exc)
     for ws in workbook.worksheets:
         if ws.name == worksheet_name:
             ws.mark_class = spec.mark_class()
@@ -283,60 +350,77 @@ def tableau_worksheet_modify(
     return _persist_workbook(workbook, path)
 
 
-@tool(description="Create a new dashboard referencing existing worksheets.")
+@tool(description=(
+    "Create a new dashboard referencing existing worksheets. layout is optional: entries "
+    "{worksheet, x, y, w, h} in percent (0-100) of the dashboard; default stacks the worksheets vertically."
+))
 def tableau_dashboard_create(
-    workbook_path: str, dashboard_name: str, worksheets: list[str]
+    workbook_path: str,
+    dashboard_name: str,
+    worksheets: list[str],
+    layout: list[dict[str, Any]] | None = None,
 ) -> dict[str, Any]:
     path = Path(workbook_path)
     workbook = _load_workbook(path)
-    if any(d.name == dashboard_name for d in workbook.dashboards):
+    if any(d.name == dashboard_name for d in workbook.dashboards) or dashboard_name in workbook.worksheet_names():
         return {"error": "duplicate_dashboard", "name": dashboard_name}
-    if any(ws not in workbook.worksheet_names() for ws in worksheets):
+    if not worksheets or any(ws not in workbook.worksheet_names() for ws in worksheets):
         return {"error": "unknown_worksheet", "requested": worksheets}
+    try:
+        xml = render_dashboard(dashboard_name, layout or default_layout(worksheets))
+    except TableauIntegrationError as exc:
+        return _failure(exc)
     workbook.dashboards.append(Dashboard(name=dashboard_name))
-    workbook.dashboards_xml[dashboard_name] = (
-        f'    <dashboard name="{dashboard_name}"><zones>'
-        + "".join(
-            f'<zone name="{ws}" x="0" y="{i * 100}" w="200" h="100"/>'
-            for i, ws in enumerate(worksheets)
-        )
-        + "</zones></dashboard>"
-    )
+    workbook.dashboards_xml[dashboard_name] = xml
     return _persist_workbook(workbook, path)
 
 
-@tool(description="Update the zone layout for an existing dashboard.")
+@tool(description="Update the zone layout (percent 0-100) for an existing dashboard; dashboard size is preserved.")
 def tableau_dashboard_layout(
     workbook_path: str, dashboard_name: str, layout: list[dict[str, Any]]
 ) -> dict[str, Any]:
+    from lxml import etree
+
     path = Path(workbook_path)
     workbook = _load_workbook(path)
-    if dashboard_name not in workbook.dashboard_names():
+    target = next((d for d in workbook.dashboards if d.name == dashboard_name), None)
+    if target is None:
         return {"error": "not_found", "dashboard": dashboard_name}
-    zones = "".join(
-        f'<zone name="{entry["worksheet"]}" x="{entry.get("x", 0)}" '
-        f'y="{entry.get("y", 0)}" w="{entry.get("w", 200)}" h="{entry.get("h", 100)}"/>'
-        for entry in layout
-    )
-    workbook.dashboards_xml[dashboard_name] = (
-        f'    <dashboard name="{dashboard_name}"><zones>{zones}</zones></dashboard>'
-    )
+    if target.is_storyboard:
+        return {"error": "storyboard_has_no_layout", "dashboard": dashboard_name}
+    unknown = sorted({str(e.get("worksheet")) for e in layout} - set(workbook.worksheet_names()) - set(workbook.dashboard_names()))
+    if unknown:
+        return {"error": "unknown_worksheet", "requested": unknown}
+    size = (1200, 800)
+    existing = workbook.dashboards_xml.get(dashboard_name)
+    if existing:
+        node = etree.fromstring(existing.encode("utf-8")).find("size")
+        if node is not None and node.get("maxwidth") and node.get("maxheight"):
+            size = (int(node.get("maxwidth")), int(node.get("maxheight")))
+    try:
+        workbook.dashboards_xml[dashboard_name] = render_dashboard(dashboard_name, layout, size)
+    except TableauIntegrationError as exc:
+        return _failure(exc)
     return _persist_workbook(workbook, path)
 
 
-@tool(description="Attach story points (caption list) to a workbook.")
+@tool(description=(
+    "Add a story (storyboard) to a workbook. points are captions or {caption, sheet}; "
+    "a point without sheet captures the workbook's dashboards/worksheets in order."
+))
 def tableau_story_create(
-    workbook_path: str, story_name: str, points: list[str]
+    workbook_path: str, story_name: str, points: list[Any]
 ) -> dict[str, Any]:
     path = Path(workbook_path)
     workbook = _load_workbook(path)
-    from xninetzy.core.paths import resolve_artifact_output
-
-    path = resolve_artifact_output(path, create_parents=True)
-    workbook.story_points = [(caption, f"sp{i + 1}") for i, caption in enumerate(points)]
-    body = compile_workbook(workbook)
-    path.write_bytes(body)
-    return {"path": str(path), "story_points": points, "name": story_name}
+    try:
+        created = add_story(workbook, story_name, list(points))
+    except TableauIntegrationError as exc:
+        return _failure(exc)
+    result = _persist_workbook(workbook, path)
+    result["story"] = created
+    result["story_points"] = [caption for caption, _ in workbook.story_points]
+    return result
 
 
 @tool(description="Re-serialize a workbook to a clean .twb file.")

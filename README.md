@@ -2,7 +2,7 @@
 
 > Local-first, MCP-only Personal Intelligence and Learning system. One
 > FastMCP server, stdio primary, Streamable HTTP loopback by default.
-> 508 tools under one canonical registry.
+> 571 tools under one canonical registry.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![MCP](https://img.shields.io/badge/MCP-stdio%20%2B%20Streamable%20HTTP-6C47FF)
@@ -27,7 +27,7 @@ host (Claude / Claude Code / Cursor / Codex / OpenCode)
   ▼
 xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
   │
-  ├── xninetzy.tools.registry.get_all_tools()   (508 tools)
+  ├── xninetzy.tools.registry.get_all_tools()   (571 tools)
   │     └── xninetzy.tools.manifest.manifest_for(name)
   │           ├── feature_pack: core | academic-unair | research | coding
   │           ├── risk:         read | draft | write | final
@@ -59,7 +59,7 @@ xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
 | Area | Capabilities |
 |---|---|
 | MCP server | FastMCP("xninetzy", stateless_http, json_response) over stdio + Streamable HTTP on loopback |
-| Tool registry | 508 tools classified by risk (read/draft/write/final), feature pack (core/academic-unair/research/coding), idempotency, stability |
+| Tool registry | 571 tools classified by risk (read/draft/write/final), feature pack (core/academic-unair/research/coding), idempotency, stability |
 | Obsidian | list, search, read, create, append, frontmatter, tags, headings, backlinks, todos, MOC, daily note, vault init / organize / verify |
 | HEBAT / Moodle | login (Playwright Chromium), course sync, activity sync, material download, PDF read, assignment digest, submission with HITL approval |
 | Cyber Campus | profile, academic status, schedule, grades, KRS capabilities, KRS War arm/disarm/execute (FINAL), grade-token submission |
@@ -259,7 +259,7 @@ the canonical tool registry and authorization model.
 │   │   ├── tasks_extension.py           # SEP-2663
 │   │   └── api/                         # FastAPI HTTP bridge (secondary)
 │   ├── tools/
-│   │   ├── registry.py                  # get_all_tools() — 508 tools
+│   │   ├── registry.py                  # get_all_tools() — 571 tools
 │   │   ├── manifest.py                  # risk + feature_pack + idempotency
 │   │   └── release_check.py             # 6 release-gate checks
 │   ├── os/
@@ -304,7 +304,7 @@ uv run python -m xninetzy.cli.supervisor release-check
 Expected output:
 
 ```text
-  [PASS   ] tool_registry            508 tools classified
+  [PASS   ] tool_registry            571 tools classified
   [PASS   ] secret_redaction         3/3 sample secrets redacted
   [PASS   ] safe_fetch               3/3 SSRF guard scenarios blocked
   [PASS   ] transport_config         transport=stdio host=127.0.0.1

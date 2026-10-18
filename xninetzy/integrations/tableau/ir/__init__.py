@@ -10,6 +10,29 @@ from xninetzy.integrations.tableau.errors import TableauIntegrationError
 
 
 WORKBOOK_NS = "http://www.tableausoftware.com/xml/user"
+FORMAT_VERSION = "18.1"
+PRODUCT_BUILD = "2026.2.1 (20262.26.0708.1337)"
+PLACEHOLDER_BUILD = "0.0.0 (0000.0.0.0)"
+DOCUMENT_FEATURES: tuple[str, ...] = (
+    "AccessibleZoneTabOrder",
+    "AnimationOnByDefault",
+    "AutoCreateAndUpdateDSDPhoneLayouts",
+    "IntuitiveSorting",
+    "IntuitiveSorting_SP2",
+    "MapboxVectorStylesAndLayers",
+    "MarkAnimation",
+    "ObjectModelEncapsulateLegacy",
+    "ObjectModelExtractV2",
+    "ObjectModelTableType",
+    "SchemaViewerObjectModel",
+    "SetMembershipControl",
+    "SheetIdentifierTracking",
+    "SortTagCleanup",
+    "VConnDownstreamExtractsWithWarnings",
+    "WindowsPersistSimpleIdentifiers",
+    "WorksheetBackgroundTransparency",
+)
+DATE_LEVELS = frozenset({"year", "quarter", "month", "week", "day"})
 
 _TYPED_DATATYPES = frozenset({"integer", "real", "string", "boolean", "date", "datetime"})
 
@@ -153,6 +176,10 @@ class ArtifactRecord:
         }
 
 
+def _squash(text: str) -> str:
+    return "".join(ch for ch in str(text).lower() if ch.isalnum())
+
+
 def _stable_hash(parts: tuple[Any, ...]) -> str:
     h = hashlib.sha256()
     for p in parts:
@@ -175,18 +202,18 @@ def _datasource_equivalent(a: Datasource, b: Datasource) -> bool:
 
 @dataclass(slots=True)
 class WorkbookMetadata:
-    source_platform: str = "linux"
-    source_build: str = "2026.2.1"
-    original_version: str = "18.1"
-    version: str = "18.1"
+    source_platform: str = "win"
+    source_build: str = PRODUCT_BUILD
+    original_version: str = FORMAT_VERSION
+    version: str = FORMAT_VERSION
 
     @classmethod
     def from_root(cls, root) -> "WorkbookMetadata":
         return cls(
-            source_platform=str(root.get("source-platform", "linux")).lower(),
+            source_platform=str(root.get("source-platform", "win")).lower(),
             source_build=str(root.get("source-build", "")),
-            original_version=str(root.get("original-version", "18.1")),
-            version=str(root.get("version", "18.1")),
+            original_version=str(root.get("original-version", root.get("version", FORMAT_VERSION))),
+            version=str(root.get("version", FORMAT_VERSION)),
         )
 
 
@@ -197,6 +224,11 @@ class DatasourceField:
     datatype: str = "string"
     role: str = "dimension"
     semantic_role: str | None = None
+    remote_name: str = ""
+    ordinal: int = 0
+
+    def local_name(self) -> str:
+        return self.name[1:-1] if self.name.startswith("[") and self.name.endswith("]") else self.name
 
 
 @dataclass(slots=True)
@@ -208,6 +240,18 @@ class Datasource:
     connection_directory: str = ""
     fields: list[DatasourceField] = field(default_factory=list)
     raw_xml: str = ""
+
+    def find_field(self, reference: str) -> DatasourceField | None:
+        wanted = str(reference or "").strip()
+        bare = wanted[1:-1] if wanted.startswith("[") and wanted.endswith("]") else wanted
+        for candidate in self.fields:
+            if bare in {candidate.local_name(), candidate.caption, candidate.remote_name}:
+                return candidate
+        squashed = _squash(bare)
+        for candidate in self.fields:
+            if squashed and squashed in {_squash(candidate.local_name()), _squash(candidate.caption)}:
+                return candidate
+        return None
 
     def field_captions(self) -> list[str]:
         return [f.caption or f.name for f in self.fields]
@@ -240,6 +284,7 @@ class VisualizationSpec:
     label: str | None = None
     top_n: int | None = None
     trend_line: bool = False
+    date_level: str | None = None
 
     def mark_class(self) -> str:
         table = {
@@ -248,7 +293,7 @@ class VisualizationSpec:
             "area": "Area",
             "circle": "Circle",
             "square": "Square",
-            "map": "FilledMap",
+            "map": "Polygon",
             "kpi": "Text",
             "pie": "Pie",
             "scatter": "Circle",
@@ -271,6 +316,9 @@ class Workbook:
     preferences_xml: str = ""
     document_format_xml: str = ""
     manifest_changes_xml: str = ""
+    style_xml: str = ""
+    windows_xml: str = ""
+    preserved_xml: dict[str, str] = field(default_factory=dict)
     story_points: list[tuple[str, str]] = field(default_factory=list)
     source_path: Optional[Path] = None
 

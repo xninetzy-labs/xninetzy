@@ -54,12 +54,28 @@ Each spec is a dict:
   "rows": ["product_category_en"],
   "measure": "price",
   "measure_aggregation": "SUM",
-  "top_n": 15,
   "color": "review_score"
 }
 ```
 
-Aggregation defaults to `SUM`. Pass `measure_aggregation: "AVG"` for ratios.
+Aggregation defaults to `SUM`. Valid values: `SUM`, `AVG` (`AVERAGE`, `MEAN`),
+`COUNT`, `COUNTD`, `MIN`, `MAX`, `MEDIAN`. Use `COUNTD` for distinct counts;
+`CountDistinct` is rejected. On a text field only `COUNT`, `COUNTD`, `MIN`
+and `MAX` apply; anything else falls back to `COUNT`.
+
+Orientation: put the dimension in `cols` for vertical bars and in `rows` for
+horizontal bars. For `line` and `area` a dimension given in `rows` is moved to
+the columns shelf so time runs on the x axis.
+
+Dates: a `date` field defaults to `YEAR` (discrete) and to `MONTH` truncation on
+`line`/`area`. Set `date_level` (`year`, `quarter`, `month`, `week`, `day`) to
+force continuous truncation at that level, for example `day` for a daily series.
+Values such as `2018-03` are text, not dates, and are never given a date
+derivation.
+
+`top_n` is not supported by the generator and raises `VIZ_OPTION_UNSUPPORTED`.
+Pre-bucket the category in the CSV (keep the top N, label the rest) or add the
+Top N filter in Tableau Desktop.
 
 ## Reference deliverable: AVD-praktikum "Olist" workbook
 
@@ -86,15 +102,15 @@ result = tableau_workbook_generate.invoke({
         "Action: prioritize SP/RJ sellers for north region",
     ],
     "visualizations": [
-        {"type": "kpi",   "name": "01_KPI_Orders",    "measure": "order_id",        "measure_aggregation": "CountDistinct"},
+        {"type": "kpi",   "name": "01_KPI_Orders",    "measure": "order_id",        "measure_aggregation": "COUNTD"},
         {"type": "kpi",   "name": "02_KPI_Revenue",   "measure": "price"},
-        {"type": "kpi",   "name": "03_KPI_LateRate",  "measure": "is_late",         "measure_aggregation": "Avg"},
-        {"type": "kpi",   "name": "04_KPI_Review",    "measure": "review_score",    "measure_aggregation": "Avg"},
+        {"type": "kpi",   "name": "03_KPI_LateRate",  "measure": "is_late",         "measure_aggregation": "AVG"},
+        {"type": "kpi",   "name": "04_KPI_Review",    "measure": "review_score",    "measure_aggregation": "AVG"},
         {"type": "map",   "name": "05_Map_Brazil",    "rows": ["customer_state"],  "measure": "price", "color": "price"},
         {"type": "line",  "name": "06_Trend_Monthly", "rows": ["purchase_yearmonth"], "measure": "price"},
-        {"type": "bar",   "name": "07_Top_Categories","rows": ["product_category_en"], "measure": "price", "top_n": 15},
+        {"type": "bar",   "name": "07_Top_Categories","rows": ["product_category_en"], "measure": "price"},
         {"type": "scatter","name": "08_Scatter_Price_Freight", "measure": "freight_value", "color": "is_late"},
-        {"type": "heatmap","name": "09_Heatmap_Late", "rows": ["customer_state"], "cols": ["purchase_yearmonth"], "measure": "is_late", "measure_aggregation": "Avg"},
+        {"type": "heatmap","name": "09_Heatmap_Late", "rows": ["customer_state"], "cols": ["purchase_yearmonth"], "measure": "is_late", "measure_aggregation": "AVG"},
     ],
 })
 
@@ -122,7 +138,15 @@ tableau_twbx_package.invoke({"workbook_path": result["path"]})
 
 - CSV header row required; columns map 1:1 to Tableau fields.
 - Field names are tokenized — `My Field!` becomes `[My_Field]`.
-- Top-N filter uses the `measure_aggregation` you supply.
+- Output follows the Tableau 2026.2 document format: `version='18.1'`, the full
+  `document-format-change-manifest` feature list, worksheets identified by
+  `simple-id`, and an object-model datasource (`object-graph`,
+  `metadata-records`). Tableau Desktop builds its runtime schema from that
+  manifest, so an empty or invented manifest makes it load the legacy schema
+  and reject every worksheet.
+- `tableau_version` selects which vendored official XSD (`26.1` or `26.2`) the
+  output is validated against; the document `version` attribute is always
+  `18.1`.
 - Map worksheet requires a column with geographic role; use
   `state-name` or `city` semantic role (added automatically when the
   column name matches `customer_state` / `seller_state` / `customer_city`).
@@ -140,8 +164,14 @@ assert report["valid"], report["errors"]
 ```
 
 The validator checks: XML well-formedness, namespace, datasource
-declarations, dashboard-to-worksheet references, and round-trip
-serialization. It also flags stale `C:\` Windows paths.
+declarations, dashboard-to-worksheet references, the manifest
+(`TWB_MANIFEST_INVALID`, `TWB_MANIFEST_INCOMPLETE`), the official XSD, and
+round-trip serialization. It also flags stale `C:\` Windows paths.
+
+The XSD cannot see manifest problems, and it cannot see whether the requested
+aggregation reached the XML. After generating, read the worksheet XML back
+(`column-instance` derivation per worksheet) and recompute each one from the
+CSV before claiming the dashboard matches another source.
 
 ## Failure modes
 
@@ -150,6 +180,9 @@ serialization. It also flags stale `C:\` Windows paths.
 | `TableauIntegrationError: VIZ_TYPE_ERROR` | Unsupported viz type | Pick from `tableau_capabilities` → `supported_visualizations` |
 | `TableauIntegrationError: WORKSHEET_CONFLICT` | Duplicate worksheet name | Pass unique `name` per visualization or suffix `_2` |
 | Errors include `TWB_DANGLING_DASHBOARD_REF` | Dashboard references missing worksheet | Run after `tableau_worksheet_create` |
+| Tableau Desktop reports `group 'Sort-G' must contain all, choice, or sequence compositor` or `missing required attribute 'number'` | Manifest empty or invented, `version` not `18.1` | Regenerate with the current generator; run `tableau_workbook_validate` and expect `checks.manifest: true` |
+| KPI shows a row count instead of a distinct count | `CountDistinct` or another unsupported spelling, or an older generator that forced `Count` on text | Use `COUNTD`; regenerate |
+| Daily or monthly chart collapses to years or months | Field typed `date`/`datetime` without `date_level`, or a text label mistyped as a date | Set `date_level`; make sure label columns are not date-shaped |
 | Warnings include `TWB_WINDOWS_PATH` | Repo template has `C:\` paths | Switch to `template_name="Progres1ya.twb"` or strip before load |
 | `idempotency_key` collision warning | Re-ran with same content | Already idempotent — emit is informational |
 

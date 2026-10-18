@@ -125,7 +125,7 @@ Skill frontmatter integrity is enforced by
 
 ## 6b. MCP resources & prompts
 
-The MCP server exposes 2 resources and 1 prompt in addition to the 491
+The MCP server exposes 2 resources and 1 prompt in addition to the 571
 tools (see `xninetzy/interfaces/mcp_server.py`; count via
 `python -c "from xninetzy.tools.registry import get_tool_names; print(len(get_tool_names()))"`):
 

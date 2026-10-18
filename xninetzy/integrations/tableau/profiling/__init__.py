@@ -16,7 +16,8 @@ from xninetzy.integrations.tableau.ir import (
 _SAMPLE_ROWS = 200
 _BOOL_TRUE = frozenset({"true", "false", "t", "f", "yes", "no", "0", "1"})
 
-_DATE_HINTS = re.compile(r"(\bdate\b|\bday\b|\bmonth\b|year|created|updated|deleted|purchase|delivery)", re.IGNORECASE)
+_ISO_DATE = re.compile(r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])$")
+_ISO_DATETIME = re.compile(r"^\d{4}-(0[1-9]|1[0-2])-(0[1-9]|[12]\d|3[01])[ T]([01]\d|2[0-3]):[0-5]\d(:[0-5]\d(\.\d+)?)?$")
 _GEO_HINTS = re.compile(r"(state|city|country|region|province|zip|postal|latitude|longitude|geo|coord)", re.IGNORECASE)
 
 
@@ -47,17 +48,20 @@ def _looks_like_bool(values: list[str]) -> bool:
     return bool(lowered) and lowered.issubset(_BOOL_TRUE)
 
 
-def _looks_like_date(values: list[str]) -> bool:
+def _date_kind(values: list[str]) -> str | None:
+    kinds: set[str] = set()
     for v in values:
         if not v:
             continue
-        if "-" in v or "/" in v:
-            parts = re.split(r"[-/]", v)
-            if len(parts) >= 2 and all(p.isdigit() for p in parts):
-                return True
-        if v.isdigit() and 8 <= len(v) <= 14:
-            return True
-    return False
+        if _ISO_DATE.match(v):
+            kinds.add("date")
+        elif _ISO_DATETIME.match(v):
+            kinds.add("datetime")
+        else:
+            return None
+    if not kinds:
+        return None
+    return "datetime" if "datetime" in kinds else "date"
 
 
 def _classify_column(samples: list[str], caption: str = "") -> tuple[str, str, str | None]:
@@ -68,12 +72,11 @@ def _classify_column(samples: list[str], caption: str = "") -> tuple[str, str, s
         return ("integer", "measure", None)
     if _looks_like_float(samples):
         return ("real", "measure", None)
-    if _looks_like_date(samples):
-        return ("datetime", "dimension", None)
+    date_kind = _date_kind(samples)
+    if date_kind:
+        return (date_kind, "dimension", None)
     if _GEO_HINTS.search(caption) or _GEO_HINTS.search(joined):
         return ("string", "dimension", "geo")
-    if _DATE_HINTS.search(caption) or _DATE_HINTS.search(joined):
-        return ("datetime", "dimension", None)
     return ("string", "dimension", None)
 
 

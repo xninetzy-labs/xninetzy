@@ -38,3 +38,13 @@ Use this skill whenever the owner asks to:
 
 Do **not** use this skill for running processes, triggering actions, or
 executing tasks — those belong to workflow orchestration tools.
+## BPMN files for Bizagi Modeler
+
+Use the registered tools instead of writing BPMN XML by hand:
+
+1. `process_bpmn_generate(title, nodes, flows, lanes)` writes a `.bpmn` with pool, lanes and a computed diagram layout.
+2. `process_bpmn_validate(bpmn_path)` lists what an importer would reject (missing `targetNamespace`, missing diagram, invalid ids, dangling references).
+3. `process_bpmn_import(bpmn_path)` turns an existing file into an editable spec and reports elements outside the supported subset.
+4. `process_bpmn_convert(bpmn_path)` makes an old file importable (adds layout, fixes ids) without touching the source.
+
+Report the result honestly: the tools check structure only. Say that opening the file in Bizagi Modeler is an unverified manual step, and list every entry of `skipped_elements` or `dropped_elements` under limitations.

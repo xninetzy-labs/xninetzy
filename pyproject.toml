@@ -145,6 +145,7 @@ include = [
     "xninetzy/**/*.py",
     "xninetzy/py.typed",
     "xninetzy/**/*.json",
+    "xninetzy/templates/**",
 ]
 exclude = [
     "xninetzy/**/tests/**",

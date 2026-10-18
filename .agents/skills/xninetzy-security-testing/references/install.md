@@ -1534,7 +1534,7 @@ OSV-Scanner releases provide SLSA provenance metadata, and Syft supports optiona
 
 # 32. Health Check
 
-`security_check_tools` should run lightweight checks only.
+`security_check_tools` runs lightweight checks only: `docker info` and a local image inspect. It never pulls an image and never starts a scanner.
 
 Example:
 
@@ -2093,7 +2093,7 @@ command -v prowler
 
 # 45. Xninetzy Capability Status
 
-`security_check_tools` should normalize everything into:
+`security_check_tools` reports every scanner as one of `READY`, `DEGRADED`, `MISSING` or `UNHEALTHY`; the full status vocabulary of the capability model is:
 
 ```text
 READY

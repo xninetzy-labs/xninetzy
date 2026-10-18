@@ -58,7 +58,9 @@ def validate_against_xml(
     *,
     artifact_id: str,
     checked_at: str,
+    interchange: bool = False,
 ) -> ValidationReport:
+    from xninetzy.context.process_engineering.bpmn_check import check_interchange, errors_only
     from xninetzy.context.process_engineering.bpmn_io import parse_bpmn_text
 
     issues: list[ValidationIssue] = []
@@ -74,6 +76,11 @@ def validate_against_xml(
         )
     structure_errors = validate_process_model(model)
     issues.extend(_issue_for(msg) for msg in structure_errors)
+    if interchange:
+        issues.extend(
+            ValidationIssue(code=item.code, message=item.message, location=item.location)
+            for item in errors_only(check_interchange(xml_text))
+        )
     return ValidationReport(
         artifact_id=artifact_id,
         issues=tuple(issues),

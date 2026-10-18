@@ -51,7 +51,7 @@ def test_profile_csv_date_detection(tmp_path: Path) -> None:
     )
     profile = profile_csv(p)
     by_name = {c.name: c for c in profile.columns}
-    assert by_name["order_date"].datatype == "datetime"
+    assert by_name["order_date"].datatype == "date"
     assert by_name["customer_state"].semantic_role == "geo"
 
 

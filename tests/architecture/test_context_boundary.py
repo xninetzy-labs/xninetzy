@@ -114,6 +114,7 @@ ALLOWED_IMPORT_PREFIXES = (
     "xninetzy.db",
     "xninetzy.os",
     "xninetzy.tools",
+    "xninetzy.skills",
     "xninetzy.orchestration",
     "xninetzy.interfaces",
 )

@@ -2,7 +2,8 @@ from __future__ import annotations
 
 import hashlib
 import json
-import re
+import logging
+import time
 import uuid
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -17,6 +18,7 @@ from langchain_core.tools import tool
 
 from xninetzy.db.sqlite import connect, init_db
 from xninetzy.db.idempotency import idempotent_call as _idempotent_call
+from xninetzy.os.security import findings_store
 
 
 DEFAULT_SCOPE_TTL_HOURS = 24
@@ -45,6 +47,17 @@ _BLOCKED_NETWORKS = [
     ipaddress.ip_network("fe80::/10"),
 ]
 _REQUEST_TIMEOUT = 15.0
+_LIGHT_ENGINE_CONFIDENCE = 0.3
+_PROTECTED_HOST_SUFFIXES = (".ac.id", ".go.id", ".mil.id")
+_LAB_LOOPBACK_HOSTS = frozenset({"localhost", "127.0.0.1", "::1"})
+_LAB_MAX_TTL_HOURS = 8
+_LAB_DEFAULT_BUDGET = 50_000
+_LAB_MAX_BUDGET = 5_000_000
+_LAB_DEFAULT_RATE = 20.0
+_LAB_MAX_RATE = 100.0
+_LAB_PROFILES = frozenset({"passive", "active"})
+_LOGGER = logging.getLogger(__name__)
+_PRIVATE_ENV_WARNED = False
 
 
 def _now_iso() -> str:
@@ -69,23 +82,47 @@ def _host_is_private(host: str) -> bool:
 
 
 def _private_ip_block_disabled() -> bool:
+    global _PRIVATE_ENV_WARNED
     import os
 
-    return os.environ.get("XNINETZY_ALLOW_PRIVATE_TARGETS", "").strip().lower() in {
+    enabled = os.environ.get("XNINETZY_ALLOW_PRIVATE_TARGETS", "").strip().lower() in {
         "1", "true", "yes", "on",
     }
+    if enabled and not _PRIVATE_ENV_WARNED:
+        _PRIVATE_ENV_WARNED = True
+        _LOGGER.warning(
+            "XNINETZY_ALLOW_PRIVATE_TARGETS deprecated: gunakan security_scope(kind='owner_lab')"
+        )
+    return enabled
 
 
-def _normalize_target(target: str) -> tuple[str, str, int]:
+def _canonical_http(scheme: str, host: str, port: int) -> str:
+    shown = f"[{host}]" if ":" in host else host
+    return f"{scheme}://{shown}:{port}"
+
+
+def _lab_hosts(record: dict[str, Any] | None) -> frozenset[str]:
+    if not record or record.get("kind") != "owner_lab":
+        return frozenset()
+    return frozenset(json.loads(record.get("targets_json") or "[]"))
+
+
+def _normalize_target(
+    target: str, lab_hosts: frozenset[str] = frozenset()
+) -> tuple[str, str, int]:
     parsed = urlparse(target.strip())
     if parsed.scheme.lower() in ("http", "https"):
         if not parsed.hostname:
             raise ValueError(f"target tidak valid: {target}")
         host = parsed.hostname.lower()
+        if host.endswith(_PROTECTED_HOST_SUFFIXES):
+            raise ValueError(f"target dilindungi (institusi pihak ketiga): {host}")
+        port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+        canonical = _canonical_http(parsed.scheme.lower(), host, port)
+        if canonical in lab_hosts and host in _LAB_LOOPBACK_HOSTS:
+            return canonical, host, port
         if not _private_ip_block_disabled() and _host_is_private(host):
             raise ValueError(f"target tidak diizinkan (host private): {host}")
-        port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
-        canonical = f"{parsed.scheme.lower()}://{host}:{port}"
         return canonical, host, port
     if parsed.scheme.lower() == "file":
         path = parsed.path or parsed.netloc
@@ -108,29 +145,68 @@ def security_scope(
     approved_by: str = "",
     sender_id: str = "",
     idempotency_key: str = "",
+    kind: str = "standard",
+    attestation: str = "",
+    profile: str = "passive",
+    active_attestation: str = "",
+    request_budget: int = _LAB_DEFAULT_BUDGET,
+    rate_per_second: float = _LAB_DEFAULT_RATE,
+    docker_network: str = "",
 ) -> str:
     """Daftarkan target ke scope token untuk audit keamanan resmi.
 
     Args:
         targets: Daftar host atau URL (maks 32).
         rationale: Alasan persetujuan (wajib non-kosong).
-        ttl_hours: Durasi scope (1-720 jam, default 24).
+        ttl_hours: Durasi scope (1-720 jam, default 24; owner_lab maks 8).
         approved_by: Owner principal yang menyetujui.
         sender_id: Owner principal (dari context).
         idempotency_key: Kunci opsional.
+        kind: "standard" atau "owner_lab" (hanya loopback milik owner).
+        attestation: Pernyataan kepemilikan (wajib untuk owner_lab).
+        profile: "passive" atau "active" (owner_lab).
+        active_attestation: Pernyataan kedua, wajib untuk profile active.
+        request_budget: Total request maksimum per scope owner_lab.
+        rate_per_second: Batas request per detik owner_lab.
+        docker_network: Belum didukung.
     """
     if not targets:
         return json.dumps({"error": "targets kosong"}, ensure_ascii=False)
     if not rationale.strip():
         return json.dumps({"error": "rationale wajib diisi"}, ensure_ascii=False)
-    bounded_ttl = max(1, min(ttl_hours, 720))
+    if kind not in {"standard", "owner_lab"}:
+        return json.dumps({"error": "kind harus standard atau owner_lab"}, ensure_ascii=False)
+    is_lab = kind == "owner_lab"
+    if is_lab:
+        if docker_network.strip():
+            return json.dumps({"error": "docker_network belum didukung"}, ensure_ascii=False)
+        if not attestation.strip():
+            return json.dumps({"error": "attestation wajib untuk owner_lab"}, ensure_ascii=False)
+        if profile not in _LAB_PROFILES:
+            return json.dumps({"error": "profile harus passive atau active"}, ensure_ascii=False)
+        if profile == "active" and not active_attestation.strip():
+            return json.dumps({"error": "active_attestation wajib untuk profile active"}, ensure_ascii=False)
+    bounded_ttl = max(1, min(ttl_hours, _LAB_MAX_TTL_HOURS if is_lab else 720))
+    bounded_budget = max(1, min(int(request_budget), _LAB_MAX_BUDGET))
+    bounded_rate = max(0.1, min(float(rate_per_second), _LAB_MAX_RATE))
     bounded_targets = targets[:32]
     targets_truncated = len(targets) > 32
 
     canonical_targets: list[str] = []
     for target in bounded_targets:
         try:
-            canonical, _host, _port = _normalize_target(target)
+            if is_lab:
+                parsed = urlparse(target.strip())
+                lab_host = (parsed.hostname or "").lower()
+                if parsed.scheme.lower() not in ("http", "https") or lab_host not in _LAB_LOOPBACK_HOSTS:
+                    return json.dumps({
+                        "error": "owner_lab hanya mengizinkan http(s) ke localhost/127.0.0.1/[::1]",
+                        "target": target,
+                    }, ensure_ascii=False)
+                port = parsed.port or (443 if parsed.scheme.lower() == "https" else 80)
+                canonical = _canonical_http(parsed.scheme.lower(), lab_host, port)
+            else:
+                canonical, _host, _port = _normalize_target(target)
         except ValueError as exc:
             return json.dumps({"error": str(exc), "target": target}, ensure_ascii=False)
         if canonical in canonical_targets:
@@ -161,6 +237,23 @@ def security_scope(
                     _now_iso(),
                 ),
             )
+            if is_lab:
+                conn.execute(
+                    """
+                    INSERT INTO security_scope_labs
+                      (scope_token, profile, request_budget, requests_used,
+                       rate_per_second, attestation_sha, created_at)
+                    VALUES (?, ?, ?, 0, ?, ?, ?)
+                    """,
+                    (
+                        scope_token,
+                        profile,
+                        bounded_budget,
+                        bounded_rate,
+                        hashlib.sha256(attestation.encode()).hexdigest(),
+                        _now_iso(),
+                    ),
+                )
         payload = {
             "scope_token": scope_token,
             "owner": sender_id or approved_by or "system",
@@ -173,12 +266,24 @@ def security_scope(
             "created_at": _now_iso(),
             "expires_at": expires.isoformat(),
             "ttl_hours": bounded_ttl,
+            "kind": kind,
         }
+        if is_lab:
+            payload.update({
+                "profile": profile,
+                "request_budget": bounded_budget,
+                "rate_per_second": bounded_rate,
+            })
         return json.dumps(payload, ensure_ascii=False)
 
     return _idempotent_call(
         "security_scope", idempotency_key,
-        {"targets": canonical_targets, "rationale": rationale, "ttl_hours": bounded_ttl},
+        {
+            "targets": canonical_targets, "rationale": rationale, "ttl_hours": bounded_ttl,
+            "kind": kind, "profile": profile, "request_budget": bounded_budget,
+            "rate_per_second": bounded_rate,
+            "attestation_sha": hashlib.sha256(attestation.encode()).hexdigest() if is_lab else "",
+        },
         _do,
     )[0]
 
@@ -206,6 +311,63 @@ def _ssrf_safe_event_hook(request: httpx.Request) -> None:
                 raise httpx.HTTPError(f"redirect resolved to private ip: {resolved}")
 
 
+def _consume_lab_budget(scope_token: str) -> None:
+    with connect() as conn:
+        cursor = conn.execute(
+            "UPDATE security_scope_labs SET requests_used = requests_used + 1 "
+            "WHERE scope_token=? AND requests_used < request_budget",
+            (scope_token,),
+        )
+        if cursor.rowcount == 0:
+            raise httpx.HTTPError("lab scope: request budget habis")
+
+
+def _assert_loopback_resolution(host: str) -> None:
+    if _looks_like_ip(host):
+        if not ipaddress.ip_address(host).is_loopback:
+            raise httpx.HTTPError(f"lab scope: {host} bukan loopback")
+        return
+    try:
+        infos = socket.getaddrinfo(host, None)
+    except (socket.gaierror, OSError) as exc:
+        raise httpx.HTTPError(f"lab scope: dns gagal: {exc}")
+    for info in infos:
+        if not ipaddress.ip_address(info[4][0]).is_loopback:
+            raise httpx.HTTPError(f"lab scope: {host} berubah ke alamat non-loopback (rebinding)")
+
+
+def _make_request_hook(scope_token: str, lab_hosts: frozenset[str]):
+    if not lab_hosts:
+        return _ssrf_safe_event_hook
+    state = {"last": 0.0}
+
+    def _hook(request: httpx.Request) -> None:
+        parsed = urlparse(str(request.url))
+        scheme = parsed.scheme.lower()
+        if scheme not in ("http", "https"):
+            raise httpx.HTTPError(f"lab scope: scheme tidak diizinkan: {scheme}")
+        host = (parsed.hostname or "").lower()
+        port = parsed.port or (443 if scheme == "https" else 80)
+        if _canonical_http(scheme, host, port) not in lab_hosts:
+            raise httpx.HTTPError(f"lab scope: {host}:{port} di luar target yang dipin")
+        _assert_loopback_resolution(host)
+        with connect() as conn:
+            row = conn.execute(
+                "SELECT rate_per_second FROM security_scope_labs WHERE scope_token=?",
+                (scope_token,),
+            ).fetchone()
+        if not row:
+            raise httpx.HTTPError("lab scope: metadata tidak ditemukan")
+        _consume_lab_budget(scope_token)
+        interval = 1.0 / float(row["rate_per_second"])
+        wait = state["last"] + interval - time.monotonic()
+        if wait > 0:
+            time.sleep(wait)
+        state["last"] = time.monotonic()
+
+    return _hook
+
+
 def _looks_like_ip(host: str) -> bool:
     try:
         ipaddress.ip_address(host)
@@ -227,6 +389,13 @@ def _check_scope(
     if not row:
         return False, None, "scope_token tidak ditemukan"
     record = dict(row)
+    with connect() as conn:
+        lab_row = conn.execute(
+            "SELECT * FROM security_scope_labs WHERE scope_token=?", (scope_token,),
+        ).fetchone()
+    if lab_row:
+        record["kind"] = "owner_lab"
+        record["lab"] = dict(lab_row)
     if sender_id:
         owner = (record.get("owner") or "").strip().lower()
         caller = (sender_id or "").strip().lower()
@@ -247,7 +416,7 @@ def _check_scope(
 
 def _matches_scope(record: dict[str, Any], target: str) -> bool:
     try:
-        canonical, _, _ = _normalize_target(target)
+        canonical, _, _ = _normalize_target(target, _lab_hosts(record))
     except ValueError:
         return False
     targets = json.loads(record.get("targets_json") or "[]")
@@ -305,7 +474,7 @@ def security_assets(
 
     bounded_limit = max(1, min(limit, 500))
     try:
-        canonical, host, _port = _normalize_target(target)
+        canonical, host, _port = _normalize_target(target, _lab_hosts(record))
     except ValueError as exc:
         return json.dumps({"error": str(exc)}, ensure_ascii=False)
     headers = {"User-Agent": "Xninetzy-SecurityAssets/1.0"}
@@ -316,7 +485,7 @@ def security_assets(
             timeout=_REQUEST_TIMEOUT,
             follow_redirects=True,
             headers=headers,
-            event_hooks={"request": [_ssrf_safe_event_hook]},
+            event_hooks={"request": [_make_request_hook(scope_token, _lab_hosts(record))]},
         ) as client:
             for path in seed_paths:
                 try:
@@ -367,7 +536,7 @@ def security_headers(
         return json.dumps({"error": "target tidak termasuk scope"}, ensure_ascii=False)
 
     try:
-        canonical, host, _port = _normalize_target(target)
+        canonical, host, _port = _normalize_target(target, _lab_hosts(record))
     except ValueError as exc:
         return json.dumps({"error": str(exc)}, ensure_ascii=False)
 
@@ -377,7 +546,7 @@ def security_headers(
             timeout=_REQUEST_TIMEOUT,
             follow_redirects=True,
             headers=headers,
-            event_hooks={"request": [_ssrf_safe_event_hook]},
+            event_hooks={"request": [_make_request_hook(scope_token, _lab_hosts(record))]},
         ) as client:
             response = client.get(canonical)
     except httpx.HTTPError as exc:
@@ -433,7 +602,7 @@ def security_api_inventory(
     if not _matches_scope(record, target):
         return json.dumps({"error": "target tidak termasuk scope"}, ensure_ascii=False)
     try:
-        canonical, host, _port = _normalize_target(target)
+        canonical, host, _port = _normalize_target(target, _lab_hosts(record))
     except ValueError as exc:
         return json.dumps({"error": str(exc)}, ensure_ascii=False)
 
@@ -455,7 +624,7 @@ def security_api_inventory(
             timeout=_REQUEST_TIMEOUT,
             follow_redirects=True,
             headers=headers,
-            event_hooks={"request": [_ssrf_safe_event_hook]},
+            event_hooks={"request": [_make_request_hook(scope_token, _lab_hosts(record))]},
         ) as client:
             for path in candidates:
                 try:
@@ -487,39 +656,108 @@ def security_api_inventory(
     }, ensure_ascii=False)
 
 
+_SAST_SUFFIX_GLOBS = {
+    ".py": "**/*.py",
+    ".ts": "**/*.ts",
+    ".tsx": "**/*.tsx",
+    ".js": "**/*.js",
+    ".jsx": "**/*.jsx",
+    ".mjs": "**/*.mjs",
+    ".go": "**/*.go",
+    ".rb": "**/*.rb",
+    ".php": "**/*.php",
+    ".java": "**/*.java",
+}
+_SAST_SKIP_DIRS = frozenset({".git", "node_modules", ".venv", "venv", "dist", "build", "__pycache__", ".next"})
+_SAST_SCAN_ENTRIES = 20000
+
+
+def _detect_sast_globs(base: Path) -> list[str]:
+    found: set[str] = set()
+    seen = 0
+    for path in base.rglob("*"):
+        seen += 1
+        if seen > _SAST_SCAN_ENTRIES:
+            break
+        if any(part in _SAST_SKIP_DIRS for part in path.relative_to(base).parts):
+            continue
+        glob = _SAST_SUFFIX_GLOBS.get(path.suffix.lower())
+        if glob and path.is_file():
+            found.add(glob)
+    return sorted(found) or ["**/*.py"]
+
+
+def _merge_sast_reports(reports: list[dict[str, Any]], limit: int) -> dict[str, Any]:
+    severity_order = {"high": 0, "medium": 1, "low": 2}
+    findings = [item for report in reports for item in report.get("findings", [])]
+    findings.sort(key=lambda f: (severity_order.get(f.get("severity"), 99), f.get("file", ""), f.get("line", 0)))
+    by_rule: dict[str, int] = {}
+    for report in reports:
+        for rule, count in (report.get("by_rule") or {}).items():
+            by_rule[rule] = by_rule.get(rule, 0) + count
+    bounded = max(1, min(limit, 200))
+    return {
+        "root": reports[0].get("root"),
+        "rule_count": len(by_rule),
+        "finding_count": len(findings[:bounded]),
+        "truncated": len(findings) > bounded or any(r.get("truncated") for r in reports),
+        "by_rule": dict(sorted(by_rule.items(), key=lambda kv: -kv[1])),
+        "findings": findings[:bounded],
+    }
+
+
+def _record_sast_run(scope_token: str, repo_root: str, report: dict[str, Any], globs: list[str]) -> None:
+    findings_store.record_run(
+        scope_token, "sast-light", repo_root, "OK", int(report.get("finding_count", 0)),
+        {"globs": globs, "confidence": _LIGHT_ENGINE_CONFIDENCE},
+    )
+
+
 @tool
 def security_sast(
     scope_token: str,
     root: str = "self",
-    glob: str = "**/*.py",
+    glob: str = "",
     limit: int = 50,
     sender_id: str = "",
+    engine: str = "light",
+    include_tests: bool = False,
 ) -> str:
-    """Jalankan pemindai SAST ringan pada kode (delegasi ke repo_risk).
+    """Jalankan SAST: engine light (regex, confidence rendah) atau semgrep (scanner gateway Docker).
 
     Args:
         scope_token: Token scope.
         root: Path atau alias repo (default self).
-        glob: Pola file.
+        glob: Pola file untuk engine light; kosong = deteksi bahasa dari isi repo.
         limit: Maks finding.
         sender_id: Owner principal.
+        engine: "light" atau "semgrep"; semgrep melapor TOOL_MISSING bila docker atau image tidak ada.
+        include_tests: Sertakan file test/fixture untuk rule kredensial.
     """
+    if engine == "semgrep":
+        from xninetzy.tools.ecosystem.security_scanner_tools import security_run_semgrep
+
+        return security_run_semgrep.invoke({
+            "scope_token": scope_token, "root": root, "limit": limit, "sender_id": sender_id,
+        })
+    if engine != "light":
+        return json.dumps({
+            "error": "engine tidak dikenal",
+            "engine": engine,
+            "allowed": ["light", "semgrep"],
+            "scope_token": scope_token,
+        }, ensure_ascii=False)
     ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
-    targets = json.loads(record.get("targets_json") or "[]")
-    file_targets = [
-        t[len("file://"):] if t.startswith("file://") else t[len("file:"):]
-        for t in targets if t.startswith("file:")
-    ]
-    file_targets = [p[1:] if p.startswith("//") else p for p in file_targets]
+    file_targets = _file_scope_targets(record)
     if not file_targets:
         return json.dumps({
             "error": "scope tidak berisi target file:; security_sast butuh file-scope",
             "scope_token": scope_token,
         }, ensure_ascii=False)
     repo_root = str(_resolve_repo_root(root).resolve())
-    if not any(repo_root.startswith(t) or t.startswith(repo_root) for t in file_targets):
+    if not _root_in_file_scope(Path(repo_root), file_targets):
         return json.dumps({
             "error": "root di luar scope file target",
             "scope_token": scope_token,
@@ -527,12 +765,53 @@ def security_sast(
             "allowed": file_targets,
         }, ensure_ascii=False)
     from xninetzy.tools.ecosystem.repo_tools import repo_risk
-    result = repo_risk.invoke({"root": root, "glob": glob, "limit": limit, "sender_id": sender_id})
+
+    globs = [glob] if glob else _detect_sast_globs(Path(repo_root))
+    reports = [
+        json.loads(repo_risk.invoke({
+            "root": root, "glob": pattern, "limit": limit,
+            "sender_id": sender_id, "include_tests": include_tests,
+        }))
+        for pattern in globs
+    ]
+    report = reports[0] if len(reports) == 1 else _merge_sast_reports(reports, limit)
+    _record_sast_run(scope_token, repo_root, report, globs)
     return json.dumps({
         "scope_token": scope_token,
         "tool": "sast-light",
-        "report": json.loads(result),
+        "engine": "light",
+        "confidence": _LIGHT_ENGINE_CONFIDENCE,
+        "globs": globs,
+        "report": report,
     }, ensure_ascii=False)
+
+
+def _file_scope_targets(record: dict[str, Any]) -> list[str]:
+    targets = json.loads(record.get("targets_json") or "[]")
+    file_targets = [
+        t[len("file://"):] if t.startswith("file://") else t[len("file:"):]
+        for t in targets if t.startswith("file:")
+    ]
+    return [p[1:] if p.startswith("//") else p for p in file_targets]
+
+
+def _root_in_file_scope(root: Path, file_targets: list[str]) -> bool:
+    resolved = root.resolve()
+    for target in file_targets:
+        base = Path(target).resolve()
+        if resolved == base or resolved.is_relative_to(base):
+            return True
+    return False
+
+
+def _reserve_lab_budget(scope_token: str, cost: int) -> bool:
+    with connect() as conn:
+        cursor = conn.execute(
+            "UPDATE security_scope_labs SET requests_used = requests_used + ? "
+            "WHERE scope_token=? AND requests_used + ? <= request_budget",
+            (cost, scope_token, cost),
+        )
+        return cursor.rowcount == 1
 
 
 def _resolve_repo_root(root: str) -> Path:
@@ -546,7 +825,7 @@ def security_dependencies(
     root: str = "self",
     sender_id: str = "",
 ) -> str:
-    """Inventaris dependency dari pyproject + requirements dan peringatan versi.
+    """Inventaris dependency dari lockfile (npm/bun/pnpm/yarn/uv/poetry/cargo/pub/go/composer) dan requirements; tanpa penilaian kerentanan.
 
     Args:
         scope_token: Token scope.
@@ -556,12 +835,7 @@ def security_dependencies(
     ok, record, reason = _check_scope(scope_token, sender_id)
     if not ok or not record:
         return json.dumps({"error": reason, "scope_token": scope_token}, ensure_ascii=False)
-    targets = json.loads(record.get("targets_json") or "[]")
-    file_targets = [
-        t[len("file://"):] if t.startswith("file://") else t[len("file:"):]
-        for t in targets if t.startswith("file:")
-    ]
-    file_targets = [p[1:] if p.startswith("//") else p for p in file_targets]
+    file_targets = _file_scope_targets(record)
     if not file_targets:
         return json.dumps({
             "error": "scope tidak berisi target file:; security_dependencies butuh file-scope",
@@ -569,52 +843,59 @@ def security_dependencies(
         }, ensure_ascii=False)
     base = _resolve_repo_root(root).resolve()
     repo_root = str(base)
-    if not any(repo_root.startswith(t) or t.startswith(repo_root) for t in file_targets):
+    if not _root_in_file_scope(base, file_targets):
         return json.dumps({
             "error": "root di luar scope file target",
             "scope_token": scope_token,
             "repo_root": repo_root,
             "allowed": file_targets,
         }, ensure_ascii=False)
-    deps: list[dict[str, Any]] = []
-    pyproject = base / "pyproject.toml"
-    if pyproject.exists():
-        try:
-            text = pyproject.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            text = ""
-        in_deps = False
-        for raw in text.splitlines():
-            line = raw.strip()
-            if not line or line.startswith("#"):
-                continue
-            if line.startswith("[") and line.endswith("]"):
-                in_deps = line.lower() in {"[dependencies]", "[project.dependencies]"}
-                continue
-            if in_deps and "=" in line:
-                name = re.split(r"[<>=!~;\[]", line, maxsplit=1)[0].strip().strip("\"'")
-                if name and not name.startswith("--"):
-                    deps.append({"name": name, "version_hint": line.split("=", 1)[1][:40], "source": "pyproject.toml"})
-    requirements = base / "requirements.txt"
-    if requirements.exists():
-        try:
-            text = requirements.read_text(encoding="utf-8", errors="replace")
-        except OSError:
-            text = ""
-        for raw in text.splitlines():
-            line = raw.strip()
-            if not line or line.startswith("#") or line.startswith("-"):
-                continue
-            name = re.split(r"[<>=!~;\[]", line, maxsplit=1)[0].strip()
-            if name:
-                deps.append({"name": name, "version_hint": line, "source": "requirements.txt"})
+    from xninetzy.os.security import lockfiles
 
+    lock_paths = lockfiles.discover(base)
+    seen: set[tuple[str, str, str]] = set()
+    deps: list[dict[str, Any]] = []
+    lockfile_summary: list[dict[str, Any]] = []
+    parse_errors: list[dict[str, str]] = []
+    for path in lock_paths:
+        rel = str(path.relative_to(base))
+        try:
+            packages = lockfiles.parse_lockfile(path, base)
+        except (ValueError, OSError) as exc:
+            parse_errors.append({"lockfile": rel, "error": type(exc).__name__})
+            continue
+        lockfile_summary.append({"lockfile": rel, "packages": len(packages)})
+        for pkg in packages:
+            key = (pkg.ecosystem, pkg.name, pkg.version)
+            if key in seen:
+                continue
+            seen.add(key)
+            deps.append({
+                "name": pkg.name,
+                "version": pkg.version,
+                "version_hint": pkg.version,
+                "ecosystem": pkg.ecosystem,
+                "dev": pkg.dev,
+                "source": rel,
+            })
+    pyproject = base / "pyproject.toml"
+    manifest = lockfiles.manifest_dependencies(pyproject) if pyproject.exists() else []
     payload = {
         "scope_token": scope_token,
         "root": str(base),
         "dependency_count": len(deps),
+        "lockfile_count": len(lockfile_summary),
+        "lockfiles": lockfile_summary,
+        "parse_errors": parse_errors,
+        "manifest_dependencies": manifest,
         "dependencies": deps,
+        "vulnerabilities": "NOT_ASSESSED",
+        "vulnerability_note": "hasil ini hanya inventaris; jalankan security_run_osv atau security_run_trivy untuk advisory",
     }
+    findings_store.record_run(
+        scope_token, "dependency-inventory", str(base), "OK", len(deps),
+        {"lockfiles": len(lockfile_summary), "parse_errors": len(parse_errors)},
+    )
     return json.dumps(payload, ensure_ascii=False)
 
 

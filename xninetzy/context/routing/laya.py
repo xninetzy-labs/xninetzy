@@ -2,8 +2,7 @@ from __future__ import annotations
 
 import json
 import math
-from dataclasses import asdict, dataclass, field
-from pathlib import Path
+from dataclasses import dataclass, field
 from typing import Any
 
 LAYA_VERSION = "1.0.0"
@@ -80,7 +79,7 @@ def _llm_chat_json(
     timeout_seconds: float,
 ) -> dict[str, Any]:
     from xninetzy.core.config import get_settings
-    import httpx
+    from xninetzy.interfaces.llm_chat_transport import post_json
 
     s = get_settings()
     base_url = ""
@@ -105,10 +104,7 @@ def _llm_chat_json(
         "response_format": {"type": "json_object"},
     }
     headers = {"Authorization": f"Bearer {api_key}", "Content-Type": "application/json"}
-    with httpx.Client(timeout=timeout_seconds) as client:
-        resp = client.post(url, json=payload, headers=headers)
-        resp.raise_for_status()
-        body = resp.json()
+    body = post_json(url, payload, headers, timeout_seconds)
     content = (((body.get("choices") or [{}])[0]).get("message") or {}).get("content") or ""
     text = content.strip()
     if text.startswith("```"):
@@ -205,25 +201,8 @@ def invoke_laya(
     )
 
 
-def fit_platt(probs: list[float], labels: list[int]) -> tuple[float, float] | None:
-    if not probs or len(probs) != len(labels):
-        return None
-    if len(probs) < 3 or len(set(labels)) < 2:
-        return _platt_fit_closed_form(probs, labels)
-    try:
-        from sklearn.linear_model import LogisticRegression
-        import math as _math
-
-        feats = [_math.log(max(min(p, 1.0 - 1e-9), 1e-9)) for p in probs]
-        clf = LogisticRegression(max_iter=1000, solver="lbfgs")
-        clf.fit([[x] for x in feats], list(labels))
-        return (float(clf.coef_[0][0]), float(clf.intercept_[0]))
-    except Exception:
-        return _platt_fit_closed_form(probs, labels)
-
-
 def _platt_fit_closed_form(probs: list[float], labels: list[int]) -> tuple[float, float]:
-    pos = sum(1 for l in labels if l == 1)
+    pos = sum(1 for y in labels if y == 1)
     n = len(labels)
     a = 1.0 if 0 < pos < n else 0.0
     import math as _math
@@ -237,7 +216,6 @@ def fit_platt(probs: list[float], labels: list[int]) -> tuple[float, float] | No
     if not probs or len(probs) != len(labels):
         return None
     try:
-        import numpy as _np
         from sklearn.linear_model import LogisticRegression
     except Exception:
         try:
@@ -258,15 +236,15 @@ def ece(probs: list[float], labels: list[int], *, n_bins: int = 10) -> float:
     if not probs or len(probs) != len(labels):
         return 0.0
     bins: list[list[tuple[float, int]]] = [[] for _ in range(n_bins)]
-    for p, l in zip(probs, labels):
+    for p, y in zip(probs, labels):
         idx = min(int(p * n_bins), n_bins - 1)
-        bins[idx].append((p, l))
+        bins[idx].append((p, y))
     total = len(probs)
     out = 0.0
     for bucket in bins:
         if not bucket:
             continue
-        acc = sum(l for _, l in bucket) / len(bucket)
+        acc = sum(y for _, y in bucket) / len(bucket)
         conf = sum(p for p, _ in bucket) / len(bucket)
         out += (len(bucket) / total) * abs(acc - conf)
     return out
@@ -275,4 +253,4 @@ def ece(probs: list[float], labels: list[int], *, n_bins: int = 10) -> float:
 def brier(probs: list[float], labels: list[int]) -> float:
     if not probs:
         return 0.0
-    return sum((p - l) ** 2 for p, l in zip(probs, labels)) / len(probs)
+    return sum((p - y) ** 2 for p, y in zip(probs, labels)) / len(probs)

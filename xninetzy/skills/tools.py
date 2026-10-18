@@ -96,10 +96,13 @@ def skill_resource_list(name: str) -> str:
 
 
 @tool
-def skill_resource_read(name: str, relative_path: str) -> str:
+def skill_resource_read(name: str, relative_path: str = "", resource: str = "") -> str:
     """Muat satu resource teks skill secara bounded dan path-confined."""
+    target = (relative_path or resource).strip()
+    if not target:
+        return "❌ Parameter `relative_path` (alias `resource`) wajib diisi."
     try:
-        return read_skill_resource(name, relative_path)
+        return read_skill_resource(name, target)
     except (OSError, SkillValidationError, UnicodeError) as exc:
         return f"❌ Resource skill tidak dapat dimuat: {exc}"
 

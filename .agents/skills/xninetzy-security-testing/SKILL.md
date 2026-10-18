@@ -1347,18 +1347,9 @@ unless a separate explicit assessment profile requires it.
 
 Every scanner invocation must go through one subprocess gateway.
 
-Conceptually:
+Implemented in `xninetzy/ecosystem/scanners/runner.py` and exposed through `security_run_gitleaks`, `security_run_trivy`, `security_run_osv`, `security_run_semgrep`, `security_sbom`, `security_run_zap` and `security_run_schemathesis`. There is no generic `security_execute`: each scanner has its own adapter and fixed argument template.
 
-```python
-security_execute(
-    tool=...,
-    args=...,
-    scope=...,
-    policy=...,
-    timeout=...,
-    output_limit=...,
-)
-```
+Every run is `docker run --rm --read-only --cap-drop=ALL --security-opt=no-new-privileges` with memory, pid and CPU limits, a non-root user, a read-only source mount and an output directory under the scope. The docker socket is never mounted and images are never pulled automatically: a missing image returns `TOOL_MISSING`.
 
 The gateway enforces:
 
@@ -1384,29 +1375,19 @@ The language model must never construct arbitrary unrestricted subprocess comman
 
 ## 32. Tool Discovery
 
-`security_check_tools` must return:
+`security_check_tools` reads `security-tools.lock` (image tag and digest per scanner) and reports one row per scanner:
 
 ```yaml
 tool:
+capability:
+status: READY | DEGRADED | MISSING | UNHEALTHY
+image:
 version:
-path:
-healthy:
-capabilities:
-supported_targets:
-container_available:
-docker_available:
-notes:
+digest:
+detail:
 ```
 
-Example:
-
-```text
-nmap       YES  /usr/bin/nmap
-nuclei     YES  /usr/local/bin/nuclei
-semgrep    YES  /usr/local/bin/semgrep
-gitleaks   YES  /usr/local/bin/gitleaks
-trivy      YES  /usr/bin/trivy
-```
+`READY` means the image is present locally and its digest matches the pin in the lock. `DEGRADED` means the image is present but the digest is unpinned or differs from the lock. `MISSING` means the image is not installed; `detail` carries the `docker pull` command for the owner to run. `UNHEALTHY` means docker or its daemon is unreachable. `security_check_tools(pin=True)` writes the digests of locally installed images into the lock. The tool never pulls an image and never runs a scanner.
 
 A missing scanner is a degraded capability, not a reason to fabricate coverage.
 

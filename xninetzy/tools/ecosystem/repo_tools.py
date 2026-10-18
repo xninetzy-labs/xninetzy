@@ -120,13 +120,13 @@ class RiskFinding:
 _RISK_RULES: list[tuple[str, str, str, str]] = [
     ("subprocess", r"\bsubprocess\.(?:Popen|run|call|check_output|check_call)\b", "high", "subprocess call"),
     ("os.system", r"\bos\.system\s*\(", "high", "shell execution"),
-    ("eval", r"\beval\s*\(", "high", "dynamic code execution"),
-    ("exec", r"\bexec\s*\(", "high", "dynamic code execution"),
+    ("eval", r"(?<![.\w])eval\s*\(", "high", "dynamic code execution"),
+    ("exec", r"(?<![.\w])exec\s*\(", "high", "dynamic code execution"),
     ("pickle_load", r"\bpickle\.loads?\s*\(", "medium", "unsafe deserialization"),
     ("yaml_load_unsafe", r"\byaml\.load\s*\((?![^)]*Loader\s*=)", "medium", "unsafe YAML load"),
     ("shell_true", r"shell\s*=\s*True", "medium", "shell=True risk"),
     ("http_no_timeout", r"\bhttpx\.[A-Za-z_]+\s*\([^)]*\)", "low", "httpx call without explicit timeout"),
-    ("requests_no_timeout", r"\brequests\.[A-Za-z_]+\s*\([^)]*\)", "low", "requests call without explicit timeout"),
+    ("requests_no_timeout", r"(?<![.\w])requests\.[A-Za-z_]+\s*\([^)]*\)", "low", "requests call without explicit timeout"),
     ("hardcoded_password", r"(?i)(password|passwd|pwd)\s*=\s*['\"][^'\"]{4,}['\"]", "high", "hardcoded password"),
     ("hardcoded_token", r"(?i)(api_key|token|secret)\s*=\s*['\"][A-Za-z0-9_\-]{12,}['\"]", "high", "hardcoded credential"),
     ("sql_concat", r"(?i)\b(?:SELECT|INSERT|UPDATE|DELETE)\b[^;\n]*%[sd]", "medium", "SQL string format"),
@@ -138,6 +138,24 @@ _RISK_RULES: list[tuple[str, str, str, str]] = [
     ("disable_ssl", r"verify\s*=\s*False", "medium", "TLS verification disabled"),
     ("allow_offscreen_canvas", r"getContext\s*\(\s*['\"]webgl['\"][^)]*\{[^}]*preserveDrawingBuffer", "low", "webgl fingerprint pattern"),
 ]
+
+
+_PYTHON_ONLY_RULES = frozenset({
+    "subprocess", "os.system", "pickle_load", "yaml_load_unsafe", "shell_true",
+    "http_no_timeout", "requests_no_timeout", "random_usesecrets", "md5_password",
+    "sha1_password", "sql_fstring", "open_path_traversal",
+})
+_TEST_PATH_RULES = frozenset({"hardcoded_password", "hardcoded_token"})
+_TEST_PATH_MARKERS = ("__tests__", "tests", "test", "fixtures", "__mocks__")
+_LIGHT_ENGINE_CONFIDENCE = 0.3
+
+
+def _is_test_path(rel: str) -> bool:
+    parts = rel.replace("\\", "/").split("/")
+    name = parts[-1]
+    if any(part in _TEST_PATH_MARKERS for part in parts[:-1]):
+        return True
+    return bool(re.search(r"(?:^test_|_test\.|\.test\.|\.spec\.)", name))
 
 
 _GIT_REF_RE = re.compile(r"^[A-Za-z0-9_][A-Za-z0-9_./^~@{}\-]{0,200}$")
@@ -750,6 +768,7 @@ def repo_risk(
     limit: int = 60,
     chat_id: str = "system",
     sender_id: str = "",
+    include_tests: bool = False,
 ) -> str:
     """Pemindai SAST ringan: subprocess/eval/pickle/yaml.unsafe/hardcoded creds/SQL format/disable_ssl/dll.
 
@@ -759,6 +778,7 @@ def repo_risk(
         limit: Maks jumlah finding (cap 200).
         chat_id: Chat ID (dari context).
         sender_id: Owner principal (dari context).
+        include_tests: Sertakan file test/fixture untuk rule kredensial.
     """
     base = _resolve_root(root)
     bounded_limit = max(1, min(limit, 200))
@@ -769,8 +789,14 @@ def repo_risk(
         text = _safe_read(path, _DEFAULT_LIMITS["repo_search"]["max_file_bytes"])
         if not text:
             continue
+        is_python = path.suffix.lower() in {".py", ".pyi"}
+        in_tests = _is_test_path(_rel(base, path))
         for line_no, line in enumerate(text.splitlines(), start=1):
             for rule_id, pattern, severity, rationale in _RISK_RULES:
+                if rule_id in _PYTHON_ONLY_RULES and not is_python:
+                    continue
+                if rule_id in _TEST_PATH_RULES and in_tests and not include_tests:
+                    continue
                 try:
                     if re.search(pattern, line):
                         findings.append(RiskFinding(

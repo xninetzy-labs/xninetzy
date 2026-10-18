@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import asyncio
+import os
 import secrets
 
 from xninetzy.core.config import get_settings
@@ -19,10 +20,35 @@ logger = logging.getLogger(__name__)
 
 _PLAYWRIGHT_AVAILABLE = False
 try:
+    from playwright.async_api import TimeoutError as PlaywrightTimeoutError
     from playwright.async_api import async_playwright
+
     _PLAYWRIGHT_AVAILABLE = True
 except ImportError:
-    pass
+    PlaywrightTimeoutError = asyncio.TimeoutError
+
+UPLOAD_SETTLE_TIMEOUT_S = 120.0
+UPLOAD_POLL_INTERVAL_S = 1.0
+SAVE_NAVIGATION_TIMEOUT_MS = 120_000
+SAVE_SELECTOR = "input[type='submit'][value*='Save'], button:has-text('Save changes')"
+UPLOAD_SNAPSHOT_JS = """() => {
+    const visible = (el) => !!(el.offsetWidth || el.offsetHeight);
+    const manager = Array.from(document.querySelectorAll('.filemanager')).find(visible);
+    const names = manager
+        ? Array.from(manager.querySelectorAll('.fp-filename')).filter(visible).map((el) => el.innerText.trim())
+        : [];
+    const errors = Array.from(document.querySelectorAll('.fp-msg-error, .moodle-exception, .alert-danger'))
+        .filter(visible)
+        .map((el) => el.innerText.trim())
+        .filter(Boolean);
+    return {
+        names,
+        errors,
+        updating: !!(manager && manager.classList.contains('fm-updating')),
+        dialogOpen: !!document.querySelector(".moodle-dialogue-base[aria-hidden='false']"),
+        editFormOpen: !!document.querySelector("input[name='action'][value='savesubmission']"),
+    };
+}"""
 
 
 def generate_token() -> str:
@@ -78,6 +104,73 @@ def _classify_removal(parsed: dict) -> tuple[bool, str]:
     if status and "no submission" in status.lower():
         return True, verification
     return False, f"Status submission masih terbaca: {status or 'tidak terbaca'}"
+
+
+def _upload_state(
+    snapshot: dict,
+    expected_name: str,
+    before_names: list[str],
+    baseline_errors: list[str],
+) -> tuple[str, str | None]:
+    new_errors = [e for e in snapshot.get("errors", []) if e not in baseline_errors]
+    if new_errors:
+        return "error", "; ".join(new_errors)[:300]
+    names = snapshot.get("names", [])
+    listed = (expected_name in names and expected_name not in before_names) or len(names) > len(
+        before_names
+    )
+    if listed and not snapshot.get("updating") and not snapshot.get("dialogOpen"):
+        return "ready", None
+    return "pending", None
+
+
+async def _wait_for_upload_listed(
+    page,
+    expected_name: str,
+    before_names: list[str],
+    baseline_errors: list[str],
+    timeout_s: float = UPLOAD_SETTLE_TIMEOUT_S,
+    poll_interval_s: float = UPLOAD_POLL_INTERVAL_S,
+) -> tuple[str, str | None]:
+    loop = asyncio.get_running_loop()
+    deadline = loop.time() + timeout_s
+    while True:
+        snapshot = await page.evaluate(UPLOAD_SNAPSHOT_JS)
+        state, detail = _upload_state(snapshot, expected_name, before_names, baseline_errors)
+        if state != "pending":
+            return state, detail
+        if loop.time() >= deadline:
+            return (
+                "timeout",
+                f"File belum muncul di daftar file HEBAT setelah {int(timeout_s)} detik",
+            )
+        await asyncio.sleep(poll_interval_s)
+
+
+def _save_failure_reason(snapshot: dict) -> str | None:
+    if not snapshot.get("editFormOpen"):
+        return None
+    errors = [e for e in snapshot.get("errors", []) if e]
+    if errors:
+        return "Moodle menolak penyimpanan: " + "; ".join(errors)[:300]
+    return "Form submission masih terbuka setelah Save changes"
+
+
+async def _click_save(page) -> None:
+    try:
+        save_btn = await page.wait_for_selector(SAVE_SELECTOR, state="visible", timeout=30_000)
+    except PlaywrightTimeoutError:
+        save_btn = None
+    async with page.expect_navigation(
+        wait_until="domcontentloaded", timeout=SAVE_NAVIGATION_TIMEOUT_MS
+    ):
+        if save_btn is not None:
+            await save_btn.click(timeout=15_000)
+        else:
+            form = await page.wait_for_selector(
+                "form[action*='mod/assign']", state="visible", timeout=5_000
+            )
+            await form.evaluate("el => el.submit()")
 
 
 async def upload_submission_via_playwright(
@@ -148,6 +241,8 @@ async def upload_submission_via_playwright(
             )
             await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
 
+            before = await page.evaluate(UPLOAD_SNAPSHOT_JS)
+            expected_name = os.path.basename(local_file_path)
             file_manager = page.locator(".filemanager:visible").last
             direct_input = file_manager.locator("input[type='file']").last
             file_input = direct_input
@@ -194,34 +289,27 @@ async def upload_submission_via_playwright(
             except Exception:
                 return failed_result("Dialog Upload this file tidak ditemukan")
             await upload_button.click(force=True, timeout=15_000)
-            try:
-                await upload_dialog.wait_for(state="hidden", timeout=15_000)
-            except Exception:
-                await page.wait_for_timeout(1000)
-
-            save_selector = (
-                "input[type='submit'][value*='Save'], "
-                "button:has-text('Save changes')"
+            upload_state, upload_detail = await _wait_for_upload_listed(
+                page, expected_name, before["names"], before["errors"]
             )
-            try:
-                save_btn = await page.wait_for_selector(
-                    save_selector,
-                    state="visible",
-                    timeout=30_000,
+            if upload_state != "ready":
+                return failed_result(
+                    upload_detail or "File tidak muncul di daftar file HEBAT setelah diunggah"
                 )
-                await save_btn.click(timeout=15_000)
-            except Exception:
-                form = await page.wait_for_selector(
-                    "form[action*='mod/assign']",
-                    state="visible",
-                    timeout=5_000,
-                )
-                await form.evaluate("el => el.submit()")
 
-            await page.wait_for_load_state("domcontentloaded", timeout=30_000)
+            try:
+                await _click_save(page)
+            except PlaywrightTimeoutError:
+                return failed_result(
+                    "Save changes tidak memicu navigasi dalam batas waktu; submission tidak tersimpan"
+                )
+            after_save = await page.evaluate(UPLOAD_SNAPSHOT_JS)
+            save_failure = _save_failure_reason(after_save)
+            if save_failure:
+                return failed_result(save_failure)
             await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
 
-            await page.goto(assignment_url, wait_until="domcontentloaded", timeout=20_000)
+            await page.goto(assignment_url, wait_until="domcontentloaded", timeout=60_000)
             await asyncio.sleep(s.HEBAT_RATE_LIMIT_SECONDS)
             html_after = await page.content()
             parsed = parse_assignment_page(html_after)

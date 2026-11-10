@@ -313,3 +313,51 @@ async def test_grade_token_submit_token_only_denies_non_admin(monkeypatch):
     )
 
     assert result == "Token nilai hanya dapat dikirim oleh  admin."
+
+
+def _grade_result(**extra):
+    return GradeResult(
+        period="2025/2026 - Genap - Genap",
+        entries=(GradeEntry(values=(("Mata Kuliah", "SIC201"), ("Nilai", "A"))),),
+        **extra,
+    )
+
+
+def test_format_grades_reports_saved_file_and_note():
+    saved = portal_tools._format_grades(_grade_result(saved_path="/tmp/KHS.pdf"))
+    failed = portal_tools._format_grades(_grade_result(save_error="RuntimeError: x"))
+    both = portal_tools._format_grades(
+        _grade_result(saved_path="/tmp/raw.html", save_error="Cetak gagal")
+    )
+    plain = portal_tools._format_grades(_grade_result())
+
+    assert "Berkas KHS: /tmp/KHS.pdf" in saved
+    assert "Catatan berkas KHS: RuntimeError: x" in failed
+    assert "Berkas KHS:" not in failed
+    assert "Berkas KHS: /tmp/raw.html" in both and "Catatan berkas KHS: Cetak gagal" in both
+    assert "Berkas KHS" not in plain
+
+
+@pytest.mark.asyncio
+async def test_portal_grades_passes_save_dir_only_when_download_original_requested(monkeypatch):
+    prepare_calls = []
+
+    async def fake_start(owner_id, academic_period):
+        return {"challenge_id": "c1", "expires_at": "soon"}
+
+    async def fake_prepare(challenge_id, academic_period, **options):
+        prepare_calls.append(options)
+        return SimpleNamespace(label="2025/2026 - Genap - Genap")
+
+    monkeypatch.setattr(portal_tools, "is_owner_admin", lambda sender_id, sender_name: True)
+    monkeypatch.setattr(portal_tools, "_notification_jid", lambda: "628123@chat.local")
+    monkeypatch.setattr(portal_tools, "_inbox_capture_item", lambda *args, **kwargs: None)
+    monkeypatch.setattr(portal_tools.GRADE_TOKEN_COORDINATOR, "start", fake_start)
+    monkeypatch.setattr(portal_tools.ACADEMIC_PORTAL_READER, "prepare_grade_request", fake_prepare)
+
+    await portal_tools.portal_grades.coroutine("latest", "system", "system")
+    await portal_tools.portal_grades.coroutine("latest", "system", "system", True)
+
+    assert prepare_calls[0] == {}
+    assert list(prepare_calls[1]) == ["save_dir"]
+    assert prepare_calls[1]["save_dir"].endswith("Downloads")

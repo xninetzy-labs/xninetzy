@@ -1,0 +1,75 @@
+{
+  "tools": {
+    "gitleaks": {
+      "capability": "secrets",
+      "db_updated": "",
+      "digest": "sha256:c00b6bd0aeb3071cbcb79009cb16a60dd9e0a7c60e2be9ab65d25e6bc8abbb7f",
+      "image": "zricethezav/gitleaks:v8.30.1",
+      "version": "8.30.1"
+    },
+    "grype": {
+      "capability": "sbom-vulnerabilities",
+      "db_updated": "",
+      "digest": "sha256:6a36234da13f9faa327306ac0b3dab3405cfa2b4eb20c8f904125a8707863913",
+      "image": "anchore/grype:latest",
+      "version": "latest"
+    },
+    "k6": {
+      "capability": "load-test",
+      "db_updated": "",
+      "digest": "",
+      "image": "grafana/k6:1.3.0",
+      "version": "1.3.0"
+    },
+    "nginx": {
+      "capability": "nginx-config-test",
+      "db_updated": "",
+      "digest": "sha256:65645c7bb6a0661892a8b03b89d0743208a18dd2f3f17a54ef4b76fb8e2f2a10",
+      "image": "nginx:1.27-alpine",
+      "version": "1.27"
+    },
+    "osv-scanner": {
+      "capability": "dependencies",
+      "db_updated": "",
+      "digest": "sha256:afd838850ac1a0fcc15ff4a041dc9ba11123c3f0d2666217a5f0fcf9222b55fa",
+      "image": "ghcr.io/google/osv-scanner:v2.6.0",
+      "version": "2.6.0"
+    },
+    "schemathesis": {
+      "capability": "api-fuzz",
+      "db_updated": "",
+      "digest": "sha256:ddf8b3c9e0b3ee7edfa65dad4d0c0e05c53fb5d92f99db379d40da01883474c7",
+      "image": "schemathesis/schemathesis:stable",
+      "version": "stable"
+    },
+    "semgrep": {
+      "capability": "sast",
+      "db_updated": "",
+      "digest": "sha256:acaac22ffc7b7cc5926de0751b223bce0b2491c33d18422fa72f632c78d81198",
+      "image": "semgrep/semgrep:1.177.0",
+      "version": "1.177.0"
+    },
+    "syft": {
+      "capability": "sbom",
+      "db_updated": "",
+      "digest": "sha256:3c70e6d5979364cefdc22b51617a78fd264574d3bd6b4f84a351204147025e2a",
+      "image": "anchore/syft:latest",
+      "version": "latest"
+    },
+    "trivy": {
+      "capability": "vulnerabilities+config+secrets",
+      "db_updated": "",
+      "digest": "sha256:62b1e65e8869bc4b4c6aa4fa2b21595256c7c2f6018a9d9ad61caf87187c1969",
+      "image": "aquasec/trivy:0.74.0",
+      "version": "0.74.0"
+    },
+    "zap": {
+      "capability": "dast",
+      "db_updated": "",
+      "digest": "sha256:9624669db72f54d86c4b46a7064518bd9bf79d8c61a4c31befa9923489f328af",
+      "image": "ghcr.io/zaproxy/zaproxy:2.17.0",
+      "version": "2.17.0"
+    }
+  },
+  "version": 1
+}

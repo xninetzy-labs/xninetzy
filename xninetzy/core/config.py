@@ -267,6 +267,7 @@ class Settings(BaseSettings):
     CYBER_CAMPUS_LOGIN_TIMEOUT_MS: int = 30_000
     CYBER_CAMPUS_GRADE_TOKEN_TTL_SECONDS: int = 180
     CYBER_CAMPUS_GRADE_TOKEN_MAX_ATTEMPTS: int = 3
+    CYBER_CAMPUS_KHS_SAVE_DIR: str = "~/Downloads"
     CYBER_CAMPUS_ENTRY_YEAR: int = 0
     UACC_ENABLED: bool = False
     UACC_BASE_URL: str = "https://uacc.unair.ac.id"
@@ -572,6 +573,7 @@ _PATH_KEYS = frozenset({
     "VECTOR_DATA_DIR",
     "GRAPH_VECTOR_DATA_DIR",
     "VIDEO_OUTPUT_DIR",
+    "CYBER_CAMPUS_KHS_SAVE_DIR",
 })
 
 

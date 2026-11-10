@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 import asyncio
+import mimetypes
 import re
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from pathlib import Path
 from typing import Any
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from bs4 import BeautifulSoup
 
@@ -80,6 +82,8 @@ class GradeEntry:
 class GradeResult:
     period: str
     entries: tuple[GradeEntry, ...]
+    saved_path: str = ""
+    save_error: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -129,6 +133,98 @@ class PreparedGradeRequest:
     context: Any
     page: Any
     expiry_handle: asyncio.TimerHandle | None = None
+    save_dir: str = ""
+
+
+CETAK_URL_PATTERN = re.compile(r"""['"]([^'"\s]+\.php[^'"\s]*)['"]""")
+
+
+@dataclass(frozen=True, slots=True)
+class OriginalKhsRequest:
+    method: str
+    url: str
+    fields: tuple[tuple[str, str], ...] = ()
+
+
+def _cetak_label(node: Any) -> str:
+    raw = node.get_text(" ") or node.get("value") or node.get("title") or node.get("alt")
+    return re.sub(r"\s+", " ", str(raw or "")).strip().casefold()
+
+
+def _cetak_nodes(soup: BeautifulSoup) -> list[Any]:
+    return [
+        node
+        for node in soup.select("a, button, input, span, td, div, img")
+        if _cetak_label(node) == "cetak"
+    ]
+
+
+def _request_from_node(node: Any, page_url: str) -> OriginalKhsRequest | None:
+    href = str(node.get("href") or "").strip()
+    is_script_href = href.casefold().startswith("javascript:")
+    if node.name == "a" and href and not href.startswith("#") and not is_script_href:
+        return OriginalKhsRequest("get", urljoin(page_url, href))
+    script_text = " ".join(
+        part for part in (str(node.get("onclick") or ""), href if is_script_href else "") if part
+    )
+    match = CETAK_URL_PATTERN.search(script_text)
+    if match:
+        return OriginalKhsRequest("get", urljoin(page_url, match.group(1)))
+    action = str(node.get("action") or "").strip()
+    if node.name == "form" and action:
+        fields = tuple(
+            (str(field.get("name")), str(field.get("value") or ""))
+            for field in node.select("input[name]")
+            if str(field.get("type") or "").casefold() not in {"submit", "button", "file"}
+        )
+        method = str(node.get("method") or "get").strip().casefold()
+        return OriginalKhsRequest(method, urljoin(page_url, action), fields)
+    return None
+
+
+def find_original_khs_request(
+    html: str, page_url: str, base_url: str
+) -> OriginalKhsRequest | None:
+    soup = BeautifulSoup(html or "", "lxml")
+    base_host = urlparse(base_url).netloc.casefold()
+    for node in _cetak_nodes(soup):
+        for candidate in (node, *node.parents):
+            request = _request_from_node(candidate, page_url)
+            if (
+                request is not None
+                and request.method in {"get", "post"}
+                and urlparse(request.url).netloc.casefold() == base_host
+            ):
+                return request
+    return None
+
+
+def describe_cetak_nodes(html: str) -> str:
+    nodes = _cetak_nodes(BeautifulSoup(html or "", "lxml"))
+    if not nodes:
+        return "tidak ada elemen bertuliskan Cetak"
+    markup = _text(str(nodes[-1].parent or nodes[-1]))
+    return re.sub(r"\d{6,}", "[angka]", markup)[:300]
+
+
+def original_khs_path(save_dir: str, period: str, suffix: str) -> Path:
+    slug = re.sub(r"[^0-9A-Za-z]+", "-", period).strip("-") or "periode"
+    folder = Path(save_dir).expanduser()
+    candidate = folder / f"KHS_asli_{slug}{suffix}"
+    index = 1
+    while candidate.exists():
+        candidate = folder / f"KHS_asli_{slug}-{index}{suffix}"
+        index += 1
+    return candidate
+
+
+def original_khs_suffix(body: bytes, headers: dict[str, str]) -> str:
+    if body.startswith(b"%PDF"):
+        return ".pdf"
+    content_type = str(headers.get("content-type") or "").split(";")[0].strip().casefold()
+    if "html" in content_type:
+        return ".html"
+    return mimetypes.guess_extension(content_type) or ".bin"
 
 
 def _text(value: Any) -> str:
@@ -676,13 +772,82 @@ class AcademicPortalReader:
                 raise AcademicPortalReadError(
                     "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
                 )
-            return parse_grade_html(result_html, prepared.period.label)
+            result = parse_grade_html(result_html, prepared.period.label)
+            if prepared.save_dir:
+                result = await self._attach_original_khs(prepared, result, result_html)
+            return result
         finally:
             clean_token = ""
             await self.cancel_grade_request(challenge_id)
 
+    async def _attach_original_khs(
+        self,
+        prepared: PreparedGradeRequest,
+        result: GradeResult,
+        result_html: str,
+    ) -> GradeResult:
+        try:
+            request = find_original_khs_request(
+                result_html, prepared.page.url, self.settings.CYBER_CAMPUS_BASE_URL
+            )
+            if request is None:
+                raise AcademicPortalReadError(
+                    "tombol Cetak tidak dikenali: " + describe_cetak_nodes(result_html)
+                )
+            headers = {"Referer": prepared.page.url}
+            if request.method == "post":
+                response = await prepared.context.request.post(
+                    request.url, form=dict(request.fields), headers=headers
+                )
+            else:
+                response = await prepared.context.request.get(
+                    request.url, params=dict(request.fields) or None, headers=headers
+                )
+            if not response.ok:
+                raise AcademicPortalReadError(f"Cetak KHS dijawab status {response.status}")
+            body = await response.body()
+            suffix = original_khs_suffix(body, response.headers)
+            if suffix != ".pdf" and looks_like_login(body.decode("utf-8", "ignore")):
+                raise AcademicPortalReadError(
+                    "Session Cyber Campus kedaluwarsa. Jalankan /cyber-login."
+                )
+            target = original_khs_path(prepared.save_dir, prepared.period.label, suffix)
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_bytes(body)
+            return replace(result, saved_path=str(target))
+        except Exception as exc:
+            return self._save_raw_khs_response(prepared, result, result_html, exc)
+
+    def _save_raw_khs_response(
+        self,
+        prepared: PreparedGradeRequest,
+        result: GradeResult,
+        result_html: str,
+        error: Exception,
+    ) -> GradeResult:
+        reason = f"{type(error).__name__}: {error}"
+        try:
+            target = original_khs_path(
+                prepared.save_dir, f"{prepared.period.label}-respons", ".html"
+            )
+            target.parent.mkdir(parents=True, exist_ok=True)
+            target.write_text(result_html, encoding="utf-8")
+        except Exception as write_error:
+            return replace(
+                result,
+                save_error=f"{reason}; respons mentah juga gagal disimpan: {write_error}",
+            )
+        return replace(
+            result,
+            saved_path=str(target),
+            save_error=f"{reason}. Yang tersimpan adalah respons KHS mentah dari portal, bukan berkas Cetak.",
+        )
+
     async def prepare_grade_request(
-        self, challenge_id: str, academic_period: str = "latest"
+        self,
+        challenge_id: str,
+        academic_period: str = "latest",
+        save_dir: str = "",
     ) -> AcademicPeriod:
         await self.cancel_all_grade_requests()
         playwright, browser, context = await self._browser()
@@ -720,6 +885,7 @@ class AcademicPortalReader:
                 browser=browser,
                 context=context,
                 page=page,
+                save_dir=save_dir,
             )
             loop = asyncio.get_running_loop()
             prepared.expiry_handle = loop.call_later(

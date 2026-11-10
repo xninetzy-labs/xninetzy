@@ -153,8 +153,8 @@ async def portal_login_submit_captcha(
             await asyncio.to_thread(
                 _inbox_capture_item,
                 "Cyber Campus berhasil login dan session terenkripsi sudah disimpan.",
-                "note",
-                jid,
+                kind="note",
+                chat_id=jid,
             )
         except Exception:
             pass
@@ -269,8 +269,8 @@ async def uacc_login_submit_captcha(
             await asyncio.to_thread(
                 _inbox_capture_item,
                 "UACC berhasil login dan session terenkripsi sudah disimpan.",
-                "note",
-                jid,
+                kind="note",
+                chat_id=jid,
             )
         except Exception:
             pass
@@ -436,6 +436,10 @@ def _format_grades(
             continue
         lines.append("")
         lines.append(f"{index}. " + " | ".join(f"{key}: {value}" for key, value in values))
+    if result.saved_path:
+        lines.extend(["", f"Berkas KHS: {result.saved_path}"])
+    if result.save_error:
+        lines.extend(["", f"Catatan berkas KHS: {result.save_error}"])
     if snapshot:
         lines.extend(["", f"Snapshot lokal: #{snapshot.snapshot_id}"])
         if snapshot.changes:
@@ -524,18 +528,27 @@ async def portal_grades(
     academic_period: str = "latest",
     chat_id: str = "system",
     sender_id: str | None = None,
+    download_original: bool = False,
 ) -> str:
-    """Minta token KHS melalui  admin untuk pembacaan nilai sekali pakai."""
+    """Minta token KHS melalui  admin untuk pembacaan nilai sekali pakai.
+
+    download_original=True juga mengunduh berkas hasil tombol Cetak dari portal
+    apa adanya ke CYBER_CAMPUS_KHS_SAVE_DIR (default ~/Downloads) setelah token
+    dikirim. Tidak ada PDF yang dibuat ulang.
+    """
     if not is_owner_admin(sender_id or chat_id, None):
         return "Pembacaan nilai hanya dapat dimulai oleh owner."
     jid = _notification_jid()
     if not jid:
         return "ADMIN_JID  belum dikonfigurasi."
     challenge: dict | None = None
+    prepare_options = (
+        {"save_dir": get_settings().CYBER_CAMPUS_KHS_SAVE_DIR} if download_original else {}
+    )
     try:
         challenge = await GRADE_TOKEN_COORDINATOR.start(jid, academic_period)
         period = await ACADEMIC_PORTAL_READER.prepare_grade_request(
-            challenge["challenge_id"], academic_period
+            challenge["challenge_id"], academic_period, **prepare_options
         )
         text = (
             "*Verified Token Cyber Campus*\n\n"
@@ -547,7 +560,7 @@ async def portal_grades(
             f"Berlaku sampai: {challenge['expires_at']}\n"
             "Token dipakai sekali, tidak masuk LLM, dan tidak disimpan."
         )
-        await asyncio.to_thread(_inbox_capture_item, text, "note", jid)
+        await asyncio.to_thread(_inbox_capture_item, text, kind="note", chat_id=jid)
     except Exception as exc:
         if challenge:
             await GRADE_TOKEN_COORDINATOR.cancel(challenge["challenge_id"])

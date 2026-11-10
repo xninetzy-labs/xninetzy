@@ -34,6 +34,12 @@ class TTLCache(Generic[K, V]):
             return
         self._store[key] = _Entry(value=value, expires_at=time.monotonic() + ttl)
 
+    def pop(self, key: K, default: V | None = None) -> V | None:
+        entry = self._store.pop(key, None)
+        if entry is None or entry.expires_at <= time.monotonic():
+            return default
+        return entry.value
+
     def clear(self) -> None:
         self._store.clear()
 

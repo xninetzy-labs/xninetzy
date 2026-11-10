@@ -33,6 +33,7 @@ Every non-trivial turn must traverse this chain. Skipping any stage is a policy 
 | 8 | `markitdown` | doc extraction |
 | 9 | `playwright` | browser (ask first) |
 | 10 | `powerpoint` / `document_generator` | artifact output |
+| 11 | `rea` (skill `reverse-engineer-anything`) | reverse engineering shipped binary/app/web — authorized targets only; details in `CLI_SHARED_INSTRUCTIONS.md` |
 
 Generic vendor tools (Read/Write/Bash) = last resort only.
 

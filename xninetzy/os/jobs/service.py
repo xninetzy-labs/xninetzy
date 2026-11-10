@@ -454,7 +454,7 @@ def _local_time(now: datetime | None, settings: Settings) -> datetime:
 
 
 async def _send_message(chat_id: str, message: str) -> None:
-    await asyncio.to_thread(_jobs_capture_item, message, "note", chat_id)
+    await asyncio.to_thread(_jobs_capture_item, message, kind="note", chat_id=chat_id)
 
 
 async def _run_hebat_sync(chat_id: str) -> str:

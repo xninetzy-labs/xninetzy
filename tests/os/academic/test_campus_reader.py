@@ -7,6 +7,9 @@ from xninetzy.os.academic.mahasiswa_portal.reader import (
     GRADE_FETCH_SCRIPT,
     GradeTokenRejected,
     PreparedGradeRequest,
+    describe_cetak_nodes,
+    find_original_khs_request,
+    original_khs_suffix,
     parse_academic_profile_html,
     parse_academic_status_html,
     parse_current_krs_html,
@@ -261,6 +264,203 @@ async def test_read_grades_reuses_prepared_page_and_posts_selected_period():
     assert "fetch(" in calls[2][0]
     assert "$(" not in GRADE_FETCH_SCRIPT
     assert reader._prepared_grade_requests == {}
+
+BASE = "https://mahasiswa.unair.ac.id"
+PAGE = BASE + "/modul/mhs/akademik-khs.php"
+CETAK_LINK_HTML = GRADE_HTML + '<a href="akademik-khs-cetak.php?semes=291">Cetak</a>'
+CETAK_ONCLICK_HTML = GRADE_HTML + """<button onclick="window.open('/modul/mhs/proses/khs-cetak.php?id=7','_blank')">Cetak</button>"""
+CETAK_FORM_HTML = GRADE_HTML + (
+    '<form method="post" action="khs-cetak.php"><input type="hidden" name="semes" value="291">'
+    '<input type="submit" value="Cetak"></form>'
+)
+
+
+def test_find_original_khs_request_reads_anchor_href():
+    request = find_original_khs_request(CETAK_LINK_HTML, PAGE, BASE)
+
+    assert request.method == "get"
+    assert request.url == BASE + "/modul/mhs/akademik-khs-cetak.php?semes=291"
+
+
+def test_find_original_khs_request_reads_onclick_url():
+    request = find_original_khs_request(CETAK_ONCLICK_HTML, PAGE, BASE)
+
+    assert request.method == "get"
+    assert request.url == BASE + "/modul/mhs/proses/khs-cetak.php?id=7"
+
+
+def test_find_original_khs_request_reads_enclosing_form():
+    request = find_original_khs_request(CETAK_FORM_HTML, PAGE, BASE)
+
+    assert request.method == "post"
+    assert request.url == BASE + "/modul/mhs/khs-cetak.php"
+    assert request.fields == (("semes", "291"),)
+
+
+def test_find_original_khs_request_rejects_other_hosts_and_missing_button():
+    foreign = GRADE_HTML + '<a href="https://example.org/khs.php">Cetak</a>'
+
+    assert find_original_khs_request(foreign, PAGE, BASE) is None
+    assert find_original_khs_request(GRADE_HTML, PAGE, BASE) is None
+    assert describe_cetak_nodes(GRADE_HTML) == "tidak ada elemen bertuliskan Cetak"
+
+
+def test_describe_cetak_nodes_redacts_long_numbers():
+    html = '<div><span onclick="x(1234567890)">Cetak</span></div>'
+
+    assert "1234567890" not in describe_cetak_nodes(html)
+    assert "[angka]" in describe_cetak_nodes(html)
+
+
+def test_original_khs_suffix_prefers_pdf_magic_then_content_type():
+    assert original_khs_suffix(b"%PDF-1.4", {"content-type": "text/html"}) == ".pdf"
+    assert original_khs_suffix(b"<html>", {"content-type": "text/html; charset=utf-8"}) == ".html"
+    assert original_khs_suffix(b"x", {}) == ".bin"
+
+
+class _FakeResponse:
+    def __init__(self, body, headers=None, status=200):
+        self._body = body
+        self.headers = headers or {}
+        self.status = status
+        self.ok = 200 <= status < 300
+
+    async def body(self):
+        return self._body
+
+
+def _prepared_with_cetak(tmp_path, grade_html, response):
+    calls = []
+
+    class Request:
+        async def get(self, url, params=None, headers=None):
+            calls.append(("get", url, params, headers))
+            return response
+
+        async def post(self, url, form=None, headers=None):
+            calls.append(("post", url, form, headers))
+            return response
+
+    class Context:
+        request = Request()
+
+        async def close(self):
+            return None
+
+    class Closeable:
+        async def close(self):
+            return None
+
+    class Stoppable:
+        async def stop(self):
+            return None
+
+    class Page:
+        url = PAGE
+
+        class Field:
+            async def fill(self, value):
+                return None
+
+            async def evaluate(self, script, value):
+                return None
+
+        def locator(self, selector):
+            return self.Field()
+
+        async def evaluate(self, script, payload):
+            return grade_html
+
+    prepared = PreparedGradeRequest(
+        challenge_id="grade-cetak",
+        period=AcademicPeriod("291", "2025/2026 - Genap - Genap"),
+        playwright=Stoppable(),
+        browser=Closeable(),
+        context=Context(),
+        page=Page(),
+        save_dir=str(tmp_path),
+    )
+    return prepared, calls
+
+
+@pytest.mark.asyncio
+async def test_read_grades_downloads_original_pdf_without_rendering(tmp_path):
+    reader = AcademicPortalReader()
+    prepared, calls = _prepared_with_cetak(
+        tmp_path, CETAK_LINK_HTML, _FakeResponse(b"%PDF-1.7 asli", {"content-type": "application/pdf"})
+    )
+    reader._prepared_grade_requests["grade-cetak"] = prepared
+
+    result = await reader.read_grades("12345", "latest", "grade-cetak")
+
+    saved = tmp_path / "KHS_asli_2025-2026-Genap-Genap.pdf"
+    assert result.saved_path == str(saved)
+    assert result.save_error == ""
+    assert saved.read_bytes() == b"%PDF-1.7 asli"
+    assert calls[0][0] == "get"
+    assert calls[0][1].endswith("akademik-khs-cetak.php?semes=291")
+    assert calls[0][3] == {"Referer": PAGE}
+
+
+@pytest.mark.asyncio
+async def test_read_grades_does_not_overwrite_existing_original(tmp_path):
+    (tmp_path / "KHS_asli_2025-2026-Genap-Genap.pdf").write_bytes(b"lama")
+    reader = AcademicPortalReader()
+    prepared, _ = _prepared_with_cetak(
+        tmp_path, CETAK_LINK_HTML, _FakeResponse(b"%PDF-1.7 baru")
+    )
+    reader._prepared_grade_requests["grade-cetak"] = prepared
+
+    result = await reader.read_grades("12345", "latest", "grade-cetak")
+
+    assert (tmp_path / "KHS_asli_2025-2026-Genap-Genap.pdf").read_bytes() == b"lama"
+    assert result.saved_path.endswith("Genap-Genap-1.pdf")
+
+
+@pytest.mark.asyncio
+async def test_read_grades_posts_form_for_original(tmp_path):
+    reader = AcademicPortalReader()
+    prepared, calls = _prepared_with_cetak(
+        tmp_path, CETAK_FORM_HTML, _FakeResponse(b"%PDF-1.7")
+    )
+    reader._prepared_grade_requests["grade-cetak"] = prepared
+
+    await reader.read_grades("12345", "latest", "grade-cetak")
+
+    assert calls[0][0] == "post"
+    assert calls[0][2] == {"semes": "291"}
+
+
+@pytest.mark.asyncio
+async def test_read_grades_saves_raw_response_when_cetak_is_unknown(tmp_path):
+    reader = AcademicPortalReader()
+    prepared, calls = _prepared_with_cetak(tmp_path, GRADE_HTML, _FakeResponse(b"%PDF"))
+    reader._prepared_grade_requests["grade-cetak"] = prepared
+
+    result = await reader.read_grades("12345", "latest", "grade-cetak")
+
+    assert calls == []
+    assert len(result.entries) == 1
+    assert "tombol Cetak tidak dikenali" in result.save_error
+    raw = tmp_path / "KHS_asli_2025-2026-Genap-Genap-respons.html"
+    assert result.saved_path == str(raw)
+    assert "Pembelajaran Mesin" in raw.read_text(encoding="utf-8")
+
+
+@pytest.mark.asyncio
+async def test_read_grades_keeps_grades_when_cetak_is_rejected(tmp_path):
+    reader = AcademicPortalReader()
+    prepared, _ = _prepared_with_cetak(
+        tmp_path, CETAK_LINK_HTML, _FakeResponse(b"", status=403)
+    )
+    reader._prepared_grade_requests["grade-cetak"] = prepared
+
+    result = await reader.read_grades("12345", "latest", "grade-cetak")
+
+    assert len(result.entries) == 1
+    assert "status 403" in result.save_error
+    assert result.saved_path.endswith("-respons.html")
+
 
 def test_parse_academic_profile_supports_label_for_fields():
     result = parse_academic_profile_html(PROFILE_FORM_HTML)

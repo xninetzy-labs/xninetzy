@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 from xninetzy.context.gateway.trust import (
     TRUST_TIER_BLOCKED,
     TRUST_TIER_KNOWN_EXTERNAL,
@@ -27,6 +29,24 @@ def test_evaluate_policy_blocks_blocked_trust_tier():
     decision = evaluate_policy(trust_tier=TRUST_TIER_BLOCKED, side_effect=SIDE_EFFECT_READ_ONLY)
     assert decision.outcome == POLICY_BLOCK
     assert "blocked" in decision.reason
+
+
+@pytest.mark.parametrize("name", ["not-a-real-class", "", "  ", "irreversble"])
+@pytest.mark.parametrize("trust_tier", [TRUST_TIER_LOCAL, TRUST_TIER_KNOWN_EXTERNAL, TRUST_TIER_UNVERIFIED])
+def test_evaluate_policy_blocks_invalid_explicit_class_even_with_credentials(name, trust_tier):
+    decision = evaluate_policy(
+        trust_tier=trust_tier, side_effect=name, approval_id=42, idempotency_key="key",
+    )
+
+    assert decision.outcome == POLICY_BLOCK
+    assert "side_effect" in decision.reason
+    assert decision.side_effect_class.allowed_for_unverified is False
+
+
+def test_evaluate_policy_preserves_none_read_only_default():
+    decision = evaluate_policy(trust_tier=TRUST_TIER_UNVERIFIED, side_effect=None)
+    assert decision.outcome == POLICY_ALLOW
+    assert decision.side_effect_class.name == SIDE_EFFECT_READ_ONLY
 
 
 def test_evaluate_policy_allows_read_only_at_any_trust():

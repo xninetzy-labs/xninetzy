@@ -8,8 +8,6 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
-from openpyxl import Workbook, load_workbook
-
 
 def _utcnow() -> str:
     return datetime.now(timezone.utc).isoformat()
@@ -61,6 +59,12 @@ def generate_xlsx_artifact(
     source: str = "",
     transformation: str = "",
 ) -> TableArtifact:
+    try:
+        from openpyxl import Workbook
+    except ImportError as exc:
+        raise RuntimeError(
+            "XLSX generation requires optional document dependencies; install xninetzy-mcp[documents]."
+        ) from exc
     p = Path(path)
     p.parent.mkdir(parents=True, exist_ok=True)
     schema: list[str] = []
@@ -97,6 +101,12 @@ def validate_xlsx_artifact(artifact: TableArtifact) -> TableArtifact:
     p = Path(artifact.path)
     if not p.exists():
         return TableArtifact(**{**artifact.to_dict(), "validation_status": "missing"})
+    try:
+        from openpyxl import load_workbook
+    except ImportError as exc:
+        raise RuntimeError(
+            "XLSX validation requires optional document dependencies; install xninetzy-mcp[documents]."
+        ) from exc
     try:
         wb = load_workbook(p, read_only=True, data_only=True)
     except Exception:

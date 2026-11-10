@@ -5,18 +5,31 @@ import shutil
 import subprocess
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
-import cv2
-import numpy as np
 from langchain_core.tools import tool
-from PIL import Image
+
+if TYPE_CHECKING:
+    import numpy as np
 
 
 SUPPORTED_SUFFIXES = {".png", ".jpg", ".jpeg", ".gif", ".bmp", ".webp", ".tiff", ".tif"}
 _MAX_DIMENSION = 4096
 _TESSERACT_LANGS = "eng"
 _TESSERACT_MIN_CONF = 30
+
+
+def _vision_dependencies():
+    """Load optional pixel-processing packages only when an image is used."""
+    try:
+        import cv2
+        import numpy as np
+        from PIL import Image
+    except ImportError as exc:
+        raise RuntimeError(
+            "Image processing requires optional browser dependencies; install xninetzy-mcp[browser]."
+        ) from exc
+    return cv2, np, Image
 
 
 @dataclass(slots=True)
@@ -43,6 +56,7 @@ def _resolve_path(value: str) -> Path | None:
 
 
 def _decode(path: Path) -> np.ndarray | None:
+    _, np, Image = _vision_dependencies()
     try:
         with Image.open(path) as img:
             arr = np.array(img.convert("RGB"))
@@ -71,6 +85,7 @@ def _bounded(value: int, cap: int) -> int:
 
 
 def _ensure_uint8(arr: np.ndarray) -> np.ndarray:
+    _, np, _ = _vision_dependencies()
     if arr.dtype != np.uint8:
         return np.clip(arr, 0, 255).astype(np.uint8)
     return arr
@@ -152,6 +167,7 @@ def image_preprocess(
     resolved = _resolve_path(path)
     if resolved is None:
         return json.dumps({"error": "image not found"}, ensure_ascii=False)
+    cv2, _, Image = _vision_dependencies()
     arr = _decode(resolved)
     if arr is None:
         return json.dumps({"error": "image unreadable"}, ensure_ascii=False)
@@ -213,6 +229,7 @@ def image_preprocess(
 
 
 def _deskew(gray: np.ndarray) -> np.ndarray:
+    cv2, np, _ = _vision_dependencies()
     inv = cv2.bitwise_not(gray)
     thresh = cv2.threshold(inv, 0, 255, cv2.THRESH_BINARY | cv2.THRESH_OTSU)[1]
     coords = np.column_stack(np.where(thresh > 0))
@@ -259,6 +276,7 @@ def image_crop(
     resolved = _resolve_path(path)
     if resolved is None:
         return json.dumps({"error": "image not found"}, ensure_ascii=False)
+    _, _, Image = _vision_dependencies()
     arr = _decode(resolved)
     if arr is None:
         return json.dumps({"error": "image unreadable"}, ensure_ascii=False)
@@ -320,6 +338,7 @@ def image_ocr(
         }, ensure_ascii=False)
 
     src = resolved
+    cv2, _, Image = _vision_dependencies()
     if preprocess:
         arr = _decode(resolved)
         if arr is not None:
@@ -408,6 +427,7 @@ def image_regions(
     resolved = _resolve_path(path)
     if resolved is None:
         return json.dumps({"error": "image not found"}, ensure_ascii=False)
+    cv2, _, _ = _vision_dependencies()
     arr = _decode(resolved)
     if arr is None:
         return json.dumps({"error": "image unreadable"}, ensure_ascii=False)
@@ -466,6 +486,7 @@ def image_compare(
     b = _resolve_path(path_b)
     if a is None or b is None:
         return json.dumps({"error": "one or both images not found"}, ensure_ascii=False)
+    cv2, _, _ = _vision_dependencies()
     arr_a = _decode(a)
     arr_b = _decode(b)
     if arr_a is None or arr_b is None:
@@ -527,6 +548,7 @@ def image_layout(
     resolved = _resolve_path(path)
     if resolved is None:
         return json.dumps({"error": "image not found"}, ensure_ascii=False)
+    cv2, _, _ = _vision_dependencies()
     arr = _decode(resolved)
     if arr is None:
         return json.dumps({"error": "image unreadable"}, ensure_ascii=False)

@@ -52,7 +52,19 @@ def evaluate_policy(
     approval_id: int | None = None,
     idempotency_key: str | None = None,
 ) -> PolicyDecision:
-    cls = classify_side_effect(side_effect)
+    try:
+        cls = classify_side_effect(side_effect)
+    except ValueError:
+        # Retain the public decision shape using the most restrictive existing
+        # class as metadata. Invalid declarations are blocked even if callers
+        # supply approval/key fields; those fields cannot repair classification.
+        return PolicyDecision(
+            outcome=POLICY_BLOCK,
+            side_effect_class=classify_side_effect(SIDE_EFFECT_IRREVERSIBLE),
+            trust_tier=trust_tier,
+            reason="invalid explicit side_effect class",
+            details={"error_code": "invalid_side_effect"},
+        )
     if trust_tier >= TRUST_TIER_BLOCKED:
         return PolicyDecision(
             outcome=POLICY_BLOCK,

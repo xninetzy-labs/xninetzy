@@ -126,6 +126,21 @@ def test_execute_invocation_routes_to_registered_invocable(_isolated_db):
     assert outcome.audit.outcome == AUDIT_OUTCOME_OK
 
 
+@pytest.mark.parametrize("name", ["not-a-real-class", "", "  ", "irreversble"])
+@pytest.mark.parametrize("use_override", [False, True])
+def test_execute_invocation_never_runs_invalid_class(_isolated_db, name, use_override):
+    _seed_known_provider()
+    stub = _StubInvocable("known-x", payload={"effect": "must not happen"})
+    register_invokable("known-x", stub)
+    request = _request(side_effect=name, idempotency_key="invalid-class", approval_id=42)
+
+    with pytest.raises(ValueError, match="side_effect"):
+        execute_invocation(request, invocation_override=stub if use_override else None)
+
+    assert stub.calls == []
+    assert list_audit_entries(request_id="req-1") == []
+
+
 def test_execute_invocation_returns_error_when_invokable_missing(_isolated_db):
     _seed_unverified_provider()
     outcome = execute_invocation(_request())

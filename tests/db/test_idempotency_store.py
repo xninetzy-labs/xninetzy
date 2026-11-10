@@ -87,6 +87,50 @@ def test_failed_execution_releases_reservation_for_retry():
     assert created is True
 
 
+def test_concurrent_duplicate_cannot_take_over_active_reservation():
+    from concurrent.futures import ThreadPoolExecutor
+    from threading import Event
+
+    started, release = Event(), Event()
+    calls: list[str] = []
+
+    def execute():
+        calls.append("effect")
+        started.set()
+        assert release.wait(timeout=5)
+        return "done"
+
+    with ThreadPoolExecutor(max_workers=1) as pool:
+        first = pool.submit(idempotent_call, "scope", "concurrent", {}, execute)
+        try:
+            assert started.wait(timeout=5)
+            with pytest.raises(RuntimeError, match="pending"):
+                idempotent_call("scope", "concurrent", {}, lambda: calls.append("duplicate"))
+        finally:
+            release.set()
+        assert first.result(timeout=5) == ("done", True)
+
+    assert calls == ["effect"]
+    assert idempotent_call("scope", "concurrent", {}, execute) == ("done", False)
+
+
+def test_pending_after_interruption_requires_reconciliation():
+    key = storage_key("scope", "interrupted", {})
+    with connect() as conn:
+        conn.execute(
+            "INSERT INTO idempotency_keys VALUES (?, ?, 'pending', NULL, ?, ?)",
+            (key, "scope", "2020-01-01", "2020-01-01"),
+        )
+    calls = []
+    with pytest.raises(RuntimeError, match="pending"):
+        idempotent_call("scope", "interrupted", {}, lambda: calls.append("effect"))
+    assert calls == []
+    with connect() as conn:
+        assert conn.execute(
+            "SELECT status FROM idempotency_keys WHERE storage_key=?", (key,)
+        ).fetchone()["status"] == "pending"
+
+
 @pytest.mark.asyncio
 async def test_task_capture_with_idempotency_key_does_not_duplicate(monkeypatch):
     from xninetzy.tools.ecosystem import life_tools

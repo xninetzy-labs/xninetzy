@@ -22,12 +22,73 @@ jobs:
         run: uv sync --all-extras
       - name: Ruff
         run: uv run ruff check xninetzy tests scripts
-      - name: Pytest (tools + manifest + release)
-        run: uv run --no-project pytest -ra tests/tools
+      - name: Pytest (tools and critical execution contracts)
+        env:
+          AUTO_MEMORY_ENABLED: 'false'
+          AUTO_GRAPH_ENABLED: 'false'
+          AUTO_IMPROVE_ENABLED: 'false'
+          NEO4J_ENABLED: 'false'
+          NEO4J_AUTOSTART_ENABLED: 'false'
+        run: >-
+          uv run --no-project pytest -ra tests/tools tests/db/test_idempotency_store.py
+          tests/interfaces/test_mcp_runtime.py tests/invocation tests/policy tests/orchestrator
+          tests/reasoning/test_reasoning_depth.py tests/os/lightning/test_input_redaction.py
+          tests/core/test_secret_redaction.py tests/architecture/test_minimal_dependencies.py
+          tests/governance/test_prompt_contract.py tests/governance/test_skill_frontmatter.py
+          tests/os/skills/test_skills.py tests/workflow tests/os/graph
+      - name: Canonical prompt integrity
+        run: uv run --no-project python scripts/validate_prompt_contract.py
       - name: Release gate
         run: uv run python -m xninetzy.cli.supervisor release-check
       - name: MCP audit (strict)
         run: uv run --no-project python scripts/mcp_audit.py --strict
+
+  minimal:
+    name: Minimal installed wheel (no optional services)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.11'
+      - name: Install frozen base package
+        run: uv sync --frozen --no-dev --no-editable
+      - name: Smoke installed package outside checkout
+        working-directory: ${{ runner.temp }}
+        run: |
+          "$GITHUB_WORKSPACE/.venv/bin/python" - <<'PY'
+          import asyncio
+          import os
+          import sys
+          import tempfile
+          from pathlib import Path
+
+          root = Path(tempfile.mkdtemp(prefix="xn-minimal-"))
+          os.environ.update(
+              MCP_RUNTIME_MODE="container", DATA_DIR=str(root),
+              SQLITE_PATH=str(root / "smoke.sqlite3"), LIGHTNING_ENABLED="false",
+              AUTO_MEMORY_ENABLED="false", AUTO_GRAPH_ENABLED="false",
+              AUTO_IMPROVE_ENABLED="false", NEO4J_ENABLED="false",
+              NEO4J_AUTOSTART_ENABLED="false",
+          )
+          import xninetzy
+          assert Path(xninetzy.__file__).resolve().is_relative_to(Path(sys.prefix))
+          from xninetzy.core.config import Settings, get_settings
+          Settings.model_config["env_file"] = None
+          get_settings.cache_clear()
+          from xninetzy.interfaces.mcp_server import mcp, EXPOSED_XNINETZY_TOOLS
+          from xninetzy.tools.registry import get_tool_names
+
+          async def smoke():
+              tools = await mcp.list_tools()
+              assert {tool.name for tool in tools} == set(get_tool_names())
+              assert set(EXPOSED_XNINETZY_TOOLS) == set(get_tool_names())
+              result = await mcp.call_tool("datetime_now", {})
+              assert "Sekarang:" in str(result) and "ISO:" in str(result)
+              print(f"Minimal installed wheel: {len(tools)} tools; safe read passed")
+
+          asyncio.run(smoke())
+          PY
 
   docs:
     name: Documentation (yarn check + build)

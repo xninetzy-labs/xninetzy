@@ -2,9 +2,7 @@ from __future__ import annotations
 
 from functools import lru_cache
 
-from langchain_anthropic import ChatAnthropic
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_openai import ChatOpenAI
 
 from xninetzy.core.config import get_settings
 from xninetzy.core.providers import LLMProfile, provider_catalog, resolve_profile
@@ -35,6 +33,12 @@ def _build_llm(profile: LLMProfile | None = None) -> BaseChatModel:
     info = provider_catalog(s)[selected.provider]
 
     if info.kind == "anthropic":
+        try:
+            from langchain_anthropic import ChatAnthropic
+        except ImportError as exc:
+            raise RuntimeError(
+                "Anthropic provider requires optional AI dependencies; install xninetzy-mcp[ai]."
+            ) from exc
         return ChatAnthropic(
             api_key=s.ANTHROPIC_API_KEY,
             model=selected.model,
@@ -42,6 +46,13 @@ def _build_llm(profile: LLMProfile | None = None) -> BaseChatModel:
             max_retries=s.LLM_MAX_RETRIES,
             temperature=0,
         )
+
+    try:
+        from langchain_openai import ChatOpenAI
+    except ImportError as exc:
+        raise RuntimeError(
+            "OpenAI-compatible provider requires optional AI dependencies; install xninetzy-mcp[ai]."
+        ) from exc
 
     api_keys = {
         "flaz": s.FLAZ_API_KEY,

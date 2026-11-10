@@ -23,18 +23,20 @@ _VALID_MODES = {"auto", "host", "container"}
 
 
 def ai_service_root() -> Path:
-    """Return the absolute ``services/ai`` directory."""
-    return Path(__file__).resolve().parents[3]
+    """Return the package's containing directory in flat or legacy layouts."""
+    return Path(__file__).resolve().parents[2]
 
 
 def repository_root(service_root: Path) -> Path:
-    if len(service_root.parents) >= 2:
+    # Only the historical monorepo layout has two extra directory levels.
+    # Flat checkouts and installed packages must not escape their package root.
+    if service_root.name == "ai" and service_root.parent.name == "services":
         return service_root.parents[1]
     return service_root
 
 
 def repository_env_path(ai_root: Path | None = None) -> Path:
-    """Return the root .env path for a normal monorepo checkout."""
+    """Return the .env path for a flat checkout or legacy monorepo layout."""
     root = (ai_root or ai_service_root()).resolve()
     return repository_root(root) / ".env"
 
@@ -144,7 +146,7 @@ def configure_mcp_runtime_paths(
 
     Xninetzy's root ``.env`` is shared by Docker and host clients. Docker uses
     ``/app/data`` while project-scoped MCP servers run on the host. In ``auto``
-    mode, container paths are mapped into ``services/ai/data`` only when
+    mode, container paths are mapped into the package root's ``data`` only when
     ``/app`` is unavailable or not writable. Explicit non-container paths are
     always preserved.
 
@@ -184,6 +186,26 @@ def configure_mcp_runtime_paths(
         if configured_sqlite
         else host_base / "xninetzy.sqlite3"
     )
+
+    legacy_sqlite = service_root.parent / "data" / "xninetzy.sqlite3"
+    explicit_sqlite = target_env.get("SQLITE_PATH", "").strip()
+    store_selected = (
+        host_base_from_environment
+        or bool(target_env.get("MCP_HOST_SQLITE_PATH", "").strip())
+        or bool(explicit_sqlite and not _is_container_path(explicit_sqlite, app_root.resolve()))
+    )
+    if (
+        repository_root(service_root) == service_root
+        and legacy_sqlite.is_file()
+        and not store_selected
+    ):
+        raise ValueError(
+            f"Legacy MCP database exists at {legacy_sqlite}. "
+            "The corrected package layout requires explicit store selection to avoid "
+            "silently switching owner data. Set MCP_HOST_DATA_DIR or MCP_HOST_SQLITE_PATH "
+            "in the process environment (or an explicit non-container SQLITE_PATH) "
+            "to the intended existing store before restarting. No data was moved."
+        )
 
     destinations = {
         key: str(host_base / Path(relative).relative_to("data"))

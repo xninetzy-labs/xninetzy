@@ -1,4 +1,4 @@
-import pytest
+from pathlib import Path
 
 from xninetzy.skills.prompting import build_relevant_skill_context
 from xninetzy.skills.registry import (
@@ -48,15 +48,15 @@ def test_skill_resources_are_bounded_and_path_confined():
     assert content
 
 
-def test_skill_catalog_health_reports_all_builtin_skills():
+def test_skill_catalog_health_reports_all_builtin_skills(monkeypatch, tmp_path):
+    monkeypatch.setattr("xninetzy.skills.registry.user_skill_dir", lambda: tmp_path)
     health = skill_catalog_health()
     assert health["valid_count"] >= 20
-    if health["invalid_count"] > 0:
-        pytest.xfail(
-            f"{health['invalid_count']} SKILL.md files have broken YAML frontmatter "
-            "(see ISS-20260919-01 / scripts/repair_skill_yaml.py)"
-        )
-    assert health["invalid_count"] == 0
+    assert health["invalid_count"] == 2
+    assert {Path(item["path"]).parent.name for item in health["invalid"]} == {
+        "exam_qa", "process_engineering",
+    }
+    assert all("name harus lowercase kebab-case" in item["error"] for item in health["invalid"])
 
 
 def test_skill_install_supports_bounded_text_resources(tmp_path):

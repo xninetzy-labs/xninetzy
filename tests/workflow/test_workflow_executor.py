@@ -71,6 +71,7 @@ async def test_noncritical_failure_continues():
     statuses = {r.action_id: r.status for r in res.action_results}
     assert statuses["a1"] == WorkflowActionStatus.FAILED
     assert statuses["a2"] == WorkflowActionStatus.SUCCESS  # continued despite a1 failing
+    assert res.status == WorkflowActionStatus.FAILED
     assert "link file tidak ditemukan" in res.final_response
     assert "planning 4 milestone" in res.final_response
 
@@ -108,6 +109,46 @@ async def test_skipped_dependency_cascades():
     statuses = {r.action_id: r.status for r in res.action_results}
     assert statuses["a1"] == WorkflowActionStatus.SKIPPED
     assert statuses["a2"] == WorkflowActionStatus.SKIPPED
+    assert res.status == WorkflowActionStatus.FAILED
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize("first_status", [WorkflowActionStatus.FAILED, WorkflowActionStatus.SKIPPED])
+async def test_incomplete_workflow_persists_truthful_status_and_successful_steps(
+    first_status, tmp_path, monkeypatch,
+):
+    from types import SimpleNamespace
+
+    from xninetzy.db import sqlite
+    from xninetzy.workflow.models import WorkflowExecutionResult
+    from xninetzy.workflow.store import WorkflowStore
+
+    monkeypatch.setattr(sqlite, "get_settings", lambda: SimpleNamespace(
+        SQLITE_PATH=str(tmp_path / "workflow.sqlite3"),
+    ))
+    plan = _plan([
+        _action("a1", WorkflowActionType.DEEP_RESEARCH),
+        _action("a2", WorkflowActionType.TASK_PLANNING),
+    ])
+
+    async def incomplete(action, state):
+        return WorkflowActionResult(
+            action_id=action.id, status=first_status, summary="incomplete", error="fixture failure",
+        )
+
+    store = WorkflowStore()
+    result = await WorkflowExecutor(store=store, handlers={
+        WorkflowActionType.DEEP_RESEARCH: incomplete,
+        WorkflowActionType.TASK_PLANNING: _ok_handler("plan created"),
+    }).execute(plan)
+    saved = store.get(plan.id)
+
+    assert result.status == WorkflowActionStatus.FAILED
+    assert saved["status"] == "failed"
+    persisted = WorkflowExecutionResult.model_validate_json(saved["result_json"])
+    assert persisted.status == WorkflowActionStatus.FAILED
+    assert [step.action_id for step in persisted.succeeded()] == ["a2"]
+    assert "sebagian" in result.final_response
 
 
 @pytest.mark.asyncio

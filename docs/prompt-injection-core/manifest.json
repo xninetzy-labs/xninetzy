@@ -1,0 +1,34 @@
+{
+  "id": "xninetzy.shared-client-guidance",
+  "version": "2.0.0",
+  "scope": "repository-canonical",
+  "applicable_clients": [
+    "codex",
+    "claude-code",
+    "opencode"
+  ],
+  "change": "Correct authority, separate workflow choice from policy, select context and planning by task.",
+  "evaluation": "tests/governance/test_prompt_contract.py",
+  "rollback": "Restore previous versions from Git; host installations remain unchanged.",
+  "last_verified_configuration": "Local static validation; live cross-client parity NOT_VERIFIED_IN_LIVE_ENVIRONMENT",
+  "files": {
+    "CORE_PROMPT.md": {
+      "sha256": "ab1e42b47b6b9eb2f1e321b41cae55cc07120b1c353ae6ce02238cf1534e4cfd"
+    },
+    "CORE_RULES.md": {
+      "sha256": "1b4eadadbe0b1e864c5ffe4daa5dc574f1e2ecfa6e5d81d29d2650d4aed34984"
+    },
+    "CLI_SHARED_INSTRUCTIONS.md": {
+      "sha256": "7f7804eb6b2314f889d12c6e9700ca2f9190b89c66b7f5d3dd3fe0e884da2997"
+    },
+    "cli-overrides/codex-AGENTS.md": {
+      "sha256": "5339b63d5c988a3c85a68b60ccef42bbc33619259893ce98bc7f3f73434abfac"
+    },
+    "cli-overrides/claude-CLAUDE.md": {
+      "sha256": "a0a3a9034c98a716e010806852f8ae73ef6e363780388f473195caf030036267"
+    },
+    "cli-overrides/opencode-xninetzy-paksa.md": {
+      "sha256": "7c60342054e4a21230a09019cf1ebf1c44fdcb9f93074b0698ad31b29b17f7c1"
+    }
+  }
+}

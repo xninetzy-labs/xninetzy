@@ -63,12 +63,18 @@ SIDE_EFFECT_TABLE: dict[str, SideEffectClass] = {
 
 
 def classify_side_effect(name: str | None) -> SideEffectClass:
+    """Resolve a declared class; reject malformed explicit classifications.
+
+    ``None`` retains the legacy read-only default for existing callers. This
+    classifier does not verify that a valid caller declaration matches the
+    actual operation; canonical capability policy must enforce that separately.
+    """
     if name is None:
         return SIDE_EFFECT_TABLE[SIDE_EFFECT_READ_ONLY]
     key = str(name).strip().lower()
     if key in SIDE_EFFECT_TABLE:
         return SIDE_EFFECT_TABLE[key]
-    return SIDE_EFFECT_TABLE[SIDE_EFFECT_READ_ONLY]
+    raise ValueError("invalid explicit side_effect class")
 
 
 def side_effect_names() -> tuple[str, ...]:

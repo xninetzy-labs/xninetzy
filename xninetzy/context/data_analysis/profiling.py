@@ -5,8 +5,6 @@ import uuid
 from pathlib import Path
 from typing import Any, Iterable
 
-from openpyxl import load_workbook
-
 from xninetzy.context.data_analysis.dataset import (
     ColumnProfile,
     DatasetSummary,
@@ -133,6 +131,12 @@ def profile_xlsx(
     sheet_name: str | None = None,
     max_rows: int = 100_000,
 ) -> DatasetSummary:
+    try:
+        from openpyxl import load_workbook
+    except ImportError as exc:
+        raise RuntimeError(
+            "XLSX profiling requires optional document dependencies; install xninetzy-mcp[documents]."
+        ) from exc
     p = Path(path)
     workbook = load_workbook(p, read_only=True, data_only=True)
     try:

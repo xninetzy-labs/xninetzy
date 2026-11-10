@@ -23,16 +23,22 @@ logger = logging.getLogger(__name__)
 
 
 def _apply_one(row: dict) -> None:
-    """Apply a single outbox op to both projections. Raises on hard failure so
-    the caller records a retry; returns normally when the op is satisfied (even
-    if a projection is merely unavailable — that's not a per-row failure)."""
+    """Apply an outbox op; enabled Neo4j must acknowledge before completion.
+
+    Disabled Neo4j is skipped without claiming synchronization. Enabled but
+    unavailable Neo4j retains the operation for bounded outbox retry, while
+    canonical SQLite and the independent FAISS leg remain usable.
+    """
+    settings = get_settings()
+    neo4j_enabled = bool(settings.GRAPHRAG_V3_ENABLED and settings.NEO4J_ENABLED)
     entity_type = row["entity_type"]
     key = row["entity_key"]
     op = row["op"]
 
     if op == "delete":
-        if entity_type == "node":
-            neo4j_store.delete_node(key)
+        if entity_type == "node" and neo4j_enabled:
+            if not neo4j_store.delete_node(key):
+                raise RuntimeError("Neo4j node delete was not acknowledged")
         return
 
     if entity_type == "node":
@@ -46,13 +52,16 @@ def _apply_one(row: dict) -> None:
             props = _json.loads(node.get("properties_json") or "{}")
         except Exception:
             props = {}
-        neo4j_store.upsert_node(
-            key=key, node_type=node["node_type"], title=node["title"], properties=props
+        neo4j_synced = neo4j_enabled and neo4j_store.upsert_node(
+            key=key, node_type=node["node_type"], title=node["title"], properties=props,
         )
         row_id = faiss_store.upsert_node_vector(key, node["title"], node.get("content"))
         if row_id is not None:
             sqlite_store.set_faiss_row(key, row_id)
-        sqlite_store.mark_neo4j_synced("node", key)
+        if neo4j_enabled:
+            if not neo4j_synced:
+                raise RuntimeError("Neo4j node upsert was not acknowledged")
+            sqlite_store.mark_neo4j_synced("node", key)
         return
 
     if entity_type == "edge":
@@ -63,13 +72,17 @@ def _apply_one(row: dict) -> None:
             payload = _json.loads(row.get("payload_json") or "{}")
         except Exception:
             payload = {}
-        neo4j_store.upsert_edge(
+        if not neo4j_enabled:
+            return
+        acknowledged = neo4j_store.upsert_edge(
             key=key,
             source_key=payload.get("source_key"),
             target_key=payload.get("target_key"),
             edge_type=payload.get("edge_type", "related_to"),
             weight=float(payload.get("weight", 1.0)),
         )
+        if not acknowledged:
+            raise RuntimeError("Neo4j edge upsert was not acknowledged")
         sqlite_store.mark_neo4j_synced("edge", key)
         return
 

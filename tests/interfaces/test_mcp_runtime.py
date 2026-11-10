@@ -4,7 +4,116 @@ from pathlib import Path
 
 import pytest
 
+from xninetzy.interfaces import mcp_runtime
 from xninetzy.interfaces.mcp_runtime import configure_mcp_runtime_paths
+
+
+def test_service_root_uses_package_parent(monkeypatch, tmp_path: Path) -> None:
+    package_parent = tmp_path / "site-packages"
+    monkeypatch.setattr(
+        mcp_runtime, "__file__", str(package_parent / "xninetzy/interfaces/mcp_runtime.py")
+    )
+
+    assert mcp_runtime.ai_service_root() == package_parent
+
+
+@pytest.mark.parametrize("legacy_layout", [False, True])
+def test_repository_env_path_supports_flat_and_legacy_layouts(
+    tmp_path: Path, legacy_layout: bool
+) -> None:
+    repo = tmp_path / "repo"
+    service_root = repo / "services/ai" if legacy_layout else repo
+
+    assert mcp_runtime.repository_env_path(service_root) == repo / ".env"
+
+
+def test_flat_layout_resolves_relative_host_paths_inside_repository(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    overrides = configure_mcp_runtime_paths(
+        environ={"MCP_HOST_DATA_DIR": "runtime", "MCP_HOST_SQLITE_PATH": "runtime/owner.db"},
+        env_file_values={},
+        ai_root=repo,
+        force_host=True,
+    )
+
+    assert overrides["DATA_DIR"] == str(repo / "runtime")
+    assert overrides["SQLITE_PATH"] == str(repo / "runtime/owner.db")
+
+
+def test_default_host_mapping_uses_flat_checkout(monkeypatch, tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    monkeypatch.setattr(mcp_runtime, "__file__", str(repo / "xninetzy/interfaces/mcp_runtime.py"))
+    overrides = configure_mcp_runtime_paths(
+        environ={}, env_file_values={}, force_host=True
+    )
+
+    assert overrides["DATA_DIR"] == str(repo / "data")
+    assert overrides["SQLITE_PATH"] == str(repo / "data/xninetzy.sqlite3")
+
+
+@pytest.mark.parametrize("checkout_store_exists", [False, True])
+def test_implicit_root_change_requires_explicit_store_selection(
+    tmp_path: Path, checkout_store_exists: bool
+) -> None:
+    repo = tmp_path / "repo"
+    legacy_store = tmp_path / "data/xninetzy.sqlite3"
+    legacy_store.parent.mkdir()
+    legacy_store.touch()
+    if checkout_store_exists:
+        checkout_store = repo / "data/xninetzy.sqlite3"
+        checkout_store.parent.mkdir(parents=True)
+        checkout_store.touch()
+    environ: dict[str, str] = {}
+
+    with pytest.raises(ValueError, match="MCP_HOST_DATA_DIR.*MCP_HOST_SQLITE_PATH"):
+        configure_mcp_runtime_paths(
+            environ=environ, env_file_values={}, ai_root=repo, force_host=True
+        )
+
+    assert environ == {}
+    assert legacy_store.exists()
+
+
+@pytest.mark.parametrize("file_setting", ["MCP_HOST_DATA_DIR", "MCP_HOST_SQLITE_PATH", "SQLITE_PATH"])
+def test_newly_discovered_env_file_cannot_silently_select_different_store(
+    tmp_path: Path, file_setting: str
+) -> None:
+    repo = tmp_path / "repo"
+    legacy_store = tmp_path / "data/xninetzy.sqlite3"
+    legacy_store.parent.mkdir()
+    legacy_store.touch()
+
+    with pytest.raises(ValueError, match="MCP_HOST_DATA_DIR.*MCP_HOST_SQLITE_PATH"):
+        configure_mcp_runtime_paths(
+            environ={},
+            env_file_values={file_setting: str(repo / "new-store")},
+            ai_root=repo,
+            force_host=True,
+        )
+
+
+@pytest.mark.parametrize("explicit_setting", ["MCP_HOST_DATA_DIR", "MCP_HOST_SQLITE_PATH", "SQLITE_PATH"])
+def test_explicit_store_selection_is_preserved_when_legacy_store_exists(
+    tmp_path: Path, explicit_setting: str
+) -> None:
+    repo = tmp_path / "repo"
+    legacy_store = tmp_path / "data/xninetzy.sqlite3"
+    legacy_store.parent.mkdir()
+    legacy_store.touch()
+    selection = repo / "chosen"
+    environ = {explicit_setting: str(selection)}
+
+    overrides = configure_mcp_runtime_paths(
+        environ=environ, env_file_values={}, ai_root=repo, force_host=True
+    )
+
+    assert environ[explicit_setting] == str(selection)
+    if explicit_setting == "MCP_HOST_DATA_DIR":
+        assert overrides["SQLITE_PATH"] == str(selection / "xninetzy.sqlite3")
+    elif explicit_setting == "MCP_HOST_SQLITE_PATH":
+        assert overrides["SQLITE_PATH"] == str(selection)
+    else:
+        assert "SQLITE_PATH" not in overrides
 
 
 def test_host_runtime_maps_container_paths_into_service_data(tmp_path: Path) -> None:

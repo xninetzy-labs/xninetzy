@@ -400,10 +400,12 @@ def iter_active_edges() -> list[dict]:
 def claim_outbox_batch(*, limit: int, lease_seconds: int) -> list[dict]:
     """Atomically lease up to ``limit`` ready outbox rows. A row is ready when
     pending/failed and its next_retry_at has passed, or its lease has expired.
+    Exhausted rows remain failed for inspection, never immediate NULL retries.
     Mirrors the JobStore claim idiom (BEGIN IMMEDIATE + lease_until)."""
     from datetime import timedelta
 
-    now_dt = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE))
+    settings = get_settings()
+    now_dt = datetime.now(ZoneInfo(settings.APP_TIMEZONE))
     now = now_dt.isoformat()
     lease_until = (now_dt + timedelta(seconds=max(1, lease_seconds))).isoformat()
     with _connect() as conn:
@@ -411,18 +413,18 @@ def claim_outbox_batch(*, limit: int, lease_seconds: int) -> list[dict]:
         rows = conn.execute(
             """
             SELECT * FROM graph_sync_outbox
-             WHERE (
+             WHERE attempts < ? AND ((
                      status IN ('pending','failed')
                      AND (next_retry_at IS NULL OR next_retry_at <= ?)
                    )
                 OR (
                      status='processing'
                      AND (lease_until IS NULL OR lease_until <= ?)
-                   )
+                   ))
              ORDER BY id
              LIMIT ?
             """,
-            (now, now, limit),
+            (settings.GRAPH_SYNC_MAX_ATTEMPTS, now, now, limit),
         ).fetchall()
         claimed: list[dict] = []
         for row in rows:

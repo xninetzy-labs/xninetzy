@@ -60,11 +60,11 @@ dependencies = [
     "lxml>=5.0",
     "networkx>=3.3",
     "ddgs>=6.0",
+    "langchain-core>=0.3",
 ]
 
 [project.optional-dependencies]
 ai = [
-    "langchain-core>=0.3",
     "langchain-anthropic>=0.3",
     "langchain-openai>=0.2",
     "sentence-transformers>=3.0",

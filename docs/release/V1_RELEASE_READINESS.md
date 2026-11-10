@@ -1,5 +1,8 @@
 # V1 Release Readiness
 
+Historical checklist. Current audit and release decision: [RELEASE_READINESS.md](RELEASE_READINESS.md).
+The WhatsApp/REST and license claims below do not describe the current verified system.
+
 ## Quality gates
 
 - Run AI Ruff and the full pytest suite.

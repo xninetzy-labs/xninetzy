@@ -77,6 +77,13 @@ async def test_final_response_includes_created_reminder_summary():
         WorkflowActionType.FINAL_SYNTHESIS: DEFAULT_HANDLERS[WorkflowActionType.FINAL_SYNTHESIS],
     }
     result = await WorkflowExecutor(handlers=handlers).execute(plan)
-    assert result.status == WorkflowActionStatus.SUCCESS
+    # Academic detail/download handlers are absent from this reminder fixture.
+    # Their skipped outcomes make the aggregate incomplete while planning and
+    # the real local reminder operation still succeed.
+    assert result.status == WorkflowActionStatus.FAILED
+    statuses = {action.type: step.status for action, step in zip(plan.actions, result.action_results)}
+    assert statuses[WorkflowActionType.HEBAT_ASSIGNMENT_DETAIL] == WorkflowActionStatus.SKIPPED
+    assert statuses[WorkflowActionType.HEBAT_DOWNLOAD_MATERIALS] == WorkflowActionStatus.SKIPPED
+    assert statuses[WorkflowActionType.REMINDER_INFER] == WorkflowActionStatus.SUCCESS
     assert "Reminder" in result.final_response
     assert ReminderService().list_pending("chat1")

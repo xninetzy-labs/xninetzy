@@ -24,6 +24,10 @@ IDEMPOTENCY_INDEX_DDL = (
 )
 
 
+class IdempotencyPendingError(RuntimeError):
+    """The reservation is active or its previous outcome needs reconciliation."""
+
+
 def storage_key(
     scope: str, idempotency_key: str, payload: Mapping[str, Any] | None
 ) -> str:
@@ -58,10 +62,11 @@ def idempotent_call(
 ) -> tuple[Any, bool]:
     """Run ``execute`` once per (scope, key, payload); replay the stored result.
 
-    A pending reservation left by a crashed attempt is taken over on retry,
-    so a failed run never poisons its key. Concurrent duplicate execution is
-    out of scope for the single-process deployment and remains guarded by
-    downstream unique constraints where they exist.
+    SQLite atomically reserves the key before execution. An existing pending
+    reservation is never taken over: it may belong to a concurrent caller or
+    an interrupted operation whose side effects need reconciliation. Ordinary
+    exceptions release the reservation for callers that can safely retry;
+    this helper cannot establish whether an external side effect occurred.
     """
     normalized = (idempotency_key or "").strip()
     if not normalized:
@@ -90,6 +95,10 @@ def idempotent_call(
             ).fetchone()
             if row and row["status"] == "done":
                 return _deserialize(row["result_json"]), False
+            raise IdempotencyPendingError(
+                "Idempotency reservation is pending; reconcile the previous "
+                "attempt before retrying."
+            )
 
     try:
         result = execute()

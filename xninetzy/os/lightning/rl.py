@@ -10,13 +10,18 @@ from typing import Any
 from zoneinfo import ZoneInfo
 
 from xninetzy.core.config import get_settings
+from xninetzy.core.security import sanitize_tool_output
 from xninetzy.db.migrations import run_migrations
 from xninetzy.db.sqlite import connect, init_db
 
 
 _SENSITIVE_RE = re.compile(
-    r"(?i)(api[_-]?key|access[_-]?token|bearer|password|passwd|secret|cookie|"
-    r"storage[_-]?state|captcha)(\\s*[:=]\\s*)([^,;\\s]+)"
+    r"(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|bearer|password|passwd|secret|cookie|"
+    r"storage[_-]?state|captcha)(\s*[:=]\s*)(\"[^\"]*\"|'[^']*'|[^,;\s]+)"
+)
+_SENSITIVE_KEY_RE = re.compile(
+    r"(?i)(?:^|[_ -])(?:api[_ -]?key|token|password|passwd|secret|cookie|"
+    r"authorization|credentials?|private[_ -]?key|storage[_ -]?state|captcha)$"
 )
 _SOURCE_WEIGHTS = {
     "task_success": 0.30,
@@ -44,15 +49,20 @@ def _redact(value: Any, depth: int = 0) -> Any:
     if depth > 4:
         return "[truncated]"
     if isinstance(value, dict):
-        return {str(key): _redact(item, depth + 1) for key, item in value.items()}
+        return {
+            str(key): "[redacted]" if _SENSITIVE_KEY_RE.search(str(key)) else _redact(item, depth + 1)
+            for key, item in value.items()
+        }
     if isinstance(value, list):
         return [_redact(item, depth + 1) for item in value[:50]]
     if isinstance(value, tuple):
         return [_redact(item, depth + 1) for item in value[:50]]
     if value is None or isinstance(value, (bool, int, float)):
         return value
-    text = str(value)[: int(getattr(get_settings(), "LIGHTNING_MAX_EVENT_CHARS", 4000))]
-    return _SENSITIVE_RE.sub(r"\\1[redacted]", text)
+    # Redact before truncating so a clipped credential cannot evade matching.
+    text = sanitize_tool_output(str(value))
+    text = _SENSITIVE_RE.sub(lambda match: f"{match[1]}{match[2]}[redacted]", text)
+    return text[: int(getattr(get_settings(), "LIGHTNING_MAX_EVENT_CHARS", 4000))]
 
 
 def _json(value: Any) -> str:

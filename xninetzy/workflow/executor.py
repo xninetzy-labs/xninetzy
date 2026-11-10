@@ -112,7 +112,9 @@ class WorkflowExecutor:
 
         final_response = self._build_final_response(plan, st, results, stopped)
         overall = (
-            WorkflowActionStatus.FAILED if stopped
+            WorkflowActionStatus.FAILED if stopped or any(
+                result.status != WorkflowActionStatus.SUCCESS for result in results
+            )
             else WorkflowActionStatus.SUCCESS
         )
         exec_result = WorkflowExecutionResult(

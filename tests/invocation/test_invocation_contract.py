@@ -8,7 +8,6 @@ from xninetzy.context.invocation.classify import (
     SIDE_EFFECT_IRREVERSIBLE,
     SIDE_EFFECT_NON_IDEMPOTENT_WRITE,
     SIDE_EFFECT_READ_ONLY,
-    SideEffectClass,
     classify_side_effect,
     side_effect_names,
 )
@@ -42,10 +41,11 @@ def test_side_effect_names_covers_all_classes():
     }.issubset(names)
 
 
-def test_classify_side_effect_unknown_defaults_read_only():
-    cls = classify_side_effect("not-a-real-class")
-    assert isinstance(cls, SideEffectClass)
-    assert cls.name == SIDE_EFFECT_READ_ONLY
+@pytest.mark.parametrize("name", ["not-a-real-class", "", "  ", "irreversble"])
+def test_classify_side_effect_invalid_explicit_class_fails_closed(name):
+    # Invalid caller metadata must never grant the read-only policy exemption.
+    with pytest.raises(ValueError, match="side_effect"):
+        classify_side_effect(name)
 
 
 def test_classify_side_effect_none_defaults_read_only():
@@ -95,6 +95,15 @@ def test_validate_request_rejects_missing_request_id():
     req = _make_request(request_id="")
     with pytest.raises(ValueError):
         validate_invocation_request(req)
+
+
+@pytest.mark.parametrize("name", ["not-a-real-class", "", "  ", "irreversble"])
+def test_invocation_validation_rejects_invalid_class_despite_credentials(name):
+    req = _make_request(side_effect=name, approval_id=42, idempotency_key="key")
+    with pytest.raises(ValueError, match="side_effect"):
+        validate_invocation_request(req)
+    with pytest.raises(ValueError, match="side_effect"):
+        build_invocation_context(req)
 
 
 def test_validate_request_rejects_missing_capability():

@@ -496,6 +496,7 @@ class Settings(BaseSettings):
     # Fully gated: when disabled the V3 stores, worker, and tools stay dormant
     # and the legacy V1 graph_store keeps working untouched.
     GRAPHRAG_V3_ENABLED: bool = False
+    GRAPH_SYNC_WORKER_ENABLED: bool = False
     GRAPH_VECTOR_DATA_DIR: str = "/app/data/graph_vector"
     GRAPH_SYNC_POLL_SECONDS: int = 15
     GRAPH_SYNC_BATCH_SIZE: int = 32
@@ -529,6 +530,30 @@ class Settings(BaseSettings):
     ALLOW_AUTONOMOUS_DELETE: bool = False
 
 
+# Learned overrides tune retrieval/routing cost; they cannot change identity,
+# permissions, credentials, deployment, data selection or feature enablement.
+CONTEXT_TUNING_LIMITS = {
+    "LIGHTNING_EXPLORATION_RATE": (float, 0.0, 1.0),
+    "RAG_TOP_K": (int, 1, 100),
+    "RAG_MAX_CONTEXT_CHARS": (int, 256, 100_000),
+    "GRAPH_RETRIEVAL_TOP_K": (int, 1, 100),
+    "GRAPH_RRF_K": (int, 1, 1000),
+}
+
+
+def valid_context_tuning(name: str, value: object) -> bool:
+    import math
+
+    limits = CONTEXT_TUNING_LIMITS.get(name)
+    if limits is None or isinstance(value, bool):
+        return False
+    kind, minimum, maximum = limits
+    if kind is int and not isinstance(value, int):
+        return False
+    return (isinstance(value, (int, float)) and math.isfinite(value)
+            and minimum <= value <= maximum)
+
+
 _SETTINGS_BUILDING = False
 
 
@@ -544,9 +569,9 @@ def get_settings() -> Settings:
             from xninetzy.os.lightning.patch_executor import (
                 load_context_config_overrides,
             )
-            overrides = load_context_config_overrides()
+            overrides = load_context_config_overrides(sqlite_path=settings.SQLITE_PATH)
             for name, value in overrides.items():
-                if hasattr(settings, name) and not name.startswith("_"):
+                if valid_context_tuning(name, value):
                     try:
                         setattr(settings, name, value)
                     except Exception:

@@ -1,12 +1,13 @@
 ---
 name: benchmark-analysis
-description: Find and compare benchmarks used in academic papers for a given task.
+description: Finds and compares the benchmarks academic papers use for a given task. Use when choosing evaluation datasets or comparing reported results.
 metadata:
-  type: "workflow"
-  layer: "research-academic"
-  consumes: "'[\"research_search\",\"research_fetch\",\"evidence-grader\"]'"
-  produces: "'[\"benchmark_landscape\"]'"
-  tier: "'0'"
+  type: workflow
+  layer: research-academic
+  consumes: '''["research_search","research_fetch","evidence-grader"]'''
+  produces: '''["benchmark_landscape"]'''
+  tier: '''0'''
+  keywords: compare find used
 ---
 
 

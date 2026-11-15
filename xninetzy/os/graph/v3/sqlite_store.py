@@ -175,7 +175,7 @@ def upsert_node(spec: NodeUpsert, *, actor: str | None = None) -> UpsertResult:
             UPDATE graph_nodes_v3
                SET node_type=?, title=?, content=?, properties_json=?,
                    provenance_json=?, content_hash=?, version=?, status='active',
-                   updated_at=?
+                   updated_at=?, neo4j_synced_at=NULL, faiss_synced_at=NULL
              WHERE id=?
             """,
             (spec.node_type, spec.title, spec.content, props, prov, chash,
@@ -247,7 +247,7 @@ def upsert_edge(spec: EdgeUpsert, *, actor: str | None = None) -> UpsertResult:
             """
             UPDATE graph_edges_v3
                SET edge_type=?, weight=?, properties_json=?, provenance_json=?,
-                   content_hash=?, version=?, status='active', updated_at=?
+                   content_hash=?, version=?, status='active', updated_at=?, neo4j_synced_at=NULL
              WHERE id=?
             """,
             (spec.edge_type, float(spec.weight), props, prov, chash,
@@ -277,10 +277,11 @@ def soft_delete_node(key: str, *, actor: str | None = None) -> bool:
         if row is None or row["status"] == "deleted":
             return False
         conn.execute(
-            "UPDATE graph_nodes_v3 SET status='deleted', updated_at=? WHERE id=?",
+            "UPDATE graph_nodes_v3 SET status='deleted', updated_at=?, neo4j_synced_at=NULL, faiss_synced_at=NULL WHERE id=?",
             (now, row["id"]),
         )
         conn.execute("DELETE FROM graph_nodes_v3_fts WHERE node_key=?", (key,))
+        conn.execute("UPDATE graph_edges_v3 SET neo4j_synced_at=NULL WHERE source_key=? OR target_key=?", (key, key))
         _enqueue_outbox(conn, entity_type="node", entity_key=key, op="delete",
                         payload={"op": "delete"}, now=now)
         _audit(conn, entity_type="node", entity_key=key, op="delete",
@@ -295,6 +296,18 @@ def get_node(key: str) -> dict | None:
         row = conn.execute(
             "SELECT * FROM graph_nodes_v3 WHERE canonical_key=? AND status='active'",
             (key,),
+        ).fetchone()
+    return dict(row) if row else None
+
+
+def get_edge(key: str) -> dict | None:
+    """Current active relationship, only while both canonical endpoints exist."""
+    with _connect() as conn:
+        row = conn.execute(
+            "SELECT e.* FROM graph_edges_v3 e "
+            "JOIN graph_nodes_v3 s ON s.canonical_key=e.source_key AND s.status='active' "
+            "JOIN graph_nodes_v3 t ON t.canonical_key=e.target_key AND t.status='active' "
+            "WHERE e.canonical_key=? AND e.status='active'", (key,),
         ).fetchone()
     return dict(row) if row else None
 
@@ -359,13 +372,14 @@ def edges_for_keys(keys: list[str], limit: int = 60) -> list[dict]:
     return [dict(row) for row in rows]
 
 
-def set_faiss_row(key: str, faiss_row: int) -> None:
+def set_faiss_row(key: str, faiss_row: int, *, version: int | None = None, content_hash: str | None = None) -> None:
     now = _now()
     with _connect() as conn:
-        conn.execute(
-            "UPDATE graph_nodes_v3 SET faiss_row=?, faiss_synced_at=? WHERE canonical_key=?",
-            (faiss_row, now, key),
-        )
+        predicate, arguments = "canonical_key=?", [faiss_row, now, key]
+        if version is not None and content_hash is not None:
+            predicate += " AND version=? AND content_hash=? AND status='active'"
+            arguments.extend([version, content_hash])
+        conn.execute(f"UPDATE graph_nodes_v3 SET faiss_row=?, faiss_synced_at=? WHERE {predicate}", arguments)
 
 
 def mark_neo4j_synced(entity_type: str, key: str) -> None:
@@ -437,23 +451,74 @@ def claim_outbox_batch(*, limit: int, lease_seconds: int) -> list[dict]:
                 """,
                 (lease_until, now, row["id"]),
             )
-            claimed.append(dict(row))
+            claimed.append(dict(conn.execute("SELECT * FROM graph_sync_outbox WHERE id=?", (row["id"],)).fetchone()))
     return claimed
 
 
-def mark_outbox_done(outbox_id: int) -> None:
+def _claim_values(outbox_id: int, claim: dict | None) -> tuple:
+    if not claim or claim.get("id") != outbox_id:
+        return (outbox_id, -1, "", _now())
+    return (outbox_id, claim.get("attempts", -1), claim.get("lease_until"), _now())
+
+
+_OWNED_CLAIM = "id=? AND attempts=? AND lease_until=? AND lease_until>? AND status='processing'"
+
+
+def claim_is_current(claim: dict) -> bool:
+    with _connect() as conn:
+        return conn.execute(
+            f"SELECT 1 FROM graph_sync_outbox WHERE {_OWNED_CLAIM}",
+            _claim_values(claim.get("id"), claim),
+        ).fetchone() is not None
+
+
+def release_unstarted_claim(claim: dict) -> bool:
+    """Return only an undispatched owned claim; never use after provider entry."""
+    with _connect() as conn:
+        cursor = conn.execute(
+            "UPDATE graph_sync_outbox SET status='pending', attempts=attempts-1, lease_until=NULL, "
+            "next_retry_at=?,updated_at=? WHERE id=? AND attempts=? AND lease_until=? "
+            "AND status='processing' AND attempts>0",
+            (_now(), _now(), *_claim_values(claim.get("id"), claim)[:3]),
+        )
+    return cursor.rowcount == 1
+
+
+def mark_outbox_done(outbox_id: int, *, claim: dict | None = None, receipt: dict | None = None) -> bool:
     now = _now()
     with _connect() as conn:
-        conn.execute(
+        conn.execute("BEGIN IMMEDIATE")
+        cursor = conn.execute(
             "UPDATE graph_sync_outbox SET status='done', last_error=NULL, "
-            "lease_until=NULL, updated_at=? WHERE id=?",
-            (now, outbox_id),
+            f"lease_until=NULL, next_retry_at=NULL, updated_at=? WHERE {_OWNED_CLAIM}",
+            (now, *_claim_values(outbox_id, claim)),
         )
+        if cursor.rowcount != 1:
+            return False
+        # An ACK describes one exact canonical snapshot, not a newer write.
+        if receipt and receipt.get("entity_type") in {"node", "edge"}:
+            entity = receipt["entity_type"]
+            table = "graph_nodes_v3" if entity == "node" else "graph_edges_v3"
+            predicate = "canonical_key=? AND version=? AND content_hash=? AND status='active'"
+            if entity == "edge":
+                predicate += (
+                    " AND EXISTS (SELECT 1 FROM graph_nodes_v3 WHERE canonical_key=graph_edges_v3.source_key AND status='active')"
+                    " AND EXISTS (SELECT 1 FROM graph_nodes_v3 WHERE canonical_key=graph_edges_v3.target_key AND status='active')"
+                )
+            arguments = (receipt["key"], receipt["version"], receipt["content_hash"])
+            if receipt.get("neo4j_synced"):
+                conn.execute(f"UPDATE {table} SET neo4j_synced_at=? WHERE {predicate}", (now, *arguments))
+            if entity == "node" and receipt.get("faiss_row") is not None:
+                conn.execute(
+                    f"UPDATE {table} SET faiss_row=?,faiss_synced_at=? WHERE {predicate}",
+                    (receipt["faiss_row"], now, *arguments),
+                )
+        return True
 
 
 def mark_outbox_failed(
-    outbox_id: int, *, error: str, max_attempts: int, retry_base_seconds: int
-) -> None:
+    outbox_id: int, *, error: str, max_attempts: int, retry_base_seconds: int, claim: dict | None = None
+) -> bool:
     """Exponential backoff on failure; give up after ``max_attempts`` (status
     stays 'failed' with no next_retry so it stops being claimed)."""
     from datetime import timedelta
@@ -461,10 +526,13 @@ def mark_outbox_failed(
     now_dt = datetime.now(ZoneInfo(get_settings().APP_TIMEZONE))
     now = now_dt.isoformat()
     with _connect() as conn:
+        conn.execute("BEGIN IMMEDIATE")
         row = conn.execute(
-            "SELECT attempts FROM graph_sync_outbox WHERE id=?", (outbox_id,)
+            f"SELECT attempts FROM graph_sync_outbox WHERE {_OWNED_CLAIM}", _claim_values(outbox_id, claim),
         ).fetchone()
-        attempts = int(row["attempts"]) if row else max_attempts
+        if row is None:
+            return False
+        attempts = int(row["attempts"])
         if attempts >= max_attempts:
             conn.execute(
                 "UPDATE graph_sync_outbox SET status='failed', last_error=?, "
@@ -479,6 +547,7 @@ def mark_outbox_failed(
                 "lease_until=NULL, next_retry_at=?, updated_at=? WHERE id=?",
                 (error[:2000], next_retry, now, outbox_id),
             )
+        return True
 
 
 def outbox_pending_count() -> int:

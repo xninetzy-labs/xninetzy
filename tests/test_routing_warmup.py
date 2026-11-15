@@ -1,10 +1,8 @@
 from __future__ import annotations
 
-import time
 from unittest.mock import patch
 
-from xninetzy.context.routing.embeddings_index import _index_documents, get_indexed_items
-from xninetzy.context.routing.embeddings_warmup import is_warmed, warm_faiss_index
+from xninetzy.context.routing.embeddings_warmup import warm_faiss_index
 from xninetzy.context.routing.warmup import warm_once, warmup_routing_stack
 
 

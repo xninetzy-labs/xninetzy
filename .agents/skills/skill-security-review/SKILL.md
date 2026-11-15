@@ -1,15 +1,16 @@
 ---
 name: skill-security-review
-description: Mandatory static-analysis gate for every third-party Agent Skill before
+description: 'Static security gate for third-party Agent Skills before they enter .agents/skills: checks SKILL.md and scripts for egress, process execution, secret access, dynamic code and prompt injection without running them. Use on skill install or promotion.'
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "governance"
-  priority: "P0"
-  required_tools: "'[\"read_file\",\"grep_search\",\"glob_files\",\"skill_validate\",\"skill_list\",\"action_policy_evaluate\"]'"
-  optional_tools: "'[\"os_inbox\",\"hitl_request_approval\"]'"
-  trigger_conditions: "'[\"user asks to install, copy, or vendor a new skill\",\"skill_healthcheck"
-  prerequisites: "'[\"target SKILL.md path OR skill name in `.agents/skills/`\",\"read"
+  author: xninetzy
+  version: 1.0.0
+  scope: governance
+  priority: P0
+  required_tools: '''["read_file","grep_search","glob_files","skill_validate","skill_list","action_policy_evaluate"]'''
+  optional_tools: '''["os_inbox","hitl_request_approval"]'''
+  trigger_conditions: '''["user asks to install, copy, or vendor a new skill","skill_healthcheck'
+  prerequisites: '''["target SKILL.md path OR skill name in `.agents/skills/`","read'
+  keywords: add all always analysis any bundled captcha community content copies critical emit every findings from generation harnesses high inbox inspect kind lands license mandatory network never note operator owner promoting risks route run target trigger types unsafe url vectors verdict via when
 ---
 
 

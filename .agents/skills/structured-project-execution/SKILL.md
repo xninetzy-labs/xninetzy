@@ -1,11 +1,6 @@
 ---
 name: structured-project-execution
-description: 'Durable execution state for non-trivial multi-step work (≥ 30 steps).
-  Replaces ad-hoc "carry state in the conversation context" with a state machine:
-  PLAN → IN_PROGRESS → BLOCKED → VERIFIED → DONE, with explicit checkpoints, decisions,
-  artifacts, verifications, and rollback strategies persisted between harness invocations.
-  Use on any engineering / research / security task expected to span more than a single
-  MCP exchange.'
+description: Durable state machine (PLAN → IN_PROGRESS → BLOCKED → VERIFIED → DONE) with checkpoints, decisions, artifacts and rollback for long multi-step work. Use for engineering, research or security tasks spanning many steps or sessions.
 metadata:
   author: xninetzy
   version: 1.0.0
@@ -13,12 +8,9 @@ metadata:
   priority: P0
   required_tools: '["repo_search","write_file","read_file","todo_tool","lightning_episode_start","lightning_episode_finish","lightning_record_action","hitl_request_approval"]'
   optional_tools: '["os_inbox","memory_add","memory_search"]'
-  trigger_conditions: '["the operator asks for a project of ≥ 30 steps, multi-PR,
-    or multi-week work","the operator asks for a security audit, repository migration,
-    or large refactor","any task whose previous attempt lost state across harness
-    invocations"]'
-  prerequisites: '["target project / goal","target branch / working directory","approval
-    status (auto vs HITL-gated)"]'
+  trigger_conditions: '["the operator asks for a project of ≥ 30 steps, multi-PR, or multi-week work","the operator asks for a security audit, repository migration, or large refactor","any task whose previous attempt lost state across harness invocations"]'
+  prerequisites: '["target project / goal","target branch / working directory","approval status (auto vs HITL-gated)"]'
+  keywords: any between carry context conversation exchange execution expected explicit harness hoc invocations mcp more non persisted replaces single span strategies task than trivial verifications
 ---
 
 
@@ -191,6 +183,6 @@ a state transition. The owner can resume any time via
 - `context-engineering` — L4 / L5 layers consume project state
 - `multi-agent-orchestration` — distributes per-task execution across
   parallel sub-agents
-- `memory-management` — promotes proven project conventions into
+- `xninetzy-memory` (layer governance) — promotes proven project conventions into
   semantic memory
 - `tdd-workflow` — the default verification protocol for engineering tasks

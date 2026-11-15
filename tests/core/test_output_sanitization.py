@@ -50,6 +50,28 @@ def test_masks_multiple_jids_in_one_text():
     assert "628987654321" not in out
 
 
+def test_long_unrelated_identifier_does_not_exhaust_redaction_budget():
+    import subprocess
+    import sys
+
+    # A valid identifier later in the output must not make a long unrelated
+    # token trigger a quadratic scan. Isolate the deadline from the test runner.
+    result = subprocess.run([sys.executable, "-c", """
+from xninetzy.core.security import redact_chat_ids_in_text
+text = 'x' * 40000 + '@example.com tail 628123456789@chat.local'
+result = redact_chat_ids_in_text(text)
+assert result.startswith('x' * 40000 + '@example.com')
+assert '628123456789' not in result
+assert '@chat.local' in result
+"""], capture_output=True, text=True, timeout=2)
+    assert result.returncode == 0
+
+
+def test_redaction_preserves_leading_punctuation_and_nonoverlapping_matches():
+    assert redact_jids_in_text("-foo@chat.local") == "-[redacted]@chat.local"
+    assert redact_jids_in_text("foo@chat.local@chat.local") == "[redacted]@chat.local@chat.local"
+
+
 def test_sanitize_recurses_into_containers():
     payload = {
         "chat": "628123456789@chat.local",
@@ -90,6 +112,12 @@ def test_strip_trusted_context_preserves_non_identity_keys():
     payload = {"chat_id": "x", "tool": "demo", "result": [1, 2, 3]}
     cleaned = strip_trusted_context(payload)
     assert cleaned == {"tool": "demo", "result": [1, 2, 3]}
+
+
+def test_stringified_json_cannot_disclose_trusted_identity():
+    import json
+    cleaned = strip_trusted_context(json.dumps({"sender_id": "private-owner", "result": 42}))
+    assert json.loads(cleaned) == {"result": 42}
 
 
 def test_strip_trusted_context_handles_lists_and_nesting():

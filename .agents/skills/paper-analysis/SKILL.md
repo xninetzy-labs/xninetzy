@@ -1,12 +1,13 @@
 ---
 name: paper-analysis
-description: Analyze a single paper from a DOI / arXiv ID / S2 paper ID. Extract metadata,
+description: 'Analyzes one paper from a DOI, arXiv ID or Semantic Scholar ID into a structured card: metadata, methodology, claims and limitations. Use for single-paper analysis.'
 metadata:
-  type: "workflow"
-  layer: "research-academic"
-  consumes: "'[\"research_fetch\",\"research_grade_evidence\"]'"
-  produces: "'[\"paper_card\"]'"
-  tier: "'0'"
+  type: workflow
+  layer: research-academic
+  consumes: '''["research_fetch","research_grade_evidence"]'''
+  produces: '''["paper_card"]'''
+  tier: '''0'''
+  keywords: analyze extract outputs
 ---
 
 

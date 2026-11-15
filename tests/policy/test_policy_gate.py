@@ -96,6 +96,14 @@ def test_evaluate_policy_blocks_unverified_for_external_side_effect():
     assert decision.outcome == POLICY_BLOCK
 
 
+@pytest.mark.parametrize("approval_id", [None, 42, -1])
+def test_known_external_mutation_cannot_use_unverified_approval(approval_id):
+    decision = evaluate_policy(trust_tier=1, side_effect=SIDE_EFFECT_EXTERNAL,
+                               idempotency_key="external-fixture", approval_id=approval_id)
+    assert decision.outcome == POLICY_REQUIRE_APPROVAL
+    assert decision.details["error_code"] == "approval_channel_unverified"
+
+
 def test_evaluate_policy_requires_approval_for_irreversible():
     decision = evaluate_policy(
         trust_tier=TRUST_TIER_KNOWN_EXTERNAL,
@@ -106,14 +114,17 @@ def test_evaluate_policy_requires_approval_for_irreversible():
     assert decision.outcome == POLICY_REQUIRE_APPROVAL
 
 
-def test_evaluate_policy_allows_irreversible_with_approval():
+@pytest.mark.parametrize("approval_id", [0, -1, 42, 987654321])
+@pytest.mark.parametrize("trust_tier", [TRUST_TIER_LOCAL, TRUST_TIER_KNOWN_EXTERNAL])
+def test_evaluate_policy_does_not_authenticate_approval_identifier(approval_id, trust_tier):
     decision = evaluate_policy(
-        trust_tier=TRUST_TIER_KNOWN_EXTERNAL,
+        trust_tier=trust_tier,
         side_effect=SIDE_EFFECT_IRREVERSIBLE,
         idempotency_key="k1",
-        approval_id=42,
+        approval_id=approval_id,
     )
-    assert decision.outcome == POLICY_ALLOW
+    assert decision.outcome == POLICY_REQUIRE_APPROVAL
+    assert decision.details["error_code"] == "approval_channel_unverified"
 
 
 def test_is_terminal_decision_classifies_outcomes():

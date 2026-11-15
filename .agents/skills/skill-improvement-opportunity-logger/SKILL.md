@@ -1,11 +1,6 @@
 ---
 name: skill-improvement-opportunity-logger
-description: 'Long-running capability layered on top of the Lightning RL trace. Watches
-  installed skills for friction patterns: repeated tool calls, low-confidence retrievals,
-  owner escalations, recovery thrashing, prompt-size blow-ups. Emits structured `ImprovementProposal`
-  objects routed through Lightning → HITL → `skill-creator` → benchmark → publish
-  loop. Use when the operator asks "what''s blocking the harness", or any time Lightning
-  episodes are recorded into the trace store.'
+description: Watches skills for friction (repeated tool calls, low-confidence retrieval, escalations, recovery thrashing, prompt bloat) and emits ImprovementProposal objects into the Lightning → HITL → skill-creator loop. Use to find what blocks the harness.
 metadata:
   author: xninetzy
   version: 1.0.0
@@ -13,12 +8,9 @@ metadata:
   priority: P0
   required_tools: '["lightning_record_action","lightning_record_outcome","lightning_episode_finish","lightning_propose_improvement","lightning_list_proposals","skill_list","skill_get"]'
   optional_tools: '["os_inbox","hitl_request_approval","memory_search","memory_add"]'
-  trigger_conditions: '["Lightning episode trace accumulates ≥ 50 episodes on a task
-    type","owner asks \"what''s blocking the harness\"","an episode shows retry thrashing
-    (≥ 3 consecutive failed tool calls)","a recovery loop fires more than twice in
-    one episode"]'
-  prerequisites: '["Lightning trace store has ≥ 1 episode for the relevant task type","target
-    skill name or tool surface is known"]'
+  trigger_conditions: '["Lightning episode trace accumulates ≥ 50 episodes on a task type","owner asks \"what''s blocking the harness\"","an episode shows retry thrashing (≥ 3 consecutive failed tool calls)","a recovery loop fires more than twice in one episode"]'
+  prerequisites: '["Lightning trace store has ≥ 1 episode for the relevant task type","target skill name or tool surface is known"]'
+  keywords: any are asks benchmark blocking blow capability episodes installed layered long operator owner patterns publish recorded retrievals routed running size store structured through time top trace ups when
 ---
 
 
@@ -178,5 +170,5 @@ configurable cooldown period to avoid re-issuing immediately.
 - `skill-security-review` — gates every publication
 - `lightning_improve` — the proposal application engine; this skill feeds
   into it
-- `memory-management` — for capturing repeated-owner friction into long-term
+- `xninetzy-memory` (layer governance) — for capturing repeated-owner friction into long-term
   memory

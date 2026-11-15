@@ -1,0 +1,63 @@
+{
+  "name": "academic-hebat",
+  "description": "HEBAT Document Standard: Times New Roman 12 pt, 1.5 spacing, 2.3/2.5 cm margins, cover, table of contents, page numbers; Indonesian labels.",
+  "fonts": {
+    "body": "Times New Roman",
+    "heading": "Times New Roman",
+    "mono": "DejaVu Sans Mono",
+    "deck_body": "Arial",
+    "deck_heading": "Arial"
+  },
+  "sizes": {
+    "body": 12.0,
+    "small": 10.0,
+    "title": 24.0,
+    "subtitle": 16.0,
+    "h1": 24.0,
+    "h2": 16.0,
+    "h3": 13.0,
+    "slide_title": 30.0,
+    "slide_body": 20.0,
+    "slide_min": 14.0
+  },
+  "colors": {
+    "text": "#000000",
+    "heading": "#000000",
+    "accent": "#1F3864",
+    "muted": "#555555",
+    "table_header_bg": "#D9E2F3",
+    "table_header_text": "#000000",
+    "table_stripe": "#F5F7FB",
+    "slide_background": "#FFFFFF",
+    "slide_title": "#1F3864",
+    "slide_text": "#1A1A1A"
+  },
+  "page": {
+    "size": "A4",
+    "margin_top_cm": 2.3,
+    "margin_bottom_cm": 2.3,
+    "margin_left_cm": 2.5,
+    "margin_right_cm": 2.5
+  },
+  "document": {
+    "language": "id",
+    "line_spacing": 1.5,
+    "paragraph_after_pt": 6.0,
+    "justify": true,
+    "cover": true,
+    "toc": true,
+    "page_numbers": true,
+    "heading_numbering": false,
+    "caption_numbering": true,
+    "header_text": "",
+    "footer_text": ""
+  },
+  "deck": {
+    "aspect": "16:9",
+    "accent_bar": true,
+    "slide_numbers": true,
+    "max_bullets": 6,
+    "max_table_rows": 8,
+    "footer_text": ""
+  }
+}

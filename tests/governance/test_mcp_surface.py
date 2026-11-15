@@ -36,18 +36,14 @@ def test_tool_manifests_have_no_idempotency_gaps() -> None:
 
 
 def test_final_tools_are_exactly_named() -> None:
-    """FINAL risk class is reserved for: hebat_upload_submission,
-    portal_krs_war_arm, qa_fill_kuesioner, tableau_publish_workbook.
-    Any drift must be intentional."""
+    """The reviewed FINAL set must match the canonical release invariant."""
     from xninetzy.tools.manifest import manifest_for
     from xninetzy.tools.registry import get_tool_names
 
-    expected = {
-        "hebat_upload_submission",
-        "portal_krs_war_arm",
-        "qa_fill_kuesioner",
-        "tableau_publish_workbook",
-    }
+    from xninetzy.tools.release_check import _CANONICAL_FINAL_TOOLS
+    expected = set(_CANONICAL_FINAL_TOOLS)
+    assert {"hebat_upload_submission", "hebat_remove_submission", "external_mcp_call",
+            "graph_v3_rebuild", "qa_fill_kuesioner", "tableau_publish_workbook"} <= expected
     finals: set[str] = set()
     for name in get_tool_names():
         try:

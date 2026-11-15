@@ -1,6 +1,6 @@
 ---
 name: interview-prep
-description: Generate interview preparation pack for a target posting: company brief, likely questions, technical refreshers, project storytelling prompts.
+description: 'Generate interview preparation pack for a target posting: company brief, likely questions, technical refreshers, project storytelling prompts.'
 metadata:
   type: workflow
   layer: career

@@ -1,12 +1,13 @@
 ---
-name: "technical-content-writer"
-description: "Produce technical content for developers, engineers, and technical practitioners: tutorials, READMEs, how-to guides, API explanations, architecture descriptions, runbooks. Optimizes for accuracy, runnable examples, and progressive disclosure. Never invents APIs, parameters, or behaviors."
+name: technical-content-writer
+description: Writes accurate technical content (tutorials, READMEs, how-tos, API explanations, architecture descriptions, runbooks) with runnable examples; never invents APIs. Use for developer documentation.
 metadata:
-  scope: "writing"
-  intent_class: "TECHNICAL"
-  consumes: "evidence-synthesis, source-evaluation"
-  produces: "technical_document"
-  tier: "0"
+  scope: writing
+  intent_class: TECHNICAL
+  consumes: evidence-synthesis, source-evaluation
+  produces: technical_document
+  tier: '0'
+  keywords: accuracy and behaviors developers disclosure engineers guides optimizes parameters practitioners produce progressive
 ---
 # technical-content-writer
 

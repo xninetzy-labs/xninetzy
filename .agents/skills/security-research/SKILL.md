@@ -1,12 +1,13 @@
 ---
 name: security-research
-description: Research a CVE, advisory, or vulnerability topic. Pulls from NVD (when
+description: 'Researches a CVE, advisory or vulnerability topic from NVD and web sources: affected packages, severity and known exploits. Use for vulnerability lookups.'
 metadata:
-  type: "workflow"
-  layer: "research-security"
-  consumes: "'[\"research_search\",\"research_fetch\",\"evidence-grader\",\"contradiction-hunter\"]'"
-  produces: "'[\"security_brief\"]'"
-  tier: "'0'"
+  type: workflow
+  layer: research-security
+  consumes: '''["research_search","research_fetch","evidence-grader","contradiction-hunter"]'''
+  produces: '''["security_brief"]'''
+  tier: '''0'''
+  keywords: available pulls research surfaces when
 ---
 
 

@@ -1,11 +1,12 @@
 ---
-name: "argument-coherence"
-description: "Detect logical flow problems (missing premise, non sequitur, topic break, circular reasoning, false dichotomy) in existing prose. Produces a finding list with locations and minimal-edit suggestions. Activates during editorial review."
+name: argument-coherence
+description: Finds logical-flow defects in prose (missing premise, non sequitur, topic break, circular reasoning, false dichotomy) and suggests minimal edits. Use during editorial review.
 metadata:
-  intent_class: "EDITING"
-  consumes: "evidence-synthesis, claim-lattice"
-  produces: "coherence_findings"
-  tier: "0"
+  intent_class: EDITING
+  consumes: evidence-synthesis, claim-lattice
+  produces: coherence_findings
+  tier: '0'
+  keywords: activates detect edit existing finding list locations problems produces suggestions with
 ---
 
 # argument-coherence

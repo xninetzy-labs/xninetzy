@@ -1,6 +1,5 @@
 ---
 type Props = { pageTitle?: string };
-const { pageTitle } = Astro.props;
 ---
 
 <aside class="page-feedback" aria-label="Page feedback">
@@ -22,16 +21,17 @@ const { pageTitle } = Astro.props;
 </aside>
 
 <script>
-  const root = document.currentScript?.previousElementSibling as HTMLElement | null;
   const block = document.querySelector<HTMLElement>('.page-feedback');
   if (block) {
     const thanks = block.querySelector<HTMLElement>('.page-feedback-thanks');
     block.querySelectorAll<HTMLButtonElement>('button[data-vote]').forEach((b) => {
       b.addEventListener('click', () => {
+        const vote = b.dataset.vote;
+        if (vote !== 'up' && vote !== 'down') return;
         try {
           const k = `feedback:${location.pathname}`;
           const prev = JSON.parse(localStorage.getItem(k) ?? '{}');
-          prev[b.dataset.vote] = Date.now();
+          prev[vote] = Date.now();
           localStorage.setItem(k, JSON.stringify(prev));
         } catch {}
         if (thanks) thanks.hidden = false;

@@ -1,9 +1,7 @@
 from __future__ import annotations
 
-import time
 from typing import Any
 
-from xninetzy.os.knowledge.vector_store import _load_or_create_index as _lazy_index
 
 _INDEX: dict[str, Any] = {"items": [], "vectors": []}
 

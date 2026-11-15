@@ -1,6 +1,8 @@
 ---
-name: "research"
-description: "Run evidence-first, multi-source, auditable research from scoping through source verification, claim-evidence mapping, synthesis, adversarial review, and reproducible deliverables. Use whenever the user asks for deep research, literature or systematic-style review, fact-checking, source comparison, technical/product/market/policy/legal/health/historical/educational/implementation research, or artifacts such as a source matrix, bibliography, research report, dataset, diagram, DOCX, PDF, or slides. Do not use for a single stable fact, casual brainstorming, or merely reading one supplied..."
+name: research
+description: Evidence-first research in a repo-local auditable workspace (charter, source matrix, claim-evidence ledger, adversarial review) producing a report, DOCX, PDF or slides. Use for systematic reviews, fact-checking or source comparison that must leave files in a repository; not for one stable fact.
+metadata:
+  keywords: and artifacts asks bibliography brainstorming casual cross dataset deep deliverables diagram document educational from health historical implementation legal literature mapping maps market merely multi policy product reading reproducible requested run scoping single sources style such supplied synthesis technical through unless user verification verified whenever
 ---
 
 # Evidence-first research

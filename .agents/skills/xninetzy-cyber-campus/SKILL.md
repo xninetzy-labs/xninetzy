@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-cyber-campus"
-description: "Safely retrieve and analyze authorized Cyber Campus status, schedules, grades, and KRS using manual CAPTCHA and OTP challenges."
+name: xninetzy-cyber-campus
+description: Retrieves and analyzes authorized Cyber Campus status, schedules, grades and KRS with manual CAPTCHA and OTP. Use for read-only Cyber Campus checks.
+metadata:
+  keywords: analyze challenges retrieve safely using
 ---
 
 # Cyber Campus

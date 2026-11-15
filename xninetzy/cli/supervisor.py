@@ -53,6 +53,9 @@ def _cmd_start(args: argparse.Namespace) -> int:
             file=sys.stderr,
         )
         return 2
+    if transport == "streamable-http":
+        print("authenticated_http_unavailable: use local stdio until owner HTTP authentication is implemented", file=sys.stderr)
+        return 2
     cmd = [sys.executable, "-m", "xninetzy.interfaces.mcp_server"]
     print(f"starting MCP server (transport={transport})", file=sys.stderr)
     if args.dry_run:
@@ -99,58 +102,19 @@ def _cmd_release_check(_args: argparse.Namespace) -> int:
         for fail in failures:
             print(f"  [FAIL   ] audit                 {fail}")
         return 2
-    tools = snapshot.get("tools", {})
-    transport = snapshot.get("transport", {})
-    checks: list[tuple[str, str, bool]] = []
-    checks.append(
-        (
-            "tool_registry",
-            f"{tools.get('total', 0)} tools classified",
-            not tools.get("bad_risk") and not tools.get("missing_idempotency"),
-        )
-    )
-    checks.append(
-        (
-            "secret_redaction",
-            "3/3 sample secrets redacted",
-            True,
-        )
-    )
-    checks.append(
-        (
-            "safe_fetch",
-            "3/3 SSRF guard scenarios blocked",
-            True,
-        )
-    )
-    transport_line = (
-        f"transport={transport.get('transport','stdio')} "
-        f"host={transport.get('host','127.0.0.1')}"
-    )
-    checks.append(("transport_config", transport_line, True))
-    checks.append(
-        (
-            "sdk_pin",
-            "mcp resolved=1.28.1",
-            True,
-        )
-    )
-    from xninetzy.tools.release_check import _CANONICAL_FINAL_TOOLS
+    from xninetzy.tools.release_check import run_release_checks
 
-    finals = tuple(tools.get("final_tools", ()))
-    expected_final = tuple(sorted(_CANONICAL_FINAL_TOOLS))
-    checks.append(
-        (
-            "canonical_final_tools",
-            f"{len(finals)} FINAL tools match canonical set",
-            finals == expected_final,
-        )
-    )
+    try:
+        checks = run_release_checks()
+    except Exception as exc:
+        # Configuration/provider exception messages can contain private values.
+        print(f"  [FAIL   ] release_checks         {type(exc).__name__}")
+        print("\noverall: FAIL")
+        return 2
     ok = True
-    for name, detail, passed in checks:
-        marker = "PASS" if passed else "FAIL"
-        print(f"  [{marker:<7}] {name:<22} {detail}")
-        if not passed:
+    for check in checks:
+        print(f"  [{check.status:<7}] {check.name:<22} {check.detail}")
+        if check.status != "PASS":
             ok = False
     if failures:
         for fail in failures:

@@ -33,8 +33,23 @@ async def test_approval_persists_to_owner_inbox(monkeypatch):
     assert record["chat_id"] == "628123"
     assert record["kind"] == "note"
     assert "#42" in record["text"]
-    assert "/approve 42" in record["text"]
-    assert "/reject 42" in record["text"]
+    assert "approval_channel_unverified" in record["text"]
+    assert "/approve" not in record["text"]
+    assert "/reject" not in record["text"]
+
+
+@pytest.mark.asyncio
+async def test_failed_inbox_notification_does_not_log_private_content(monkeypatch, caplog):
+    def failed(*args, **kwargs):
+        raise RuntimeError("password=synthetic-exception-private")
+
+    monkeypatch.setattr(admin_notifier, "get_settings", lambda: _settings())
+    monkeypatch.setattr(inbox_service, "capture_item", failed)
+    with caplog.at_level("INFO"):
+        assert not await admin_notifier.notify_admin_approval(42, "fixture-action", "synthetic-private-title", "synthetic-private-summary")
+    assert "synthetic-exception-private" not in caplog.text
+    assert "synthetic-private-title" not in caplog.text
+    assert "synthetic-private-summary" not in caplog.text
 
 
 @pytest.mark.asyncio

@@ -1,12 +1,13 @@
 ---
-name: "proposal-red-team"
-description: "Adversarially review a proposal: identify weak claims, missing evidence, unaddressed counter-arguments, evaluation vulnerabilities, reviewer objections, scoring weaknesses. Produces a structured red-team report without rewriting the proposal. Activates before submission."
+name: proposal-red-team
+description: Adversarially reviews a proposal for weak claims, missing evidence, unaddressed objections and scoring weaknesses, without rewriting it. Use before submission.
 metadata:
-  scope: "review"
-  intent_class: "REVIEW"
-  consumes: "proposal-writer, anti-slop"
-  produces: "red_team_report"
-  tier: "0"
+  scope: review
+  intent_class: REVIEW
+  consumes: proposal-writer, anti-slop
+  produces: red_team_report
+  tier: '0'
+  keywords: activates arguments counter evaluation identify produces red report review reviewer structured team vulnerabilities
 ---
 # proposal-red-team
 

@@ -1,13 +1,14 @@
 ---
-name: "media-video-edit"
-description: "Deterministic video editing primitives: trim, concat, transition (crossfade), add text overlay, scale, apply caption (SRT/VTT import). Operates on existing MP4 / WebM / MOV / image segments with FFmpeg filter graphs. CPU-only, no AI transcription, no auto-cut."
+name: media-video-edit
+description: 'Deterministic FFmpeg editing of existing clips: trim, concat, crossfade, text overlay, scale and SRT/VTT captions; no AI transcription or auto-cut. Use to edit existing footage.'
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "video_clip_trim, video_clip_add, video_transition_add, video_text_add, video_audio_add"
-  produces: "edited_video_segment"
-  tier: "1"
-  engine: "ffmpeg"
+  scope: media
+  intent_class: MEDIA
+  consumes: video_clip_trim, video_clip_add, video_transition_add, video_text_add, video_audio_add
+  produces: edited_video_segment
+  tier: '1'
+  engine: ffmpeg
+  keywords: add apply caption cpu filter graphs image import mov mp4 only operates primitives segments transition video webm with
 ---
 
 # media-video-edit

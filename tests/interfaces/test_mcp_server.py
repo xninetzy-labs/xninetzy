@@ -1,4 +1,5 @@
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -61,15 +62,10 @@ def test_mcp_schema_matches_registry_including_previously_hidden_fields():
 async def test_mcp_stdio_transport_lists_tools():
     ai_root = Path(__file__).resolve().parents[2]
     parameters = StdioServerParameters(
-        command="uv",
-        args=[
-            "run",
-            "--directory",
-            str(ai_root),
-            "python",
-            "-m",
-            "xninetzy.interfaces.mcp_server",
-        ],
+        command=sys.executable,
+        args=["-m", "xninetzy.interfaces.mcp_server"],
+        cwd=str(ai_root),
+        env=dict(os.environ),
     )
     async with stdio_client(parameters) as (read_stream, write_stream):
         async with ClientSession(read_stream, write_stream) as session:
@@ -98,18 +94,13 @@ async def test_mcp_stdio_host_mode_can_read_tasks_without_app_path(
         {
             "MCP_RUNTIME_MODE": "host",
             "MCP_HOST_DATA_DIR": str(tmp_path),
+            "ACTION_POLICY_DEFAULT_MODE": "auto",
         }
     )
     parameters = StdioServerParameters(
-        command="uv",
-        args=[
-            "run",
-            "--directory",
-            str(ai_root),
-            "python",
-            "-m",
-            "xninetzy.interfaces.mcp_server",
-        ],
+        command=sys.executable,
+        args=["-m", "xninetzy.interfaces.mcp_server"],
+        cwd=str(ai_root),
         env=child_env,
     )
     async with stdio_client(parameters) as (read_stream, write_stream):

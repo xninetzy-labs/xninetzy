@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-os"
-description: "Top-level coordination layer for the Xninetzy operating system. Routes incoming requests to the appropriate domain skill, inspects relevant current state, separates reads from plans from approvals from writes, preserves verification, and integrates results across canonical subsystems."
+name: xninetzy-os
+description: 'Top-level coordinator for Xninetzy: routes requests to domain skills, inspects current state, separates reads, plans, approvals and writes, and integrates results. Use when a request spans several Xninetzy subsystems.'
+metadata:
+  keywords: across appropriate canonical coordination from incoming layer operating preserves relevant skill system verification
 ---
 
 # Xninetzy OS

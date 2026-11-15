@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from numbers import Integral
+from threading import RLock
+
 from xninetzy.core.config import get_settings
 from xninetzy.core.logging import logging
 
@@ -7,6 +10,8 @@ logger = logging.getLogger(__name__)
 
 _model = None
 _PROVIDER: str | None = None
+_MODEL_CONFIG: tuple | None = None
+_MODEL_LOCK = RLock()
 
 
 def _configure_cpu_threads(s) -> None:
@@ -24,11 +29,20 @@ def _configure_cpu_threads(s) -> None:
 
 
 def _load_model():
-    global _model, _PROVIDER
-    if _model is not None:
-        return _model
+    with _MODEL_LOCK:
+        return _load_model_locked()
 
+
+def _load_model_locked():
+    global _model, _PROVIDER, _MODEL_CONFIG
     s = get_settings()
+    identity = (s.EMBEDDING_PROVIDER, s.EMBEDDING_MODEL if s.EMBEDDING_PROVIDER == "sentence_transformers" else None)
+    if _MODEL_CONFIG == identity and _PROVIDER is not None and (_PROVIDER != "sentence_transformers" or _model is not None):
+        return _model
+    if _model is not None and _MODEL_CONFIG is None:
+        return _model  # Existing injected/legacy in-process model contract.
+    _model, _PROVIDER, _MODEL_CONFIG = None, None, identity
+
     if s.EMBEDDING_PROVIDER == "sentence_transformers":
         try:
             _configure_cpu_threads(s)
@@ -45,7 +59,7 @@ def _load_model():
         except ImportError:
             logger.warning("sentence_transformers not installed — falling back to numpy TF-IDF")
         except Exception as e:
-            logger.warning("Failed to load sentence_transformers: %s — falling back", e)
+            logger.warning("Failed to load sentence_transformers (%s); using degraded numpy_tfidf fallback", type(e).__name__)
 
     _PROVIDER = "numpy_tfidf"
     logger.info("Embeddings: using numpy TF-IDF fallback")
@@ -103,7 +117,13 @@ def _tfidf_embed(texts: list[str], dim: int = 256) -> list[list[float]]:
 def embedding_dim() -> int:
     model = _load_model()
     if model is not None and _PROVIDER == "sentence_transformers":
-        return model.get_sentence_embedding_dimension()
+        dimension_method = getattr(model, "get_embedding_dimension", None)
+        if not callable(dimension_method):
+            dimension_method = model.get_sentence_embedding_dimension
+        dimension = dimension_method()
+        if isinstance(dimension, bool) or not isinstance(dimension, Integral) or dimension <= 0:
+            raise ValueError("Embedding model dimension must be a positive integer.")
+        return int(dimension)
     return 256
 
 

@@ -50,6 +50,10 @@ def test_legacy_group_to_canonical_round_trip() -> None:
         assert canonical in SEMANTIC_DOMAINS or canonical in SYSTEM_CAPABILITIES or "." in canonical
 
 
+def test_performance_group_routes_to_existing_software_domain() -> None:
+    assert legacy_group_to_canonical("performance") == "software"
+
+
 def test_intent_domain_to_canonical_handles_internal_keys() -> None:
     for src, expected in [
         ("research", "research"),
@@ -60,10 +64,13 @@ def test_intent_domain_to_canonical_handles_internal_keys() -> None:
 
 
 def test_cross_walk_covers_all_legacy_groups() -> None:
+    from xninetzy.tools.registry import get_tool_groups
+
     cross = build_cross_walk()
     assert set(cross["semantic_domains"]) == set(SEMANTIC_DOMAINS)
     assert set(cross["system_capabilities"]) == set(SYSTEM_CAPABILITIES)
     total = sum(len(v) for v in cross["domains"].values())
     total += sum(len(v) for v in cross["system"].values())
     total += sum(len(v) for v in cross["integrations"].values())
-    assert total + len(cross["empty_legacy_groups"]) + len(cross["unmapped_legacy_groups"]) == 33
+    assert not cross["unmapped_legacy_groups"]
+    assert total + len(cross["empty_legacy_groups"]) == len(get_tool_groups())

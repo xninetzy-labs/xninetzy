@@ -1,12 +1,13 @@
 ---
-name: "paper-review"
-description: "Review a research paper or preprint: novelty, methodology rigor, statistical validity, evidence-claim alignment, literature coverage, reproducibility, clarity. Produces a structured review report without rewriting. Default non-mutating."
+name: paper-review
+description: Reviews a paper or preprint for novelty, methodological rigor, statistics, evidence-claim alignment, literature coverage, reproducibility and clarity, without rewriting it. Use for peer-review style critique.
 metadata:
-  scope: "review"
-  intent_class: "REVIEW"
-  consumes: "citation-validation, source-evaluation, anti-slop"
-  produces: "paper_review"
-  tier: "0"
+  scope: review
+  intent_class: REVIEW
+  consumes: citation-validation, source-evaluation, anti-slop
+  produces: paper_review
+  tier: '0'
+  keywords: default methodology mutating non produces report research statistical structured validity
 ---
 # paper-review
 

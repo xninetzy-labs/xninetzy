@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import math
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
@@ -97,15 +97,15 @@ def ece(probs: list[float], labels: list[int], *, n_bins: int = 10) -> float:
     if not probs or len(probs) != len(labels):
         return 0.0
     bins: list[list[tuple[float, int]]] = [[] for _ in range(n_bins)]
-    for p, l in zip(probs, labels):
+    for p, label in zip(probs, labels):
         idx = min(max(int(p * n_bins), 0), n_bins - 1)
-        bins[idx].append((p, l))
+        bins[idx].append((p, label))
     total = len(probs)
     score = 0.0
     for bucket in bins:
         if not bucket:
             continue
-        acc = sum(l for _, l in bucket) / len(bucket)
+        acc = sum(label for _, label in bucket) / len(bucket)
         conf = sum(p for p, _ in bucket) / len(bucket)
         score += (len(bucket) / total) * abs(acc - conf)
     return score
@@ -114,7 +114,7 @@ def ece(probs: list[float], labels: list[int], *, n_bins: int = 10) -> float:
 def brier(probs: list[float], labels: list[int]) -> float:
     if not probs:
         return 0.0
-    return sum((p - l) ** 2 for p, l in zip(probs, labels)) / len(probs)
+    return sum((p - label) ** 2 for p, label in zip(probs, labels)) / len(probs)
 
 
 def fit_platt(probs: list[float], labels: list[int]) -> tuple[float, float]:

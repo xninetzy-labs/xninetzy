@@ -308,6 +308,7 @@ from xninetzy.tools.ecosystem.tasks_tools import (
 from xninetzy.tools.ecosystem.learning_companion_tools import learning_companion_tools
 from xninetzy.tools.ecosystem.skill_routing_tools import skill_routing_tools
 from xninetzy.tools.ecosystem.tableau_tools import TABLEAU_TOOLS
+from xninetzy.tools.ecosystem.document_studio_tools import DOCUMENT_STUDIO_TOOLS
 from xninetzy.os.mcp_external.tools import (
     external_mcp_list_tool,
     external_mcp_shutdown_tool,
@@ -943,6 +944,7 @@ def get_all_tools() -> list[BaseTool]:
             *learning_companion_tools,
             *skill_routing_tools,
             *TABLEAU_TOOLS,
+            *DOCUMENT_STUDIO_TOOLS,
             career_search_jobs,
             career_search_internships,
             career_skill_gap,
@@ -1269,6 +1271,15 @@ def get_tool_groups() -> dict[str, list[str]]:
     """
     return {
         "core": ["calculate", "calculate_percentage", "datetime_now"],
+        "document_studio": [
+            "artifact_render",
+            "artifact_preview",
+            "artifact_validate",
+            "artifact_theme_list",
+            "artifact_theme_get",
+            "artifact_theme_save",
+            "artifact_theme_from_file",
+        ],
         "reasoning": [
             "reasoning_classify_depth",
             "reasoning_get_depth",

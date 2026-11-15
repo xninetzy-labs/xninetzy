@@ -7,7 +7,7 @@ from xninetzy.domains.it_learning.roadmap_store import (
     get_roadmap,
     save_roadmap_draft,
 )
-from xninetzy.os.hitl.approval_service import request_approval, set_approval_status
+from xninetzy.os.hitl.approval_service import request_approval, set_approval_status, _apply_status_decision
 
 
 def test_approval_only_admin(monkeypatch):
@@ -16,12 +16,12 @@ def test_approval_only_admin(monkeypatch):
     approval_id = request_approval("chat", "sender", "test", "Title", "Summary")
     ok, msg = set_approval_status(approval_id, "approved", "user", "Regular")
     assert not ok
-    assert "admin" in msg.lower()
+    assert "approval_channel_unverified" in msg
     ok, _ = set_approval_status(approval_id, "approved", "user", "Misbahul")
-    assert ok
+    assert not ok
 
 
-def test_approval_activates_learning_roadmap_and_tasks():
+def test_transition_kernel_activates_learning_roadmap_and_tasks():
     init_db()
     run_migrations()
     topic = f"Data Analytics {uuid4()}"
@@ -44,7 +44,8 @@ def test_approval_activates_learning_roadmap_and_tasks():
         {"roadmap_id": roadmap_id},
     )
 
-    ok, message = set_approval_status(approval_id, "approved", None, "Misbahul")
+    # Verify domain effects under the transition kernel, not human consent.
+    ok, message = _apply_status_decision(approval_id, "approved")
 
     assert ok
     assert "diaktifkan" in message

@@ -1,0 +1,297 @@
+[
+  {
+    "sector": "Energy",
+    "year": "2020",
+    "id": "1O9aIswI6psoU1jr6-d9Ix-4kTEtMygkE"
+  },
+  {
+    "sector": "Energy",
+    "year": "2021",
+    "id": "1Pm2XF8ttB1gCmXVldCdBHePhQK-2F0fX"
+  },
+  {
+    "sector": "Energy",
+    "year": "2022",
+    "id": "1fToYJWvssjQMyTbFHjdO2Sw8P_cV2JGh"
+  },
+  {
+    "sector": "Energy",
+    "year": "2023",
+    "id": "1PWMF75DR7QFx0MuG2xC62LxM-3fS0XG4"
+  },
+  {
+    "sector": "Energy",
+    "year": "2024",
+    "id": "1_sj52Cj-uon2j3hpJr_Ek3GKBgt5Umgy"
+  },
+  {
+    "sector": "Energy",
+    "year": "2025",
+    "id": "1Yo7ADXVEZ1G_xNvrMyl8d6ecKniJO8I3"
+  },
+  {
+    "sector": "Basic Materials",
+    "year": "2020",
+    "id": "14_Szsr9z7JcIPfY1eUIuZae_MNhetQWu"
+  },
+  {
+    "sector": "Basic Materials",
+    "year": "2021",
+    "id": "1benE4jBE-uD4SaGd_AaKHboAmBDQZXUc"
+  },
+  {
+    "sector": "Basic Materials",
+    "year": "2022",
+    "id": "11lCwMuXmD2GG9dajAlkMmlZjB7Lq_eeM"
+  },
+  {
+    "sector": "Basic Materials",
+    "year": "2023",
+    "id": "1fJK2KkFtWi5H3bH6bzL5fnl72HijlsSf"
+  },
+  {
+    "sector": "Basic Materials",
+    "year": "2024",
+    "id": "1H2fTjr_uH85JNpXjGJ8L-3qhVZtoqcc6"
+  },
+  {
+    "sector": "Basic Materials",
+    "year": "2025",
+    "id": "1ESdMQcZzhRzj2WEUWKRaiDEwKX1qJwdl"
+  },
+  {
+    "sector": "Industrials",
+    "year": "2020",
+    "id": "15-ETWaqU43bYEvALPBi017IiJbpCLzoF"
+  },
+  {
+    "sector": "Industrials",
+    "year": "2021",
+    "id": "1mLt411168ffhGgFQZZPajS9Me7IhedF2"
+  },
+  {
+    "sector": "Industrials",
+    "year": "2022",
+    "id": "17MUjmSF0vuPU6zE5PwUKAkt5QqWUjF_a"
+  },
+  {
+    "sector": "Industrials",
+    "year": "2023",
+    "id": "10QY2bUYL-lolqzZLZYtx6HzkQWuhJQr5"
+  },
+  {
+    "sector": "Industrials",
+    "year": "2024",
+    "id": "1DdEPXedE4V_RVYkyi55OGIqzSZLsr2yR"
+  },
+  {
+    "sector": "Industrials",
+    "year": "2025",
+    "id": "13wzp_uukV-iOtDGYS0IS6Yc5E8soSIjd"
+  },
+  {
+    "sector": "Consumer Non-Cyclicals",
+    "year": "2020",
+    "id": "1dic4d_Di2wWy0qdCFI_8OyhDjWNNRZdq"
+  },
+  {
+    "sector": "Consumer Non-Cyclicals",
+    "year": "2021",
+    "id": "19E21DQMa4HXV6LYLJPfa4USNYQf2db0x"
+  },
+  {
+    "sector": "Consumer Non-Cyclicals",
+    "year": "2022",
+    "id": "1yHbSHlgMzA8oRHs85aFIdlHUwXcWjLmt"
+  },
+  {
+    "sector": "Consumer Non-Cyclicals",
+    "year": "2023–2024",
+    "id": "1Q453OzEVhWqwPsgk_kb8i50IlDngWD5R"
+  },
+  {
+    "sector": "Consumer Non-Cyclicals",
+    "year": "2025",
+    "id": "16vJZatCq8QoAXLkHbnR19eJ5sQfamM74"
+  },
+  {
+    "sector": "Consumer Cyclicals",
+    "year": "2020",
+    "id": "12X9jk9fSz6IjDojUQTnrepgb4mMMbM6V"
+  },
+  {
+    "sector": "Consumer Cyclicals",
+    "year": "2021",
+    "id": "1IRaHqh3bEI55lR9gmaRg-tlWP_zc0j2J"
+  },
+  {
+    "sector": "Consumer Cyclicals",
+    "year": "2022",
+    "id": "1KHf7QFgkEazhz9LIgjgoJ-6DDpcMGFGq"
+  },
+  {
+    "sector": "Consumer Cyclicals",
+    "year": "2023",
+    "id": "1Qstm37asOm_7w4UkLwoz6QrIWGjfmzSA"
+  },
+  {
+    "sector": "Consumer Cyclicals",
+    "year": "2024",
+    "id": "1e1iSwu3HgXaia9U1D1esXjQwwHlLzO1e"
+  },
+  {
+    "sector": "Consumer Cyclicals",
+    "year": "2025",
+    "id": "1zj_keNFQ9GTTvQtj1CV4gX5EJKeBC-h5"
+  },
+  {
+    "sector": "Healthcare",
+    "year": "2020",
+    "id": "1yH5H-eztwDw31kyrW_QRYeSqxgb96oIY"
+  },
+  {
+    "sector": "Healthcare",
+    "year": "2021",
+    "id": "1h68fXneZ2lYOLxrbkJbOpLJoMjkSjgFv"
+  },
+  {
+    "sector": "Healthcare",
+    "year": "2022",
+    "id": "1FZstJwj-2FuLKlPbilVioQPCCua4zvHa"
+  },
+  {
+    "sector": "Healthcare",
+    "year": "2023",
+    "id": "1P8ifXyQP097w9dTI2qjkDLBI0l8HuwBV"
+  },
+  {
+    "sector": "Healthcare",
+    "year": "2024",
+    "id": "1v0csjTVrItperPx2bg-zeANaAQ_XGVBx"
+  },
+  {
+    "sector": "Healthcare",
+    "year": "2025",
+    "id": "1eoJnclopVlj6tNBVthPFyNR9h-PeJzuD"
+  },
+  {
+    "sector": "Technology",
+    "year": "2020",
+    "id": "1J7HRwxraae9NjTM6Lcd65QfX_TylY4F7"
+  },
+  {
+    "sector": "Technology",
+    "year": "2021",
+    "id": "1cEwk1L_Ed9WST1beQfBetz5UMu0J0BKL"
+  },
+  {
+    "sector": "Technology",
+    "year": "2022",
+    "id": "1IYFbRYS2wTAxRSeWNcsTA6ZeHndxQRiZ"
+  },
+  {
+    "sector": "Technology",
+    "year": "2023",
+    "id": "10DBR9cAxjRhkHjJ-8m17aMdQgkbzJmhr"
+  },
+  {
+    "sector": "Technology",
+    "year": "2024",
+    "id": "1h05meBw378f_KpqNKlhjhEVQFj_XDn0d"
+  },
+  {
+    "sector": "Technology",
+    "year": "2025",
+    "id": "1sFV6Kgl-hcNW2h1TU0bWx2aroODjSp5N"
+  },
+  {
+    "sector": "Infrastructure",
+    "year": "2020",
+    "id": "15FOgyeUkG24PNSy0hmYCBMB6khGAsJt9"
+  },
+  {
+    "sector": "Infrastructure",
+    "year": "2021",
+    "id": "16vjcAfb6wbNRljUiKZP9lgnuVBI9P2bx"
+  },
+  {
+    "sector": "Infrastructure",
+    "year": "2022",
+    "id": "1XBgMd4nC2Np-8B-_DEL7VwFTXPL6Lu4c"
+  },
+  {
+    "sector": "Infrastructure",
+    "year": "2023",
+    "id": "1tIz_AsG3hRUSriQ7TD9REKTnrle5ec-q"
+  },
+  {
+    "sector": "Infrastructure",
+    "year": "2024",
+    "id": "1PPJrhVL6YZSLVEcOHGHwcGY8TaUhjP3l"
+  },
+  {
+    "sector": "Infrastructure",
+    "year": "2025",
+    "id": "11Evj3YA15hVny02znFk85FlhScBif05a"
+  },
+  {
+    "sector": "Transportation & Logistics",
+    "year": "2020",
+    "id": "1vNWuA33lAV_nEzNcsD0lw6WWOe0WStR0"
+  },
+  {
+    "sector": "Transportation & Logistics",
+    "year": "2021",
+    "id": "19ieY1WbZ_Ss2M0luzJ_NNw7NqLpYnMCB"
+  },
+  {
+    "sector": "Transportation & Logistics",
+    "year": "2022",
+    "id": "1tqjAbhGT9-0edGHIwQS0SHGXWdYIVjVd"
+  },
+  {
+    "sector": "Transportation & Logistics",
+    "year": "2023",
+    "id": "1soCihVzan8luRIHvAiz5bBbFFMpylPYJ"
+  },
+  {
+    "sector": "Transportation & Logistics",
+    "year": "2024",
+    "id": "1GikmAG6onz3pgdkZhpFmomP9kHkHYyAs"
+  },
+  {
+    "sector": "Transportation & Logistics",
+    "year": "2025",
+    "id": "1qz-JZiZ0vdUCfCdynCxZB_FQ__4AN6X1"
+  },
+  {
+    "sector": "Property & Real Estate",
+    "year": "2020",
+    "id": "1wD7fOLtS6tnBc1_lUJXPrMgXZDnNGJg7"
+  },
+  {
+    "sector": "Property & Real Estate",
+    "year": "2021",
+    "id": "1jsFF5C0uLra4R0XNjLWesSkCjJxAjPhg"
+  },
+  {
+    "sector": "Property & Real Estate",
+    "year": "2022",
+    "id": "1tPWCWnvlaiM3PR2rtxICj0VNX3QHyBat"
+  },
+  {
+    "sector": "Property & Real Estate",
+    "year": "2023",
+    "id": "1xSgZXioaiixHwaEaX8BAtV-acZaBqRLW"
+  },
+  {
+    "sector": "Property & Real Estate",
+    "year": "2024",
+    "id": "1YWAsjPcYH6JUcAVM1tX0nCqP6os6Uxpi"
+  },
+  {
+    "sector": "Property & Real Estate",
+    "year": "2025",
+    "id": "1wJiCvfDH7L-jsfcc-npKNGqmjrji7O67"
+  }
+]

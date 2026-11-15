@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from typing import Any
+
 SEMANTIC_DOMAINS: tuple[str, ...] = (
     "learning",
     "academic",
@@ -77,6 +79,7 @@ _ALIAS_TO_CANONICAL: dict[str, str] = {
 }
 
 _LEGACY_GROUP_TO_CANONICAL: dict[str, str] = {
+    "performance": "software",
     "it_learning": "learning",
     "academic": "academic",
     "research": "research",

@@ -7,7 +7,6 @@ import sys
 import time
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any
 
 XNINETZY_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(XNINETZY_ROOT))
@@ -69,7 +68,7 @@ async def phase1_oauth_login(sources: list[str], headed: bool = True) -> dict[st
     from playwright.async_api import async_playwright
 
     print("\n=== Phase 1: OAuth login (owner present) ===")
-    print(f"Headed browser will open for each site. Login manually, then close window.")
+    print("Headed browser will open for each site. Login manually, then close window.")
 
     results = {}
     async with async_playwright() as p:
@@ -86,15 +85,15 @@ async def phase1_oauth_login(sources: list[str], headed: bool = True) -> dict[st
             if not spec:
                 continue
             print(f"\n[{spec.display_name}] Opening {spec.login_url}")
-            print(f"  -> Login manually (Google OAuth recommended).")
-            print(f"  -> When done, navigate AWAY from login page (e.g., to /jobs).")
-            print(f"  -> Then press Enter here to capture cookies and continue.")
+            print("  -> Login manually (Google OAuth recommended).")
+            print("  -> When done, navigate AWAY from login page (e.g., to /jobs).")
+            print("  -> Then press Enter here to capture cookies and continue.")
             try:
                 await page.goto(spec.login_url, wait_until="domcontentloaded", timeout=30000)
             except Exception as e:
                 print(f"  WARN: could not open login page: {e}")
             input(f"  Press Enter when [{sid}] login is complete...")
-            html = await page.content()
+            await page.content()
             cookies = await ctx.cookies()
             relevant = [c for c in cookies if spec.cookie_domain_match in c.get("domain", "")]
             print(f"  Captured {len(relevant)} cookies for {spec.cookie_domain_match}")
@@ -127,8 +126,6 @@ async def phase2_scrape(
     import importlib
     import xninetzy.os.auth.browser.gateway as gateway_mod
     importlib.reload(gateway_mod)
-    from xninetzy.os.auth.browser.gateway import launch_local_browser, close_local_browser
-    from xninetzy.os.research.sources.browser_session import make_session
     from xninetzy.os.research.sources import kalibrr, glints, dealls, jobstreet_id as jsid
 
     adapter_map = {
@@ -140,7 +137,6 @@ async def phase2_scrape(
 
     url_map = {
         "kalibrr": kalibrr.KalibrrAdapter().build_search_url(keyword),
-        "jobstreet": jsid.JobstreetIDAdapter().build_search_url(keyword),
         "glints": (
             f"https://glints.com/id/opportunities/jobs/explore"
             f"?keyword={keyword}&country=ID&locationName={location.replace(' ', '+')}"
@@ -270,7 +266,7 @@ def main() -> int:
         failed = [sid for sid, ok in results.items() if not ok]
         if failed:
             print(f"\nWARN: No cookies captured for: {failed}")
-            print(f"  Re-run script and complete login manually for those sites.")
+            print("  Re-run script and complete login manually for those sites.")
 
     if not args.login_only:
         results = asyncio.run(phase2_scrape(

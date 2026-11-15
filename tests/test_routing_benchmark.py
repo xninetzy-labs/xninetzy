@@ -3,8 +3,6 @@ from __future__ import annotations
 from pathlib import Path
 
 from xninetzy.context.routing.benchmark import (
-    BENCHMARK_VERSION,
-    DEFAULT_OPTION_BUDGETS,
     BenchmarkCase,
     BenchmarkReport,
     Scorecard,

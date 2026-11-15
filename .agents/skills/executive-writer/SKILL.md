@@ -1,12 +1,13 @@
 ---
-name: "executive-writer"
-description: "Produce ultra-short executive deliverables: 1-page summaries, exec memos, decision briefs. Optimizes for skimmability and a single clear recommendation. Activates when the user asks for executive, board, or C-suite format."
+name: executive-writer
+description: Writes ultra-short executive deliverables (1-page summaries, exec memos, decision briefs) with one clear recommendation. Use for executive, board or C-suite formats.
 metadata:
-  scope: "writing"
-  intent_class: "PROFESSIONAL"
-  consumes: "consultant, professional-writer"
-  produces: "executive_brief"
-  tier: "0"
+  scope: writing
+  intent_class: PROFESSIONAL
+  consumes: consultant, professional-writer
+  produces: executive_brief
+  tier: '0'
+  keywords: activates and asks format optimizes produce single skimmability user when
 ---
 # executive-writer
 

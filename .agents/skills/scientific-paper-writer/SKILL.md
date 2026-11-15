@@ -1,12 +1,13 @@
 ---
-name: "scientific-paper-writer"
-description: "Draft a scientific paper in discipline-appropriate structure: abstract, introduction, related work, methods, results, discussion, conclusion. Strict evidence discipline; never fabricates results or statistics. Activates for empirical research writing."
+name: scientific-paper-writer
+description: Drafts empirical scientific papers (abstract, introduction, related work, methods, results, discussion) with strict evidence discipline; never fabricates results or statistics. Use for empirical research writing.
 metadata:
-  scope: "writing"
-  intent_class: "ACADEMIC"
-  consumes: "research-paper-writer, evidence-synthesis, citation-validation"
-  produces: "scientific_paper"
-  tier: "0"
+  scope: writing
+  intent_class: ACADEMIC
+  consumes: research-paper-writer, evidence-synthesis, citation-validation
+  produces: scientific_paper
+  tier: '0'
+  keywords: activates appropriate conclusion draft paper structure
 ---
 # scientific-paper-writer
 

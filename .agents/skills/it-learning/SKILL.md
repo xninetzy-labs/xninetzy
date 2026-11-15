@@ -1,6 +1,8 @@
 ---
-name: "it-learning"
-description: "Evidence-driven learning operating system for IT, software engineering, programming, backend, databases, cloud, DevOps, Docker, system design, cybersecurity, AI agents, RAG, data analytics, machine learning, and adjacent technical domains. Use for goal definition, prerequisite mapping, adaptive roadmaps, study sessions, active recall, deliberate practice, evidence collection, mastery assessment, progress reviews, and next-focus decisions."
+name: it-learning
+description: 'Evidence-driven learning system for IT topics (programming, backend, databases, cloud, DevOps, system design, security, AI/ML, data): goals, prerequisite maps, roadmaps, study sessions, active recall and mastery checks. Use to learn or practice a technical skill.'
+metadata:
+  keywords: adaptive adjacent agents analytics assessment collection cybersecurity decisions definition deliberate docker domains engineering focus goal machine mapping next operating progress rag reviews software
 ---
 
 # IT Learning OS

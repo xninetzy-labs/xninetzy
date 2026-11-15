@@ -1,12 +1,13 @@
 ---
-name: "anti-slop"
-description: "Detect and remove 'AI slop' patterns: filler phrases, generic praise, vague hedging, listicle bloat, cliched intros, fake enthusiasm, invented consensus, and structural boilerplate. Activates as a final pass on any text-producing skill. Reports specific instances with location and replacement suggestion, never silently rewrites."
+name: anti-slop
+description: Detects AI slop in text (filler, generic praise, vague hedging, listicle bloat, cliché intros, invented consensus) and reports each instance with location and replacement. Use as the final pass on generated text.
 metadata:
-  scope: "guardrail"
-  intent_class: "REVIEW"
-  consumes: "professional-editor, academic-editor"
-  produces: "slop_report"
-  tier: "0"
+  scope: guardrail
+  intent_class: REVIEW
+  consumes: professional-editor, academic-editor
+  produces: slop_report
+  tier: '0'
+  keywords: activates any boilerplate cliched detect enthusiasm fake instances never patterns phrases producing remove rewrites silently skill specific structural suggestion
 ---
 # anti-slop
 

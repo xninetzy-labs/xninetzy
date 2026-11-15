@@ -57,7 +57,7 @@ def _tool_snapshot() -> dict[str, object]:
             finals.append(name)
             if not manifest.requires_approval:
                 missing_approval.append(name)
-        if manifest.risk.value not in {"read", "draft", "write", "final"}:
+        if not manifest.policy_known or manifest.risk.value not in {"read", "draft", "write", "final"}:
             bad_risk.append(name)
         if manifest.risk.value in {"write", "final"} and not manifest.requires_idempotency:
             missing_idem.append(name)
@@ -83,6 +83,7 @@ def _tool_inventory() -> list[dict[str, object]]:
     groups = get_tool_groups()
     rows: list[dict[str, object]] = []
     for tool in sorted(get_all_tools(), key=lambda item: item.name):
+        manifest = manifest_for(tool.name)
         function = getattr(tool, "func", None) or getattr(tool, "coroutine", None)
         try:
             output_schema = tool.get_output_schema().model_json_schema()
@@ -95,12 +96,12 @@ def _tool_inventory() -> list[dict[str, object]]:
             "module": getattr(function, "__module__", "UNKNOWN"),
             "description": tool.description,
             "input_schema": tool.args_schema.model_json_schema(),
-            "input_schema_source": "registry; trusted identity fields are hidden by MCP adapter",
+            "input_schema_source": "domain registry; MCP hides identity and adds idempotency_key for mutations where absent",
             "output_schema": output_schema,
-            "output_schema_source": "langchain_inferred; MCP output enforcement UNKNOWN",
+            "output_schema_source": "langchain declared/inferred; MCP validates before returning",
             "manifest": manifest_for(tool.name).as_dict(),
-            "policy_source": "manifest_for / classify_risk; includes name heuristics",
-            "side_effect_class": "UNKNOWN",
+            "policy_source": "tools/execution_policies.json; canonical MCP gateway enforcement",
+            "side_effect_class": {"read": "read_only", "draft": "read_only", "write": "local_mutation", "final": "approval_required"}[manifest.risk.value],
             "data_sensitivity": "UNKNOWN",
             "dependencies": "UNKNOWN",
             "runtime_availability": "registered",
@@ -109,8 +110,8 @@ def _tool_inventory() -> list[dict[str, object]]:
             "test_coverage": "UNKNOWN",
             "consumer_workflows": "UNKNOWN",
             "owner": "UNKNOWN",
-            "idempotency_enforcement": "UNKNOWN",
-            "approval_enforcement": "UNKNOWN",
+            "idempotency_enforcement": "MCP gateway-v1 scoped reservation for WRITE/FINAL; domain paths audited separately",
+            "approval_enforcement": "MCP denies FINAL until independent owner authorization is integrated",
         })
     return rows
 

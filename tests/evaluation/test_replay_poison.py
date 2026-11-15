@@ -55,6 +55,7 @@ def _seed_provider(provider_id: str = "goodprov"):
         risk_class="low",
         capabilities=("do_thing",),
         health_state=HEALTH_OK,
+        metadata={"capability_side_effects": {"do_thing": "read_only"}},
     )
     register_invokable(provider_id, _OkInvocable())
 
@@ -149,7 +150,10 @@ def test_audit_skippable_does_not_audit():
         approval_id=None,
         metadata={"audit_skippable": True},
     )
-    execute_pipeline_with_evaluation(requests=[req])
+    from xninetzy.context.orchestrator.pipeline import execute_pipeline
+    outcome = execute_pipeline([req])[0]
+    assert outcome.result.outcome == "error"
+    assert "not executed" in outcome.result.error
     with connect() as conn:
         count = conn.execute(
             "SELECT COUNT(*) c FROM audit_invocations WHERE request_id=?",

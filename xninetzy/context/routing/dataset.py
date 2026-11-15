@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import json
 import re
-from dataclasses import asdict
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 from typing import Any
@@ -179,10 +178,8 @@ def split_dataset(rows: list[dict[str, Any]]) -> dict[str, list[dict[str, Any]]]
     test_holder: list[dict[str, Any]] = []
     train_start_dt = datetime.fromisoformat(train_start)
     train_end_dt = datetime.fromisoformat(train_end)
-    test_start_dt = datetime.fromisoformat(test_start)
     for row in rows:
         started_at = str(row.get("context", {}).get("episode_id") or "")
-        actions = row.get("input", {}).get("entities") or []
         now = datetime.now(UTC)
         if started_at == "rt-auto":
             now = now

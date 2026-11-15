@@ -69,7 +69,7 @@ async def test_direct_admin_admin_substring_cannot_bypass(direct_admin_stubs, mo
 
 
 @pytest.mark.asyncio
-async def test_direct_admin_verified_owner_may_upload(direct_admin_stubs, monkeypatch):
+async def test_direct_admin_owner_identity_is_not_human_approval(direct_admin_stubs, monkeypatch):
     upload_file, calls = direct_admin_stubs
     monkeypatch.setattr(hebat_tools, "_is_owner_chat", lambda *a, **k: True)
     result = await hebat_tools.hebat_upload_submission.ainvoke(
@@ -79,5 +79,45 @@ async def test_direct_admin_verified_owner_may_upload(direct_admin_stubs, monkey
             "direct_assignment_cmid": "7",
         }
     )
-    assert calls["uploaded"] == 1
-    assert "Berhasil upload" in result
+    assert calls["uploaded"] == 0
+    assert calls["approval_requested"] == 1
+    assert "membutuhkan approval" in result
+
+
+@pytest.mark.asyncio
+async def test_owner_supplied_approval_must_reach_independent_validator(direct_admin_stubs, monkeypatch):
+    upload_file, calls = direct_admin_stubs
+    monkeypatch.setattr(hebat_tools, "_is_owner_chat", lambda *args: True)
+
+    def held(*args):
+        raise ValueError("approval_channel_unverified")
+
+    monkeypatch.setattr(hebat_tools, "validate_approval", held)
+    result = await hebat_tools.hebat_upload_submission.ainvoke({
+        "chat_id": "fixture-owner", "direct_file_path": str(upload_file),
+        "direct_assignment_cmid": "7", "approval_id": 123,
+    })
+    assert "approval_channel_unverified" in result
+    assert calls["uploaded"] == 0
+
+
+@pytest.mark.asyncio
+async def test_confirmation_boolean_cannot_remove_submission(monkeypatch):
+    effects = []
+    monkeypatch.setattr(hebat_tools, "_resolve_activity_cmid", lambda *args, **kwargs: ("7", "https://fixture.invalid/assign/7"))
+    monkeypatch.setattr(hebat_tools, "_ensure_session_or_msg", lambda *args: None)
+
+    async def detail(*args, **kwargs):
+        return {"title": "Fixture", "submission_status": "Submitted for grading"}
+
+    async def remove(**kwargs):
+        effects.append(True)
+        return {"status": "removed"}
+
+    monkeypatch.setattr(hebat_tools, "fetch_assignment_detail", detail)
+    monkeypatch.setattr(hebat_tools, "list_assignments", lambda: [])
+    monkeypatch.setattr(hebat_tools, "create_submission", lambda **kwargs: None)
+    monkeypatch.setattr(hebat_tools, "remove_submission_via_playwright", remove)
+    result = await hebat_tools.hebat_remove_submission.ainvoke({"chat_id": "fixture-owner", "assignment_id_or_url": "7", "confirm": True})
+    assert effects == []
+    assert "approval_channel_unverified" in result

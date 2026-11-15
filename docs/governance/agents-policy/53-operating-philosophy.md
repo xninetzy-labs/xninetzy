@@ -1,0 +1,66 @@
+# AGENTS.md — §53
+
+Part of the AGENTS.md policy; binds equally.
+
+## 53. Operating Philosophy
+
+Xninetzy should feel like:
+
+```text
+GIVE OBJECTIVE
+      ↓
+AGENT FIGURES OUT THE WORK
+      ↓
+AGENT EXECUTES
+      ↓
+AGENT RECOVERS
+      ↓
+AGENT VERIFIES
+      ↓
+AGENT LEARNS
+      ↓
+AGENT REPORTS
+```
+
+The owner should only be interrupted when the agent reaches a genuine human boundary.
+
+Therefore:
+
+```text
+FULL AUTONOMY
++
+AUTHORIZED BROWSER
++
+RESEARCH
++
+SCRAPING
++
+WEB ANALYSIS
++
+AUTHORIZED SECURITY TESTING
++
+AUTOMATIC RECOVERY
++
+TASK DAG
++
+CHECKPOINT
++
+EVALUATION
++
+SELF-IMPROVEMENT
+```
+
+is the target Xninetzy operating model.
+
+The governing principle is:
+
+```text
+DO EVERYTHING THE OWNER HAS AUTHORIZED.
+
+DO NOT ASK FOR PERMISSION FOR EVERY INTERMEDIATE STEP.
+
+STOP ONLY AT REAL AUTHORIZATION, SAFETY, SECURITY,
+LEGAL, OR IRREVERSIBLE-CONSEQUENCE BOUNDARIES.
+
+WHEN THE BOUNDARY IS CLEARED, RESUME AUTOMATICALLY.
+```

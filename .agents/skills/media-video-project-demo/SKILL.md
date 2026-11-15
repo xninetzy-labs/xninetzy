@@ -1,14 +1,15 @@
 ---
-name: "media-video-project-demo"
-description: "Build a deterministic 30-second product/feature demo video from a running Xninetzy project. Inspects the project, opens the running app via the existing browser gateway, captures key states, assembles an intro → feature → live-demo → result timeline, applies deterministic motion (camera push, lower third, highlight, transition), and renders to MP4. CPU-only."
+name: media-video-project-demo
+description: 'Builds a deterministic 30-second product or feature demo from a running Xninetzy project: capture key states, intro → feature → demo → result, motion and MP4 render. Use for quick product demos.'
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "video_project_inspect, video_project_create, video_asset_import, video_scene_create, video_motion_apply, video_render"
-  produces: "project_demo_mp4"
-  tier: "1"
-  engine: "ffmpeg,remotion"
-  template: "project_demo"
+  scope: media
+  intent_class: MEDIA
+  consumes: video_project_inspect, video_project_create, video_asset_import, video_scene_create, video_motion_apply, video_render
+  produces: project_demo_mp4
+  tier: '1'
+  engine: ffmpeg,remotion
+  template: project_demo
+  keywords: app applies assembles browser build camera captures cpu existing gateway highlight inspects live lower only opens push renders third timeline transition via video
 ---
 
 # media-video-project-demo

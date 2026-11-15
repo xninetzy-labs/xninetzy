@@ -1,12 +1,13 @@
 ---
-name: "professional-writer"
-description: "Produce professional non-academic writing for business, product, marketing, internal communication, and general-purpose professional contexts. Decomposes audience and purpose, drafts from evidence and approved facts, applies clarity and scannability heuristics, and never invents claims or fabricates metrics. Activates when the user requests memos, briefs, product pages, release notes, case studies, internal announcements, or professional communications."
+name: professional-writer
+description: Writes professional non-academic content (memos, briefs, product pages, release notes, case studies, announcements) from approved facts without invented claims or metrics. Use for business, product or internal communication.
 metadata:
-  scope: "writing"
-  intent_class: "PROFESSIONAL"
-  consumes: "evidence-synthesis, source-evaluation, citation-validation"
-  produces: "professional_document"
-  tier: "0"
+  scope: writing
+  intent_class: PROFESSIONAL
+  consumes: evidence-synthesis, source-evaluation, citation-validation
+  produces: professional_document
+  tier: '0'
+  keywords: activates and applies audience clarity communications contexts decomposes drafts evidence fabricates general heuristics invents marketing never produce purpose requests scannability user when writing
 ---
 # professional-writer
 

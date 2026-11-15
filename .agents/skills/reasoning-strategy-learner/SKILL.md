@@ -1,12 +1,13 @@
 ---
 name: reasoning-strategy-learner
-description: Tracks reasoning strategy outcomes per context, exposes history trace,
+description: Tracks which reasoning depth and tool budget work per task class, exposes history traces and supports replay-safe strategy updates for Lightning. Use when tuning reasoning strategy from outcomes.
 metadata:
-  type: "meta"
-  layer: "learning"
-  consumes: "'[{\"tool\":\"reasoning_record_history\"},{\"tool\":\"reasoning_set_strategy\"},{\"tool\":\"reasoning_get_strategy\"},{\"tool\":\"reasoning_trace\"},{\"tool\":\"reasoning_clear_strategy\"}]'"
-  produces: "'[\"strategy_descriptor\",\"reasoning_trace\"]'"
-  tier: "'0'"
+  type: meta
+  layer: learning
+  consumes: '''[{"tool":"reasoning_record_history"},{"tool":"reasoning_set_strategy"},{"tool":"reasoning_get_strategy"},{"tool":"reasoning_trace"},{"tool":"reasoning_clear_strategy"}]'''
+  produces: '''["strategy_descriptor","reasoning_trace"]'''
+  tier: '''0'''
+  keywords: context learn trace used works
 ---
 
 

@@ -8,6 +8,13 @@ from xninetzy.os.academic.mahasiswa_portal.login_coordinator import (
 from xninetzy.os.web_analysis.sites import get_site
 
 
+@pytest.fixture
+def session_key(monkeypatch):
+    from cryptography.fernet import Fernet
+
+    monkeypatch.setattr(get_settings(), "WEB_ANALYSIS_ENCRYPTION_KEY", Fernet.generate_key().decode())
+
+
 def test_uacc_site_definition_and_aliases():
     site = get_site("uacc")
     assert site.base_url == "https://uacc.unair.ac.id"
@@ -130,13 +137,13 @@ async def test_uacc_captcha_envelope_uses_uacc_command(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_uacc_session_status_reports_local_session(monkeypatch):
+async def test_uacc_session_status_reports_local_session(monkeypatch, session_key):
     monkeypatch.setattr(portal_tools.SessionManager, "has_session", lambda self, slug: slug == "uacc")
     result = await portal_tools.uacc_session_status.ainvoke({})
     assert "Session UACC tersedia secara lokal" in result
 
 
-def test_uacc_session_is_separate_from_cyber(monkeypatch):
+def test_uacc_session_is_separate_from_cyber(monkeypatch, session_key):
     seen = []
 
     def fake_has_session(self, slug):
@@ -152,7 +159,7 @@ def test_uacc_session_is_separate_from_cyber(monkeypatch):
 
 
 @pytest.mark.asyncio
-async def test_uacc_logout_only_clears_uacc_session(monkeypatch):
+async def test_uacc_logout_only_clears_uacc_session(monkeypatch, session_key):
     cleared = []
 
     def fake_clear(self, slug):

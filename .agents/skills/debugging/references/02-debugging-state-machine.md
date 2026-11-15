@@ -1,0 +1,56 @@
+# debugging — §2
+
+## 2. Debugging State Machine
+
+Canonical states:
+
+```text
+REPORTED
+  ↓
+SCOPED
+  ↓
+REPRODUCIBLE
+  ↓
+OBSERVED
+  ↓
+LOCALIZED
+  ↓
+HYPOTHESES_READY
+  ↓
+CONTROLLED_TEST
+  ↓
+ROOT_CAUSE_ESTABLISHED
+  ↓
+PATCH_PROPOSED
+  ↓
+PATCH_VALIDATED
+  ↓
+REGRESSION_PROTECTED
+  ↓
+CLOSED
+```
+
+Failure / blocked states:
+
+```text
+NON_REPRODUCIBLE
+INSUFFICIENT_EVIDENCE
+ENVIRONMENT_MISMATCH
+OBSERVABILITY_GAP
+AMBIGUOUS_CAUSE
+PATCH_UNSAFE
+REGRESSION_UNPROVEN
+BLOCKED
+UNKNOWN
+```
+
+Never transition directly from:
+
+```text
+REPORTED
+→ PATCH_PROPOSED
+```
+
+without sufficient evidence.
+
+---

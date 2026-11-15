@@ -1,6 +1,8 @@
 ---
 name: todolife-project-router
-description: Route project slots to VISWA, CERIA, AI/ML, or academic projects based on deadline proximity, rotation schedule, and remaining daily capacity. Activates inside todolife-daily-planner when allocating P2 slots, or when the user asks "hari ini project apa".
+description: Assigns project slots to VISWA, CERIA, AI/ML or academic work by deadline, rotation and remaining capacity. Use inside the daily planner or for 'hari ini project apa'.
+metadata:
+  keywords: activates allocating asks based projects proximity route schedule todolife user when
 ---
 
 # todolife-project-router

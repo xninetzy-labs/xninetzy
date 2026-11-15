@@ -1,12 +1,19 @@
 ---
-name: "playwright"
-description: "Use when the task requires automating a real browser from the terminal (navigation, form filling, snapshots, screenshots, data extraction, UI-flow debugging) via `playwright-cli` or the bundled wrapper script."
+name: playwright
+description: 'Automates a real browser with Playwright: the `playwright-cli` wrapper for scripted terminal control, or Playwright MCP tools for UI QA, screenshots, visual comparison, end-to-end checks and permitted scraping on authorized targets. Use when a task needs browser automation.'
+metadata:
+  keywords: after against analysis asks automating before business can capability capture compare data drive evidence families feature filling flow form from gate guardrails harness inspection operator pairs procedural requires review rules scrape screenshot script site take test testing verify via vision web xninetzy
 ---
 
 # Playwright CLI Skill
 
 Drive a real browser from the terminal using `playwright-cli`. Prefer the bundled wrapper script so the CLI works even when it is not globally installed.
-Treat this skill as CLI-first automation. Do not pivot to `@playwright/test` unless the user explicitly asks for test files.
+On the CLI path, stay CLI-first. Do not pivot to `@playwright/test` unless the user explicitly asks for test files.
+
+## Choose the driver
+
+- Playwright MCP tools are connected (`mcp__playwright__*` in Claude Code) and the task is UI QA, screenshots, before/after comparison, an end-to-end check or permitted scraping: follow `references/mcp-workflows.md`.
+- Otherwise use the CLI workflow below.
 
 ## Prerequisite check (required)
 

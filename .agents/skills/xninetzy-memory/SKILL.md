@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-memory"
-description: "Durable memory operating system for retrieving, writing, consolidating, checkpointing, validating, and resuming scoped Xninetzy context across sessions. Use to preserve durable decisions, requirements, constraints, progress, sources, artifacts, blockers, and next actions while minimizing noise, maintaining provenance, detecting conflicts, preventing stale-state errors, and protecting sensitive information."
+name: xninetzy-memory
+description: Durable memory system for scoped retrieval, writing, checkpoints, resume, consolidation and layer promotion or retirement across sessions, with provenance, conflict detection and sensitive-data protection. Use to save or recall decisions, progress, artifacts, blockers and next actions.
+metadata:
+  keywords: active add after asks avoiding avoids before boundaries cadence checkpointing claims compact complex conflicts consolidating constraints contained context continuity corrections cross detecting dumps entries episode episodic errors every explicitly external facts failed failure from gets governance governs heavy information instructions layers lifecycle lives maintaining meaningful milestones minimizing noise operating periodic persisting pollution precise preserve preventing procedural process promote promoted protecting pruning raw redundant remember requirements research restricts resuming retire retires retrieving saves security self semantic session skill skills sources speculation speculative stale state store stored successful temporary tool unsupported used user validating what when whenever where while work working xninetzy
 ---
 
 # Xninetzy Memory OS
@@ -252,6 +254,8 @@ Do not persist passwords, authentication cookies, access tokens, CAPTCHA answers
 * `references/state-and-records.md` — memory philosophy, durability tiers, record structure, types, provenance, confidence, timestamps, supersession, conflict handling, and current-state overrides.
 * `references/checkpoints-and-resume.md` — checkpoint structure, timing, content standard, failed attempts, artifact memory, source memory, decision memory, requirement memory, constraint memory, next-action memory, resume hint, consolidation, memory compression, retention, and expiration.
 * `references/integration-and-safety.md` — integration with other Xninetzy skills, graph integration, learning integration, academic integration, artifact integration, memory search strategy, retrieval safety, memory quality test, standard memory record, standard checkpoint, completion contract, and operating rules.
+* `references/chat-checkpoint-workflow.md` — compact session checkpoints: triggers, quality bar, canonical entry, resume workflow, superseded state, idempotency; templates in `references/chat-standard-template.md`, `references/chat-specialized-checkpoints.md`, `references/chat-persistence-and-failure.md`.
+* `references/layer-governance.md` — layer taxonomy (working, episodic, semantic, procedural, failure, tool, skill, security, research) and the observe → classify → verify → promote-or-skip → persist → reevaluate procedure; read before writing, promoting or retiring memory.
 
 ## Operating rules
 

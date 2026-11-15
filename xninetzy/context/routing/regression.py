@@ -1,13 +1,12 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
-from xninetzy.context.routing.benchmark import BENCHMARK_VERSION, BenchmarkReport, Scorecard
 
 REGRESSION_VERSION = "1.0.0"
 
@@ -179,8 +178,6 @@ def run_regression_gate(
             candidate_observed_abstention = _extract_abstention(cand_payload)
     legacy_top1 = _extract_top1(legacy)
     legacy_p95 = _extract_p95(legacy)
-    legacy_topk = _extract_topk(legacy)
-    legacy_abstention = _extract_abstention(legacy)
 
     checks: list[RegressionCheck] = []
     blockers: list[str] = []

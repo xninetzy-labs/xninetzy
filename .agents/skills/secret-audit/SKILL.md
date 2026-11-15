@@ -1,15 +1,16 @@
 ---
 name: secret-audit
-description: Hunt for accidentally-committed secrets (API keys, tokens, private keys,
+description: Hunts for committed secrets (API keys, tokens, private keys, .env leaks) within authorized scope. Use after a commit, before a release, or when asked whether anything leaked.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools: "'[\"repo_search\",\"repo_symbol\",\"security_scope\",\"security_sast\",\"security_validate_finding\",\"lightning_record_action\"]'"
-  optional_tools: "'[\"repo_diff\",\"security_assets\",\"hitl_request_approval\",\"memory_security_store\"]'"
-  trigger_conditions: "'[\"a commit lands on a shared branch\",\"a PR is about to be merged\",\"the"
-  prerequisites: "'[\"explicit authorized scope (via `security_scope`)\",\"target repo"
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '''["repo_search","repo_symbol","security_scope","security_sast","security_validate_finding","lightning_record_action"]'''
+  optional_tools: '''["repo_diff","security_assets","hitl_request_approval","memory_security_store"]'''
+  trigger_conditions: '''["a commit lands on a shared branch","a PR is about to be merged","the'
+  prerequisites: '''["explicit authorized scope (via `security_scope`)","target repo'
+  keywords: accidentally asks did hunt inside leak operator
 ---
 
 

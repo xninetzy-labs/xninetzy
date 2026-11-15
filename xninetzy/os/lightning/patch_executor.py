@@ -39,19 +39,15 @@ def execute_patch(
         setting_value = patch.get("value")
         if not setting_key:
             return {"applied": False, "reason": "setting missing"}
-        from xninetzy.core.config import get_settings
+        from xninetzy.core.config import get_settings, valid_context_tuning
 
         settings = get_settings()
-        if not hasattr(settings, setting_key):
+        if not valid_context_tuning(setting_key, setting_value):
             return {
                 "applied": False,
-                "reason": f"setting {setting_key!r} not in Settings",
+                "reason": "setting is protected or tuning value is invalid",
             }
         previous_value = getattr(settings, setting_key)
-        try:
-            setattr(settings, setting_key, setting_value)
-        except Exception as exc:
-            return {"applied": False, "reason": f"cannot set: {exc}"}
         with connect() as conn:
             conn.execute(
                 """
@@ -66,6 +62,7 @@ def execute_patch(
                     owner_scope or "system",
                 ),
             )
+        setattr(settings, setting_key, setting_value)
         return {
             "applied": True,
             "kind": "context_config",
@@ -163,19 +160,17 @@ def execute_rollback(
         previous_value = rollback.get("previous_value")
         if not setting_key:
             return {"rolled_back": False, "reason": "setting missing"}
-        from xninetzy.core.config import get_settings
+        from xninetzy.core.config import get_settings, valid_context_tuning
 
         settings = get_settings()
-        if hasattr(settings, setting_key):
-            try:
-                setattr(settings, setting_key, previous_value)
-            except Exception:
-                pass
+        if not valid_context_tuning(setting_key, previous_value):
+            return {"rolled_back": False, "reason": "setting is protected or tuning value is invalid"}
         with connect() as conn:
             conn.execute(
                 "DELETE FROM context_config_overrides WHERE name=?",
                 (setting_key,),
             )
+        setattr(settings, setting_key, previous_value)
         return {
             "rolled_back": True,
             "kind": "context_config",
@@ -232,14 +227,32 @@ def list_disabled_capabilities() -> tuple[str, ...]:
         return ()
 
 
-def load_context_config_overrides() -> dict[str, Any]:
-    """Read all persisted context_config overrides as {name: value}."""
+def load_context_config_overrides(*, sqlite_path: str | None = None) -> dict[str, Any]:
+    """Read permitted tuning without creating a store or applying legacy policy overrides."""
+    import sqlite3
+    from pathlib import Path
+    from xninetzy.core.config import Settings, valid_context_tuning
+
+    path = Path(sqlite_path or Settings().SQLITE_PATH).expanduser().resolve()
+    if not path.is_file():
+        return {}
     try:
-        with connect() as conn:
+        conn = sqlite3.connect(path.as_uri() + "?mode=ro", uri=True)
+        try:
             rows = conn.execute(
                 "SELECT name, value_json FROM context_config_overrides"
             ).fetchall()
-        return {str(r["name"]): json.loads(str(r["value_json"])) for r in rows}
+        finally:
+            conn.close()
+        result = {}
+        for name, raw in rows:
+            try:
+                value = json.loads(raw)
+            except (TypeError, ValueError):
+                continue
+            if valid_context_tuning(name, value):
+                result[name] = value
+        return result
     except Exception:
         return {}
 

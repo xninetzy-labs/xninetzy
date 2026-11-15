@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-krs"
-description: "Plan, validate, prepare, and safely commit KRS selections using curriculum, roster, prerequisites, conflicts, credit limits, and explicit confirmation."
+name: xninetzy-krs
+description: Plans, validates, prepares and safely commits KRS selections using curriculum, roster, prerequisites, conflicts, credit limits and explicit confirmation. Use for KRS planning.
+metadata:
+  keywords: commit plan prepare validate
 ---
 
 # KRS

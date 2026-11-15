@@ -81,7 +81,7 @@ class _StubInvocable(Invocable):
         return True
 
 
-def _seed_provider(provider_id: str, trust_tier: int):
+def _seed_provider(provider_id: str, trust_tier: int, *, capability_side_effects: dict | None = None):
     upsert_provider(
         provider_id=provider_id,
         transport=TRANSPORT_STDIO,
@@ -90,6 +90,7 @@ def _seed_provider(provider_id: str, trust_tier: int):
         risk_class="low" if trust_tier == TRUST_TIER_KNOWN_EXTERNAL else "unreviewed",
         capabilities=("do_thing",),
         health_state=HEALTH_OK,
+        metadata={"capability_side_effects": capability_side_effects or {}},
     )
 
 
@@ -464,10 +465,10 @@ def test_self_audit_reports_layers():
 
 
 def test_invocation_outcome_mapping_pipeline():
-    _seed_provider("unverified-x", TRUST_TIER_UNVERIFIED)
+    _seed_provider("known-x", TRUST_TIER_KNOWN_EXTERNAL, capability_side_effects={"do_thing": "read_only"})
     register_invokable(
-        "unverified-x",
-        _StubInvocable("unverified-x", payload={"ok": True}),
+        "known-x",
+        _StubInvocable("known-x", payload={"ok": True}),
     )
     req = _request(request_id="r-outcome")
     outcome = execute_invocation(req)
@@ -481,6 +482,21 @@ def test_invocation_outcome_mapping_pipeline():
         error=outcome.audit.error,
     )
     assert summary.outcome_label == "pass"
+
+
+def test_unverified_invocation_outcome_is_incomplete(monkeypatch):
+    _seed_provider("unverified-x", TRUST_TIER_UNVERIFIED)
+    invocable = _StubInvocable("unverified-x", payload={"ok": True})
+    monkeypatch.setattr(invocable, "invoke", lambda *args: pytest.fail("Unverified provider was executed"))
+    register_invokable("unverified-x", invocable)
+    outcome = execute_invocation(_request(request_id="r-unverified-outcome"))
+    assert outcome.result.outcome == "blocked"
+    summary = build_invocation_summary(
+        request_id=outcome.audit.request_id, provider_id=outcome.audit.provider_id,
+        capability=outcome.audit.capability, audit_outcome=outcome.audit.outcome,
+        latency_ms=outcome.audit.latency_ms, error=outcome.audit.error,
+    )
+    assert summary.outcome_label == "incomplete"
 
 
 def test_invocation_outcome_mapping_error():

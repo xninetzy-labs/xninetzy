@@ -1,0 +1,63 @@
+{
+  "name": "consulting",
+  "description": "Consulting deck style: Arial, deep navy and teal, action titles, dense tables, accent bars.",
+  "fonts": {
+    "body": "Arial",
+    "heading": "Arial",
+    "mono": "DejaVu Sans Mono",
+    "deck_body": null,
+    "deck_heading": null
+  },
+  "sizes": {
+    "body": 10.5,
+    "small": 9,
+    "title": 28,
+    "subtitle": 16,
+    "h1": 22.0,
+    "h2": 15.0,
+    "h3": 12.0,
+    "slide_title": 26.0,
+    "slide_body": 18.0,
+    "slide_min": 12.0
+  },
+  "colors": {
+    "text": "#1B1B1B",
+    "heading": "#0B2545",
+    "accent": "#1B998B",
+    "muted": "#5C677D",
+    "table_header_bg": "#0B2545",
+    "table_header_text": "#FFFFFF",
+    "table_stripe": "#F4F6F8",
+    "slide_background": "#FFFFFF",
+    "slide_title": "#0B2545",
+    "slide_text": "#1B1B1B"
+  },
+  "page": {
+    "size": "A4",
+    "margin_top_cm": 2.54,
+    "margin_bottom_cm": 2.54,
+    "margin_left_cm": 2.54,
+    "margin_right_cm": 2.54
+  },
+  "document": {
+    "language": "en",
+    "line_spacing": 1.15,
+    "paragraph_after_pt": 6,
+    "justify": false,
+    "cover": true,
+    "toc": true,
+    "page_numbers": true,
+    "heading_numbering": false,
+    "caption_numbering": true,
+    "header_text": "",
+    "footer_text": ""
+  },
+  "deck": {
+    "aspect": "16:9",
+    "accent_bar": true,
+    "slide_numbers": true,
+    "max_bullets": 5,
+    "max_table_rows": 10,
+    "footer_text": ""
+  }
+}

@@ -84,27 +84,28 @@ _RISK_OVERRIDES: dict[str, RiskClass] = {
     "perf_plan": RiskClass.DRAFT,
     "process_bpmn_validate": RiskClass.READ,
     "process_bpmn_import": RiskClass.READ,
-    "process_bpmn_generate": RiskClass.DRAFT,
-    "process_bpmn_convert": RiskClass.DRAFT,
+    "process_bpmn_generate": RiskClass.WRITE,
+    "process_bpmn_convert": RiskClass.WRITE,
 }
 
 
 def classify_risk(action: str) -> RiskClass:
     normalized = action.strip().lower()
+    from xninetzy.tools.manifest import policy_catalog
+
+    policy = policy_catalog().get(normalized)
+    if policy is not None:
+        return RiskClass(policy)
+    if normalized == "learning_prepare_plan":
+        return RiskClass.DRAFT
     override = _RISK_OVERRIDES.get(normalized)
     if override is not None:
         return override
-    if normalized in _FINAL_ACTIONS or normalized.endswith("_final_submit"):
+    if normalized in _FINAL_ACTIONS:
         return RiskClass.FINAL
-    if any(marker in normalized for marker in _DRAFT_MARKERS):
-        return RiskClass.DRAFT
-    if (
-        normalized in _READ_ACTIONS
-        or normalized.startswith(_READ_PREFIXES)
-        or normalized.endswith(("_status", "_info"))
-    ):
+    if normalized in _READ_ACTIONS:
         return RiskClass.READ
-    return RiskClass.WRITE
+    return RiskClass.FINAL
 
 
 def _overrides() -> dict[str, ActionMode]:

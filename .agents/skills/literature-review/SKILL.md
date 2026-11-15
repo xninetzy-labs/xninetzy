@@ -1,12 +1,13 @@
 ---
 name: literature-review
-description: Compose a structured literature review across academic sources. Decomposes
+description: 'Researches a literature review from scratch: splits the topic into sub-questions, runs research_search and research_fetch for each, then grades and synthesizes. Use when the sources still have to be found.'
 metadata:
-  type: "workflow"
-  layer: "research-academic"
-  consumes: "'[\"research-planner\",\"source-selector\",\"research_search\",\"research_fetch\",\"evidence-grader\",\"research-critic\"]'"
-  produces: "'[\"literature_review\"]'"
-  tier: "'0'"
+  type: workflow
+  layer: research-academic
+  consumes: '''["research-planner","source-selector","research_search","research_fetch","evidence-grader","research-critic"]'''
+  produces: '''["literature_review"]'''
+  tier: '''0'''
+  keywords: academic across calls compose decomposes per question structured
 ---
 
 

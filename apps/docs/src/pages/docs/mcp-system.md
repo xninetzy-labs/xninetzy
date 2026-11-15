@@ -19,7 +19,7 @@ host (Claude / Claude Code / Cursor / Codex / OpenCode)
   ▼
 xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
   │
-  ├── xninetzy.tools.registry.get_all_tools()   (571 tools)
+  ├── xninetzy.tools.registry.get_all_tools()   (578 tools)
   │     │
   │     └── xninetzy.tools.manifest.manifest_for(name)
   │           ├── feature_pack: core | academic-unair | research | coding
@@ -62,32 +62,30 @@ canonical FINAL-tool set drifts.
 
 | Metric | Value |
 |---|---|
-| Total tools | **571** |
-| Risk = `read` | 43 |
-| Risk = `draft` | 23 |
-| Risk = `write` | 501 |
-| Risk = `final` | **4** |
-| Feature pack = `core` | 479 |
+| Total tools | **578** |
+| Risk = `read` | 139 |
+| Risk = `draft` | 6 |
+| Risk = `write` | 410 |
+| Risk = `final` | **23** |
+| Feature pack = `core` | 486 |
 | Feature pack = `academic-unair` | 46 |
 | Feature pack = `research` | 43 |
 | Feature pack = `coding` | 3 |
-| Stability | 571/571 `stable` |
+| Stability | 578/578 `stable` |
 
-Risk classifier (`xninetzy/os/policy/action_policy.py::classify_risk`):
+Registered tool risks come from the repository-owned
+`xninetzy/tools/execution_policies.json`, consumed by `manifest_for` and
+`classify_risk`. Unknown tools fail closed. Caller arguments and descriptions
+cannot downgrade that policy.
 
-- `_FINAL_ACTIONS` set or suffix `_final_submit` → `final`
-- contains `prepare|plan|draft|preview|dry_run|analyze` → `draft`
-- matches `_READ_ACTIONS` set or prefix `read|list|get|check|search|status`
-  or suffix `_status|_info` → `read`
-- everything else → `write`
-
-The orchestrator enforces `_effective_tier = max(declared, manifest_tier)`
-so an owner-supplied tier downgrade cannot demote a `final` tool
-(`xninetzy/cli/orchestrator.py`).
+The three `skill_validate_*` writing checks inspect supplied text in memory.
+They are READ operations, need neither write approval nor an idempotency key,
+and do not submit a document. Explicit owner restrictions and the kill switch
+still apply.
 
 ## FINAL-class tools
 
-These tools always require HITL approval server-side:
+There are 23 FINAL tools. Examples include:
 
 1. `hebat_upload_submission` (alias-mapped from
    `hebat_submit_submission` in `xninetzy/tools/manifest.py`)
@@ -95,16 +93,17 @@ These tools always require HITL approval server-side:
 3. `qa_fill_kuesioner`
 4. `tableau_publish_workbook` (publishes a workbook to a Tableau server)
 
-Approval is enforced through `xninetzy/os/hitl/approval_service.py`
-(`request_approval`, `set_approval_status`, `validate_approval`).
-Owner check: `xninetzy/os/research/permissions.py::is_owner_admin`.
+The MCP gateway currently holds all FINAL execution with
+`approval_channel_unverified`. A caller's confirmation or approval ID cannot
+authorize it. An independently authenticated positive approval channel remains
+a release blocker; the presence of approval records is insufficient.
 
 ## Transports
 
 | Transport | Status | Default | Source |
 |---|---|---|---|
 | stdio | primary | yes | `xninetzy/interfaces/mcp_server.py` |
-| Streamable HTTP | secondary (loopback) | opt-in | `XNINETZY_MCP_TRANSPORT=streamable-http` |
+| Streamable HTTP | held pending verified authentication, including loopback | no | `XNINETZY_MCP_TRANSPORT=streamable-http` |
 | Legacy HTTP+SSE | n/a | n/a | not used |
 | REST / GraphQL | n/a | n/a | MCP-only |
 
@@ -228,8 +227,8 @@ authorization evidence on their own. Tools that require owner scope
 etc.) check via
 `xninetzy/os/research/permissions.py::is_owner_admin`.
 
-FINAL-class tools always require HITL approval regardless of declared
-tier in orchestrator plans.
+FINAL-class tools remain held regardless of declared tier in orchestrator
+plans. READ validation does not grant permission to submit its output.
 
 ## Release gate
 
@@ -241,12 +240,12 @@ Six checks must all PASS:
 
 | Check | Verifies |
 |---|---|
-| `tool_registry` | 571 tools classified, no unknown risk, no missing idempotency |
+| `tool_registry` | 578 tools classified, no unknown risk, no missing idempotency |
 | `secret_redaction` | `redact_secrets` strips sample OpenAI / GitHub / Google keys |
 | `safe_fetch` | SSRF guard rejects non-http(s), private/loopback, oversize |
-| `transport_config` | transport ∈ stdio\|streamable-http; default loopback |
+| `transport_config` | supported authenticated deployment boundary; current build uses STDIO |
 | `sdk_pin` | resolved `mcp` version on v1.x |
-| `canonical_final_tools` | the 3 FINAL tools match the canonical set |
+| `canonical_final_tools` | required consequential declarations remain FINAL; not proof of live approval authenticity |
 
 ## Path conventions
 

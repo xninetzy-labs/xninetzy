@@ -3,8 +3,6 @@ from __future__ import annotations
 from xninetzy.context.routing.regression import (
     GATE_NAMES,
     REGRESSION_VERSION,
-    RegressionCheck,
-    RegressionReport,
     RegressionStatus,
     run_regression_gate,
     write_regression_report,
@@ -58,13 +56,13 @@ def test_run_regression_gate_with_legacy_and_candidate(tmp_path) -> None:
 
 
 def test_run_regression_gate_top1_regression_fails() -> None:
-    legacy = {"scorecards": [{"baseline": "D-rules+embeddings", "top1": 0.9, "topk": 0.9, "latency_p95_ms": 100.0, "abstention_rate": 0.1}]}
-    cand = {"scorecards": [{"baseline": "D-rules+embeddings", "top1": 0.5, "topk": 0.9, "latency_p95_ms": 100.0, "abstention_rate": 0.1}]}
     report = run_regression_gate(
         legacy_report_path=tmp_path_legacy(),
         candidate_report_path=tmp_path_candidate(),
     )
     routing_check = next((c for c in report.checks if c.name == "routing_quality"), None)
+    assert routing_check is not None
+    assert routing_check.status == RegressionStatus.FAILED
     assert report.overall == RegressionStatus.FAILED
     assert "routing_quality" in " ".join(report.block_reasons)
 

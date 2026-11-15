@@ -3,7 +3,7 @@ from __future__ import annotations
 import time
 from typing import Any
 
-from xninetzy.context.routing.laya import CARDI_OPTIONS, invoke_laya
+from xninetzy.context.routing.laya import invoke_laya
 from xninetzy.context.routing.state import RouterLayerDecision, StateSnapshot, build_state_snapshot
 from xninetzy.context.registry.taxonomy import SEMANTIC_DOMAINS
 

@@ -1,6 +1,8 @@
 ---
 name: todolife-schedule-auditor
-description: Audit a daily or weekly schedule for conflicts, overlaps, impossible windows, and priority violations. Read-only — never mutates the plan. Activates when the user asks "cek jadwal", "validasi plan", "ada bentrok?", or as the validation pass before todolife-daily-planner writes to Obsidian.
+description: Read-only audit of a daily or weekly schedule for conflicts, overlaps, impossible windows and priority violations. Use for 'cek jadwal', 'validasi plan', 'ada bentrok?' or before the daily planner writes.
+metadata:
+  keywords: activates asks mutates never obsidian pass todolife user validation when
 ---
 
 # todolife-schedule-auditor

@@ -1,12 +1,13 @@
 ---
-name: "professional-editor"
-description: "Edit existing professional or business documents for clarity, consistency, tone, grammar, scannability, and structure without changing intent or evidence. Activates when the user submits a draft for review and improvement rather than first-time authoring. Preserves the author's voice while eliminating ambiguity, filler, and structural drift."
+name: professional-editor
+description: Edits professional or business drafts for clarity, consistency, tone, grammar, scannability and structure without changing intent or evidence. Use when a draft needs improvement rather than first-time writing.
 metadata:
-  scope: "editing"
-  intent_class: "EDITING"
-  consumes: "evidence-synthesis, citation-validation"
-  produces: "edited_document"
-  tier: "0"
+  scope: editing
+  intent_class: EDITING
+  consumes: evidence-synthesis, citation-validation
+  produces: edited_document
+  tier: '0'
+  keywords: activates ambiguity author authoring documents drift edit eliminating existing filler preserves review structural submits user voice while
 ---
 # professional-editor
 

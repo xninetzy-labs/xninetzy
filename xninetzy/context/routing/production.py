@@ -2,17 +2,15 @@ from __future__ import annotations
 
 import json
 import time
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
 from typing import Any
 
 from xninetzy.context.routing.regression import (
-    REGRESSION_VERSION,
     RegressionReport,
     RegressionStatus,
-    run_regression_gate,
 )
 
 PROD_VERSION = "1.0.0"

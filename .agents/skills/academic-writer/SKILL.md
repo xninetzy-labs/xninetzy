@@ -1,12 +1,13 @@
 ---
-name: "academic-writer"
-description: "Produce academic text: clear claim structure, evidence-grounded reasoning, citation discipline, hedging appropriate to evidence strength, discipline-appropriate sectioning. Never invents citations, statistics, or results. Activates for any formal academic writing."
+name: academic-writer
+description: Writes formal academic text with clear claims, evidence-grounded reasoning, citation discipline and calibrated hedging; never invents citations, statistics or results. Use for any formal academic writing.
 metadata:
-  scope: "writing"
-  intent_class: "ACADEMIC"
-  consumes: "citation-validation, source-evaluation, literature-review-writer"
-  produces: "academic_document"
-  tier: "0"
+  scope: writing
+  intent_class: ACADEMIC
+  consumes: citation-validation, source-evaluation, literature-review-writer
+  produces: academic_document
+  tier: '0'
+  keywords: activates appropriate claim produce sectioning strength structure
 ---
 # academic-writer
 

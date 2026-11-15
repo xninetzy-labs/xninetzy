@@ -1,12 +1,13 @@
 ---
-name: "research-proposal"
-description: "Draft a research proposal: research question, significance, literature context, methodology, expected contributions, timeline, budget. Adheres to academic proposal conventions. Activates for thesis, grant, or research-program proposals."
+name: research-proposal
+description: Drafts research proposals (question, significance, literature, methodology, contributions, timeline, budget) for theses, grants or research programs. Use when proposing research.
 metadata:
-  scope: "writing"
-  intent_class: "PROPOSAL"
-  consumes: "literature-review-writer, evidence-synthesis, academic-writer"
-  produces: "research_proposal"
-  tier: "0"
+  scope: writing
+  intent_class: PROPOSAL
+  consumes: literature-review-writer, evidence-synthesis, academic-writer
+  produces: research_proposal
+  tier: '0'
+  keywords: academic activates adheres context conventions draft expected grant program proposal thesis
 ---
 # research-proposal
 

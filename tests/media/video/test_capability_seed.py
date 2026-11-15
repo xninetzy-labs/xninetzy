@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import pytest
 
 
 def test_seed_media_capabilities_is_idempotent():

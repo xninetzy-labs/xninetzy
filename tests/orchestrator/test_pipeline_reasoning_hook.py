@@ -66,6 +66,7 @@ def _seed_provider(provider_id: str, trust_tier: int):
         trust_tier=trust_tier,
         risk_class="low" if trust_tier == TRUST_TIER_KNOWN_EXTERNAL else "unreviewed",
         capabilities=("do_thing",),
+        metadata={"capability_side_effects": {"do_thing": "read_only"}},
         health_state=HEALTH_OK,
     )
 

@@ -1,12 +1,13 @@
 ---
-name: "proposal-writer"
-description: "Draft a competitive proposal: problem framing, solution design, evidence, feasibility, impact, risks, budget. Adapts structure to competition requirements when present. Activates for grants, competitions, internal RFPs, vendor proposals."
+name: proposal-writer
+description: Drafts competitive proposals (problem, solution, evidence, feasibility, impact, risks, budget) adapted to competition requirements. Use for grants, competitions, internal RFPs and vendor proposals.
 metadata:
-  scope: "writing"
-  intent_class: "PROPOSAL"
-  consumes: "evidence-synthesis, source-evaluation, research-proposal"
-  produces: "proposal_document"
-  tier: "0"
+  scope: writing
+  intent_class: PROPOSAL
+  consumes: evidence-synthesis, source-evaluation, research-proposal
+  produces: proposal_document
+  tier: '0'
+  keywords: activates adapts design draft framing present proposal structure when
 ---
 # proposal-writer
 

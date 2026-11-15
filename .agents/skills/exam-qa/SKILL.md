@@ -1,12 +1,13 @@
 ---
-name: "exam-qa"
-description: "Offline-first practice exam and test-running OS for the owner. Use for dry-run drills, scored practice runs, and graded exam simulations where every step produces evidence. NEVER use to autonomously complete graded examinations on real institutional platforms; the system enforces an authorization gate (HITL approval_id) before any actual graded run. Use for fixture authoring, scenario construction, deterministic question selection, provider resolution (mock/local only), state-machine transitions (planned/ready/running/submitted/graded/failed/cancelled), evidence collection, and environment capture."
+name: exam-qa
+description: 'Offline practice-exam system: dry-run drills, scored practice and exam simulations with evidence, fixtures and deterministic question selection. Never completes real graded exams; a graded run needs an approval_id. Use for exam practice.'
 metadata:
-  scope: "general"
-  owner: "xninetzy"
-  language: "en"
-  version: "0.1.0"
-  lifecycle: "fixture -> scenario -> authorize -> select -> run -> grade -> evidence"
+  scope: general
+  owner: xninetzy
+  language: en
+  version: 0.1.0
+  lifecycle: fixture -> scenario -> authorize -> select -> run -> grade -> evidence
+  keywords: actual any authoring authorization autonomously before cancelled capture collection complete construction enforces environment every examinations failed first fixture gate hitl institutional local machine mock only owner planned platforms produces provider ready resolution running runs scenario state step submitted test transitions where
 ---
 
 # Exam QA

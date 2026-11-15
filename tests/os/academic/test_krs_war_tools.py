@@ -169,6 +169,26 @@ async def test_arm_fails_closed_when_plan_missing(monkeypatch, store):
     assert store.get()["armed"] == 0
 
 
+@pytest.mark.asyncio
+async def test_legacy_approved_row_cannot_arm_krs(monkeypatch, store):
+    from xninetzy.db.sqlite import connect
+    from xninetzy.os.hitl.approval_service import request_approval
+
+    plan = _plan()
+
+    async def load(*args, **kwargs):
+        return plan
+
+    monkeypatch.setattr(portal_tools, "is_owner_admin", lambda *args: True)
+    monkeypatch.setattr(portal_tools, "load_krs_plan", load)
+    identifier = request_approval("fixture-chat", "fixture-owner", "portal_krs_war_arm", "Fixture", "Fixture", portal_tools._krs_war_approval_payload(plan))
+    with connect() as conn:
+        conn.execute("UPDATE approval_requests SET status='approved' WHERE id=?", (identifier,))
+    result = await portal_tools.portal_krs_war_arm.ainvoke({"approval_id": identifier})
+    assert "approval_channel_unverified" in result
+    assert store.get()["armed"] == 0
+
+
 def test_disarm_sets_armed_off(monkeypatch, store):
     plan = _plan()
     store.set_armed(True, plan)

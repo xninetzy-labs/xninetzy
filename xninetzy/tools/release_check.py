@@ -31,7 +31,7 @@ def check_tool_registry() -> CheckResult:
     missing_idem: list[tuple[str, str]] = []
     for tool in tools:
         manifest = manifest_for(tool.name)
-        if manifest.risk.value not in {"read", "draft", "write", "final"}:
+        if not manifest.policy_known or manifest.risk.value not in {"read", "draft", "write", "final"}:
             bad_risk.append(tool.name)
         if manifest.risk.value in {"write", "final"} and not manifest.requires_idempotency:
             missing_idem.append((tool.name, manifest.risk.value))
@@ -132,6 +132,8 @@ def check_transport_config() -> CheckResult:
         issues.append(f"transport invalid: {transport!r}")
     if transport == "streamable-http" and host and host not in {"127.0.0.1", "::1"}:
         issues.append(f"http host non-loopback: {host!r} (auth required)")
+    if transport == "streamable-http":
+        issues.append("authenticated_http_unavailable: use local stdio")
     status = "PASS" if not issues else "WARN"
     return CheckResult(
         name="transport_config",
@@ -169,10 +171,29 @@ def check_sdk_pin() -> CheckResult:
 
 
 _CANONICAL_FINAL_TOOLS = (
-    "hebat_upload_submission",
-    "portal_krs_war_arm",
-    "qa_fill_kuesioner",
-    "tableau_publish_workbook",
+    'admin_notify_progress',
+    'auth_session_revoke',
+    'external_mcp_add',
+    'external_mcp_call',
+    'external_mcp_remove',
+    'graph_v3_rebuild',
+    'hebat_remove_submission',
+    'hebat_upload_submission',
+    'improvement_approve',
+    'knowledge_rebuild_index',
+    'lightning_approve',
+    'perf_run_k6',
+    'pixelrag_local_start',
+    'portal_krs_war_arm',
+    'qa_fill_kuesioner',
+    'retention_prune_now',
+    'rule_delete',
+    'security_http_probe',
+    'security_run_schemathesis',
+    'security_run_zap',
+    'skill_install',
+    'tableau_publish_workbook',
+    'video_session_start',
 )
 
 

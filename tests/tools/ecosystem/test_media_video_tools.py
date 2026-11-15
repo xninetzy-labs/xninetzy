@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import json
 import os
-import tempfile
 import uuid
 
 import pytest
@@ -19,8 +18,6 @@ from xninetzy.tools.ecosystem.media_video_tools import (
     video_render,
     video_render_cancel,
     video_render_status,
-    video_renderer_health,
-    video_scene_create,
     video_session_start,
     video_session_stop,
     video_template_apply,
@@ -150,7 +147,7 @@ def test_motion_apply_unknown_primitive_rejected(tmp_path, monkeypatch):
         "template": "tutorial",
         "duration_seconds": 1.0,
     })
-    inspect = json.loads(video_project_inspect.invoke({"project_id": pid}))
+    json.loads(video_project_inspect.invoke({"project_id": pid}))
     scene_id = None
     store, _ = _storage()
     proj = store.get(pid)

@@ -1,12 +1,13 @@
 ---
 name: process-engineering-providers
-description: Provider-agnostic process_engineering capability. Selects between native_xninetzy,
+description: Selects a process-engineering provider (native, bpmn-js, PM4Py, Flowable, SimPy, Bizagi/Camunda interop) by capability and license posture. Use when a process task needs a specific engine.
 metadata:
-  type: "meta"
-  layer: "process-engineering"
-  consumes: "'[{\"tool\":\"process_list_providers\"},{\"tool\":\"process_select_provider\"},{\"tool\":\"process_capability_providers\"},{\"tool\":\"process_is_provider_enabled\"},{\"tool\":\"process_discover_from_event_log\"},{\"tool\":\"process_simulate\"},{\"tool\":\"process_plan_execution\"}]'"
-  produces: "'[\"provider_decision\",\"discovery_report\",\"simulation_result\",\"execution_plan\"]'"
-  tier: "'0'"
+  type: meta
+  layer: process-engineering
+  consumes: '''[{"tool":"process_list_providers"},{"tool":"process_select_provider"},{"tool":"process_capability_providers"},{"tool":"process_is_provider_enabled"},{"tool":"process_discover_from_event_log"},{"tool":"process_simulate"},{"tool":"process_plan_execution"}]'''
+  produces: '''["provider_decision","discovery_report","simulation_result","execution_plan"]'''
+  tier: '''0'''
+  keywords: agnostic agpl based between opt rest xninetzy
 ---
 
 

@@ -1,12 +1,13 @@
 ---
-name: "citation-validation"
-description: "Validate citations in a document: verify each citation exists, metadata is accurate, citation supports the nearby claim, formatting is consistent. Flags orphan citations, mismatched claims, and unverifiable references. Default non-mutating."
+name: citation-validation
+description: Checks that each citation exists, has accurate metadata, supports its nearby claim and is formatted consistently; flags orphan and unverifiable references without editing. Use before delivering cited work.
 metadata:
-  scope: "review"
-  intent_class: "REVIEW"
-  consumes: "source-evaluation"
-  produces: "citation_validation_report"
-  tier: "0"
+  scope: review
+  intent_class: REVIEW
+  consumes: source-evaluation
+  produces: citation_validation_report
+  tier: '0'
+  keywords: citations claims consistent default document formatting mismatched mutating non validate verify
 ---
 # citation-validation
 

@@ -1,12 +1,13 @@
 ---
 name: scoring-rubric
-description: Normalize and apply competition/scoring rubrics. Produce per-criterion evaluation sheet with weighted scores and threshold checks. Activates whenever quantitative scoring drives selection.
+description: Normalizes and applies scoring rubrics into a per-criterion sheet with weighted scores and threshold checks. Use when quantitative scoring drives selection.
 metadata:
-  scope: "xninetzy"
-  intent_class: "PROPOSAL"
-  consumes: "requirement-coverage"
-  produces: "rubric_score"
-  tier: "0"
+  scope: xninetzy
+  intent_class: PROPOSAL
+  consumes: requirement-coverage
+  produces: rubric_score
+  tier: '0'
+  keywords: activates apply competition evaluation normalize produce whenever
 ---
 
 # Scoring Rubric Mapper

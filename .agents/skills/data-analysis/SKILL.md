@@ -1,11 +1,12 @@
 ---
 name: data-analysis
-description: Use when the user provides tabular data (CSV/XLSX) and wants profiling,
+description: 'Data-first workflow for tabular data (CSV/XLSX): profile → quality audit → analysis → tables or dashboards. Use when the user provides a dataset to analyze.'
 metadata:
-  type: "workflow"
-  domain: "data_intelligence"
-  capabilities: "'[\"data_profile\",\"data_quality_audit\",\"data_generate_xlsx\",\"data_validate_xlsx\",\"dashboard_generate\",\"dashboard_validate\",\"dashboard_list_providers\"]'"
-  version: "1.0.0"
+  type: workflow
+  domain: data_intelligence
+  capabilities: '''["data_profile","data_quality_audit","data_generate_xlsx","data_validate_xlsx","dashboard_generate","dashboard_validate","dashboard_list_providers"]'''
+  version: 1.0.0
+  keywords: and artifact dashboard excel forces generation hoc manipulation profiling rather table than wants
 ---
 
 

@@ -1,12 +1,13 @@
 ---
-name: "academic-editor"
-description: "Edit academic text for argument structure, evidence-claim alignment, hedging accuracy, citation completeness, section flow, and discipline conventions. Preserves author voice. Activates on academic draft submission."
+name: academic-editor
+description: Edits academic drafts for argument structure, evidence-claim alignment, hedging, citations, section flow and discipline conventions while preserving the author's voice. Use when an academic draft needs editing.
 metadata:
-  scope: "editing"
-  intent_class: "EDITING"
-  consumes: "academic-writer, citation-validation"
-  produces: "edited_academic_document"
-  tier: "0"
+  scope: editing
+  intent_class: EDITING
+  consumes: academic-writer, citation-validation
+  produces: edited_academic_document
+  tier: '0'
+  keywords: accuracy activates citation completeness edit preserves submission text
 ---
 # academic-editor
 

@@ -1,12 +1,13 @@
 ---
 name: methodology-rater
-description: Rate a study's methodology across 6 axes (design fit, sample, control, measurement, analysis, transparency) with bands + composite. Activates during paper review or research design vetting.
+description: Rates a study's methodology on six axes (design fit, sample, control, measurement, analysis, transparency) with bands and a composite score. Use in paper review or research-design vetting.
 metadata:
-  scope: "paper-analysis"
-  intent_class: "REVIEW"
-  consumes: "paper-analysis"
-  produces: "methodology_scorecard"
-  tier: "0"
+  scope: paper-analysis
+  intent_class: REVIEW
+  consumes: paper-analysis
+  produces: methodology_scorecard
+  tier: '0'
+  keywords: across activates during rate
 ---
 
 # methodology-rater

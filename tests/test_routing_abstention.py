@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from xninetzy.context.routing.abstention import (
-    AbstentionResult,
     decide_abstention,
 )
 

@@ -1,12 +1,13 @@
 ---
-name: "submission-readiness"
-description: "Pre-submission check for any document or proposal: completeness against requirements, formatting compliance, citation integrity, evidence-claim alignment, common rejection triggers, signature/checklist items. Produces a readiness report."
+name: submission-readiness
+description: 'Pre-submission check of a document or proposal: requirement completeness, formatting, citation integrity, evidence-claim alignment, rejection triggers and checklist items, with a readiness report. Use before submitting.'
 metadata:
-  scope: "review"
-  intent_class: "REVIEW"
-  consumes: "anti-slop, citation-validation"
-  produces: "readiness_report"
-  tier: "0"
+  scope: review
+  intent_class: REVIEW
+  consumes: anti-slop, citation-validation
+  produces: readiness_report
+  tier: '0'
+  keywords: against any common compliance for produces requirements signature
 ---
 # submission-readiness
 

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import dataclass, field
 from datetime import UTC, datetime
 from enum import Enum
 from pathlib import Path
@@ -224,7 +224,7 @@ def evaluate_fine_tune_gates(
 
     try:
         cal = CalibrationRegistry(storage_dir=calibration_dir)
-        eces = [m.ece for m in (cal.lookup(l, d) for l in ("L2_domain", "L3_skill", "L4_task", "L5_capability", "L5_tool") for d in ("research", "academic", "career")) if m]
+        eces = [m.ece for m in (cal.lookup(layer, d) for layer in ("L2_domain", "L3_skill", "L4_task", "L5_capability", "L5_tool") for d in ("research", "academic", "career")) if m]
     except Exception:
         eces = []
     if not eces:

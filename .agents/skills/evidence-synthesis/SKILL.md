@@ -1,12 +1,13 @@
 ---
-name: "evidence-synthesis"
-description: "Synthesize evidence from multiple sources into a structured ledger: claims with supporting evidence, contradictions, gaps, confidence ratings. Activates whenever multiple sources must be combined into a single evidence base for downstream writing skills."
+name: evidence-synthesis
+description: Combines multiple sources into an evidence ledger of claims, support, contradictions, gaps and confidence. Use when sources must become one evidence base for writing.
 metadata:
-  scope: "research"
-  intent_class: "RESEARCH"
-  consumes: "source-evaluation, citation-validation"
-  produces: "evidence_synthesis"
-  tier: "0"
+  scope: research
+  intent_class: RESEARCH
+  consumes: source-evaluation, citation-validation
+  produces: evidence_synthesis
+  tier: '0'
+  keywords: activates combined downstream from ratings single skills structured supporting synthesize whenever with
 ---
 # evidence-synthesis
 

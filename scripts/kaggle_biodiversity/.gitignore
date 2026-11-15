@@ -1,0 +1,4 @@
+jobs/
+campaign_state.json
+campaign_state.tmp
+campaign.lock

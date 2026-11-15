@@ -61,6 +61,44 @@ def test_execute_patch_context_config_persists():
     assert overrides.get("LIGHTNING_EXPLORATION_RATE") == 0.42
 
 
+@pytest.mark.parametrize("setting,value", [
+    ("SQLITE_PATH", "/tmp/unauthorized.sqlite3"),
+    ("ALLOW_AUTONOMOUS_UPLOAD", True),
+    ("REQUIRE_CONFIRMATION_FOR_IMPORTANT_ACTIONS", False),
+    ("LIGHTNING_EXPLORATION_RATE", 2.0),
+    ("RAG_TOP_K", True),
+])
+def test_patch_cannot_change_protected_or_invalid_settings(setting, value):
+    from xninetzy.core.config import get_settings
+    before = getattr(get_settings(), setting)
+    result = execute_patch(target_area="context_config",
+                           patch={"setting": setting, "value": value})
+    assert result["applied"] is False
+    assert getattr(get_settings(), setting) == before
+
+
+def test_legacy_protected_override_is_ignored_without_deletion(_isolated_db):
+    import json
+    from xninetzy.core.config import get_settings
+    from xninetzy.db.sqlite import connect
+    with connect() as connection:
+        connection.execute("INSERT INTO context_config_overrides VALUES (?, ?, ?, ?)",
+                           ("SQLITE_PATH", json.dumps("/tmp/untrusted.sqlite3"), "now", "test"))
+    get_settings.cache_clear()
+    assert str(get_settings().SQLITE_PATH) == str(_isolated_db)
+    with connect() as connection:
+        assert connection.execute("SELECT count(*) FROM context_config_overrides").fetchone()[0] == 1
+
+
+def test_loading_settings_does_not_create_missing_database(tmp_path, monkeypatch):
+    from xninetzy.core.config import get_settings
+    missing = tmp_path / "missing" / "state.sqlite3"
+    monkeypatch.setenv("SQLITE_PATH", str(missing))
+    get_settings.cache_clear()
+    get_settings()
+    assert not missing.exists()
+
+
 def test_execute_rollback_context_config_restores_previous():
     execute_patch(
         target_area="context_config",

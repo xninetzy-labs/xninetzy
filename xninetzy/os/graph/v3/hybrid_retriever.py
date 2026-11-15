@@ -101,6 +101,9 @@ def retrieve(query: str, *, top_k: int | None = None, expand_depth: int = 1) -> 
     # from. Below the floor is noise, not evidence.
     min_relevance = settings.RAG_MIN_RELEVANCE
     raw_semantic = faiss_store.search(query, limit=over)
+    canonical = sqlite_store.get_nodes([row["key"] for row in raw_semantic]) if raw_semantic else {}
+    raw_semantic = [row for row in raw_semantic if row["key"] in canonical and row.get("text_hash") ==
+                    faiss_store.node_text_hash(canonical[row["key"]]["title"], canonical[row["key"]].get("content"))]
     semantic_active = bool(raw_semantic)  # dense index populated for this corpus
     faiss_rows = [
         r for r in raw_semantic if float(r.get("score") or 0.0) >= min_relevance

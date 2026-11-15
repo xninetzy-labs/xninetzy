@@ -4,7 +4,8 @@ services:
       context: .
       dockerfile: Dockerfile
     env_file:
-      - .env
+      - path: .env
+        required: false
     user: "${HOST_UID:-1000}:${HOST_GID:-1000}"
     environment:
       DATA_DIR: /app/data
@@ -17,6 +18,7 @@ services:
       HEBAT_DOWNLOAD_DIR: /app/data/hebat/downloads
       XNINETZY_SKILLS_DIR: /app/data/opencode-config/opencode/skills
       MCP_RUNTIME_MODE: container
+      XNINETZY_MCP_TRANSPORT: stdio
       OLLAMA_BASE_URL: ${OLLAMA_DOCKER_BASE_URL:-http://host.docker.internal:11434/v1}
       XNINETZY_DEVICE: cpu
       EMBEDDING_DEVICE: cpu
@@ -30,19 +32,24 @@ services:
       XDG_CONFIG_HOME: /app/data/opencode-config
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    ports:
-      - "127.0.0.1:8000:8000"
-      - "127.0.0.1:8765:8765"
+    stdin_open: true
+    tty: false
+    init: true
+    read_only: true
+    tmpfs:
+      - /tmp:mode=1777
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    pids_limit: 256
     volumes:
-      - ./data:/app/data
-      - ${OBSIDIAN_VAULT_HOST_PATH:?Set OBSIDIAN_VAULT_HOST_PATH}:/app/obsidian-vault:ro
-    healthcheck:
-      test: ["CMD", "uv", "run", "--no-dev", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
-      interval: 10s
-      timeout: 5s
-      retries: 12
-      start_period: 30s
-    restart: unless-stopped
+      - type: bind
+        source: ${XNINETZY_DATA_DIR:-./data}
+        target: /app/data
+        bind:
+          create_host_path: false
+    restart: "no"
 
   neo4j:
     image: neo4j:5.26-community

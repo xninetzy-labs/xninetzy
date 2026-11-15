@@ -1,12 +1,13 @@
 ---
-name: "terminology-bank"
-description: "Maintain per-domain canonical term lists with aliases, definitions, banned forms, first-use notes. Run consistency pass against draft text. Activates during editorial review for academic or technical documents."
+name: terminology-bank
+description: Maintains per-domain canonical terms (aliases, definitions, banned forms) and runs a consistency pass over drafts. Use during academic or technical editing.
 metadata:
-  scope: "editing"
-  intent_class: "EDITING"
-  consumes: "source-evaluation"
-  produces: "terminology_findings"
-  tier: "0"
+  scope: editing
+  intent_class: EDITING
+  consumes: source-evaluation
+  produces: terminology_findings
+  tier: '0'
+  keywords: activates against documents draft editorial first for lists maintain notes review run term text with
 ---
 # terminology-bank
 

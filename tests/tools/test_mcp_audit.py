@@ -68,10 +68,10 @@ def test_inventory_inspects_schemas_without_executing_tool(monkeypatch):
     assert row["groups"] == ["example"]
     assert row["input_schema"]["properties"]["limit"]["default"] == 5
     assert isinstance(row["output_schema"], dict)
-    assert row["output_schema_source"] == "langchain_inferred; MCP output enforcement UNKNOWN"
+    assert row["output_schema_source"] == "langchain declared/inferred; MCP validates before returning"
     assert row["runtime_execution"] == "UNKNOWN"
-    assert row["idempotency_enforcement"] == "UNKNOWN"
-    assert row["approval_enforcement"] == "UNKNOWN"
+    assert "gateway-v1 scoped reservation" in row["idempotency_enforcement"]
+    assert "denies FINAL" in row["approval_enforcement"]
 
 
 def test_inventory_cli_emits_json_without_changing_default_output(monkeypatch, capsys):

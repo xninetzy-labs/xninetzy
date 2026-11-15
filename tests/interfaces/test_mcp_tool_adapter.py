@@ -11,6 +11,14 @@ from xninetzy.interfaces.mcp_tool_adapter import (
 )
 
 
+@pytest.fixture(autouse=True)
+def test_tool_policies(monkeypatch):
+    from xninetzy.tools.manifest import policy_catalog
+
+    for name in ("sample_tool", "async_sample", "identity_tool", "leaky_tool", "structured_tool"):
+        monkeypatch.setitem(policy_catalog(), name, "read")
+
+
 def test_adapter_preserves_langchain_tool_schema():
     @tool
     def sample_tool(required: str, limit: int = 3) -> str:

@@ -1,6 +1,8 @@
 ---
-name: "transcribe"
-description: "Transcribe audio files to text with optional diarization and known-speaker hints. Use when a user asks to transcribe speech from audio/video, extract text from recordings, or label speakers in interviews or meetings."
+name: transcribe
+description: Transcribes audio or video to text with optional diarization and known-speaker hints. Use to transcribe recordings, interviews or meetings.
+metadata:
+  keywords: asks extract files from label speakers speech user when
 ---
 
 # Audio Transcribe

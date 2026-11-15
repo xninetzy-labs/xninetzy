@@ -1,6 +1,15 @@
 from __future__ import annotations
 
 from langchain_core.tools import StructuredTool
+import pytest
+
+
+@pytest.fixture(autouse=True)
+def test_tool_policies(monkeypatch):
+    from xninetzy.tools.manifest import policy_catalog
+
+    for name in ("sample_echo", "sample_dict"):
+        monkeypatch.setitem(policy_catalog(), name, "read")
 
 
 def _make_echo(captured: dict) -> StructuredTool:

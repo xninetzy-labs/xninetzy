@@ -21,7 +21,7 @@ def test_expanded_adversarial_set_at_least_200() -> None:
     for r in rows:
         src = r.get("source", {})
         labels.add(src.get("label", ""))
-    assert len({l for l in labels if l}) >= 9
+    assert len({label for label in labels if label}) >= 9
 
 
 def test_write_expanded_adversarial_overwrites(tmp_path) -> None:

@@ -1,6 +1,6 @@
 # Tool inventory and audit contract
 
-Recorded 2026-11-10 against checkout `2d0f13f` plus this local audit change.
+Updated 2026-11-15 against checkout `74ff58b` plus the local hardening changes.
 Evidence labels follow `CURRENT_SYSTEM_TRUTH.md`.
 
 The complete generated inventory is [tool_inventory.json](tool_inventory.json).
@@ -14,21 +14,25 @@ inspection. No tool handlers or external providers were invoked to generate it.
 | Metric | Value | Evidence |
 |---|---:|---|
 | Registered tools | 571 | `VERIFIED_RUNTIME`: `get_all_tools()` |
-| READ / DRAFT / WRITE / FINAL | 43 / 23 / 501 / 4 | `VERIFIED_RUNTIME`: manifest declarations |
+| READ / DRAFT / WRITE / FINAL | 136 / 6 / 406 / 23 | `VERIFIED_RUNTIME` November15: three pure writing validators corrected to READ |
 | Registry groups | 34 | `VERIFIED_RUNTIME`: `get_tool_groups()` |
 | Tools without a group membership | 244 | `VERIFIED_RUNTIME`: inventory comparison |
 | Tools labelled stable | 571 | `VERIFIED_CODE`: manifest default; not a readiness assessment |
 | Inferred output schemas with a top-level `type` | 0 / 571 | `VERIFIED_RUNTIME`: LangChain schema inspection |
-| Declared WRITE/FINAL tools without an `idempotency_key` input field | 430 / 505 | `VERIFIED_RUNTIME`: input schema comparison |
-| Declared FINAL tools without an `approval_id` input field | 1 / 4 | `VERIFIED_RUNTIME`: `tableau_publish_workbook` schema |
+| Declared WRITE/FINAL tools without an `idempotency_key` input field | 354 / 429 | `VERIFIED_RUNTIME`: registry schema comparison; gateway supplies its own field |
+| Declared FINAL tools without an `approval_id` input field | 20 / 23 | `VERIFIED_RUNTIME`: registry schema comparison; all FINAL execution remains held |
 | Live provider availability, cost, coverage, consumer ownership | UNKNOWN | Not measured by registry inspection |
 
 Input fields do not establish enforcement. A tool can enforce idempotency or
 approval in a shared service or use another parameter; absence of these names
 does not demonstrate a bypass. Conversely, manifest `requires_idempotency=true`
-does not prove reservation or replay protection. Risk and stability metadata
-remain partly name-derived (`manifest_for` → `classify_risk`). No tool was
-removed or reclassified in this batch.
+does not prove reservation or replay protection. Risk metadata uses the explicit
+execution catalog; stability still defaults to stable.
+The November15 correction reclassifies only `skill_validate_anti_slop`,
+`skill_validate_output`, and `skill_validate_submission_readiness`. Their
+handlers and transitive validators only inspect supplied text in memory.
+Actual MCP calls under default approval mode pass without a write key;
+explicit owner restrictions remain enforced. No tool was removed.
 
 The input schemas here are registry schemas. The MCP adapter removes trusted
 identity fields from its public callable signatures and injects server context.

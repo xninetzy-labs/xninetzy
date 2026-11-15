@@ -1,12 +1,13 @@
 ---
-name: "source-evaluation"
-description: "Evaluate a source for authority, recency, methodology, primary-vs-secondary status, and topic fit. Produces a graded scorecard. Activates whenever a source must be trusted, cited, or excluded from evidence synthesis."
+name: source-evaluation
+description: Scores a source for authority, recency, methodology, primary/secondary status and topic fit. Use whenever a source must be trusted, cited or excluded.
 metadata:
-  scope: "research"
-  intent_class: "RESEARCH"
-  consumes: "none"
-  produces: "source_scorecard"
-  tier: "0"
+  scope: research
+  intent_class: RESEARCH
+  consumes: none
+  produces: source_scorecard
+  tier: '0'
+  keywords: activates evaluate evidence from graded produces scorecard synthesis
 ---
 # source-evaluation
 

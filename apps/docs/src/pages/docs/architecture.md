@@ -17,7 +17,7 @@ Xninetzy MCP server / FastMCP :8765 (Streamable) or stdio
   ↓
 Application core (xninetzy/)
   ↓
-Canonical tool registry → 571 tools (core 479 / academic-unair 46 / research 43 / coding 3)
+Canonical tool registry → 578 tools (core 486 / academic-unair 46 / research 43 / coding 3)
   ↓
 Domain modules (knowledge | research | career | learning | security |
                 os_kernel | lightning | harness | improvement | ...)

@@ -386,5 +386,5 @@ async def execute_action(
     try:
         return await handler(action, state)
     except Exception as exc:  # pragma: no cover - handlers already guard
-        logger.warning("workflow handler crashed type=%s err=%s", action.type, exc)
-        return _fail(action, str(exc))
+        logger.warning("workflow handler crashed type=%s error_type=%s", action.type, type(exc).__name__)
+        return _fail(action, f"Handler gagal ({type(exc).__name__}).")

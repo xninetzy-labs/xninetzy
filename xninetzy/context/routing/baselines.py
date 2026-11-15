@@ -173,7 +173,6 @@ class EmbeddingsBaseline:
         try:
             import numpy as np
             from xninetzy.os.knowledge.embeddings import embed_query, embed_texts
-            from xninetzy.os.knowledge.vector_store import _load_or_create_index as _lazy
         except Exception:
             decision, latency = _timer(lambda: RoutingDecision(
                 request_id=f"C-{abs(hash(query)) % 10**9}",

@@ -1,8 +1,6 @@
 from __future__ import annotations
 
 import json
-import random
-from dataclasses import asdict, dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -87,7 +85,6 @@ def analyze_confusion_pairs(
         rel = [c for c in cases if c.expected_domains and any(d in c.expected_domains for d in positive_domains)]
         if not rel:
             continue
-        from xninetzy.context.routing.baselines import _case_from_dataset_row
 
         wrong = 0
         right = 0

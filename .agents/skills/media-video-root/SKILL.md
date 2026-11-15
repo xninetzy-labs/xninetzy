@@ -1,14 +1,15 @@
 ---
-name: "media-video-root"
-description: "Dispatcher skill for the deterministic Video Creator + Editor subsystem of Xninetzy MCP. Activates whenever a user request involves producing, transforming, or rendering a video from project assets, screen captures, screenshots, images, SVG, code, audio, or existing clips. CPU-only; no generative video model integration (no Veo / Sora / Runway / Kling / Pika). Routes to one of the media-video-* sub-skills based on user intent."
+name: media-video-root
+description: 'Entry point of the deterministic CPU-only video subsystem: routes requests to make, edit or render video from project assets, captures, images, code or clips to the right media-video-* skill; no generative video models. Use for any video request.'
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "media-video-capture, media-video-edit, media-video-motion, media-video-render, media-video-project-demo, media-video-tutorial, media-video-development"
-  produces: "video_project_plan"
-  tier: "0"
-  engine: "ffmpeg+remotion"
-license: "Xninetzy-Source-Available-2.2.0"
+  scope: media
+  intent_class: MEDIA
+  consumes: media-video-capture, media-video-edit, media-video-motion, media-video-render, media-video-project-demo, media-video-tutorial, media-video-development
+  produces: video_project_plan
+  tier: '0'
+  engine: ffmpeg+remotion
+  keywords: activates audio based creator dispatcher editor existing integration intent involves kling mcp model one pika producing rendering runway screen screenshots skills sora sub svg transforming user veo whenever xninetzy
+license: Xninetzy-Source-Available-2.2.0
 ---
 # media-video-root
 

@@ -518,4 +518,4 @@ def test_bpmn_tools_are_registered_with_the_expected_risk_classes():
     names = {t.name for t in tools.BPMN_TOOLS}
     assert names <= set(get_tool_names()) and names <= set(get_tool_groups()["process_engineering"])
     assert classify_risk("process_bpmn_validate") is RiskClass.READ and classify_risk("process_bpmn_import") is RiskClass.READ
-    assert classify_risk("process_bpmn_generate") is RiskClass.DRAFT and classify_risk("process_bpmn_convert") is RiskClass.DRAFT
+    assert classify_risk("process_bpmn_generate") is RiskClass.WRITE and classify_risk("process_bpmn_convert") is RiskClass.WRITE

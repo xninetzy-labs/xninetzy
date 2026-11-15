@@ -21,7 +21,7 @@ jobs:
       - name: Sync
         run: uv sync --all-extras
       - name: Ruff
-        run: uv run ruff check xninetzy tests scripts
+        run: uv run ruff check .
       - name: Pytest (tools and critical execution contracts)
         env:
           AUTO_MEMORY_ENABLED: 'false'
@@ -30,12 +30,26 @@ jobs:
           NEO4J_ENABLED: 'false'
           NEO4J_AUTOSTART_ENABLED: 'false'
         run: >-
-          uv run --no-project pytest -ra tests/tools tests/db/test_idempotency_store.py
+          uv run --no-project pytest -ra tests/tools tests/cli tests/db/test_idempotency_store.py
           tests/interfaces/test_mcp_runtime.py tests/invocation tests/policy tests/orchestrator
           tests/reasoning/test_reasoning_depth.py tests/os/lightning/test_input_redaction.py
           tests/core/test_secret_redaction.py tests/architecture/test_minimal_dependencies.py
           tests/governance/test_prompt_contract.py tests/governance/test_skill_frontmatter.py
-          tests/os/skills/test_skills.py tests/workflow tests/os/graph
+          tests/os/skills/test_skills.py tests/workflow tests/os/graph tests/os/hitl tests/os/backup
+          tests/os/knowledge/test_embedding_dimensions.py tests/media/video/test_storage_roundtrip.py
+          tests/test_routing_taxonomy.py tests/architecture/test_container_deployment.py
+          tests/interfaces/test_execution_boundary.py tests/interfaces/test_transport_authority.py
+          tests/interfaces/test_graph_lifespan.py
+          tests/interfaces/test_skill_validation_policy.py
+          tests/governance/test_execution_authority.py tests/os/lightning/test_patch_executor.py
+          tests/interfaces/test_mcp_tool_adapter.py tests/interfaces/test_trust_injection.py
+          tests/core/test_output_sanitization.py
+          tests/os/policy/test_action_policy.py tests/os/notifications/test_admin_notifier.py
+          tests/os/academic/hebat/test_hebat_direct_admin_approval.py
+          tests/os/academic/hebat/test_hebat_upload_flow.py
+          tests/os/academic/test_qa_portal_tools.py tests/os/academic/test_krs_war_tools.py
+      - name: Opt-in MCP graph worker and FAISS restart (offline)
+        run: uv run --no-project python scripts/smoke_graph_worker.py
       - name: Canonical prompt integrity
         run: uv run --no-project python scripts/validate_prompt_contract.py
       - name: Release gate
@@ -52,7 +66,9 @@ jobs:
         with:
           python-version: '3.11'
       - name: Install frozen base package
-        run: uv sync --frozen --no-dev --no-editable
+        run: uv sync --frozen --no-dev --no-editable --reinstall-package xninetzy-mcp
+      - name: Installed package matches source
+        run: .venv/bin/python -I scripts/check_installed_package.py --source xninetzy
       - name: Smoke installed package outside checkout
         working-directory: ${{ runner.temp }}
         run: |
@@ -89,9 +105,34 @@ jobs:
 
           asyncio.run(smoke())
           PY
+      - name: Durable workflow recovery over MCP
+        working-directory: ${{ runner.temp }}
+        run: '"$GITHUB_WORKSPACE/.venv/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke_workflow_recovery.py"'
+      - name: Online snapshot and offline restore over MCP
+        working-directory: ${{ runner.temp }}
+        run: '"$GITHUB_WORKSPACE/.venv/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke_backup_restore.py"'
+
+  graph:
+    name: Optional Neo4j projection (isolated backend)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.11'
+      - name: Install frozen graph-only profile
+        run: uv sync --frozen --no-dev --no-editable --extra graph --reinstall-package xninetzy-mcp
+      - name: Installed package matches source
+        run: .venv/bin/python -I scripts/check_installed_package.py --source xninetzy
+      - name: Pull the existing supported official backend
+        run: docker pull neo4j:5.26-community
+      - name: Projection outage and recovery
+        working-directory: ${{ runner.temp }}
+        run: '"$GITHUB_WORKSPACE/.venv/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke_graph_projection.py"'
 
   docs:
-    name: Documentation (yarn check + build)
+    name: Documentation (Astro check + build)
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -104,5 +145,5 @@ jobs:
           cache: yarn
           cache-dependency-path: apps/docs/yarn.lock
       - run: yarn install --frozen-lockfile
-      - run: yarn check
+      - run: yarn run check
       - run: yarn build

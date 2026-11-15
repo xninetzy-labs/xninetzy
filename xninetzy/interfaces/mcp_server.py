@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import ipaddress
+from contextlib import asynccontextmanager
 
 from mcp.server.fastmcp import FastMCP
 
@@ -13,16 +14,11 @@ from xninetzy.interfaces.mcp_tool_adapter import (
 )
 from xninetzy.db.migrations import run_migrations
 from xninetzy.db.sqlite import init_db
-from xninetzy.core.config import get_settings
-
-init_db()
-run_migrations()
+from xninetzy.core.config import Settings, get_settings
 
 assert isinstance(_MCP_PATH_OVERRIDES, dict)
-_MCP_PRINCIPAL = mcp_principal()
-
-
-_XNINETZY_SETTINGS = get_settings()
+_XNINETZY_SETTINGS = Settings()
+_MCP_PRINCIPAL = mcp_principal(_XNINETZY_SETTINGS)
 _TRANSPORT = (_XNINETZY_SETTINGS.XNINETZY_MCP_TRANSPORT or "stdio").strip().lower()
 _HTTP_HOST = (_XNINETZY_SETTINGS.XNINETZY_MCP_HTTP_HOST or "127.0.0.1").strip()
 _HTTP_PORT = int(_XNINETZY_SETTINGS.XNINETZY_MCP_HTTP_PORT)
@@ -46,6 +42,26 @@ if _TRANSPORT == "streamable-http":
             "Streamable HTTP requires real auth (OAuth 2.1 + Resource Indicators) "
             "before exposing beyond localhost."
         )
+    raise ValueError(
+        "authenticated_http_unavailable: this build has no independently verified owner HTTP authentication. "
+        "Use the local stdio transport; loopback binding alone is not authentication."
+    )
+
+
+# Reject unsupported configuration before touching an existing owner store.
+init_db()
+run_migrations()
+
+
+@asynccontextmanager
+async def _mcp_lifespan(server):
+    settings = get_settings()
+    if settings.GRAPHRAG_V3_ENABLED and settings.GRAPH_SYNC_WORKER_ENABLED:
+        from xninetzy.os.graph.v3.projection_worker import background_projection
+        async with background_projection():
+            yield {}
+    else:
+        yield {}
 
 
 mcp = FastMCP(
@@ -64,6 +80,7 @@ mcp = FastMCP(
     host=_HTTP_HOST,
     port=_HTTP_PORT,
     streamable_http_path=_HTTP_PATH,
+    lifespan=_mcp_lifespan,
 )
 
 

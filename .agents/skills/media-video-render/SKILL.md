@@ -1,13 +1,14 @@
 ---
-name: "media-video-render"
-description: "Render a VideoProject to MP4 / WebM via deterministic engine selection (Remotion for motion-heavy React/UI scenes, FFmpeg for trim/concat/composition, FFmpeg for final mux). Schedules long renders through the existing `xninetzy/os/jobs/` service. Validates the rendered file with ffprobe before declaring success."
+name: media-video-render
+description: Renders a VideoProject to MP4/WebM with Remotion or FFmpeg, schedules long renders as jobs and validates output with ffprobe. Use for the final render step.
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "video_render, video_render_status, video_render_cancel, video_inspect, video_export"
-  produces: "rendered_mp4"
-  tier: "1"
-  engine: "ffmpeg,remotion"
+  scope: media
+  intent_class: MEDIA
+  consumes: video_render, video_render_status, video_render_cancel, video_inspect, video_export
+  produces: rendered_mp4
+  tier: '1'
+  engine: ffmpeg,remotion
+  keywords: before composition concat declaring deterministic engine existing file heavy motion mux react rendered scenes selection service success through trim via xninetzy
 ---
 
 # media-video-render

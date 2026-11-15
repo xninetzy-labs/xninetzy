@@ -2,13 +2,23 @@
 
 FROM ghcr.io/astral-sh/uv:python3.11-bookworm-slim
 
-ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
-    UV_CACHE_DIR=/tmp/uv-cache \
-    UV_HTTP_TIMEOUT=120 \
-    UV_HTTP_RETRIES=5 \
-    UV_COMPILE_BYTECODE=1 \
+ENV UV_CACHE_DIR=/tmp/uv-cache \
     UV_LINK_MODE=copy \
-    HOME=/tmp/xninetzy-home \
+    UV_COMPILE_BYTECODE=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PATH="/app/.venv/bin:$PATH" \
+    MCP_RUNTIME_MODE=container \
+    XNINETZY_MCP_TRANSPORT=stdio \
+    DATA_DIR=/app/data \
+    SQLITE_PATH=/app/data/xninetzy.sqlite3 \
+    BACKUP_DIR=/app/data/backups \
+    OUTPUT_DIR=/app/data/output \
+    GENERATED_DOCUMENTS_DIR=/app/data/generated/documents \
+    RESEARCH_OUTPUT_DIR=/app/data/generated/research \
+    UNTRACKED_OUTPUT_DIR=/app/data/generated/untracked \
+    HEBAT_DATA_DIR=/app/data/hebat \
+    HEBAT_DOWNLOAD_DIR=/app/data/hebat/downloads \
+    XNINETZY_SKILLS_DIR=/app/data/skills \
     CUDA_VISIBLE_DEVICES="" \
     NVIDIA_VISIBLE_DEVICES=void \
     XNINETZY_DEVICE=cpu \
@@ -19,34 +29,16 @@ ENV PLAYWRIGHT_BROWSERS_PATH=/ms-playwright \
     TORCH_NUM_THREADS=4
 
 WORKDIR /app
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    libnss3 libnspr4 libdbus-1-3 libatk1.0-0 libatk-bridge2.0-0 \
-    libcups2 libdrm2 libxkbcommon0 libxcomposite1 libxdamage1 \
-    libxfixes3 libxrandr2 libgbm1 libasound2 libpango-1.0-0 \
-    libcairo2 libatspi2.0-0 libwayland-client0 \
-    tesseract-ocr tesseract-ocr-eng tesseract-ocr-ind \
-    && rm -rf /var/lib/apt/lists/*
-
-COPY pyproject.toml uv.lock ./
-RUN --mount=type=cache,target=/tmp/uv-cache \
-    uv sync --frozen --no-dev
-
-RUN --mount=type=cache,target=/tmp/uv-cache \
-    uv run --no-dev playwright install chromium \
-    && mkdir -p /app/data/hebat/downloads /app/data/hebat/browser-profiles \
-        /app/data/backups \
-        /app/data/opencode-config/opencode/skills \
-        /tmp/xninetzy-home /tmp/uv-cache \
-    && chmod -R a+rX /ms-playwright \
-    && chmod -R a+rwX /app/data /tmp/xninetzy-home /tmp/uv-cache
-
+COPY pyproject.toml uv.lock README.md LICENSE ./
 COPY xninetzy ./xninetzy
 COPY scripts ./scripts
 COPY .agents ./.agents
-COPY apps/docs ./apps/docs
+RUN --mount=type=cache,target=/tmp/uv-cache \
+    uv sync --frozen --no-dev --no-editable --reinstall-package xninetzy-mcp \
+    && python -I scripts/check_installed_package.py --source /app/xninetzy \
+    && useradd --uid 1000 --create-home xninetzy \
+    && mkdir -p /app/data \
+    && chown xninetzy:xninetzy /app/data
 
-EXPOSE 8000
-EXPOSE 8765
-
-CMD ["uv", "run", "--no-dev", "python", "-m", "uvicorn", "xninetzy.main:app", "--host", "0.0.0.0", "--port", "8000"]
+USER 1000:1000
+CMD ["python", "-m", "xninetzy.interfaces.mcp_server"]

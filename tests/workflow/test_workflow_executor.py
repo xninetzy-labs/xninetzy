@@ -126,6 +126,9 @@ async def test_incomplete_workflow_persists_truthful_status_and_successful_steps
     monkeypatch.setattr(sqlite, "get_settings", lambda: SimpleNamespace(
         SQLITE_PATH=str(tmp_path / "workflow.sqlite3"),
     ))
+    monkeypatch.setenv("ACTION_POLICY_DEFAULT_MODE", "auto")
+    from xninetzy.core.config import get_settings
+    get_settings.cache_clear()
     plan = _plan([
         _action("a1", WorkflowActionType.DEEP_RESEARCH),
         _action("a2", WorkflowActionType.TASK_PLANNING),

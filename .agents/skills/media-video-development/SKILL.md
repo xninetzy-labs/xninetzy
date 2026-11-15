@@ -1,14 +1,15 @@
 ---
-name: "media-video-development"
-description: "Build a deterministic 'development journey' video from prior Xninetzy Development Video sessions. Reuses the existing `.dev-video/{session.json, events.jsonl, storyboard.json}` artifacts. Sections: problem → implementation → failure → debugging → resolution → demonstration. NO keystroke capture; events only."
+name: media-video-development
+description: Builds a development-journey video (problem → implementation → failure → debugging → resolution → demo) from existing .dev-video session artifacts. Use for dev-story videos.
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "video_session_start, video_session_stop, video_asset_import, video_timeline_build, video_scene_create, video_motion_apply, video_render"
-  produces: "development_journey_mp4"
-  tier: "1"
-  engine: "ffmpeg+remotion"
-license: "Xninetzy-Source-Available-2.2.0"
+  scope: media
+  intent_class: MEDIA
+  consumes: video_session_start, video_session_stop, video_asset_import, video_timeline_build, video_scene_create, video_motion_apply, video_render
+  produces: development_journey_mp4
+  tier: '1'
+  engine: ffmpeg+remotion
+  keywords: build capture demonstration deterministic events json jsonl keystroke only prior reuses sections sessions storyboard xninetzy
+license: Xninetzy-Source-Available-2.2.0
 ---
 
 # media-video-development

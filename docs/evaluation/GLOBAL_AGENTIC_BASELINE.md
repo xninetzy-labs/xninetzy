@@ -80,3 +80,9 @@ Candidate files were tokenized after the parent implementation batch. Installed 
 | L0 + L1 + continuity + OpenCode L2 | 5217 | 1835 | -3382 (-64.8%) |
 
 Candidate correction removes absolute host-override language, mandatory FIRST/LAST reasoning loops and universal prefix permission grants, and clarifies workflow customization cannot bypass security boundaries. Static integrity tests validate template/hash contracts; they do not demonstrate LLM prompt-injection resistance, native client parity or authorization behavior. Any active developer mandate in the current host session remains authoritative until changed through that host. Host installation requires a separate reviewed action preserving owner additions and backups.
+
+## Continuation checks
+
+Re-tokenization confirms the canonical Codex composition remains353+1035+275+198 = **1861 cl100k_base tokens**. Canonical hash validation passes; host instruction files are not installed/replaced. MCP connection repair candidates are separate from global prompt distribution: [client implementation](../implementation/CLIENT_CONNECTIONS.md) records eight compatible hosts/nine configuration entries and actual isolated transport probes. Native Claude health and Codex config parsing are verified; complete cross-client reasoning, routing, approval UI and outcome parity remain unverified.
+
+The781-test continuation includes deterministic routing/registry checks, not781 labeled skill-selection tasks. Existing performance group now maps into software and all34 current groups have a canonical mapping; this does not fill the244 tool group-membership gaps or repair all multilingual skill routing. Model self-approval is refused even when a skill/output claims owner consent, but full prompt-injection resistance and trusted authorization across all paths remain open gates.

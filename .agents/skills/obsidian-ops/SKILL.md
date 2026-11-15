@@ -1,11 +1,12 @@
 ---
 name: obsidian-ops
-description: Use when the user asks for vault health, graph analysis, canvas inspection,
+description: 'Read-only Obsidian diagnostics: vault health, graph analysis, canvas inspection, template and daily-note discovery; never modifies the vault without confirmation. Use for vault inspection.'
 metadata:
-  type: "workflow"
-  domain: "obsidian"
-  capabilities: "'[\"obsidian_vault_health\",\"obsidian_graph_analysis\",\"obsidian_canvas_inspect\",\"obsidian_template_list\",\"obsidian_daily_notes_list\"]'"
-  version: "1.0.0"
+  type: workflow
+  domain: obsidian
+  capabilities: '''["obsidian_vault_health","obsidian_graph_analysis","obsidian_canvas_inspect","obsidian_template_list","obsidian_daily_notes_list"]'''
+  version: 1.0.0
+  keywords: asks explicit modify operations owner user when
 ---
 
 

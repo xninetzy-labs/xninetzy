@@ -3,7 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 from datetime import datetime, timezone
-from typing import Any, Callable, Mapping
+from typing import Any, Awaitable, Callable, Mapping
+import asyncio
 
 from xninetzy.db.sqlite import connect
 
@@ -113,3 +114,61 @@ def idempotent_call(
             (_serialize(result), _now_iso(), key),
         )
     return result, True
+
+
+def _reserve_bound(scope: str, token: str, payload: Mapping[str, Any]) -> tuple[str, bool, Any]:
+    """Separate gateway namespace keeps legacy payload-sensitive keys intact."""
+    key = storage_key("gateway-v1:" + scope, token, {})
+    digest = hashlib.sha256(json.dumps(payload, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
+    with connect() as conn:
+        conn.execute(IDEMPOTENCY_TABLE_DDL)
+        conn.execute(IDEMPOTENCY_INDEX_DDL)
+        reserved = conn.execute(
+            "INSERT OR IGNORE INTO idempotency_keys (storage_key,scope,status,result_json,created_at,updated_at) VALUES (?,?,'pending',?,?,?)",
+            (key, "gateway-v1:" + scope, json.dumps({"payload_hash": digest}), _now_iso(), _now_iso()),
+        ).rowcount
+        if reserved:
+            return key, True, None
+        row = conn.execute("SELECT status,result_json FROM idempotency_keys WHERE storage_key=?", (key,)).fetchone()
+        envelope = json.loads(row["result_json"] or "{}") if row else {}
+        if envelope.get("payload_hash") != digest:
+            raise ValueError("idempotency_payload_mismatch")
+        if row["status"] != "done":
+            raise IdempotencyPendingError("idempotency_pending: reconcile prior outcome; automatic takeover is forbidden")
+        return key, False, envelope.get("value")
+
+
+def _finish_bound(key: str, value: Any) -> None:
+    with connect() as conn:
+        row = conn.execute("SELECT result_json FROM idempotency_keys WHERE storage_key=?", (key,)).fetchone()
+        envelope = json.loads(row["result_json"])
+        envelope["value"] = value
+        conn.execute("UPDATE idempotency_keys SET status='done',result_json=?,updated_at=? WHERE storage_key=? AND status='pending'",
+                     (json.dumps(envelope, default=str), _now_iso(), key))
+
+
+async def idempotent_ainvoke(
+    scope: str, token: str, payload: Mapping[str, Any], execute: Callable[[], Awaitable[Any]],
+) -> Any:
+    """Bind one key to exact normalized payload; retain uncertain reservations.
+
+    Timeout, cancellation, handler failure or commit failure never releases the
+    reservation: a sync worker may still finish after async cancellation. This
+    is replay prevention, not an external exactly-once guarantee.
+    """
+    key, reserved, replay = await asyncio.to_thread(_reserve_bound, scope, token, payload)
+    if not reserved:
+        return replay
+    value = await execute()
+    await asyncio.to_thread(_finish_bound, key, value)
+    return value
+
+
+def idempotent_invoke(scope: str, token: str, payload: Mapping[str, Any], execute: Callable[[], Any]) -> tuple[Any, bool]:
+    """Synchronous counterpart with the same durable uncertain-outcome rules."""
+    key, reserved, replay = _reserve_bound(scope, token, payload)
+    if not reserved:
+        return replay, False
+    value = execute()
+    _finish_bound(key, value)
+    return value, True

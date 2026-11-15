@@ -51,10 +51,10 @@ from xninetzy.os.academic.hebat.storage import (
 )
 from xninetzy.os.academic.hebat.submission import (
     generate_token,
-    remove_submission_via_playwright,
+    remove_submission_via_playwright as remove_submission_via_playwright,  # legacy Python export
     upload_submission_via_playwright,
 )
-from xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from xninetzy.os.hitl.approval_service import request_approval, validate_approval, approval_delivery_message, APPROVAL_CHANNEL_UNVERIFIED
 from xninetzy.os.notifications.admin_notifier import notify_admin_approval
 from xninetzy.os.academic.mahasiswa_portal.credential_provider import (
     CampusCredentialError,
@@ -1010,7 +1010,7 @@ async def hebat_upload_submission(
     policy = evaluate_action("hebat_submit_submission", payload)
     if not policy.allowed:
         return tool_error(ToolErrorCode.POLICY_HELD, f"Upload ditahan policy: {policy.reason}")
-    if policy.requires_approval and not _is_owner_chat(chat_id, sub["source_chat_id"]):
+    if policy.requires_approval:
         if approval_id is None:
             requested_id = request_approval(
                 chat_id,
@@ -1026,11 +1026,7 @@ async def hebat_upload_submission(
                 "Upload tugas HEBAT",
                 f"{sub['uploaded_filename']} untuk activity {sub['assignment_id']}.",
             )
-            delivery = (
-                "Tombol approval dikirim ke  admin."
-                if delivered
-                else "Tombol approval gagal dikirim."
-            )
+            delivery = approval_delivery_message(delivered)
             return f"Upload HEBAT membutuhkan approval #{requested_id}. {delivery}"
         try:
             validate_approval(approval_id, "hebat_submit_submission", policy.action_hash)
@@ -1158,7 +1154,7 @@ async def _upload_direct_admin(
     if not policy.allowed:
         return tool_error(ToolErrorCode.POLICY_HELD, f"Upload ditahan policy: {policy.reason}")
 
-    if policy.requires_approval and not _is_owner_chat(chat_id):
+    if policy.requires_approval:
         if approval_id is None:
             requested_id = request_approval(
                 chat_id,
@@ -1170,7 +1166,7 @@ async def _upload_direct_admin(
             )
             return (
                 f"Upload HEBAT direct-admin membutuhkan approval #{requested_id}. "
-                f"Setelah approve, ulangi pemanggilan dengan approval_id={requested_id}."
+                f"{APPROVAL_CHANNEL_UNVERIFIED}"
             )
         try:
             validate_approval(approval_id, "hebat_submit_submission_direct", policy.action_hash)
@@ -1275,8 +1271,10 @@ async def hebat_remove_submission(
     Args:
         chat_id:  chat ID (dari context)
         assignment_id_or_url: cmid assignment atau URL lengkap
-        confirm: True untuk mengeksekusi penghapusan (default False = dry-run)
+        confirm: Permintaan eksekusi, tetap ditahan sampai approval independen tersedia.
     """
+    if confirm:
+        return tool_error(ToolErrorCode.POLICY_HELD, APPROVAL_CHANNEL_UNVERIFIED)
     resolved = _resolve_activity_cmid(assignment_id_or_url, activity_type="assign")
     if not resolved:
         return tool_error(
@@ -1299,46 +1297,12 @@ async def hebat_remove_submission(
     if "no submissions" in status_now or not detail.get("submission_status"):
         return "Tugas ini belum memiliki submission — tidak ada yang dihapus."
 
-    if not confirm:
-        return (
-            f"⚠️ *Siap hapus submission* (dry-run, belum dieksekusi):\n\n"
-            f"*Tugas:* {detail.get('title', '?')}\n"
-            f"*Status saat ini:* {detail.get('submission_status', '?')}\n"
-            f"*Last modified:* {detail.get('last_modified', '?')}\n\n"
-            "Untuk mengeksekusi, ulangi dengan `confirm=true`."
-        )
-
-    all_assigns = list_assignments()
-    assign = next((a for a in all_assigns if str(a.get("cmid", "")) == str(cmid)), None)
-
-    token = generate_token()
-    create_submission(
-        assignment_id=assign["activity_id"] if assign else 0,
-        source_chat_id=chat_id,
-        source_message_id=None,
-        local_file_path="",
-        uploaded_filename=f"remove:{cmid}",
-        confirmation_token=token,
-    )
-
-    result = await remove_submission_via_playwright(
-        chat_id=chat_id,
-        assignment_url=url,
-        token=token,
-    )
-
-    if result["status"] == "removed":
-        return (
-            f"✅ *Submission berhasil dihapus dari HEBAT!*\n\n"
-            f"*Tugas:* {detail.get('title', '?')}\n\n"
-            f"{result.get('verification_text', '')}\n\n"
-            "⚠️ Tetap cek manual di browser untuk memastikan."
-        )
-
     return (
-        f"❌ Penghapusan gagal.\n"
-        f"Error: {result.get('error', 'Unknown error')}\n\n"
-        "Coba lagi atau hapus manual di browser."
+        f"⚠️ *Status submission* (dry-run, belum dieksekusi):\n\n"
+        f"*Tugas:* {detail.get('title', '?')}\n"
+        f"*Status saat ini:* {detail.get('submission_status', '?')}\n"
+        f"*Last modified:* {detail.get('last_modified', '?')}\n\n"
+        f"{APPROVAL_CHANNEL_UNVERIFIED}"
     )
 
 

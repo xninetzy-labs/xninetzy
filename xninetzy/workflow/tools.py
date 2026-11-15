@@ -54,26 +54,25 @@ async def workflow_latest(chat_id: str) -> str:
 
 @tool
 async def workflow_resume(chat_id: str, workflow_id: str) -> str:
-    """Jalankan ulang sebuah workflow berdasarkan ID (MVP: eksekusi ulang inline).
+    """Lanjutkan checkpoint workflow dengan ID yang sama tanpa mengulang langkah sukses.
 
     Args:
         chat_id: Chat  (dari context).
         workflow_id: ID workflow yang mau dilanjutkan.
     """
     from xninetzy.workflow.store import WorkflowStore
-    from xninetzy.workflow.executor import run_workflow
+    from xninetzy.workflow.executor import resume_workflow
     store = WorkflowStore()
     row = store.get(workflow_id)
     if not row or row.get("chat_id") != chat_id:
         return f"Workflow `{workflow_id}` tidak ditemukan untuk chat ini."
-    msg = row.get("original_user_message") or ""
-    logger.info("workflow_resume workflow_id=%s chat_id=%s", workflow_id, chat_id)
-    return await run_workflow(chat_id, msg, from_=True)
+    logger.info("workflow_resume workflow_id=%s", workflow_id)
+    return await resume_workflow(chat_id, workflow_id, from_=True)
 
 
 @tool
 async def workflow_cancel(chat_id: str, workflow_id: str) -> str:
-    """Batalkan workflow yang masih berjalan/pending (mark cancelled)."""
+    """Batalkan workflow berjalan, pending, atau gagal agar tidak dilanjutkan."""
     from xninetzy.workflow.store import WorkflowStore
     store = WorkflowStore()
     ok = store.mark_cancelled(chat_id, workflow_id)

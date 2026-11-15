@@ -3,6 +3,8 @@ from __future__ import annotations
 import subprocess
 from pathlib import Path
 
+import pytest
+
 
 REPO_ROOT = Path(__file__).resolve().parent.parent.parent
 
@@ -48,6 +50,60 @@ def test_release_check_exit_nonzero_on_audit_failure(monkeypatch) -> None:
     )
     rc = sup.main(["release-check"])
     assert rc == 2
+
+
+@pytest.mark.parametrize("failed_check", [
+    "tool_registry", "secret_redaction", "safe_fetch", "transport_config",
+    "sdk_pin", "canonical_final_tools",
+])
+@pytest.mark.parametrize("status", ["BLOCKED", "WARN"])
+def test_release_check_uses_actual_validator_results(
+    monkeypatch, capsys, failed_check: str, status: str,
+) -> None:
+    from xninetzy.cli import supervisor as sup
+    from xninetzy.tools import release_check as checks
+
+    monkeypatch.setattr(sup, "_audit_payload", lambda: ({"tools": {}}, []))
+    invoked = []
+    for name, function in (
+        ("tool_registry", "check_tool_registry"),
+        ("secret_redaction", "check_secret_redaction_module"),
+        ("safe_fetch", "check_safe_fetch_guard"),
+        ("transport_config", "check_transport_config"),
+        ("sdk_pin", "check_sdk_pin"),
+        ("canonical_final_tools", "check_canonical_final_tools"),
+    ):
+        def validator(name=name):
+            invoked.append(name)
+            return checks.CheckResult(
+                name, status if name == failed_check else "PASS", f"measured-{name}",
+            )
+        monkeypatch.setattr(checks, function, validator)
+
+    assert sup.main(["release-check"]) == 1
+    output = capsys.readouterr().out
+    assert len(invoked) == 6
+    assert f"measured-{failed_check}" in output
+    assert status in output
+    assert "overall: FAIL" in output
+    assert "mcp resolved=1.28.1" not in output
+
+
+def test_release_check_validator_exception_fails_without_leaking_detail(monkeypatch, capsys):
+    from xninetzy.cli import supervisor as sup
+    from xninetzy.tools import release_check as checks
+
+    monkeypatch.setattr(sup, "_audit_payload", lambda: ({"tools": {}}, []))
+
+    def broken():
+        raise RuntimeError("synthetic-private-config-sentinel")
+
+    monkeypatch.setattr(checks, "run_release_checks", broken)
+    assert sup.main(["release-check"]) == 2
+    output = capsys.readouterr().out
+    assert "RuntimeError" in output
+    assert "synthetic-private-config-sentinel" not in output
+    assert "overall: FAIL" in output
 
 
 def test_init_creates_configured_paths(tmp_path: Path, monkeypatch) -> None:

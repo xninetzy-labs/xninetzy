@@ -34,7 +34,7 @@ def validate(root: Path) -> dict:
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
         if not isinstance(manifest, dict) or not isinstance(manifest.get("files"), dict):
             raise ValueError("manifest must contain a files object")
-        if manifest.get("version") != "2.0.0":
+        if manifest.get("version") != "2.2.0":
             failures.append("unsupported prompt contract version")
     except (OSError, ValueError) as exc:
         return {"ok": False, "files": [], "failures": [f"manifest: {type(exc).__name__}"]}

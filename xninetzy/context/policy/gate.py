@@ -86,13 +86,21 @@ def evaluate_policy(
                 "idempotency_key": idempotency_key,
             },
         )
-    if cls.requires_approval and approval_id is None:
+    if cls.requires_approval:
         return PolicyDecision(
             outcome=POLICY_REQUIRE_APPROVAL,
             side_effect_class=cls,
             trust_tier=trust_tier,
-            reason=f"side_effect={cls.name} requires HITL approval_id",
-            details={"idempotency_key": idempotency_key},
+            reason=(
+                f"side_effect={cls.name} requires independently verified owner approval; "
+                "an approval_id does not authenticate an approval channel. "
+                "Consequential context execution is unavailable until that boundary is integrated."
+            ),
+            details={
+                "error_code": "approval_channel_unverified",
+                "approval_id": approval_id,
+                "idempotency_key": idempotency_key,
+            },
         )
     if cls.requires_idempotency_key and not idempotency_key:
         return PolicyDecision(

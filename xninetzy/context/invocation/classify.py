@@ -49,7 +49,7 @@ SIDE_EFFECT_TABLE: dict[str, SideEffectClass] = {
     ),
     SIDE_EFFECT_EXTERNAL: SideEffectClass(
         name=SIDE_EFFECT_EXTERNAL,
-        requires_approval=False,
+        requires_approval=True,
         requires_idempotency_key=True,
         allowed_for_unverified=False,
     ),

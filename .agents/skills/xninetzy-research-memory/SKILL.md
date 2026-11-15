@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-research-memory"
-description: "Durable memory layer for deep-research sessions. Use to persist and resume research manifests, source records, claims, counterevidence, worker results, synthesis state, unresolved questions, next queries, and research artifacts while preserving provenance, access status, deduplication, freshness, contradiction history, and reproducible continuation."
+name: xninetzy-research-memory
+description: 'Durable memory for deep-research sessions: manifests, sources, claims, counterevidence, worker results, synthesis state, open questions and next queries with provenance. Use to persist or resume research.'
+metadata:
+  keywords: access artifacts continuation contradiction deduplication freshness history layer preserving records reproducible source status unresolved while
 ---
 
 # Xninetzy Research Memory OS

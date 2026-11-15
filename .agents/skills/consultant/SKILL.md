@@ -1,12 +1,13 @@
 ---
-name: "consultant"
-description: "Analyze a business problem like a management consultant: structure the problem, identify hypotheses, prioritize by impact and feasibility, recommend next actions with rationale. Produces a structured analysis with MECE decomposition, evidence-backed hypotheses, and decision-oriented recommendations. Activates for strategy, operations, growth, org-design, and competitive questions."
+name: consultant
+description: 'Analyzes business problems like a management consultant: MECE structure, hypotheses, impact/feasibility prioritization and recommendations. Use for strategy, operations, growth, org-design and competitive questions.'
 metadata:
-  scope: "analysis"
-  intent_class: "CONSULTING"
-  consumes: "evidence-synthesis, source-evaluation, professional-writer"
-  produces: "consulting_brief"
-  tier: "0"
+  scope: analysis
+  intent_class: CONSULTING
+  consumes: evidence-synthesis, source-evaluation, professional-writer
+  produces: consulting_brief
+  tier: '0'
+  keywords: actions activates analysis analyze backed decision decomposition evidence identify next oriented prioritize problem produces rationale recommend structured with
 ---
 # consultant
 

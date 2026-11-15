@@ -1,0 +1,34 @@
+{
+  "id": "xninetzy.shared-client-guidance",
+  "version": "2.1.0",
+  "scope": "repository-canonical",
+  "applicable_clients": [
+    "codex",
+    "claude-code",
+    "opencode"
+  ],
+  "change": "Merge owner operational detail into the v2.0.0 authority model; hybrid skill routing; scoped sequential thinking; remove duplicated sections; Claude Code adapter imports the shared files with @path.",
+  "evaluation": "tests/governance/test_prompt_contract.py",
+  "rollback": "Restore previous versions from Git; host installations remain unchanged.",
+  "last_verified_configuration": "Local static validation; live cross-client parity NOT_VERIFIED_IN_LIVE_ENVIRONMENT",
+  "files": {
+    "CORE_PROMPT.md": {
+      "sha256": "3d4727157f1d27db24e8f8761924dcdd8a22ff0864df6f0c9af47b1eb5b2d3a6"
+    },
+    "CORE_RULES.md": {
+      "sha256": "5c456b38145997dc916be1f6a626d611b91299efb2890ff388b2904f9ea6b23b"
+    },
+    "CLI_SHARED_INSTRUCTIONS.md": {
+      "sha256": "8778ff26a8d5bedb5b7117c7579ff18ea21a51892347c8c639bdbcbf0c493621"
+    },
+    "cli-overrides/codex-AGENTS.md": {
+      "sha256": "1a6919eb8a4df2a6ec8fae178dd2ee25502fa3cf46323b5ef09a63838dae9725"
+    },
+    "cli-overrides/claude-CLAUDE.md": {
+      "sha256": "5c6fc66e2fa389d83bbe6450c43d1235cabda75b446ef5a02759c7e899b41765"
+    },
+    "cli-overrides/opencode-xninetzy-paksa.md": {
+      "sha256": "c88899767b893cb97d296927ddd3d6af9e35795ef7fa5c545897374d03c07748"
+    }
+  }
+}

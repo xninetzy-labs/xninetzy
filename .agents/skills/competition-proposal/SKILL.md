@@ -1,12 +1,13 @@
 ---
-name: "competition-proposal"
-description: "Draft a proposal optimized for a specific competition: analyze rubric, map requirements to deliverables, maximize score on weighted criteria, surface assumptions and risks. Activates when the user names a competition or supplies a rubric."
+name: competition-proposal
+description: 'Drafts a proposal optimized for a named competition: rubric analysis, requirement-to-deliverable mapping, weighted-score maximization and risks. Use when the user names a competition or supplies a rubric.'
 metadata:
-  scope: "writing"
-  intent_class: "PROPOSAL"
-  consumes: "proposal-writer, requirement-coverage, scoring-rubric"
-  produces: "competition_proposal"
-  tier: "0"
+  scope: writing
+  intent_class: PROPOSAL
+  consumes: proposal-writer, requirement-coverage, scoring-rubric
+  produces: competition_proposal
+  tier: '0'
+  keywords: activates analyze assumptions criteria deliverables draft map maximize requirements specific surface
 ---
 # competition-proposal
 

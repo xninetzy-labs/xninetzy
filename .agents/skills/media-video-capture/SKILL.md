@@ -1,13 +1,14 @@
 ---
-name: "media-video-capture"
-description: "Capture a running Xninetzy project (browser tab, local web app, desktop monitor, terminal) into a deterministic video asset using the existing browser gateway + FFmpeg CPU capture. NEVER captures keystrokes, passwords, secrets, or out-of-scope windows. CPU-only (no NVENC / QSV)."
+name: media-video-capture
+description: Captures a running project (browser tab, local web app, monitor, terminal) into a deterministic video asset via the browser gateway and CPU FFmpeg; never records keystrokes or secrets. Use for screen-capture footage.
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "xninetzy browser gateway, ffmpeg x11grab/avfoundation/gdigrab, xninetzy os jobs service"
-  produces: "captured_video_segment"
-  tier: "1"
-  engine: "ffmpeg,cpu-capture"
+  scope: media
+  intent_class: MEDIA
+  consumes: xninetzy browser gateway, ffmpeg x11grab/avfoundation/gdigrab, xninetzy os jobs service
+  produces: captured_video_segment
+  tier: '1'
+  engine: ffmpeg,cpu-capture
+  keywords: desktop existing nvenc only out passwords qsv scope using windows xninetzy
 ---
 
 # media-video-capture

@@ -1,12 +1,13 @@
 ---
-name: "literature-review-writer"
-description: "Synthesize a literature review from a set of sources or a ResearchPacket. Structures by theme, method, chronology, or debate. Surfaces contradictions and gaps explicitly. Activates when sources, papers, or a research packet are provided."
+name: literature-review-writer
+description: Writes a literature review from supplied sources or a ResearchPacket, organized by theme, method, chronology or debate, with explicit contradictions and gaps. Use when the sources are already in hand.
 metadata:
-  scope: "writing"
-  intent_class: "ACADEMIC"
-  consumes: "source-evaluation, evidence-synthesis, citation-validation"
-  produces: "literature_review"
-  tier: "0"
+  scope: writing
+  intent_class: ACADEMIC
+  consumes: source-evaluation, evidence-synthesis, citation-validation
+  produces: literature_review
+  tier: '0'
+  keywords: activates explicitly packet papers provided research set structures surfaces synthesize
 ---
 # literature-review-writer
 

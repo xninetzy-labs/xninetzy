@@ -1,12 +1,6 @@
 ---
 name: mcp-development
-description: 'Engineering discipline for Xninetzy''s MCP tool surface. Enforces the
-  canonical rules: strict Pydantic input/output schemas, FastMCP-compatible metadata
-  (`annotations`, `meta`), explicit risk class via `manifest_for`, principal propagation
-  via `MCPPrincipal`, idempotency on mutations, bounded output size, deterministic
-  error contracts, unit + integration tests, registration through the canonical registry.
-  Use whenever the operator asks to add, modify, or remove an MCP tool, change a tool
-  signature, or audit the registry.'
+description: 'Engineering rules for Xninetzy MCP tools: Pydantic schemas, FastMCP metadata, risk class via manifest_for, MCPPrincipal propagation, idempotency, bounded output, error contracts, tests and canonical registration. Use when adding, changing or auditing an MCP tool.'
 metadata:
   author: xninetzy
   version: 1.0.0
@@ -14,9 +8,9 @@ metadata:
   priority: P1
   required_tools: '["tool_catalog","skill_list","grep_search","read_file","write_file","bash_run","pytest_run","manifest_for","meta_for"]'
   optional_tools: '["action_policy_evaluate","lightning_record_action","hitl_request_approval","skill_creator","skill_security_review"]'
-  trigger_conditions: '["the operator asks to add or modify an MCP tool","the operator
-    asks to audit the registry","the operator reports a tool signature change"]'
+  trigger_conditions: '["the operator asks to add or modify an MCP tool","the operator asks to audit the registry","the operator reports a tool signature change"]'
   prerequisites: '["target tool name (or \"all\")","explicit git branch"]'
+  keywords: add annotations asks audit change compatible deterministic discipline enforces explicit input integration meta modify mutations operator principal registry remove signature size strict surface through unit whenever
 ---
 
 

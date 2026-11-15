@@ -1,11 +1,12 @@
 ---
 name: tableau-workbook-builder
-description: Build Tableau .twb / .twbx workbooks declaratively from CSV inputs via the xninetzy Tableau integration. Use when the user asks for a Tableau dashboard, .twb generation, Tableau storyboard, or wants to compile KPIs / maps / heatmaps without opening Tableau Desktop.
+description: 'Builds Tableau .twb/.twbx workbooks declaratively from CSV via the Xninetzy Tableau integration: KPIs, maps, heatmaps, dashboards and stories. Use when the user wants a Tableau dashboard without Tableau Desktop.'
 metadata:
-  domain: "tableau"
-  inputs: "csv_paths, visualization_specs, optional template"
-  outputs: "twb_file_in_workspace, optional twbx_archive"
-  tier: "2"
+  domain: tableau
+  inputs: csv_paths, visualization_specs, optional template
+  outputs: twb_file_in_workspace, optional twbx_archive
+  tier: '2'
+  keywords: asks build compile for generation inputs opening storyboard
 ---
 
 # tableau-workbook-builder

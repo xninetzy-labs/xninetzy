@@ -1,4 +1,4 @@
-"""Runs a WorkflowPlan action-by-action with WA progress notifications.
+"""Runs a WorkflowPlan action-by-action with owner progress notifications.
 
 Behaviour:
   * actions run in order (linear dependency); a dependency that did not succeed
@@ -14,9 +14,11 @@ Runs inline within the current request (no background queue) — see
 from __future__ import annotations
 
 import time
+from contextlib import nullcontext
 
 from xninetzy.core.config import get_settings
 from xninetzy.core.logging import logging
+from xninetzy.core.security import sanitize_tool_output
 from xninetzy.workflow.actions import execute_action
 from xninetzy.workflow.models import (
     WorkflowAction,
@@ -26,10 +28,18 @@ from xninetzy.workflow.models import (
     WorkflowExecutionResult,
     WorkflowPlan,
     WorkflowState,
+    WorkflowCheckpoint,
 )
 from xninetzy.workflow.notifier import WorkflowNotifier
+from xninetzy.workflow.store import WorkflowRecoveryError, plan_fingerprint
 
 logger = logging.getLogger(__name__)
+
+_SAFE_RETRY = {
+    WorkflowActionType.REMINDER_LIST, WorkflowActionType.FINAL_SYNTHESIS,
+    WorkflowActionType.WEB_SEARCH, WorkflowActionType.YOUTUBE_SEARCH, WorkflowActionType.PAPER_SEARCH,
+    WorkflowActionType.HEBAT_COURSE_DETAIL, WorkflowActionType.HEBAT_ASSIGNMENT_DETAIL,
+}
 
 
 class WorkflowExecutor:
@@ -39,21 +49,89 @@ class WorkflowExecutor:
         self.store = store
 
     async def execute(
-        self, plan: WorkflowPlan, state: WorkflowState | None = None
+        self, plan: WorkflowPlan, state: WorkflowState | None = None, *, resume: bool = False,
+    ) -> WorkflowExecutionResult:
+        try:
+            ids = [a.id for a in plan.actions]
+            if len(ids) != len(set(ids)) or len(ids) > get_settings().WORKFLOW_MAX_ACTIONS:
+                raise WorkflowRecoveryError("workflow_plan_invalid")
+            seen = set()
+            for action in plan.actions:
+                if any(dependency not in seen for dependency in action.depends_on):
+                    raise WorkflowRecoveryError("workflow_dependencies_invalid")
+                seen.add(action.id)
+            st = state or WorkflowState(plan_id=plan.id, chat_id=plan.chat_id, original_user_message=plan.original_user_message)
+            if st.plan_id != plan.id or st.chat_id != plan.chat_id or st.original_user_message != plan.original_user_message:
+                raise WorkflowRecoveryError("workflow_owner_mismatch")
+            if self.store:
+                from xninetzy.os.policy.action_policy import evaluate_action
+                decision = evaluate_action("workflow_resume")
+                if not decision.allowed or decision.requires_approval:
+                    raise WorkflowRecoveryError("workflow_policy_held")
+            with self.store.execution_lock(plan.id) if self.store else nullcontext():
+                previous = None
+                if self.store:
+                    row = self.store.get(plan.id)
+                    if row:
+                        if row["chat_id"] != plan.chat_id:
+                            raise WorkflowRecoveryError("workflow_owner_mismatch")
+                        if row["status"] == "cancelled":
+                            raise WorkflowRecoveryError("workflow_cancelled")
+                        previous = self.store.restore_checkpoint(plan)
+                        if row["status"] == "success":
+                            if any(a.status != WorkflowActionStatus.SUCCESS for a in plan.actions):
+                                raise WorkflowRecoveryError("workflow_completion_unverified")
+                            return previous.model_copy(update={"final_response": "Hasil tersimpan (tanpa eksekusi ulang):\n" + previous.final_response})
+                        if not resume:
+                            raise WorkflowRecoveryError("workflow_already_exists_use_resume")
+                        for action in plan.actions:
+                            if action.status not in {WorkflowActionStatus.PENDING, WorkflowActionStatus.SUCCESS}:
+                                if action.type not in _SAFE_RETRY:
+                                    raise WorkflowRecoveryError("workflow_uncertain_outcome_reconcile")
+                                if any(a.status == WorkflowActionStatus.SUCCESS and action.id in a.depends_on for a in plan.actions):
+                                    raise WorkflowRecoveryError("workflow_completed_dependency_requires_review")
+                        st = previous.checkpoint.state
+                    elif resume:
+                        raise WorkflowRecoveryError("workflow_not_found")
+                    else:
+                        self.store.save_plan(plan, st)
+                return await self._execute(plan, st, previous=previous)
+        except WorkflowRecoveryError as exc:
+            return WorkflowExecutionResult(plan_id=plan.id, status=WorkflowActionStatus.FAILED, final_response=f"Pekerjaan ditahan: {exc}. Periksa checkpoint sebelum mengulang aksi.")
+        except Exception as exc:
+            logger.warning("workflow_checkpoint_error type=%s", type(exc).__name__)
+            return WorkflowExecutionResult(plan_id=plan.id, status=WorkflowActionStatus.FAILED, final_response="workflow_checkpoint_unverified: periksa state dan penyimpanan sebelum melanjutkan.")
+
+    async def _execute(
+        self, plan: WorkflowPlan, state: WorkflowState | None = None, *, previous=None,
     ) -> WorkflowExecutionResult:
         st = state or WorkflowState(
             plan_id=plan.id, chat_id=plan.chat_id,
             original_user_message=plan.original_user_message,
         )
-        results: list[WorkflowActionResult] = []
+        prior = {r.action_id: r for r in previous.action_results} if previous else {}
+        results: list[WorkflowActionResult] = [r for r in prior.values() if r.status == WorkflowActionStatus.SUCCESS]
         succeeded_ids: set[str] = set()
         skipped_ids: set[str] = set()
         stopped = False
-
-        if self.store:
-            self.store.save_plan(plan)
+        budget = float(get_settings().XNINETZY_TOOL_TIMEOUT_SECONDS)
+        if not 0 < budget <= 900:
+            raise WorkflowRecoveryError("workflow_invalid_deadline")
+        deadline = time.monotonic() + budget
 
         for action in plan.actions:
+            if action.status == WorkflowActionStatus.SUCCESS and action.id in prior:
+                succeeded_ids.add(action.id)
+                continue
+            if time.monotonic() >= deadline:
+                raise WorkflowRecoveryError("workflow_deadline_exceeded")
+            if self.store:
+                from xninetzy.os.policy.action_policy import evaluate_action
+                decision = evaluate_action("workflow_resume")
+                if not decision.allowed or decision.requires_approval:
+                    raise WorkflowRecoveryError("workflow_policy_held")
+                if self.store.get(plan.id)["status"] == "cancelled":
+                    break
             # Only a *skipped* dependency cascades. A non-critical failure does
             # NOT block downstream (spec: "download gagal → tetap lanjut planning").
             unmet = [d for d in action.depends_on if d in skipped_ids]
@@ -67,17 +145,24 @@ class WorkflowExecutor:
                 ))
                 logger.info("workflow_action_skipped workflow_id=%s action_id=%s type=%s",
                             plan.id, action.id, action.type.value)
-                self._persist_action(action, plan.id)
+                self._persist_action(action, plan, st, results)
                 continue
 
             action.status = WorkflowActionStatus.RUNNING
+            action.error = None
+            action.result_summary = None
+            self._persist_action(action, plan, st, results)
             started = time.monotonic()
             logger.info("workflow_action_started workflow_id=%s action_id=%s type=%s",
                         plan.id, action.id, action.type.value)
             if self.notifier:
-                await self.notifier.notify_action_started(plan, action)
+                await self._notify("notify_action_started", plan, action)
 
             result = await execute_action(action, st, self.handlers)
+            if result.action_id != action.id or result.status not in {WorkflowActionStatus.SUCCESS, WorkflowActionStatus.FAILED, WorkflowActionStatus.SKIPPED}:
+                raise WorkflowRecoveryError("workflow_action_result_invalid")
+            result = WorkflowActionResult.model_validate(sanitize_tool_output(result.model_dump(mode="json")))
+            result.action_id = action.id
             duration_ms = int((time.monotonic() - started) * 1000)
             action.status = result.status
             action.result_summary = result.summary
@@ -88,12 +173,13 @@ class WorkflowExecutor:
                 succeeded_ids.add(action.id)
                 if result.summary:
                     st.summaries.append(result.summary)
+                self._persist_action(action, plan, st, results)
                 logger.info(
                     "workflow_action_success workflow_id=%s action_id=%s type=%s duration_ms=%d",
                     plan.id, action.id, action.type.value, duration_ms,
                 )
                 if self.notifier:
-                    await self.notifier.notify_action_done(plan, action)
+                    await self._notify("notify_action_done", plan, action)
             else:
                 logger.info(
                     "workflow_action_failed workflow_id=%s action_id=%s type=%s "
@@ -101,14 +187,12 @@ class WorkflowExecutor:
                     plan.id, action.id, action.type.value, duration_ms,
                     action.critical, type(action.error).__name__,
                 )
+                self._persist_action(action, plan, st, results)
                 if self.notifier:
-                    await self.notifier.notify_action_failed(plan, action)
+                    await self._notify("notify_action_failed", plan, action)
                 if action.critical:
                     stopped = True
-                    self._persist_action(action, plan.id)
                     break
-
-            self._persist_action(action, plan.id)
 
         final_response = self._build_final_response(plan, st, results, stopped)
         overall = (
@@ -120,11 +204,15 @@ class WorkflowExecutor:
         exec_result = WorkflowExecutionResult(
             plan_id=plan.id, status=overall, final_response=final_response,
             action_results=results,
+            checkpoint=WorkflowCheckpoint(plan_hash=plan_fingerprint(plan), state=st),
         )
         if self.store:
-            self.store.save_result(plan, exec_result)
+            if self.store.get(plan.id)["status"] == "cancelled":
+                exec_result.status = WorkflowActionStatus.CANCELLED
+                exec_result.final_response = "Workflow dibatalkan; hasil langkah yang sudah selesai tetap tersimpan."
+            exec_result = self.store.save_result(plan, exec_result)
         if self.notifier:
-            await self.notifier.notify_final(plan, self._one_line(plan, results))
+            await self._notify("notify_final", plan, self._one_line(plan, results))
         logger.info("workflow_final_synthesis_created workflow_id=%s status=%s",
                     plan.id, overall.value)
         return exec_result
@@ -134,8 +222,8 @@ class WorkflowExecutor:
     def _build_final_response(self, plan, state, results, stopped) -> str:
         # Prefer the FINAL_SYNTHESIS step's output if it ran.
         final = next(
-            (r for r, a in zip(results, plan.actions)
-             if a.type == WorkflowActionType.FINAL_SYNTHESIS
+            (r for r in results
+             if _is_final(plan, r)
              and r.status == WorkflowActionStatus.SUCCESS),
             None,
         )
@@ -164,12 +252,19 @@ class WorkflowExecutor:
         ok = sum(1 for r in results if r.status == WorkflowActionStatus.SUCCESS)
         return f"{ok}/{len(results)} langkah berhasil."
 
-    def _persist_action(self, action: WorkflowAction, workflow_id: str) -> None:
+    async def _notify(self, method, *args):
+        try:
+            await getattr(self.notifier, method)(*args)
+        except Exception as exc:
+            logger.warning("workflow_notification_error type=%s", type(exc).__name__)
+
+    def _persist_action(self, action: WorkflowAction, plan, state, results) -> None:
+        if state.plan_id != plan.id or state.chat_id != plan.chat_id or state.original_user_message != plan.original_user_message:
+            raise WorkflowRecoveryError("workflow_context_mismatch")
+        order = {a.id: index for index, a in enumerate(plan.actions)}
+        results.sort(key=lambda r: order[r.action_id])
         if self.store:
-            try:
-                self.store.save_action(action, workflow_id)
-            except Exception:  # pragma: no cover
-                pass
+            self.store.save_checkpoint(plan, state, results, action)
 
 
 def _is_final(plan: WorkflowPlan, result: WorkflowActionResult) -> bool:
@@ -192,12 +287,8 @@ async def run_workflow(
         if (from_ and settings.WORKFLOW_NOTIFY_ENABLED)
         else None
     )
-    store = None
-    try:
-        from xninetzy.workflow.store import WorkflowStore
-        store = WorkflowStore()
-    except Exception:  # pragma: no cover
-        store = None
+    from xninetzy.workflow.store import WorkflowStore
+    store = WorkflowStore()
 
     state = WorkflowState(
         plan_id=plan.id, chat_id=chat_id, original_user_message=user_message,
@@ -205,4 +296,24 @@ async def run_workflow(
     )
     executor = WorkflowExecutor(notifier=notifier, store=store)
     result = await executor.execute(plan, state)
+    return result.final_response
+
+
+async def resume_workflow(chat_id: str, workflow_id: str, *, from_: bool = True, handlers=None) -> str:
+    """Resume the exact persisted plan; never regenerate from natural language."""
+    from xninetzy.workflow.store import WorkflowStore
+
+    store = WorkflowStore()
+    try:
+        row = store.get(workflow_id)
+        if not row or row["chat_id"] != chat_id:
+            return "workflow_not_found: workflow tidak ditemukan untuk owner ini."
+        plan = WorkflowPlan.model_validate_json(row["plan_json"])
+        if plan.id != workflow_id or plan.chat_id != chat_id:
+            return "workflow_owner_mismatch: checkpoint tidak sesuai owner atau ID workflow."
+    except Exception:
+        return "workflow_checkpoint_unavailable: periksa penyimpanan dan checkpoint."
+    settings = get_settings()
+    notifier = WorkflowNotifier(chat_id) if from_ and settings.WORKFLOW_NOTIFY_ENABLED else None
+    result = await WorkflowExecutor(store=store, handlers=handlers, notifier=notifier).execute(plan, resume=True)
     return result.final_response

@@ -172,14 +172,6 @@ def html_to_text_blocks(html: str) -> list[BeautifulSoup]:
     return [BeautifulSoup(html, "lxml")]
 
 
-def make_session(*, owner: str = "career-scraper") -> BrowserSession:
-    if not browser_scraping_enabled():
-        return _DisabledSession(
-            "browser scraping disabled via XNINETZY_BROWSER_SCRAPING_ENABLED=0"
-        )
-    return GatewayBrowserSession(owner=owner)
-
-
 _SHARED_SESSION: BrowserSession | None = None
 _SHARED_LOCK = asyncio.Lock()
 

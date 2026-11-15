@@ -8,7 +8,7 @@ from xninetzy.os.academic.qa_portal.automation import (
     list_questionnaires,
 )
 
-from xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from xninetzy.os.hitl.approval_service import request_approval, validate_approval, approval_delivery_message
 from xninetzy.os.notifications.admin_notifier import notify_admin_approval
 from xninetzy.os.policy.action_policy import evaluate_action
 from xninetzy.os.research.permissions import is_owner_admin
@@ -65,7 +65,7 @@ async def qa_fill_kuesioner(
                 "Isi kuesioner QA",
                 f"{len(entries)} kuesioner dengan skor {score}.",
             )
-            delivery = "Tombol approval dikirim ke  admin." if delivered else "Tombol approval gagal dikirim."
+            delivery = approval_delivery_message(delivered)
             return f"Pengisian QA membutuhkan approval #{requested_id}. {delivery}"
         try:
             validate_approval(approval_id, "qa_submit_kuesioner", policy.action_hash)

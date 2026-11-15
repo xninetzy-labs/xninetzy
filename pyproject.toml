@@ -86,6 +86,7 @@ documents = [
     "pypdf>=4.0",
     "pdfplumber>=0.11",
     "pypdfium2>=4.30",
+    "pillow>=10.0",
 ]
 browser = [
     "playwright>=1.40",

@@ -1,12 +1,13 @@
 ---
-name: "grant-proposal"
-description: "Draft a grant proposal aligned to funder priorities: problem statement, intervention logic, theory of change, evidence of effectiveness, budget justification, evaluation plan, sustainability. Activates when funder type, RFP, or call text is provided."
+name: grant-proposal
+description: 'Drafts grant proposals aligned to funder priorities: problem, theory of change, evidence, budget justification, evaluation and sustainability. Use when a funder, RFP or call text is provided.'
 metadata:
-  scope: "writing"
-  intent_class: "PROPOSAL"
-  consumes: "proposal-writer, evidence-synthesis, source-evaluation"
-  produces: "grant_proposal"
-  tier: "0"
+  scope: writing
+  intent_class: PROPOSAL
+  consumes: proposal-writer, evidence-synthesis, source-evaluation
+  produces: grant_proposal
+  tier: '0'
+  keywords: activates draft effectiveness intervention logic plan proposal statement type
 ---
 # grant-proposal
 

@@ -120,6 +120,8 @@ def graph_v3_stats() -> str:
         f"Enabled: {s['enabled']}\n"
         f"Node aktif: {s['active_nodes']}, Edge aktif: {s['active_edges']}\n"
         f"Outbox pending: {s['outbox_pending']}\n"
+        f"Projection worker configured: {s['worker']['configured']}, "
+        f"running: {s['worker']['running']}, inflight: {s['worker']['inflight']}\n"
         f"Neo4j online: {s['neo4j_available']}\n"
         f"Neo4j configured: {neo4j['configured']}\n"
         f"Neo4j failure cooldown: {neo4j['cooldown_seconds']}s"

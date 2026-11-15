@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import argparse
 import re
-import shutil
 from pathlib import Path
 
 import yaml
@@ -262,7 +261,6 @@ def parse_frontmatter(fm_body: str) -> dict:
             and value_part.count("'") % 2 == 1
         ):
             buf = [value_part]
-            quote_open = True
             j = i + 1
             while j < len(lines):
                 nxt = lines[j]
@@ -274,7 +272,6 @@ def parse_frontmatter(fm_body: str) -> dict:
                     break
                 buf.append(nxt)
                 if nxt.rstrip().endswith("'") and not nxt.rstrip().endswith("''"):
-                    quote_open = False
                     j += 1
                     break
                 j += 1

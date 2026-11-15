@@ -1,6 +1,8 @@
 ---
 name: todolife-budget-tracker
-description: Track daily food spending against Rp20.000/day ceiling. Read-only — never mutates the daily note. Activates when the user asks "berapa hari ini", "food budget", or during end-of-day review.
+description: Read-only tracker of daily food spending against the Rp20.000/day ceiling. Use for 'berapa hari ini', 'food budget' or the end-of-day review.
+metadata:
+  keywords: activates asks during mutates never note track user when
 ---
 
 # todolife-budget-tracker

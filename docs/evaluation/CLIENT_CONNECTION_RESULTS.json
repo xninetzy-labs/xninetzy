@@ -1,0 +1,1541 @@
+{
+  "candidate_transport_probes": [
+    {
+      "client": "codex",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 10.597
+    },
+    {
+      "client": "claude",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 5.646
+    },
+    {
+      "client": "opencode",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.931
+    },
+    {
+      "client": "opencode-jsonc",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 5.961
+    },
+    {
+      "client": "gemini",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.776
+    },
+    {
+      "client": "qwen",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 5.523
+    },
+    {
+      "client": "kilo",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.728
+    },
+    {
+      "client": "cursor",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.668
+    },
+    {
+      "client": "vscode",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 5.769
+    }
+  ],
+  "host_configs_modified": true,
+  "owner_data_opened": false,
+  "native_client_sessions": "NOT_VERIFIED",
+  "interpretation": "Nine installed entries/eight host profiles have SDK transport verification. OpenCode2.x schema follow-up is installed; native OpenCode health remains NOT_VERIFIED. Active Codex session now performs real safe reads. SDK success is not native cross-client parity.",
+  "native_checks": [
+    {
+      "client": "claude",
+      "command": "claude mcp get xninetzy",
+      "connected": true,
+      "state": "temporary"
+    },
+    {
+      "client": "codex",
+      "command": "codex -c <candidate overrides> mcp get xninetzy --json",
+      "registration_parse": true,
+      "candidate_command_matches": true,
+      "persistent_changes": false
+    },
+    {
+      "client": "codex",
+      "command": "codex mcp get xninetzy --json",
+      "installed_registration_parse": true,
+      "command_and_store_A_match": true,
+      "scope": "configuration only; no MCP owner-state process started"
+    }
+  ],
+  "unsupported": [
+    {
+      "client": "ArkCLI 1.0.25",
+      "reason": "generic local MCP-host support not established"
+    },
+    {
+      "client": "Copilot standalone",
+      "reason": "installed executable is VS Code shim; standalone CLI exits127; use VS Code Copilot host"
+    }
+  ],
+  "installation": {
+    "date_local": "2026-11-11",
+    "owner_selection": "A",
+    "canonical_store": "/home/misbahul45/code/xninetzy/services/ai/data/xninetzy.sqlite3",
+    "entries": [
+      {
+        "client": "codex",
+        "path": "/home/misbahul45/.codex/config.toml",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "claude",
+        "path": "/home/misbahul45/.claude.json",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "opencode",
+        "path": "/home/misbahul45/.config/opencode/opencode.json",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "opencode-jsonc",
+        "path": "/home/misbahul45/.config/opencode/opencode.jsonc",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "gemini",
+        "path": "/home/misbahul45/.gemini/settings.json",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "qwen",
+        "path": "/home/misbahul45/.qwen/settings.json",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "kilo",
+        "path": "/home/misbahul45/.config/kilo/kilo.jsonc",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "cursor",
+        "path": "/home/misbahul45/.cursor/mcp.json",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      },
+      {
+        "client": "vscode",
+        "path": "/home/misbahul45/.config/Code/User/mcp.json",
+        "applied": true,
+        "backup_mode": "0600",
+        "installed_hash_verified": true,
+        "permissions_preserved": true
+      }
+    ],
+    "host_count": 8,
+    "protected_databases_and_global_prompt_hashes_unchanged": true,
+    "owner_database_connection_started": false,
+    "global_prompts_modified": false,
+    "repeat_plan_changes": 0,
+    "private_rollback_receipt": "/home/misbahul45/.xninetzy/mcp-client-install-20261110T171832470918Z.json",
+    "native_gui_reload": "NOT_VERIFIED"
+  },
+  "post_install_isolated_transport_probes": [
+    {
+      "client": "codex",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 5.271
+    },
+    {
+      "client": "claude",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.348
+    },
+    {
+      "client": "opencode",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 6.913
+    },
+    {
+      "client": "opencode-jsonc",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 5.399
+    },
+    {
+      "client": "gemini",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.534
+    },
+    {
+      "client": "qwen",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 6.749
+    },
+    {
+      "client": "kilo",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.603
+    },
+    {
+      "client": "cursor",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.532
+    },
+    {
+      "client": "vscode",
+      "status": "passed",
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "seconds": 4.646
+    }
+  ],
+  "post_install_probe_scope": {
+    "command_and_non_state_config": "installed entries",
+    "mutable_state": "temporary overrides",
+    "native_client_sessions": "NOT_VERIFIED",
+    "owner_database_runtime": "NOT_VERIFIED; no migration-capable startup performed"
+  },
+  "latest_sdk_verification": {
+    "date": "2026-11-14",
+    "probes": [
+      {
+        "client": "codex",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.193
+      },
+      {
+        "client": "claude",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.109
+      },
+      {
+        "client": "opencode",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.004
+      },
+      {
+        "client": "opencode-jsonc",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 6.0
+      },
+      {
+        "client": "gemini",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.594
+      },
+      {
+        "client": "qwen",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 6.966
+      },
+      {
+        "client": "kilo",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 7.077
+      },
+      {
+        "client": "cursor",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 8.567
+      },
+      {
+        "client": "vscode",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 6.499
+      }
+    ],
+    "state": "temporary",
+    "native_parity": false
+  },
+  "active_codex_session": {
+    "date": "2026-11-14",
+    "server_tools_available": true,
+    "datetime_now_safe_read": "passed",
+    "skill_suggest_for_request": "passed",
+    "skill_get": "mcp-development",
+    "deliberate_owner_data_write": false,
+    "limitations": "Does not establish every native host, approval integrity or absence of application telemetry."
+  },
+  "opencode_v2_followup": {
+    "version": "2.2.6",
+    "schema": "mcp.servers.xninetzy",
+    "enable_flag": "disabled; legacy enabled converted with conflict rejection",
+    "installed_entries": [
+      "opencode",
+      "opencode-jsonc"
+    ],
+    "unchanged_unrelated_config_verified": true,
+    "private_receipt": "/home/misbahul45/.xninetzy/mcp-opencode-v2-install-20261114T102613327525Z.json",
+    "native_probe": "NOT_VERIFIED",
+    "native_observation": "Native add writes nested schema; isolated mcp list still says No MCP servers configured.",
+    "scope": "Isolated XDG directories, temporary server state, no real OpenCode service restart; cause UNKNOWN",
+    "limitations": "Current adapter targets verified OpenCode2.x; Kilo remains flat; OpenCode1.x native support not verified."
+  },
+  "phase1_gateway_source_probes": {
+    "candidate_transport_probes": [
+      {
+        "client": "codex",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 6.03
+      },
+      {
+        "client": "claude",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.952
+      },
+      {
+        "client": "opencode",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 6.517
+      },
+      {
+        "client": "opencode-jsonc",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.978
+      },
+      {
+        "client": "gemini",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 6.004
+      },
+      {
+        "client": "qwen",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.877
+      },
+      {
+        "client": "kilo",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.514
+      },
+      {
+        "client": "cursor",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.422
+      },
+      {
+        "client": "vscode",
+        "status": "passed",
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "seconds": 5.93
+      }
+    ],
+    "host_configs_modified": false,
+    "owner_data_opened": false,
+    "native_client_sessions": "NOT_VERIFIED",
+    "date": "2026-11-14",
+    "scope": "Final source SDK safe-read probes; native host activation and owner-state mutation not tested."
+  },
+  "phase1_isolated_container": {
+    "image": "xninetzy:phase1-20261114",
+    "first_start": {
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "safe_read": "passed",
+      "write": "passed",
+      "unverified_confirmation_denied": true,
+      "write_without_key_denied": true,
+      "modified_payload_denied": true,
+      "schema_policy_metadata": "passed",
+      "idempotent_replay_after_restart": "not_applicable"
+    },
+    "restart": {
+      "tools": 571,
+      "protocol": "2025-11-25",
+      "safe_read": "passed",
+      "restart_persistence": "passed",
+      "unverified_confirmation_denied": true,
+      "write_without_key_denied": true,
+      "modified_payload_denied": true,
+      "schema_policy_metadata": "passed",
+      "idempotent_replay_after_restart": "passed"
+    },
+    "owner_data_mounted": false,
+    "network": "none",
+    "read_only_root": true,
+    "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery.",
+    "date": "2026-11-14",
+    "image_id": "sha256:4cfa64c0ebbce8fd006a95dadd8955f8c006d8941969957b448217907e843765",
+    "policy_catalog_sha256": "a0fe8553e8892306b56c701658bcf65f56503820ab3f91dbe42a9a1e26009b9b"
+  },
+  "internal_approval_continuation": {
+    "date": "2026-11-14",
+    "image_id": "sha256:2866147d6cb006a2fce10703accf46bc7589b314436eae966c0fd75cfe2fc90a",
+    "container_smoke": {
+      "image": "xninetzy:approval-hardening-20261114",
+      "first_start": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "write": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "not_applicable"
+      },
+      "restart": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "restart_persistence": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "passed"
+      },
+      "owner_data_mounted": false,
+      "network": "none",
+      "read_only_root": true,
+      "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery."
+    },
+    "installed_service_probe": {
+      "raw_service_approval": "blocked",
+      "legacy_approved_record": "blocked",
+      "owner_data_mounted": false,
+      "network": "none"
+    },
+    "installed_runtime_parity": {
+      "changed": [],
+      "extra": [],
+      "files_checked": 663,
+      "missing": [],
+      "ok": true
+    },
+    "integrated_tests": {
+      "passed": 361,
+      "seconds": 225.86,
+      "scope": "HITL/policy/academic/notifications/MCP/privacy/workflow/graph; controlled fixtures"
+    },
+    "packaging_tests": {
+      "passed": 12,
+      "seconds": 0.29
+    },
+    "prior_artifact_limitation": "Earlier source-STDIO smoke and import/tool counts did not establish installed wheel revision. An intermediate stale wheel failed outside-checkout approval checks; current own-package rebuild and runtime parity pass.",
+    "positive_human_approval": "NOT_VERIFIED; unavailable, consequential execution held",
+    "host_configuration_changed": false,
+    "production_deployed": false,
+    "native_client_probe": "NOT_RERUN; prior SDK/native evidence remains separately scoped"
+  },
+  "workflow_recovery_continuation": {
+    "date": "2026-11-15",
+    "source_head": "74ff58b plus preserved working-tree patches",
+    "release_status": "PARTIAL / NOT_READY",
+    "image": "xninetzy:workflow-recovery-20261115",
+    "image_id": "sha256:ea96c0cc392970ef0dbc2db61326450dfa7e216868928ff5fb1acecbae23607f",
+    "installed_package_parity": {
+      "changed": [],
+      "extra": [],
+      "files_checked": 663,
+      "missing": [],
+      "ok": true
+    },
+    "installed_mcp_recovery": {
+      "protocol": "2025-11-25",
+      "same_workflow_resume": "passed",
+      "completed_replay_without_step_updates": "passed",
+      "uncertain_mutation_held": "passed",
+      "synthetic_effect_count": 2,
+      "workflow_count": 2,
+      "owner_data_used": false,
+      "limitations": "Synthetic SQLite writes, canonical local reads/synthesis; real host UI and external effects not tested."
+    },
+    "isolated_container": {
+      "image": "xninetzy:workflow-recovery-20261115",
+      "first_start": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "write": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "not_applicable"
+      },
+      "restart": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "restart_persistence": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "passed"
+      },
+      "owner_data_mounted": false,
+      "network": "none",
+      "read_only_root": true,
+      "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery."
+    },
+    "source_client_probes": {
+      "candidate_transport_probes": [
+        {
+          "client": "codex",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.597
+        },
+        {
+          "client": "claude",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.526
+        },
+        {
+          "client": "opencode",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.343
+        },
+        {
+          "client": "opencode-jsonc",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.281
+        },
+        {
+          "client": "gemini",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.529
+        },
+        {
+          "client": "qwen",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.664
+        },
+        {
+          "client": "kilo",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.253
+        },
+        {
+          "client": "cursor",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.686
+        },
+        {
+          "client": "vscode",
+          "status": "passed",
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "seconds": 5.588
+        }
+      ],
+      "host_configs_modified": false,
+      "owner_data_opened": false,
+      "native_client_sessions": "NOT_VERIFIED"
+    },
+    "verification": {
+      "integrated": {
+        "passed": 211,
+        "seconds": 242.59,
+        "scope": "Workflow, MCP boundary/adapter/principal/transport/server, HITL, action policy, execution catalog/audit/release checks, deployment/installed package, output privacy, graph",
+        "revision_limit": "Precedes final scoped handler-error privacy correction"
+      },
+      "final_affected": {
+        "passed": 123,
+        "seconds": 18.14,
+        "command": ".venv/bin/python -m pytest tests/workflow tests/core/test_output_sanitization.py tests/core/test_secret_redaction.py tests/interfaces/test_execution_boundary.py -q",
+        "workflow_cases": 59
+      },
+      "test_count_interpretation": "Selections overlap and are not summed; full repository test suite not executed.",
+      "process_recovery": "Actual isolated fixture-process SIGKILL during read and uncertain write, new executor on same temporary SQLite store",
+      "canonical_ruff": "passed: .venv/bin/python -m ruff check xninetzy tests scripts",
+      "root_ruff": {
+        "findings": 23,
+        "scope": "Preserved skill/vendor copies outside canonical CI scope",
+        "rules": {
+          "E702": 1,
+          "E741": 4,
+          "E401": 1,
+          "F541": 6,
+          "F401": 5,
+          "F841": 6
+        },
+        "measured": "2026-11-15"
+      },
+      "strict_inventory": {
+        "tools": 571,
+        "READ": 133,
+        "DRAFT": 6,
+        "WRITE": 409,
+        "FINAL": 23,
+        "passed": true
+      },
+      "prompt_integrity": "passed; no prompt candidate or host instruction change",
+      "remote_ci": "NOT_EXECUTED",
+      "documentation": {
+        "ci_command_before": "yarn check (Yarn Classic built-in dependency checker, not Astro)",
+        "ci_command_after": "yarn run check",
+        "checker_before": {
+          "errors": 1,
+          "hints": 2,
+          "file": "apps/docs/src/components/PageFeedback.astro"
+        },
+        "checker_after": {
+          "command": "yarn run check",
+          "files": 16,
+          "errors": 0,
+          "warnings": 0,
+          "hints": 0,
+          "command_seconds": 4.99
+        },
+        "build": {
+          "command": "yarn run build",
+          "pages": 34,
+          "command_seconds": 2.22,
+          "passed": true
+        },
+        "behavior_change": "Validate feedback vote as up/down before using dataset key; remove unused bindings; markup/style/storage format preserved",
+        "generated_search_index": "Restored exact pre-build bytes; no unrelated generated diff retained",
+        "native_browser": "NOT_EXECUTED",
+        "dependency_changes": false,
+        "command_issue": "Initial built-in dependency scan interrupted on its own known PID; deprecation warning not classified as vulnerability"
+      }
+    },
+    "state_contract": {
+      "new_tables": 0,
+      "new_columns": 0,
+      "migration": "none",
+      "checkpoint": "version1 typed state and plan hash in existing workflow_runs.result_json",
+      "execution_coordination": "Local POSIX advisory lock plus short SQLite step/final transactions",
+      "safe_read_retry": "Fixed server-owned whitelist on explicit resume",
+      "uncertain_mutation": "Held; no automatic replay",
+      "cancellation_and_deadline": "Cooperative; in-flight effect may finish"
+    },
+    "performance": {
+      "latency_delta": "NOT_MEASURED",
+      "rss_delta": "NOT_MEASURED",
+      "cpu_delta": "NOT_MEASURED",
+      "token_delta": "NOT_MEASURED",
+      "interpretation": "Correctness evidence only; test durations have different scopes"
+    },
+    "host_configs_modified": false,
+    "owner_data_used": false,
+    "production_deployed": false,
+    "limitations": [
+      "Independent authenticated positive approval issuance and external single-use consumption remain unavailable.",
+      "No exactly-once external delivery or domain-wide independent outcome/freshness verification.",
+      "Requires cooperating updated POSIX runtimes and trusted local data directory; mixed-version, NFS and multi-host safety not established.",
+      "Legacy/corrupt/mismatched checkpoints held without rebuilding plans.",
+      "All-native client parity remains NOT_VERIFIED; OpenCode isolated native discovery remains unresolved.",
+      "Live graph/provider recovery and owner backup/restore not executed."
+    ],
+    "rollback": "Preserve checkpoint JSON/action ledger/reservations and owner stores. Hold resume before any downgrade; old replaying resume is unsafe against active state. Never unlink active lock files or reset statuses to force retry.",
+    "report": "docs/implementation/PHASE_3_REPORT.md",
+    "runtime_contract": "docs/architecture/AGENTIC_WORKFLOW.md"
+  },
+  "backup_restore_continuation": {
+    "date": "2026-11-15",
+    "release_status": "PARTIAL / NOT_READY",
+    "source_head": "74ff58b plus preserved working-tree patches",
+    "image": "xninetzy:backup-hardening-20261115",
+    "image_id": "sha256:757420e8fd6108b50e948212eacd736600e9f41622427983af15dcba8426f38c",
+    "tests": {
+      "passed": 116,
+      "seconds": 18.89,
+      "backup_cases": 36,
+      "command": ".venv/bin/python -m pytest tests/os/backup tests/workflow tests/db tests/architecture/test_container_deployment.py tests/tools/test_installed_package.py -q",
+      "scope": "Isolated fixtures; overlaps prior recovery selections, not full-suite execution"
+    },
+    "regressions_before": {
+      "initial_failed": 17,
+      "initial_passed": 4,
+      "seconds": 1.06,
+      "same_second_retention_failed": 1,
+      "offline_wal_safety_capture_failed": 1,
+      "snapshot_sidecar_failed": 3
+    },
+    "baseline_retention": {
+      "source": "HEAD 74ff58b backup service",
+      "isolated_fixture_unrelated_directory_deleted": true,
+      "owner_data_used": false
+    },
+    "installed_package": {
+      "changed": [],
+      "extra": [],
+      "files_checked": 663,
+      "missing": [],
+      "ok": true
+    },
+    "installed_mcp_restore": {
+      "protocol": "2025-11-25",
+      "online_snapshot": "passed",
+      "offline_restore": "passed",
+      "pre_restore_snapshot": "passed",
+      "mcp_restart_and_task_state": "passed",
+      "saved_local_idempotency_replay": "passed",
+      "owner_data_used": false,
+      "limitations": "Temporary local task fixture; no external effects, owner restore, live FAISS or cross-store consistency proof."
+    },
+    "installed_mcp_workflow": {
+      "protocol": "2025-11-25",
+      "same_workflow_resume": "passed",
+      "completed_replay_without_step_updates": "passed",
+      "uncertain_mutation_held": "passed",
+      "synthetic_effect_count": 2,
+      "workflow_count": 2,
+      "owner_data_used": false,
+      "limitations": "Synthetic SQLite writes, canonical local reads/synthesis; real host UI and external effects not tested."
+    },
+    "container_stdio": {
+      "image": "xninetzy:backup-hardening-20261115",
+      "first_start": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "write": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "not_applicable"
+      },
+      "restart": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "restart_persistence": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "passed"
+      },
+      "owner_data_mounted": false,
+      "network": "none",
+      "read_only_root": true,
+      "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery."
+    },
+    "canonical_lint": "passed: .venv/bin/python -m ruff check xninetzy tests scripts",
+    "migrations": null,
+    "manifest_version": 1,
+    "new_tools": 0,
+    "new_dependencies": 0,
+    "owner_data_used": false,
+    "host_configs_modified": false,
+    "production_deployed": false,
+    "native_client_reverified": false,
+    "remote_ci_executed": false,
+    "performance": {
+      "latency_delta": "NOT_MEASURED",
+      "rss_delta": "NOT_MEASURED",
+      "cpu_delta": "NOT_MEASURED",
+      "token_delta": "NOT_MEASURED"
+    },
+    "limitations": [
+      "Offline trusted-operator restore only; idle process handles cannot be proven closed.",
+      "Local POSIX advisory lock coordinates cooperating restores, not ordinary active clients or hostile owner processes.",
+      "SQLite and optional vector files are not an atomic group; live vector/index/graph reconciliation not demonstrated.",
+      "Point-in-time restore rewinds approvals, idempotency and checkpoints; reconcile subsequent external effects before enabling consequential actions.",
+      "No independent authenticated positive MCP approval or external exactly-once guarantee.",
+      "No owner backup/restore or all-native host parity certification."
+    ],
+    "rollback": "Review batch source/test/CI/doc hunks; preserve snapshots and current stores; keep services offline after interrupted cutover; never delete journals/locks/reservations to bypass holds.",
+    "report": "docs/implementation/PHASE_3_REPORT.md",
+    "docs": {
+      "check": {
+        "files": 16,
+        "errors": 0,
+        "warnings": 0,
+        "hints": 0,
+        "seconds": 4.77
+      },
+      "build": {
+        "pages": 34,
+        "seconds": 2.26,
+        "passed": true
+      },
+      "search_index": "Only changed backup guide entry refreshed from generated output; unrelated preexisting entries preserved",
+      "browser_interactions": "NOT_EXECUTED"
+    },
+    "root_ruff": {
+      "findings": 23,
+      "scope": "Preserved .agents skill/vendor files outside canonical CI lint",
+      "measured": "2026-11-15"
+    },
+    "prompt_integrity": true
+  },
+  "graph_projection_continuation": {
+    "date": "2026-11-15",
+    "source_head": "74ff58b plus preserved working-tree patches",
+    "release_status": "PARTIAL / NOT_READY",
+    "tests": {
+      "passed": 225,
+      "seconds": 53.01,
+      "command": "HF_HUB_OFFLINE=1 TRANSFORMERS_OFFLINE=1 .venv/bin/python -m pytest tests/os/graph tests/os/backup tests/workflow tests/db tests/interfaces/test_execution_boundary.py tests/architecture/test_container_deployment.py tests/tools/test_installed_package.py tests/os/hitl/test_internal_approval_boundary.py -q",
+      "focused_worker_privacy": {
+        "passed": 44,
+        "seconds": 17.09,
+        "revision_limit": "Before the added missing-canonical-file guard/case; final integrated selection covers all36 worker and9 backend privacy cases."
+      },
+      "before": {
+        "worker_failed": 12,
+        "worker_passed": 19,
+        "seconds": 33.68,
+        "backend_privacy_failed": 9,
+        "privacy_seconds": 0.18,
+        "missing_database_failed": 1,
+        "missing_database_seconds": 0.72
+      },
+      "interpretation": "Overlapping selected regression scopes, not full-suite or task-success percentages."
+    },
+    "source_live_backend": {
+      "live_neo4j": "passed",
+      "canonical_edge_weight_properties": "passed",
+      "duplicate_delivery": "passed",
+      "backend_stop_retry_restart": "passed",
+      "sqlite_lexical_fallback": "passed",
+      "node_delete_and_relationship_removal": "passed",
+      "owner_data_used": false,
+      "faiss": "NOT_TESTED",
+      "limitations": "Controlled local backend fixture; no all-client worker startup, owner reconciliation or multi-host guarantee.",
+      "neo4j_image": "neo4j:5.26-community",
+      "neo4j_image_id": "sha256:577eb43120e8688e62e753e962c47d30044ecaa95147ee5386c29f226b878008",
+      "network": "temporary internal bridge / no published host ports",
+      "revision_limit": "Source live trial preceded final missing-database guard; final fresh installed-profile trial verifies final source."
+    },
+    "fresh_graph_only_installed": {
+      "python": "3.14.5",
+      "neo4j_driver": "6.2.0",
+      "installation": "Frozen non-editable --no-dev --extra graph in a temporary UV_PROJECT_ENVIRONMENT; owner environment unchanged",
+      "parity": {
+        "changed": [],
+        "extra": [],
+        "files_checked": 663,
+        "missing": [],
+        "ok": true
+      },
+      "live": {
+        "live_neo4j": "passed",
+        "canonical_edge_weight_properties": "passed",
+        "duplicate_delivery": "passed",
+        "backend_stop_retry_restart": "passed",
+        "sqlite_lexical_fallback": "passed",
+        "node_delete_and_relationship_removal": "passed",
+        "owner_data_used": false,
+        "faiss": "NOT_TESTED",
+        "limitations": "Controlled local backend fixture; no all-client worker startup, owner reconciliation or multi-host guarantee.",
+        "neo4j_image": "neo4j:5.26-community",
+        "neo4j_image_id": "sha256:577eb43120e8688e62e753e962c47d30044ecaa95147ee5386c29f226b878008",
+        "network": "temporary internal bridge / no published host ports"
+      }
+    },
+    "minimal_python311_image": {
+      "tag": "xninetzy:graph-hardening-20261115",
+      "id": "sha256:ecbc8096b2fd9ec3f35cc0531fbdbc201b9742cf8b2e575165848e02e6bda3fb",
+      "parity": {
+        "changed": [],
+        "extra": [],
+        "files_checked": 663,
+        "missing": [],
+        "ok": true
+      },
+      "backup": {
+        "protocol": "2025-11-25",
+        "online_snapshot": "passed",
+        "offline_restore": "passed",
+        "pre_restore_snapshot": "passed",
+        "mcp_restart_and_task_state": "passed",
+        "saved_local_idempotency_replay": "passed",
+        "owner_data_used": false,
+        "limitations": "Temporary local task fixture; no external effects, owner restore, live FAISS or cross-store consistency proof."
+      },
+      "workflow": {
+        "protocol": "2025-11-25",
+        "same_workflow_resume": "passed",
+        "completed_replay_without_step_updates": "passed",
+        "uncertain_mutation_held": "passed",
+        "synthetic_effect_count": 2,
+        "workflow_count": 2,
+        "owner_data_used": false,
+        "limitations": "Synthetic SQLite writes, canonical local reads/synthesis; real host UI and external effects not tested."
+      },
+      "stdio": {
+        "image": "xninetzy:graph-hardening-20261115",
+        "first_start": {
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "safe_read": "passed",
+          "write": "passed",
+          "unverified_confirmation_denied": true,
+          "write_without_key_denied": true,
+          "modified_payload_denied": true,
+          "schema_policy_metadata": "passed",
+          "idempotent_replay_after_restart": "not_applicable"
+        },
+        "restart": {
+          "tools": 571,
+          "protocol": "2025-11-25",
+          "safe_read": "passed",
+          "restart_persistence": "passed",
+          "unverified_confirmation_denied": true,
+          "write_without_key_denied": true,
+          "modified_payload_denied": true,
+          "schema_policy_metadata": "passed",
+          "idempotent_replay_after_restart": "passed"
+        },
+        "owner_data_mounted": false,
+        "network": "none",
+        "read_only_root": true,
+        "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery."
+      }
+    },
+    "live_harness": {
+      "network": "Owned temporary internal bridge; exact container private IP; no published host ports",
+      "container_user": "7474:7474",
+      "cpu_limit": 1.5,
+      "memory_limit": "1536MiB",
+      "heap_limit": "256MiB",
+      "pagecache_limit": "128MiB",
+      "owner_mounts": false,
+      "authentication": "Synthetic temporary env file0600; no owner credential",
+      "cleanup": "Only container/network IDs created by this invocation; synthetic anonymous volumes removed",
+      "expected_stderr": [
+        "Neo4j unavailable — projection disabled: ServiceUnavailable",
+        "Graph projection op failed (outbox #7): Neo4j node upsert was not acknowledged"
+      ],
+      "failed_harness_attempts": "Two early attempts could not publish ports on internal Docker network; cleaned up and replaced by exact owned private-address access. Not counted as graph passes.",
+      "faiss": "Explicitly stubbed; NOT_TESTED"
+    },
+    "contracts": {
+      "schema_migrations": 0,
+      "new_tools": 0,
+      "new_runtime_dependencies": 0,
+      "finalization": "Matching current processing attempt and unexpired lease; no claim fails closed",
+      "markers": "Same short ACK transaction, exact active canonical version/hash; endpoint checks on edges",
+      "local_serialization": "POSIX advisory lock for cooperating updated ticks using one trusted local database",
+      "stats": "lease_lost/deferred additive only when applicable",
+      "owner_approval": "Existing FINAL/unknown holds preserved; no new positive issuer",
+      "missing_canonical_database": "Held before projection opens a SQLite connection; no fresh database initialized."
+    },
+    "ci": {
+      "graph_only_installed_job_added": true,
+      "remote_actions": "NOT_EXECUTED",
+      "python311_enhanced_job": "NOT_EXECUTED_LOCALLY"
+    },
+    "performance": {
+      "latency_delta": "NOT_MEASURED",
+      "cpu_usage": "NOT_MEASURED",
+      "rss_usage": "NOT_MEASURED",
+      "throughput_delta": "NOT_MEASURED",
+      "token_delta": "NOT_MEASURED",
+      "interpretation": "Configured limits are not measured usage; test durations have different scopes"
+    },
+    "owner_data_used": false,
+    "host_configs_modified": false,
+    "owner_services_restarted": false,
+    "production_deployed": false,
+    "native_client_reverified": false,
+    "limitations": [
+      "No all-client worker lifecycle activation or full owner projection reconciliation.",
+      "FAISS append/save durability and semantic retrieval quality remain unverified.",
+      "Local lock/fencing does not certify mixed-version, NFS/multi-host, foreign canonical stores or hostile owner processes.",
+      "Real backend stop/restart tested with broken pool explicitly closed; no mid-transaction crash/external exactly-once guarantee.",
+      "Independent positive approval and full native-client parity remain open."
+    ],
+    "rollback": "Preserve canonical/outbox rows and review runtime versions; revert only reviewed batch hunks. Do not reset attempts, unlink active locks, wipe projections or stop owner sessions to bypass holds.",
+    "report": "docs/implementation/PHASE_3_REPORT.md",
+    "before_missing_database_guard": {
+      "tests_passed": 224,
+      "tests_seconds": 50.23,
+      "minimal_image": {
+        "tag": "xninetzy:graph-hardening-20261115",
+        "id": "sha256:6bd6a79e8bbc289255afd19498feb0ff575e83872cbe41e77f47c3882adfde27",
+        "parity": {
+          "changed": [],
+          "extra": [],
+          "files_checked": 663,
+          "missing": [],
+          "ok": true
+        },
+        "backup": {
+          "protocol": "2025-11-25",
+          "online_snapshot": "passed",
+          "offline_restore": "passed",
+          "pre_restore_snapshot": "passed",
+          "mcp_restart_and_task_state": "passed",
+          "saved_local_idempotency_replay": "passed",
+          "owner_data_used": false,
+          "limitations": "Temporary local task fixture; no external effects, owner restore, live FAISS or cross-store consistency proof."
+        },
+        "workflow": {
+          "protocol": "2025-11-25",
+          "same_workflow_resume": "passed",
+          "completed_replay_without_step_updates": "passed",
+          "uncertain_mutation_held": "passed",
+          "synthetic_effect_count": 2,
+          "workflow_count": 2,
+          "owner_data_used": false,
+          "limitations": "Synthetic SQLite writes, canonical local reads/synthesis; real host UI and external effects not tested."
+        },
+        "stdio": {
+          "image": "xninetzy:graph-hardening-20261115",
+          "first_start": {
+            "tools": 571,
+            "protocol": "2025-11-25",
+            "safe_read": "passed",
+            "write": "passed",
+            "unverified_confirmation_denied": true,
+            "write_without_key_denied": true,
+            "modified_payload_denied": true,
+            "schema_policy_metadata": "passed",
+            "idempotent_replay_after_restart": "not_applicable"
+          },
+          "restart": {
+            "tools": 571,
+            "protocol": "2025-11-25",
+            "safe_read": "passed",
+            "restart_persistence": "passed",
+            "unverified_confirmation_denied": true,
+            "write_without_key_denied": true,
+            "modified_payload_denied": true,
+            "schema_policy_metadata": "passed",
+            "idempotent_replay_after_restart": "passed"
+          },
+          "owner_data_mounted": false,
+          "network": "none",
+          "read_only_root": true,
+          "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery."
+        }
+      },
+      "graph_only_installed": {
+        "python": "3.14.5",
+        "neo4j_driver": "6.2.0",
+        "installation": "Frozen non-editable --no-dev --extra graph in a temporary UV_PROJECT_ENVIRONMENT; owner environment unchanged",
+        "parity": {
+          "changed": [],
+          "extra": [],
+          "files_checked": 663,
+          "missing": [],
+          "ok": true
+        },
+        "live": {
+          "live_neo4j": "passed",
+          "canonical_edge_weight_properties": "passed",
+          "duplicate_delivery": "passed",
+          "backend_stop_retry_restart": "passed",
+          "sqlite_lexical_fallback": "passed",
+          "node_delete_and_relationship_removal": "passed",
+          "owner_data_used": false,
+          "faiss": "NOT_TESTED",
+          "limitations": "Controlled local backend fixture; no all-client worker startup, owner reconciliation or multi-host guarantee.",
+          "neo4j_image": "neo4j:5.26-community",
+          "neo4j_image_id": "sha256:577eb43120e8688e62e753e962c47d30044ecaa95147ee5386c29f226b878008",
+          "network": "temporary internal bridge / no published host ports"
+        }
+      },
+      "source_live_backend": {
+        "live_neo4j": "passed",
+        "canonical_edge_weight_properties": "passed",
+        "duplicate_delivery": "passed",
+        "backend_stop_retry_restart": "passed",
+        "sqlite_lexical_fallback": "passed",
+        "node_delete_and_relationship_removal": "passed",
+        "owner_data_used": false,
+        "faiss": "NOT_TESTED",
+        "limitations": "Controlled local backend fixture; no all-client worker startup, owner reconciliation or multi-host guarantee.",
+        "neo4j_image": "neo4j:5.26-community",
+        "neo4j_image_id": "sha256:577eb43120e8688e62e753e962c47d30044ecaa95147ee5386c29f226b878008",
+        "network": "temporary internal bridge / no published host ports",
+        "revision_limit": "Source live trial preceded final missing-database guard; final fresh installed-profile trial verifies final source."
+      }
+    },
+    "canonical_lint": "passed: .venv/bin/python -m ruff check xninetzy tests scripts",
+    "root_ruff": {
+      "findings": 23,
+      "scope": "Preserved .agents skill/vendor findings outside canonical CI scope"
+    },
+    "prompt_integrity": true
+  },
+  "faiss_lifecycle_continuation": {
+    "date": "2026-11-15",
+    "evidence": [
+      "VERIFIED_CODE",
+      "VERIFIED_TEST",
+      "VERIFIED_RUNTIME"
+    ],
+    "red_tests": {
+      "initial_storage_failures": 10,
+      "embedding_identity_failures": 3,
+      "lifecycle_failures": 5,
+      "freshness_failures": 3
+    },
+    "selected_tests": {
+      "passed": 42,
+      "seconds": 7.4,
+      "scope": "FAISS durability, hybrid freshness, lifespan, embedding dimensions; precedes final combined run"
+    },
+    "source_hash": {
+      "provider": "numpy_tfidf",
+      "offline": true,
+      "owner_data_used": false,
+      "python": "3.14.5",
+      "machine": "x86_64",
+      "logical_cpus": 8,
+      "disabled": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 4.781808,
+        "discovery_ms": 106.056,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 5.446,
+        "warm_read_p95_nearest_rank_ms": 8.3
+      },
+      "first_start": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 5.463007,
+        "discovery_ms": 253.274,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 6.469,
+        "warm_read_p95_nearest_rank_ms": 12.774
+      },
+      "restart": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 7.943949,
+        "discovery_ms": 275.703,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 9.583,
+        "warm_read_p95_nearest_rank_ms": 16.794
+      },
+      "canonical_nodes": 3,
+      "vector_rows_after_resync": 3,
+      "unchanged_generation_after_resync": true,
+      "embedding": {
+        "provider": "numpy_tfidf",
+        "model": "hash-bow-v1",
+        "dimension": 256,
+        "normalize": true
+      },
+      "retrieval_exact_title_top1": "passed",
+      "worker_started_by_mcp_lifespan": true,
+      "limitations": "Three synthetic nodes and ten reads per session; no statistical performance guarantee, external effects or Neo4j. Shutdown is cooperative."
+    },
+    "source_cached_model": {
+      "provider": "sentence_transformers",
+      "offline": true,
+      "owner_data_used": false,
+      "python": "3.14.5",
+      "machine": "x86_64",
+      "logical_cpus": 8,
+      "disabled": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 4.83991,
+        "discovery_ms": 134.074,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 7.127,
+        "warm_read_p95_nearest_rank_ms": 8.836
+      },
+      "first_start": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 4.515969,
+        "discovery_ms": 102.051,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 3.829,
+        "warm_read_p95_nearest_rank_ms": 5.08
+      },
+      "restart": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 4.400442,
+        "discovery_ms": 99.794,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 3.992,
+        "warm_read_p95_nearest_rank_ms": 5.807
+      },
+      "canonical_nodes": 3,
+      "vector_rows_after_resync": 3,
+      "unchanged_generation_after_resync": true,
+      "embedding": {
+        "provider": "sentence_transformers",
+        "model": "sentence-transformers/all-MiniLM-L6-v2",
+        "dimension": 384,
+        "normalize": true
+      },
+      "retrieval_exact_title_top1": "passed",
+      "worker_started_by_mcp_lifespan": true,
+      "limitations": "Three synthetic nodes and ten reads per session; no statistical performance guarantee, external effects or Neo4j. Shutdown is cooperative."
+    },
+    "frozen_installed_hash": {
+      "provider": "numpy_tfidf",
+      "offline": true,
+      "owner_data_used": false,
+      "python": "3.14.5",
+      "machine": "x86_64",
+      "logical_cpus": 8,
+      "disabled": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 10.491779,
+        "discovery_ms": 121.039,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 4.648,
+        "warm_read_p95_nearest_rank_ms": 4.868
+      },
+      "first_start": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 5.271832,
+        "discovery_ms": 97.18,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 4.557,
+        "warm_read_p95_nearest_rank_ms": 5.241
+      },
+      "restart": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 5.431989,
+        "discovery_ms": 115.14,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 4.263,
+        "warm_read_p95_nearest_rank_ms": 6.803
+      },
+      "canonical_nodes": 3,
+      "vector_rows_after_resync": 3,
+      "unchanged_generation_after_resync": true,
+      "embedding": {
+        "provider": "numpy_tfidf",
+        "model": "hash-bow-v1",
+        "dimension": 256,
+        "normalize": true
+      },
+      "retrieval_exact_title_top1": "passed",
+      "worker_started_by_mcp_lifespan": true,
+      "limitations": "Three synthetic nodes and ten reads per session; no statistical performance guarantee, external effects or Neo4j. Shutdown is cooperative."
+    },
+    "frozen_installed_cached_model": {
+      "provider": "sentence_transformers",
+      "offline": true,
+      "owner_data_used": false,
+      "python": "3.14.5",
+      "machine": "x86_64",
+      "logical_cpus": 8,
+      "disabled": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 7.345879,
+        "discovery_ms": 183.755,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 4.473,
+        "warm_read_p95_nearest_rank_ms": 7.023
+      },
+      "first_start": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 6.590143,
+        "discovery_ms": 203.12,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 4.027,
+        "warm_read_p95_nearest_rank_ms": 7.619
+      },
+      "restart": {
+        "protocol": "2025-11-25",
+        "tools": 571,
+        "startup_seconds": 6.682362,
+        "discovery_ms": 166.856,
+        "warm_read_samples": 10,
+        "warm_read_p50_ms": 4.421,
+        "warm_read_p95_nearest_rank_ms": 7.272
+      },
+      "canonical_nodes": 3,
+      "vector_rows_after_resync": 3,
+      "unchanged_generation_after_resync": true,
+      "embedding": {
+        "provider": "sentence_transformers",
+        "model": "sentence-transformers/all-MiniLM-L6-v2",
+        "dimension": 384,
+        "normalize": true
+      },
+      "retrieval_exact_title_top1": "passed",
+      "worker_started_by_mcp_lifespan": true,
+      "limitations": "Three synthetic nodes and ten reads per session; no statistical performance guarantee, external effects or Neo4j. Shutdown is cooperative."
+    },
+    "installed_parity": {
+      "files": 663,
+      "missing": 0,
+      "extra": 0,
+      "changed": 0,
+      "profile": "frozen non-editable embeddings; before three policy reclassifications"
+    },
+    "temporary_install_cleaned": true,
+    "owner_worker_enabled": false,
+    "limitations": [
+      "Two local snapshot slots, CPU RAM clone and storage overhead not profiled",
+      "POSIX local cooperating writers only",
+      "Legacy index held for reviewed rebuild, never automatically overwritten",
+      "Cooperative shutdown cannot interrupt an entered synchronous provider call",
+      "Three-node exact-title check is not a labeled retrieval-quality benchmark"
+    ],
+    "final_selected_tests": {
+      "passed": 178,
+      "seconds": 192.49,
+      "warnings": 0,
+      "note": "Overlaps earlier selections; not all collected tests"
+    }
+  },
+  "validator_policy_repair": {
+    "date": "2026-11-15",
+    "evidence": [
+      "VERIFIED_CODE",
+      "VERIFIED_TEST",
+      "VERIFIED_RUNTIME"
+    ],
+    "issue": "Three pure in-memory writing validators incorrectly marked WRITE and held by default approval policy",
+    "tools": [
+      "skill_validate_anti_slop",
+      "skill_validate_output",
+      "skill_validate_submission_readiness"
+    ],
+    "change": "WRITE to READ; explicit restrictions, kill switch and consequential approval unchanged",
+    "red": {
+      "failed": 7,
+      "passed": 3,
+      "seconds": 5.63
+    },
+    "green": {
+      "passed": 61,
+      "seconds": 7.96,
+      "scope": "validator/gateway/action-policy regression; overlaps final combined run"
+    },
+    "wire": {
+      "image": "xninetzy:validator-fix-20261115",
+      "first_start": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "validators": [
+          "skill_validate_anti_slop",
+          "skill_validate_output",
+          "skill_validate_submission_readiness"
+        ],
+        "without_approval_or_key": "passed",
+        "validation_findings_preserved": true,
+        "consequential_action_held": true
+      },
+      "restart": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "validators": [
+          "skill_validate_anti_slop",
+          "skill_validate_output",
+          "skill_validate_submission_readiness"
+        ],
+        "without_approval_or_key": "passed",
+        "validation_findings_preserved": true,
+        "consequential_action_held": true
+      },
+      "owner_data_mounted": false,
+      "network": "none",
+      "read_only_root": true,
+      "default_policy": "approval",
+      "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery."
+    },
+    "image_id": "sha256:650658c1641d8ed3575c1f6db4e98554ec9435be40d9f0fbc3f5238a0672bff2",
+    "catalog": {
+      "tools": 571,
+      "read": 136,
+      "draft": 6,
+      "write": 406,
+      "final": 23
+    },
+    "host_configuration_changed": false,
+    "active_host_connections_reloaded": false,
+    "final_general_wire": {
+      "image": "xninetzy:validator-fix-20261115",
+      "first_start": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "write": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "not_applicable"
+      },
+      "restart": {
+        "tools": 571,
+        "protocol": "2025-11-25",
+        "safe_read": "passed",
+        "restart_persistence": "passed",
+        "unverified_confirmation_denied": true,
+        "write_without_key_denied": true,
+        "modified_payload_denied": true,
+        "schema_policy_metadata": "passed",
+        "idempotent_replay_after_restart": "passed"
+      },
+      "owner_data_mounted": false,
+      "network": "none",
+      "read_only_root": true,
+      "default_policy": "auto",
+      "limitations": "Synthetic local operations only; no live provider/graph or durable external workflow recovery."
+    },
+    "final_workflow_wire": {
+      "protocol": "2025-11-25",
+      "same_workflow_resume": "passed",
+      "completed_replay_without_step_updates": "passed",
+      "uncertain_mutation_held": "passed",
+      "synthetic_effect_count": 2,
+      "workflow_count": 2,
+      "owner_data_used": false,
+      "limitations": "Synthetic SQLite writes, canonical local reads/synthesis; real host UI and external effects not tested."
+    },
+    "final_backup_wire": {
+      "protocol": "2025-11-25",
+      "online_snapshot": "passed",
+      "offline_restore": "passed",
+      "pre_restore_snapshot": "passed",
+      "mcp_restart_and_task_state": "passed",
+      "saved_local_idempotency_replay": "passed",
+      "owner_data_used": false,
+      "limitations": "Temporary local task fixture; no external effects, owner restore, live FAISS or cross-store consistency proof."
+    }
+  },
+  "root_quality_continuation": {
+    "ruff_before": 23,
+    "ruff_after": 0,
+    "command": ".venv/bin/ruff check .",
+    "reviewed_skill_script_files": 9,
+    "syntax_checked": 9,
+    "bundled_scripts_executed_for_cleanup": false,
+    "backup": "/tmp/xn-skill-lint-backup-0yuaub13",
+    "full_collection": 2888,
+    "full_run_status": "INCOMPLETE: filesystem filled; captured progress 1085 cases, no trustworthy final pass total",
+    "recorded_failures": [
+      "docs risk table drift: corrected and passing in final178",
+      "unreviewed-provider success fixture: corrected;2 targeted trust-outcome tests pass",
+      "Remotion render/full run: incomplete under disk exhaustion; still requires reproduction"
+    ],
+    "native_opencode_probe": "Owned isolated server starts; /doc was not a usable OpenAPI response; no native MCP connection claim",
+    "readiness": "PARTIAL / NOT_READY",
+    "outcome_mapping_followup": {
+      "passed": 2,
+      "seconds": 24.34,
+      "positive_fixture": "known external provider, explicit reviewed read_only metadata",
+      "negative_fixture": "unverified provider cannot invoke handler",
+      "runtime_policy_changed": false
+    },
+    "documentation_build": {
+      "pages": 34,
+      "build_seconds": 2.62,
+      "command": "yarn build",
+      "check": "Markdown-only update; prior Astro typecheck retained as historical evidence"
+    },
+    "disk_followup": "Later df reports41G available after task environment and runtime completion; no owner data/cache/image pruning was performed. Peak scratch use/source not profiled."
+  }
+}

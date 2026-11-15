@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import asdict, dataclass, replace
 from datetime import datetime, timezone
 from typing import Any
 
@@ -16,6 +16,7 @@ from xninetzy.context.gateway.trust import (
 )
 from xninetzy.context.invocation.classify import (
     SIDE_EFFECT_READ_ONLY,
+    classify_side_effect,
 )
 from xninetzy.context.invocation.contract import (
     InvocationContext,
@@ -151,6 +152,16 @@ def execute_invocation(
         if invocation.side_effect_class is not None
         else SIDE_EFFECT_READ_ONLY
     )
+    from xninetzy.tools.manifest import manifest_for
+
+    manifest = manifest_for(request.capability)
+    if manifest.policy_known:
+        minimum = {"read": "read_only", "draft": "read_only", "write": "idempotent_write", "final": "irreversible"}[manifest.risk.value]
+        levels = {"read_only": 0, "idempotent_write": 1, "non_idempotent_write": 2, "external_side_effect": 3, "irreversible": 4}
+        if levels[minimum] > levels[side_effect_name]:
+            side_effect_name = minimum
+            request = replace(request, side_effect=minimum)
+            invocation = replace(invocation, request=request, side_effect_class=classify_side_effect(minimum))
     audit_skippable = bool(request.metadata.get("audit_skippable", False))
     if (
         audit_skippable
@@ -173,9 +184,10 @@ def execute_invocation(
                 request_id=request.request_id,
                 provider_id="local:xninetzy",
                 capability=request.capability,
-                outcome=OUTCOME_OK,
+                outcome=OUTCOME_ERROR,
                 latency_ms=0,
                 payload=None,
+                error="no invocable registered; operation was not executed",
                 audited=False,
             )
             return PipelineOutcome(
@@ -234,9 +246,30 @@ def execute_invocation(
     chosen_capability = (
         chosen.capability if chosen is not None else request.capability
     )
+    chosen_manifest = manifest_for(chosen_capability)
+    if chosen_manifest.policy_known:
+        minimum = {"read": "read_only", "draft": "read_only", "write": "idempotent_write", "final": "irreversible"}[chosen_manifest.risk.value]
+        levels = {"read_only": 0, "idempotent_write": 1, "non_idempotent_write": 2, "external_side_effect": 3, "irreversible": 4}
+        if levels[minimum] > levels[side_effect_name]:
+            side_effect_name = minimum
     if invocation_override is not None and chosen_provider_id != "local:xninetzy":
         chosen_provider_id = invocation_override.provider_id
     trust_tier = chosen.trust_tier if chosen is not None else TRUST_TIER_LOCAL
+    if chosen is not None and chosen.provider_id != "local:xninetzy":
+        from xninetzy.context.gateway.registry import list_providers
+
+        provider = next((p for p in list_providers() if p.provider_id == chosen.provider_id), None)
+        declared = (provider.metadata.get("capability_side_effects", {}).get(chosen_capability)
+                    if provider and isinstance(provider.metadata.get("capability_side_effects", {}), dict) else None)
+        # Provider descriptions and caller assertions are not authority.
+        # An unreviewed external capability is held until its registry policy exists.
+        if declared is None:
+            side_effect_name = "irreversible"
+        else:
+            declared = classify_side_effect(declared).name
+            levels = {"read_only": 0, "idempotent_write": 1, "non_idempotent_write": 2, "external_side_effect": 3, "irreversible": 4}
+            if levels[declared] > levels[side_effect_name]:
+                side_effect_name = declared
     if chosen is not None and chosen.provider_id == "local:xninetzy":
         route_decision = _build_route_for_local_self(
             request, chosen.provider_id, chosen.capability, request.context_key
@@ -252,6 +285,9 @@ def execute_invocation(
         if request.idempotency_key
         else None
     )
+    if replay is not None and (replay.capability != chosen_capability or replay.context_key != request.context_key
+                               or replay.args_hash != invocation.args_hash):
+        policy = replace(policy, outcome=POLICY_BLOCK, reason="idempotency_payload_mismatch", details={"error_code": "idempotency_payload_mismatch"})
     if policy.outcome == POLICY_BLOCK:
         audit = record_audit_start(
             request_id=request.request_id,
@@ -380,12 +416,27 @@ def execute_invocation(
         )
     invoke_request = _build_request_for_capability(request, chosen_capability)
     try:
-        invocable_result = invocable.invoke(invoke_request.capability, invoke_request.args)
-    except InvocableError as exc:
+        if request.idempotency_key:
+            from xninetzy.db.idempotency import idempotent_invoke
+            from xninetzy.context.orchestrator.invokable import InvocableResult
+            value, _executed = idempotent_invoke(
+                "context:" + request.context_key, request.idempotency_key,
+                {"capability": chosen_capability, "args": dict(invoke_request.args)},
+                lambda: asdict(invocable.invoke(invoke_request.capability, invoke_request.args)),
+            )
+            invocable_result = InvocableResult(**value)
+        else:
+            invocable_result = invocable.invoke(invoke_request.capability, invoke_request.args)
+    except Exception as exc:
+        from xninetzy.core.security import sanitize_tool_output
+        from xninetzy.db.idempotency import IdempotencyPendingError
+        error_text = (sanitize_tool_output(str(exc)) if isinstance(exc, (InvocableError, IdempotencyPendingError))
+                      or (isinstance(exc, ValueError) and str(exc) == "idempotency_payload_mismatch")
+                      else f"invocation_failed ({type(exc).__name__})")
         audit = complete_audit_entry(
             audit_id=audit.id,
             outcome=AUDIT_OUTCOME_ERROR,
-            error=str(exc),
+            error=error_text,
             latency_ms=None,
             now=now,
         )
@@ -395,7 +446,7 @@ def execute_invocation(
             capability=chosen_capability,
             outcome=OUTCOME_ERROR,
             latency_ms=None,
-            error=str(exc),
+            error=error_text,
             audited=True,
         )
         return PipelineOutcome(

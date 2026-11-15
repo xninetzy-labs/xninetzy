@@ -1,12 +1,13 @@
 ---
 name: research-critic
-description: Critique a completed research synthesis. Identifies missing sources,
+description: Critiques a finished research synthesis for missing sources, weak claims, overstated conclusions and unverified assumptions. Use as the final pass before delivery.
 metadata:
-  type: "meta"
-  layer: "research-orchestration"
-  consumes: "'[\"evidence-grader\",\"contradiction-hunter\"]'"
-  produces: "'[\"critique\"]'"
-  tier: "'0'"
+  type: meta
+  layer: research-orchestration
+  consumes: '''["evidence-grader","contradiction-hunter"]'''
+  produces: '''["critique"]'''
+  tier: '''0'''
+  keywords: completed critique identifies over strong user
 ---
 
 

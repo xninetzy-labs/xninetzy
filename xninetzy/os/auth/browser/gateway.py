@@ -6,7 +6,6 @@ from enum import StrEnum
 from pathlib import Path
 from typing import Any, Protocol
 
-import logging
 
 import logging as _logging
 from xninetzy.core.config import get_settings

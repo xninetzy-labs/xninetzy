@@ -9,7 +9,6 @@ from xninetzy.context.routing.routers import (
     route_tool,
     build_state_snapshot_for,
 )
-from xninetzy.context.routing.state import StateSnapshot
 from xninetzy.context.registry.taxonomy import SEMANTIC_DOMAINS
 
 

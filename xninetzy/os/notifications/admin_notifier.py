@@ -34,8 +34,7 @@ async def _persist_owner_notification(text: str, chat_id: str) -> bool:
         capture_item(text, kind="note", chat_id=chat_id or owner_chat_id())
         return True
     except Exception as exc:
-        logger.warning("Owner inbox notification failed (logged only): %s", exc)
-        logger.info("owner_notification: chat=%s text=%s", chat_id, text)
+        logger.warning("Owner inbox notification failed (%s)", type(exc).__name__)
         return False
 
 
@@ -66,7 +65,8 @@ async def notify_admin_approval(
     )
     fallback = (
         f"{text}\n\n"
-        f"Balas `/approve {approval_id}` atau `/reject {approval_id}`."
+        "approval_channel_unverified: pemberitahuan inbox bukan persetujuan owner. "
+        "Kanal persetujuan independen belum tersedia; aksi belum dijalankan."
     )
     ok = await _persist_owner_notification(fallback, chat_id)
     if not ok:

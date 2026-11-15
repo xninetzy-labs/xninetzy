@@ -54,7 +54,7 @@ def discover_skills() -> list[Path]:
         return []
     out: list[Path] = []
     for entry in sorted(SKILL_SOURCE_ROOT.iterdir()):
-        if not entry.is_dir():
+        if not entry.is_dir() or "_" in entry.name:
             continue
         if (entry / "SKILL.md").is_file():
             out.append(entry)

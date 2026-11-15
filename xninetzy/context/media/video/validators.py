@@ -6,18 +6,16 @@ CPU-only. NO Remotion imports, NO network calls.
 from __future__ import annotations
 
 import math
+import os
 from dataclasses import dataclass
-from typing import Iterable, Mapping
+from typing import Iterable
 
-from xninetzy.context.media.video.errors import VideoError
 from xninetzy.context.media.video.models import (
-    Keyframe,
     MotionPreset,
     RenderRequest,
     VideoComposition,
     VideoProject,
     VideoScene,
-    VideoTrack,
 )
 
 
@@ -173,9 +171,6 @@ def validate_path_within_roots(
         if abs_norm.startswith(os.path.abspath(root) + os.sep):
             return True
     return False
-
-
-import os
 
 
 __all__ = [

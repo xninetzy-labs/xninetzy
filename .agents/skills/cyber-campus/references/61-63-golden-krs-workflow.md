@@ -1,0 +1,93 @@
+# cyber-campus — §61–63
+
+## 61. Golden KRS Workflow
+
+```text
+SESSION CHECK
+    ↓
+BIND ACADEMIC PERIOD
+    ↓
+READ CURRENT KRS
+    ↓
+READ OFFERINGS
+    ↓
+READ QUOTA
+    ↓
+READ PREREQUISITES
+    ↓
+READ ELIGIBILITY
+    ↓
+CHECK SCHEDULE
+    ↓
+CHECK CREDIT LIMIT
+    ↓
+DRY RUN
+    ↓
+ACTION HASH
+    ↓
+EXPLICIT APPROVAL
+    ↓
+IMMEDIATE REVALIDATION
+    ↓
+CURRENT-STATE HASH CHECK
+    ↓
+STAGE
+    ↓
+READ BACK
+    ↓
+STAGED-STATE RECONCILIATION
+    ↓
+FINAL EXPLICIT APPROVAL
+    ↓
+SUBMIT ONCE
+    ↓
+PORTAL VERIFICATION
+    ↓
+AUDIT
+```
+
+---
+
+## 62. Golden Read Workflow
+
+```text
+SESSION CHECK
+    ↓
+PORTAL CONTEXT
+    ↓
+ACADEMIC PERIOD
+    ↓
+PAGE VERIFICATION
+    ↓
+READ
+    ↓
+NORMALIZE
+    ↓
+FRESHNESS
+    ↓
+RETURN STRUCTURED RESULT
+```
+
+---
+
+## 63. Golden Verification Workflow
+
+```text
+CLAIMED MUTATION
+    ↓
+READ CURRENT PORTAL
+    ↓
+CHECK PERIOD
+    ↓
+CHECK RECORD
+    ↓
+CHECK STATUS
+    ↓
+CHECK RECEIPT
+    ↓
+COMPARE AGAINST APPROVED PLAN
+    ↓
+CLASSIFY RESULT
+```
+
+---

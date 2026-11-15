@@ -6,7 +6,7 @@ from zoneinfo import ZoneInfo
 from xninetzy.core.config import get_settings
 from xninetzy.db.migrations import run_migrations
 from xninetzy.db.sqlite import connect, init_db
-from xninetzy.os.hitl.approval_service import request_approval, set_approval_status
+from xninetzy.os.hitl.approval_service import request_approval, _apply_status_decision
 from xninetzy.os.policy.action_policy import ActionMode, RiskClass, evaluate_action
 
 
@@ -111,10 +111,10 @@ def test_approval_expires_and_double_approve_does_not_execute(monkeypatch, tmp_p
                 approval_id,
             ),
         )
-    ok, message = set_approval_status(approval_id, "approved", None, "Misbahul")
+    ok, message = _apply_status_decision(approval_id, "approved")
     assert ok is False
     assert "kedaluwarsa" in message
-    assert set_approval_status(approval_id, "approved", None, "Misbahul")[0] is False
+    assert _apply_status_decision(approval_id, "approved")[0] is False
     get_settings.cache_clear()
 
 def test_approved_action_hash_mismatch_is_rejected(monkeypatch, tmp_path):
@@ -130,7 +130,8 @@ def test_approved_action_hash_mismatch_is_rejected(monkeypatch, tmp_path):
         "Read only",
         {"resource": "r"},
     )
-    assert set_approval_status(approval_id, "approved", None, "Misbahul")[0] is True
+    with connect() as conn:
+        conn.execute("UPDATE approval_requests SET status='approved' WHERE id=?", (approval_id,))
     from xninetzy.os.hitl.approval_service import validate_approval
     import pytest
 

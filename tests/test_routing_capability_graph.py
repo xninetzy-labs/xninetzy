@@ -5,9 +5,7 @@ from xninetzy.context.capability_graph.builder import (
     compute_orphan_count,
     write_graph_artifacts,
 )
-from xninetzy.context.capability_graph.graph import CapabilityNode
 from xninetzy.context.registry.taxonomy import SEMANTIC_DOMAINS, SYSTEM_CAPABILITIES
-from xninetzy.tools.registry import get_tool_names
 
 
 def test_graph_has_all_domains_and_system() -> None:

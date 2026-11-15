@@ -1,12 +1,13 @@
 ---
-name: "research-paper-writer"
-description: "Draft a research paper following IMRaD or discipline-equivalent structure: abstract, introduction, methods, results, discussion, conclusion. Requires a populated ResearchPacket or equivalent. Activates when user supplies data, findings, or research packet."
+name: research-paper-writer
+description: Drafts a research paper in IMRaD or a discipline equivalent from a ResearchPacket or supplied findings. Use when data, findings or a research packet exist.
 metadata:
-  scope: "writing"
-  intent_class: "ACADEMIC"
-  consumes: "evidence-synthesis, citation-validation, academic-writer"
-  produces: "research_paper"
-  tier: "0"
+  scope: writing
+  intent_class: ACADEMIC
+  consumes: evidence-synthesis, citation-validation, academic-writer
+  produces: research_paper
+  tier: '0'
+  keywords: abstract activates conclusion discussion draft following introduction methods populated requires results structure supplies user
 ---
 # research-paper-writer
 

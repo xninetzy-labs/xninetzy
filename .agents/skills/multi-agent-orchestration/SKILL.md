@@ -1,12 +1,6 @@
 ---
 name: multi-agent-orchestration
-description: 'Distributes a structured project across parallel sub-agents that each
-  reason independently against a scoped context slice. Used for large audit / refactor
-  / research tasks where one agent''s context window is insufficient. Merges results
-  with an explicit verification step and surfaces contradictions to the owner. Stays
-  client-side: orchestration lives in this skill, never on the Xninetzy server (no
-  server-side agent loop). Use when the operator asks for a multi-aspect audit, parallel
-  investigation, or any task whose blast radius calls for four or more focused agents.'
+description: Splits a large audit, refactor or research task across parallel sub-agents with scoped context, then merges results with verification and surfaces contradictions; orchestration stays client-side. Use when a task needs four or more focused agents.
 metadata:
   author: xninetzy
   version: 1.0.0
@@ -14,12 +8,9 @@ metadata:
   priority: P0
   required_tools: '["lightning_episode_start","lightning_episode_finish","lightning_record_action","lightning_record_outcome","todo_tool","hitl_request_approval"]'
   optional_tools: '["context_engineering","repo_search","security_scope","repo_architecture","os_inbox"]'
-  trigger_conditions: '["structured project of ≥ 4 distinct sub-domains","operator
-    asks \"audit architecture, security, and tests in parallel\"","a single agent''s
-    context budget is exceeded"]'
-  prerequisites: '["project plan exists (use `structured-project-execution`)","sub-agents
-    declared with non-overlapping responsibilities","merge strategy stated before
-    execution begins"]'
+  trigger_conditions: '["structured project of ≥ 4 distinct sub-domains","operator asks \"audit architecture, security, and tests in parallel\"","a single agent''s context budget is exceeded"]'
+  prerequisites: '["project plan exists (use `structured-project-execution`)","sub-agents declared with non-overlapping responsibilities","merge strategy stated before execution begins"]'
+  keywords: against agent any asks aspect blast calls distributes each explicit for independently insufficient investigation lives loop multi never one operator owner project radius reason server skill slice step structured tasks that this used where whose window xninetzy
 ---
 
 

@@ -1,12 +1,13 @@
 ---
-name: "consultant-challenge"
-description: "Stress-test a consultant analysis or recommendation: probe assumptions, identify weak evidence, surface counter-arguments, propose alternatives. Produces a structured critique. Activates before finalizing or submitting any consultant deliverable."
+name: consultant-challenge
+description: Stress-tests a consulting analysis by probing assumptions, weak evidence, counter-arguments and alternatives. Use before finalizing a consulting deliverable.
 metadata:
-  scope: "review"
-  intent_class: "REVIEW"
-  consumes: "consultant, anti-slop"
-  produces: "challenge_report"
-  tier: "0"
+  scope: review
+  intent_class: REVIEW
+  consumes: consultant, anti-slop
+  produces: challenge_report
+  tier: '0'
+  keywords: activates any consultant critique identify probe produces propose recommendation structured submitting surface test
 ---
 # consultant-challenge
 

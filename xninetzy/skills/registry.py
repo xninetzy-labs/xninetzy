@@ -38,8 +38,47 @@ ALIASES = {
     "hebat": "hebat-academic",
     "obsidian": "obsidian-knowledge",
     "cyber": "cyber-campus",
+    "memory-chat": "xninetzy-memory",
+    "memory-management": "xninetzy-memory",
+    "playwright-mcp-workflows": "playwright",
+    "consulting-pptx-skill": "consulting-pptx",
+    "pptx-skills": "consulting-pptx",
 }
 SKILL_TOPIC_HINTS = {
+    "document-studio": {
+        "ppt",
+        "pptx",
+        "powerpoint",
+        "slide",
+        "slides",
+        "deck",
+        "presentasi",
+        "presentation",
+        "docx",
+        "word",
+        "pdf",
+        "laporan",
+        "makalah",
+        "dokumen",
+        "document",
+        "report",
+        "proposal",
+        "theme",
+        "template",
+        "canva",
+    },
+    "figcraft-ui-sync": {
+        "frontend",
+        "tampilan",
+        "figcraft",
+        "figma",
+        "komponen",
+        "restyle",
+        "redesign",
+        "mockup",
+        "wireframe",
+        "halaman",
+    },
     "it-learning": {
         "clustering",
         "cluster",
@@ -84,6 +123,13 @@ SKILL_TOPIC_HINTS = {
     "cli-creator": {"cli", "command", "interface", "tool", "developer"},
     "gh-fix-ci": {"ci", "github", "workflow", "build", "test", "failure"},
 }
+DECK_TERMS = frozenset({"ppt", "pptx", "powerpoint", "slide", "slides", "deck", "presentasi", "presentation"})
+DELIVERABLE_HINTS = {
+    "document-studio": DECK_TERMS | {"docx", "laporan", "makalah"},
+    "consulting-pptx": DECK_TERMS,
+    "figcraft-ui-sync": frozenset({"ui", "ux", "frontend", "tampilan", "figcraft"}),
+}
+DELIVERABLE_BOOST = 10
 
 STOPWORDS = {
     "aku",
@@ -431,11 +477,12 @@ def _terms(value: str) -> set[str]:
 def rank_skills(request: str, limit: int = 3) -> list[SkillMatch]:
     normalized = re.sub(r"[^a-z0-9]+", " ", request.casefold()).strip()
     request_terms = _terms(request)
+    raw_terms = set(re.findall(r"[a-z0-9]+", request.casefold()))
     matches: list[SkillMatch] = []
     for skill in list_skills():
         name_phrase = skill.name.replace("-", " ")
         name_terms = _terms(name_phrase)
-        description_terms = _terms(skill.description)
+        description_terms = _terms(skill.description) | _terms(skill.metadata.get("keywords", ""))
         hint_terms = set(SKILL_TOPIC_HINTS.get(skill.name, set()))
         metadata_terms = _terms(skill.metadata.get("triggers", ""))
         matched_name = sorted(request_terms & name_terms)
@@ -460,6 +507,9 @@ def rank_skills(request: str, limit: int = 3) -> list[SkillMatch]:
         if name_phrase and name_phrase in normalized:
             score += 8
             reasons.append("phrase")
+        if raw_terms & DELIVERABLE_HINTS.get(skill.name, frozenset()):
+            score += DELIVERABLE_BOOST
+            reasons.append("deliverable")
         explicit_names = {f"${skill.name}", f"/skill {skill.name}"}
         if any(value in request.casefold() for value in explicit_names):
             score += 20

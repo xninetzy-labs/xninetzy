@@ -12,6 +12,7 @@ from xninetzy.context.media.video.models import (
     AssetKind,
     CompositionPreset,
     Easing,
+    Keyframe,
     MotionPreset,
     Resolution,
     TrackKind,
@@ -20,6 +21,7 @@ from xninetzy.context.media.video.models import (
     VideoComposition,
     VideoProject,
     VideoScene,
+    VideoTrack,
     VideoTransition,
 )
 

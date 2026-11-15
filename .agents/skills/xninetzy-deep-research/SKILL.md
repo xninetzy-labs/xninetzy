@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-deep-research"
-description: "Source-grounded deep-research operating system for complex research questions requiring multi-round discovery, evidence synthesis, academic papers, official sources, web research, videos, personal context, claim auditing, contradiction analysis, provenance tracking, and reusable research memory. Use for deep research, literature review, comparative analysis, fact-checking, and current-fact verification where evidence integrity matters."
+name: xninetzy-deep-research
+description: 'Stateful Xninetzy deep-research sessions over MCP: multi-round discovery across papers, official sources, web and video, workers, claim audits, contradictions and resumable research memory. Use for complex questions needing several rounds, resumable state or links to the owner''s goals.'
+metadata:
+  keywords: academic analysis auditing checking comparative context contradiction current evidence fact grounded integrity literature matters operating personal provenance requiring reusable review reviews source synthesis system tracking verification videos where
 ---
 
 # Xninetzy Deep Research OS

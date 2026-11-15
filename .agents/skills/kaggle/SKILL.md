@@ -1,13 +1,14 @@
 ---
-name: "kaggle"
-description: "Operate the authenticated Kaggle account as a Kaggle-aware agent: search datasets and notebooks, download CSV/Parquet/JSON/SQLite into the local workspace, profile and validate files locally, monitor notebook execution status, and pull notebook source. Use whenever an agent wants to discover Kaggle datasets, inspect a dataset's schema before committing to a download, profile a downloaded file, audit its data quality, or check the status of a Kaggle notebook execution. Applies when the user asks for an ecommerce / academic / ML dataset from Kaggle, wants to compare notebooks, or needs to attach a Kaggle dataset to an analysis. Do not use to execute or push Kaggle notebooks unless the operator has explicitly enabled mutation and supplied an approval_id."
+name: kaggle
+description: Uses the authenticated Kaggle account to search datasets and notebooks, download and profile data locally, and check notebook status. Use when a Kaggle dataset or notebook is needed; pushing or running notebooks needs enabled mutation and an approval_id.
 metadata:
-  scope: "general"
-  owner: "xninetzy"
-  language: "en"
-  version: "1.0.0"
-  lifecycle: "auth-check -> search -> inspect -> download -> profile -> validate -> (optional) notebook-status"
-  triggers: "kaggle dataset notebook kernel csv parquet profile validate status pull run push olistbr ecommerce"
+  scope: general
+  owner: xninetzy
+  language: en
+  version: 1.0.0
+  lifecycle: auth-check -> search -> inspect -> download -> profile -> validate -> (optional) notebook-status
+  triggers: kaggle dataset notebook kernel csv parquet profile validate status pull run push olistbr ecommerce
+  keywords: academic agent analysis applies asks attach audit aware before committing compare csv discover downloaded ecommerce execute execution explicitly file files for from has inspect into its json local monitor not operate operator parquet pull push quality schema source sqlite supplied unless user validate wants whenever workspace
 ---
 
 ## Kaggle Integration — Operating Notes

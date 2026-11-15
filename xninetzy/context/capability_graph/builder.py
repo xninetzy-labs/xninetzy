@@ -4,7 +4,7 @@ import json
 from dataclasses import asdict, dataclass, field
 from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, Iterable
+from typing import Any
 
 from xninetzy.context.capability_graph.graph import (
     CapabilityNode,
@@ -351,7 +351,7 @@ def to_dot(artifact: CapabilityGraphArtifact) -> str:
 
 def to_markdown(artifact: CapabilityGraphArtifact) -> str:
     lines: list[str] = []
-    lines.append(f"# Routing capability graph")
+    lines.append("# Routing capability graph")
     lines.append("")
     lines.append(f"Version: `{artifact.provenance['version']}`  ")
     lines.append(f"Generated at: `{artifact.provenance['generated_at']}`")

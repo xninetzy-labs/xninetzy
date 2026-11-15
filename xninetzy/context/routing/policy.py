@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass, field
-from typing import Any
+from dataclasses import dataclass
 
 from xninetzy.context.gateway.trust import (
     TRUST_TIER_KNOWN_EXTERNAL,
@@ -16,7 +15,6 @@ from xninetzy.context.invocation.classify import (
 )
 from xninetzy.context.policy.gate import (
     POLICY_ALLOW,
-    POLICY_BLOCK,
     POLICY_REQUIRE_APPROVAL,
     PolicyDecision,
     evaluate_policy,
@@ -60,7 +58,7 @@ def evaluate_routing_policy(
     decision = evaluate_policy(
         trust_tier=tier,
         side_effect=side_effect,
-        approval_id=approval_id if approval_id is not None else _existing_approval_for(tool_name),
+        approval_id=approval_id,
         idempotency_key=idempotency_key,
     )
     requires_human_approval = decision.outcome == POLICY_REQUIRE_APPROVAL
@@ -73,28 +71,6 @@ def evaluate_routing_policy(
             "policy_satisfied" if decision.outcome == POLICY_ALLOW else f"policy_{decision.outcome}",
         ),
     )
-
-
-def _existing_approval_for(tool_name: str) -> int | None:
-    try:
-        from xninetzy.db.sqlite import connect
-
-        from xninetzy.db.migrations import run_migrations  # noqa: F401
-    except Exception:
-        return None
-    try:
-        from xninetzy.db.sqlite import connect
-        with connect() as conn:
-            row = conn.execute(
-                "SELECT approval_id FROM approval_requests WHERE action_type=? "
-                "AND status='approved' ORDER BY approval_id DESC LIMIT 1",
-                (tool_name,),
-            ).fetchone()
-        if row is None:
-            return None
-        return int(row["approval_id"])
-    except Exception:
-        return None
 
 
 def is_final_action(tool_name: str) -> bool:

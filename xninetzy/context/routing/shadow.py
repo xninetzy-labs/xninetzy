@@ -1,15 +1,13 @@
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
 from xninetzy.context.routing.baselines import (
     CombinedBaseline,
-    EmbeddingsBaseline,
-    RulesBaseline,
 )
 from xninetzy.context.routing.pipeline import run_pipeline
 
@@ -119,7 +117,7 @@ def compare_summary(decisions: list[Any]) -> dict[str, Any]:
     agreement = sum(1 for d in decisions if _get(d, "agreement_top1"))
     avg_topk_overlap = sum(_get(d, "agreement_topk") for d in decisions) / n
     latencies = [_get(d, "latency_new_ms") for d in decisions]
-    latencies = [l for l in latencies if isinstance(l, (int, float))]
+    latencies = [latency for latency in latencies if isinstance(latency, (int, float))]
     if not latencies:
         return {
             "n": n,

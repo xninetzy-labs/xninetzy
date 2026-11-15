@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from xninetzy.context.routing.fine_tune import (
     FINE_TUNE_VERSION,
-    FineTuneGate,
-    FineTuneProposal,
     GateStatus,
     evaluate_fine_tune_gates,
     write_proposal,

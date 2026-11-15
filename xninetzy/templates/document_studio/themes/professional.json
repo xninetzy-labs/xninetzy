@@ -1,0 +1,63 @@
+{
+  "name": "professional",
+  "description": "Clean business style: Arial, navy headings, blue accent, striped tables, cover page.",
+  "fonts": {
+    "body": "Arial",
+    "heading": "Arial",
+    "mono": "DejaVu Sans Mono",
+    "deck_body": null,
+    "deck_heading": null
+  },
+  "sizes": {
+    "body": 11,
+    "small": 9,
+    "title": 28,
+    "subtitle": 16,
+    "h1": 20,
+    "h2": 15,
+    "h3": 12.5,
+    "slide_title": 30,
+    "slide_body": 20,
+    "slide_min": 14
+  },
+  "colors": {
+    "text": "#1A1A1A",
+    "heading": "#1F3864",
+    "accent": "#2E74B5",
+    "muted": "#666666",
+    "table_header_bg": "#1F3864",
+    "table_header_text": "#FFFFFF",
+    "table_stripe": "#EEF3FA",
+    "slide_background": "#FFFFFF",
+    "slide_title": "#1F3864",
+    "slide_text": "#1A1A1A"
+  },
+  "page": {
+    "size": "A4",
+    "margin_top_cm": 2.54,
+    "margin_bottom_cm": 2.54,
+    "margin_left_cm": 2.54,
+    "margin_right_cm": 2.54
+  },
+  "document": {
+    "language": "en",
+    "line_spacing": 1.15,
+    "paragraph_after_pt": 6,
+    "justify": false,
+    "cover": true,
+    "toc": false,
+    "page_numbers": true,
+    "heading_numbering": false,
+    "caption_numbering": true,
+    "header_text": "",
+    "footer_text": ""
+  },
+  "deck": {
+    "aspect": "16:9",
+    "accent_bar": true,
+    "slide_numbers": true,
+    "max_bullets": 6,
+    "max_table_rows": 8,
+    "footer_text": ""
+  }
+}

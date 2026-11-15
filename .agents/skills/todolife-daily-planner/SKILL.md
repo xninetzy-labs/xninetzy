@@ -1,6 +1,8 @@
 ---
-name: "todolife-daily-planner"
-description: "Produce a conflict-free daily plan for the owner by locking fixed commitments (sleep, prayer, class), allocating the Daily Core (Math 2h, ML 2h, College Task 2h, Exercise 1h), slotting project work (VISWA/CERIA rotation), enforcing the Rp20.000 food budget, and persisting the result to Obsidian under Daily/YYYY/YYYY-MM-DD.md. Activates when the user asks for a daily plan, today's todos, morning plan, or \"buat todolist hari ini\". Audit-first: never writes a plan without auditing college schedule, prayer times, existing tasks, deadlines, and prior completion."
+name: todolife-daily-planner
+description: 'Builds a conflict-free daily plan: locks sleep, prayer and class, allocates the Daily Core, rotates VISWA/CERIA slots, enforces the Rp20.000 food budget and saves to Obsidian Daily/YYYY/YYYY-MM-DD.md after an audit. Use for ''buat todolist hari ini'' or a morning plan.'
+metadata:
+  keywords: activates allocating asks auditing college commitments completion deadlines enforcing exercise existing first fixed locking math never owner persisting prior produce project result rotation schedule slotting task tasks times today todos under user when without work writes
 ---
 # todolife-daily-planner
 
@@ -174,6 +176,6 @@ P0/P1 are non-negotiable. P2 may push P3/P4 but never P0/P1.
 ## Related skills
 
 - `personal-os` — wraps goals / projects / open loops / weekly review
-- `memory-management` — persists the daily completion as episodic memory
+- `xninetzy-memory` (layer governance) — persists the daily completion as episodic memory
 - `xninetzy-obsidian-orchestra` — structural mutations; do not invoke for daily plans (read-only)
 - `obsidian-knowledge` — read/write semantic knowledge

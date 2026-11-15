@@ -37,7 +37,9 @@ def _annotations_for(risk: str, requires_approval: bool) -> dict[str, Any]:
         "readOnlyHint": risk == "read",
         "destructiveHint": risk in {"write", "final"},
         "idempotentHint": risk != "final",
-        "openWorldHint": False,
+        # Risk classes do not establish network isolation. Several READ tools
+        # fetch public/institutional sources, so keep this hint conservative.
+        "openWorldHint": True,
     }
     if requires_approval:
         hints["title"] = "requires approval"

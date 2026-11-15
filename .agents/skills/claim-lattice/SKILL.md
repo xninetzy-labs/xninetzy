@@ -1,12 +1,13 @@
 ---
 name: claim-lattice
-description: Maintain the claim ↔ evidence ↔ source graph with confidence propagation. Activates when multiple claims must be evidence-grounded together (synthesis, cross-checking, contradiction detection).
+description: 'Maintains the claim ↔ evidence ↔ source graph with confidence propagation. Use when several claims must be grounded together: synthesis, cross-checking, contradiction detection.'
 metadata:
-  scope: "project"
-  intent_class: "RESEARCH"
-  consumes: "source-evaluation, citation-validation"
-  produces: "claim_lattice"
-  tier: "0"
+  scope: project
+  intent_class: RESEARCH
+  consumes: source-evaluation, citation-validation
+  produces: claim_lattice
+  tier: '0'
+  keywords: activates maintain multiple
 ---
 
 # Claim Lattice

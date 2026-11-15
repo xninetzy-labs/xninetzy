@@ -1,13 +1,14 @@
 ---
-name: "media-video-motion"
-description: "Deterministic After-Effects-like motion primitives (FadeIn, SlideIn, Zoom, CameraPush, KenBurns, LowerThird, TitleCard, Callout, CodeHighlight, Typewriter) backed by a keyframe-interpolated motion graph. Implemented in Remotion (React) for richer scenes, or in FFmpeg filter graphs for light motion. CPU-only."
+name: media-video-motion
+description: Deterministic motion primitives (FadeIn, SlideIn, Zoom, CameraPush, KenBurns, LowerThird, TitleCard, Callout, CodeHighlight, Typewriter) via Remotion or FFmpeg keyframes. Use to add motion graphics to a video.
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "video_scene_create, video_motion_apply, video_preview"
-  produces: "motion_graph"
-  tier: "1"
-  engine: "remotion,ffmpeg"
+  scope: media
+  intent_class: MEDIA
+  consumes: video_scene_create, video_motion_apply, video_preview
+  produces: motion_graph
+  tier: '1'
+  engine: remotion,ffmpeg
+  keywords: after backed cpu effects filter for graph graphs implemented interpolated keyframe light like only react richer scenes
 ---
 
 # media-video-motion

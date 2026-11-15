@@ -4,19 +4,16 @@ from xninetzy.context.routing.production import (
     CANARY_DEFAULT_SAMPLE_RATE,
     PROD_VERSION,
     ROLLOUT_PHASES,
-    RolloutPromotionRequest,
     RolloutStage,
     RolloutState,
     _stage_transition_allowed,
     evaluate_rollout_promotion,
-    write_promotion_request,
     write_state,
 )
 from xninetzy.context.routing.regression import (
     RegressionCheck,
     RegressionReport,
     RegressionStatus,
-    run_regression_gate,
 )
 
 

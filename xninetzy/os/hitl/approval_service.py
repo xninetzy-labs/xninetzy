@@ -7,7 +7,20 @@ from zoneinfo import ZoneInfo
 from xninetzy.core.config import get_settings
 from xninetzy.db.sqlite import connect
 from xninetzy.os.policy.action_policy import action_hash
-from xninetzy.os.research.permissions import is_owner_admin
+
+APPROVAL_CHANNEL_UNVERIFIED = (
+    "approval_channel_unverified: kanal persetujuan owner independen belum "
+    "terintegrasi; identitas, notifikasi dan konfirmasi boolean bukan otorisasi. "
+    "Aksi tidak dijalankan."
+)
+
+
+def approval_delivery_message(delivered: bool) -> str:
+    notification = (
+        "Permintaan tersimpan di inbox owner."
+        if delivered else "Permintaan tercatat, tetapi notifikasi inbox owner belum tersimpan."
+    )
+    return f"{notification} {APPROVAL_CHANNEL_UNVERIFIED}"
 
 
 def _now() -> str:
@@ -106,10 +119,40 @@ def set_approval_status(
     sender_id: str | None,
     sender_name: str | None,
 ) -> tuple[bool, str]:
+    """Handle legacy service calls without treating identity as human consent.
+
+    No trusted approval channel exists in this build. Keep requests and legacy
+    approved rows intact; names, IDs and installation identity cannot approve.
+    Rejection is a scoped, reversible owner operation, never a grant.
+    """
     if status not in {"approved", "rejected"}:
         return False, "Status approval tidak valid."
-    if not is_owner_admin(sender_id, sender_name):
-        return False, "Maaf, approval ini hanya bisa dilakukan oleh admin."
+    if status == "approved":
+        return False, APPROVAL_CHANNEL_UNVERIFIED
+    settings = get_settings()
+    identifiers = {
+        value.strip().casefold()
+        for value in (
+            settings.MCP_PRINCIPAL_ID or settings.OWNER_PHONE_NUMBER or settings.ADMIN_JID or "mcp:local-owner",
+            settings.OWNER_PHONE_NUMBER, settings.ADMIN_JID,
+            settings.OWNER_CHAT_ID, *settings.OWNER_ALLOWED_IDS.split(","),
+            *settings.OWNER_ALLOWED_JIDS.split(","),
+        ) if value.strip()
+    }
+    if not sender_id or sender_id.strip().casefold() not in identifiers:
+        return False, "Penolakan hanya dapat dilakukan oleh principal owner yang dikonfigurasi."
+    return _apply_status_decision(approval_id, status)
+
+
+def _apply_status_decision(approval_id: int, status: str) -> tuple[bool, str]:
+    """Legacy atomic transition/effect kernel; does not authenticate consent.
+
+    Public approval issuance is held. The public service calls this only for
+    owner rejection. Unit tests exercise its historical race/rollback semantics
+    separately; no positive human authorization follows from those tests.
+    """
+    if status not in {"approved", "rejected"}:
+        return False, "Status approval tidak valid."
     column = "approved_at" if status == "approved" else "rejected_at"
     with connect() as conn:
         row = conn.execute(
@@ -120,18 +163,29 @@ def set_approval_status(
         row_data = dict(row)
         if row["status"] != "pending":
             if row["status"] == "approved" and status == "approved":
+                if row_data.get("execution_at") is None:
+                    return False, (
+                        f"approval_execution_unverified: Approval #{approval_id} sudah approved, "
+                        "tetapi hasil eksekusi belum terverifikasi. Periksa state aksi; jangan ulangi otomatis."
+                    )
                 return True, f"Approval #{approval_id} sudah berstatus approved."
             return False, f"Approval #{approval_id} sudah berstatus {row['status']}."
         if _expired(row_data):
-            conn.execute(
-                "UPDATE approval_requests SET status='expired', rejected_at=? WHERE id=?",
+            updated = conn.execute(
+                "UPDATE approval_requests SET status='expired', rejected_at=? WHERE id=? AND status='pending'",
                 (_now(), approval_id),
             )
+            if updated.rowcount != 1:
+                return False, f"Approval #{approval_id} sudah berubah; keputusan kedaluwarsa tidak diterapkan."
             return False, f"Approval #{approval_id} sudah kedaluwarsa."
-        conn.execute(
-            f"UPDATE approval_requests SET status=?, {column}=? WHERE id=?",
+        # Commit the winning decision before invoking any effect. A stale
+        # reader must not overwrite a rejection or execute a second time.
+        updated = conn.execute(
+            f"UPDATE approval_requests SET status=?, {column}=? WHERE id=? AND status='pending'",
             (status, _now(), approval_id),
         )
+        if updated.rowcount != 1:
+            return False, f"Approval #{approval_id} sudah berubah; keputusan tidak diterapkan."
     if status != "approved":
         return True, f"Approval #{approval_id} rejected."
     try:
@@ -179,4 +233,4 @@ def validate_approval(
         raise ValueError("Isi aksi berubah; approval lama tidak berlaku.")
     if _expired(row):
         raise ValueError(f"Approval #{approval_id} sudah kedaluwarsa.")
-    return row
+    raise ValueError(APPROVAL_CHANNEL_UNVERIFIED)

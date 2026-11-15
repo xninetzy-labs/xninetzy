@@ -17,7 +17,7 @@ def kaggle_capabilities(
     sender_id: str | None = None,
     chat_id: str | None = None,
     account: str = "default",
-) -> dict[str, Any]:
+) -> str:
     owner = _owner(sender_id, chat_id)
     snapshot = kaggle_services.capabilities(owner=owner, account=account)
     return to_tool_result(snapshot, sender_id=sender_id, chat_id=chat_id)
@@ -27,7 +27,7 @@ def kaggle_auth_status(
     sender_id: str | None = None,
     chat_id: str | None = None,
     account: str = "default",
-) -> dict[str, Any]:
+) -> str:
     owner = _owner(sender_id, chat_id)
     snapshot = kaggle_services.capabilities(owner=owner, account=account)
     auth = snapshot.get("auth", {})
@@ -45,7 +45,7 @@ def kaggle_dataset_search(
     sender_id: str | None = None,
     chat_id: str | None = None,
     account: str = "default",
-) -> dict[str, Any]:
+) -> str:
     owner = _owner(sender_id, chat_id)
     result = kaggle_services.search(
         query=query,
@@ -72,7 +72,7 @@ def kaggle_dataset_get(
     sender_id: str | None = None,
     chat_id: str | None = None,
     account: str = "default",
-) -> dict[str, Any]:
+) -> str:
     owner = _owner(sender_id, chat_id)
     result = kaggle_services.get(
         dataset_ref=dataset_ref,
@@ -97,7 +97,7 @@ def kaggle_dataset_register(
     sender_id: str | None = None,
     chat_id: str | None = None,
     account: str = "default",
-) -> dict[str, Any]:
+) -> str:
     owner = _owner(sender_id, chat_id)
     result = kaggle_services.register(
         dataset_ref=dataset_ref,
@@ -120,7 +120,7 @@ def kaggle_dataset_validate(
     sender_id: str | None = None,
     chat_id: str | None = None,
     account: str = "default",
-) -> dict[str, Any]:
+) -> str:
     owner = _owner(sender_id, chat_id)
     result = kaggle_services.validate(
         dataset_ref=dataset_ref,

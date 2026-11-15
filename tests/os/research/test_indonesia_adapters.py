@@ -24,25 +24,25 @@ KALIBRR_HTML = """
 
 GLINTS_HTML = """
 <html><body>
-<div class="Opportunityscard">
-  <a class="Opportunityscard__link" href="/id/opportunities/xyz/frontend-intern">Frontend Intern</a>
+<article role="article" class="Opportunityscard">
+  <h2><a aria-label="Job card title" href="/id/opportunities/xyz/frontend-intern">Frontend Intern</a></h2>
   <div class="Opportunityscard__company">PT Bukalapak</div>
   <div class="Opportunityscard__location">Bandung</div>
   <time>2026-09-19</time>
   <p class="Opportunityscard__description">React, TypeScript, Next.js.</p>
-</div>
+</article>
 </body></html>
 """
 
 DEALLS_HTML = """
 <html><body>
-<div data-test="job-card">
-  <a class="job-link" href="/opportunities/dev-intern-789">DevOps Intern</a>
+<a class="job-link" href="/loker/devops-intern~pt-traveloka-789">
+  <h3 class="job-title">DevOps Intern</h3>
   <span class="company-name">PT Traveloka</span>
   <span class="job-location">Jakarta</span>
   <span class="posted-date">2026-09-21</span>
   <p class="job-snippet">Docker, Kubernetes, Terraform.</p>
-</div>
+</a>
 </body></html>
 """
 
@@ -62,7 +62,7 @@ JOBSTREET_HTML = """
 def test_kalibrr_parses_listings_into_source_records():
     from xninetzy.os.research.sources.kalibrr import KalibrrAdapter
 
-    adapter = KalibrrAdapter(session_factory=lambda: make_fake_session({"jobs/search": KALIBRR_HTML}))
+    adapter = KalibrrAdapter(session_factory=lambda: make_fake_session({KalibrrAdapter.SEARCH_URL.split("?")[0]: KALIBRR_HTML}))
     import asyncio
 
     records = asyncio.run(adapter.search("engineer", limit=10))
@@ -78,7 +78,7 @@ def test_kalibrr_parses_listings_into_source_records():
 def test_glints_parses_listings_into_source_records():
     from xninetzy.os.research.sources.glints import GlintsAdapter
 
-    html_by_url = {"opportunities/jobs/explore": GLINTS_HTML}
+    html_by_url = {GlintsAdapter.SEARCH_URL.split("?")[0]: GLINTS_HTML}
     adapter = GlintsAdapter(session_factory=lambda: make_fake_session(html_by_url))
     import asyncio
 
@@ -93,7 +93,7 @@ def test_glints_parses_listings_into_source_records():
 def test_dealls_parses_listings_into_source_records():
     from xninetzy.os.research.sources.dealls import DeallsAdapter
 
-    html_by_url = {"dealls.com/opportunities": DEALLS_HTML}
+    html_by_url = {DeallsAdapter.SEARCH_URL.split("?")[0]: DEALLS_HTML}
     adapter = DeallsAdapter(session_factory=lambda: make_fake_session(html_by_url))
     import asyncio
 
@@ -102,13 +102,13 @@ def test_dealls_parses_listings_into_source_records():
     first = records[0]
     assert first.title == "DevOps Intern"
     assert first.author == "PT Traveloka"
-    assert first.identifiers["dealls_slug"] == "dev-intern-789"
+    assert first.identifiers["dealls_slug"] == "devops-intern~pt-traveloka-789"
 
 
 def test_jobstreet_parses_listings_into_source_records():
     from xninetzy.os.research.sources.jobstreet_id import JobstreetIDAdapter
 
-    html_by_url = {"id.jobstreet.com/id/job-search": JOBSTREET_HTML}
+    html_by_url = {JobstreetIDAdapter.SEARCH_URL: JOBSTREET_HTML}
     adapter = JobstreetIDAdapter(session_factory=lambda: make_fake_session(html_by_url))
     import asyncio
 

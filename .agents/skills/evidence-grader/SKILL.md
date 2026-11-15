@@ -1,12 +1,13 @@
 ---
 name: evidence-grader
-description: Assign evidence strength to a list of SourceRecord items. Considers primary
+description: Grades evidence strength for SourceRecord items by primary-source status, peer review, freshness, independence and confidence. Use before synthesis in research workflows.
 metadata:
-  type: "meta"
-  layer: "research-orchestration"
-  consumes: "'[\"research_search\",\"research_fetch\"]'"
-  produces: "'[\"graded_evidence\"]'"
-  tier: "'0'"
+  type: meta
+  layer: research-orchestration
+  consumes: '''["research_search","research_fetch"]'''
+  produces: '''["graded_evidence"]'''
+  tier: '''0'''
+  keywords: assign considers list metadata signals
 ---
 
 

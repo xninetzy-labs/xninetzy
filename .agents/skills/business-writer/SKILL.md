@@ -1,12 +1,13 @@
 ---
-name: "business-writer"
-description: "Produce business writing: case studies, market analyses, business plans, investor updates, sales collateral. Evidence-grounded, audience-aware. Activates for any business-format deliverable that is not a proposal or executive brief."
+name: business-writer
+description: 'Writes evidence-grounded business deliverables: case studies, market analyses, business plans, investor updates, sales collateral. Use for business formats other than proposals or executive briefs.'
 metadata:
-  scope: "writing"
-  intent_class: "PROFESSIONAL"
-  consumes: "evidence-synthesis, consultant"
-  produces: "business_document"
-  tier: "0"
+  scope: writing
+  intent_class: PROFESSIONAL
+  consumes: evidence-synthesis, consultant
+  produces: business_document
+  tier: '0'
+  keywords: activates any audience aware brief deliverable format not produce proposal that writing
 ---
 # business-writer
 

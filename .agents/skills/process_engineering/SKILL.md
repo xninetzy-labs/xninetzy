@@ -1,12 +1,13 @@
 ---
-name: "process_engineering"
-description: "Modeling, validating, and exchanging process diagrams for business, operations, BPMN, swimlane, approval workflows, and governance pipelines. Use for drafting processes from text, validating structural soundness (start/end/lane/edge integrity), rendering BPMN 2.0 XML, and storing reusable process artifacts in the Xninetzy catalog. Applies when the owner asks to model a workflow, review a BPMN file, normalize a process diagram, or migrate hand-written flowcharts into the canonical process_engineering model."
+name: process_engineering
+description: 'Models, validates and exchanges process diagrams (BPMN 2.0, swimlanes, approval workflows): drafts from text, checks structural soundness, renders BPMN XML and stores reusable artifacts. Use to model a workflow or review a BPMN file.'
 metadata:
-  scope: "general"
-  owner: "xninetzy"
-  language: "en"
-  version: "0.1.0"
-  lifecycle: "intake -> model -> validate -> render -> store -> review"
+  scope: general
+  owner: xninetzy
+  language: en
+  version: 0.1.0
+  lifecycle: intake -> model -> validate -> render -> store -> review
+  keywords: applies asks business canonical catalog diagram drafting edge end engineering exchanging flowcharts for governance hand integrity into lane migrate modeling normalize operations owner pipelines processes rendering start storing swimlane validating when written xninetzy
 ---
 
 # Process Engineering

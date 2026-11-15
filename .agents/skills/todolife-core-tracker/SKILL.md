@@ -1,6 +1,8 @@
 ---
 name: todolife-core-tracker
-description: Track daily-core quotas (Math 2h, ML 2h, College Task 2h, Exercise 1h) and surface deficits. Read-only — never modifies the plan. Activates when the user asks "udah berapa jam math hari ini", "core status", or end-of-day review.
+description: Read-only tracker of Daily Core quotas (Math 2h, ML 2h, College Task 2h, Exercise 1h) that surfaces deficits. Use for 'udah berapa jam math hari ini', 'core status' or the end-of-day review.
+metadata:
+  keywords: activates and asks modifies never plan surface track user when
 ---
 
 # todolife-core-tracker

@@ -42,7 +42,7 @@ def _resolve_password(settings) -> str:
             if raw:
                 return raw.split("/", 1)[1] if "/" in raw else raw
         except Exception as e:
-            logger.warning("Could not read NEO4J_AUTH_FILE (%s): %s", auth_file, e)
+            logger.warning("Could not read NEO4J_AUTH_FILE (%s)", type(e).__name__)
     return settings.NEO4J_PASSWORD
 
 
@@ -115,7 +115,7 @@ def _get_driver():
 
                 neo4j_lifecycle.ensure_running()
             except Exception as e:
-                logger.warning('Neo4j ensure_running failed (non-fatal): %s', e)
+                logger.warning('Neo4j ensure_running failed (non-fatal): %s', type(e).__name__)
         driver = None
         try:
             from neo4j import GraphDatabase
@@ -133,7 +133,7 @@ def _get_driver():
             _unavailable_until = 0.0
             atexit.register(close_driver)
             _ensure_constraints()
-            logger.info('Neo4j projection connected: %s', _resolve_uri(settings))
+            logger.info('Neo4j projection connected')
             return _driver
         except Exception as e:
             if driver is not None:
@@ -142,7 +142,7 @@ def _get_driver():
                 except Exception:
                     pass
             _latch_unavailable(settings)
-            logger.warning('Neo4j unavailable — projection disabled: %s', e)
+            logger.warning('Neo4j unavailable — projection disabled: %s', type(e).__name__)
             return None
 
 
@@ -172,7 +172,7 @@ def _ensure_constraints() -> None:
             routing_=RoutingControl.WRITE,
         )
     except Exception as e:
-        logger.warning("Neo4j constraint setup failed (non-fatal): %s", e)
+        logger.warning("Neo4j constraint setup failed (non-fatal): %s", type(e).__name__)
 
 
 def upsert_node(*, key: str, node_type: str, title: str, properties: dict | None = None) -> bool:
@@ -198,7 +198,7 @@ def upsert_node(*, key: str, node_type: str, title: str, properties: dict | None
         )
         return True
     except Exception as e:
-        logger.warning("Neo4j node upsert failed (non-fatal): %s", e)
+        logger.warning("Neo4j node upsert failed (non-fatal): %s", type(e).__name__)
         return False
 
 
@@ -232,7 +232,7 @@ def upsert_edge(
         )
         return True
     except Exception as e:
-        logger.warning("Neo4j edge upsert failed (non-fatal): %s", e)
+        logger.warning("Neo4j edge upsert failed (non-fatal): %s", type(e).__name__)
         return False
 
 
@@ -251,7 +251,7 @@ def delete_node(key: str) -> bool:
         )
         return True
     except Exception as e:
-        logger.warning("Neo4j node delete failed (non-fatal): %s", e)
+        logger.warning("Neo4j node delete failed (non-fatal): %s", type(e).__name__)
         return False
 
 
@@ -287,7 +287,7 @@ def neighborhood(keys: list[str], depth: int = 1, limit: int = 60) -> list[dict]
             for r in records
         ]
     except Exception as e:
-        logger.warning("Neo4j neighborhood query failed (non-fatal): %s", e)
+        logger.warning("Neo4j neighborhood query failed (non-fatal): %s", type(e).__name__)
         return []
 
 
@@ -314,7 +314,7 @@ def shortest_path(source_key: str, target_key: str, max_hops: int = 5) -> list[d
             return []
         return records[0]["hops"] or []
     except Exception as e:
-        logger.warning("Neo4j shortest_path failed (non-fatal): %s", e)
+        logger.warning("Neo4j shortest_path failed (non-fatal): %s", type(e).__name__)
         return []
 
 
@@ -333,7 +333,7 @@ def wipe_all() -> bool:
         )
         return True
     except Exception as e:
-        logger.warning("Neo4j wipe failed (non-fatal): %s", e)
+        logger.warning("Neo4j wipe failed (non-fatal): %s", type(e).__name__)
         return False
 
 

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import os
 
 from xninetzy.context.media.video.validators import (
     validate_project,
@@ -12,12 +11,9 @@ from xninetzy.context.media.video.models import (
     Easing,
     MotionPreset,
     RenderRequest,
-    VideoAsset,
     VideoComposition,
     VideoProject,
     VideoScene,
-    VideoTrack,
-    AssetKind,
     Resolution,
 )
 

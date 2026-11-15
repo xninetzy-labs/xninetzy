@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-mcp-lightning"
-description: "Decision and optimization layer for Xninetzy MCP environments, contextual tool selection, provider routing, skill selection, model choice, research strategy, and outcome evaluation across MCP clients and compatible agent runtimes. Guidance only; never treats this skill as authorization, evidence, or permission to perform consequential actions."
+name: xninetzy-mcp-lightning
+description: Decision and optimization layer for choosing MCP tools, providers, skills, models and research strategies with outcome evaluation; guidance only, never authorization. Use when choosing or tuning tools and strategies.
+metadata:
+  keywords: across actions agent choice clients compatible consequential contextual environments evidence model perform permission provider routing runtimes selection skill strategy this tool treats xninetzy
 ---
 
 # Xninetzy MCP Lightning OS

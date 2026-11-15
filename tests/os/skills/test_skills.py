@@ -26,6 +26,17 @@ def test_skill_suggestion_covers_machine_learning_topics():
     assert "clustering" in matches[0].matched_terms
 
 
+def test_deliverable_terms_route_decks_and_ui_before_topic_terms():
+    def top(request: str) -> str:
+        return rank_skills(request, limit=1)[0].skill.name
+
+    assert top("buatkan ppt presentasi tentang machine learning") == "document-studio"
+    assert top("bikin presentasi kuliah basis data") == "document-studio"
+    assert top("consulting deck MECE untuk klien") == "consulting-pptx"
+    assert top("implementasi ui halaman login pakai react") == "figcraft-ui-sync"
+    assert top("restyle dashboard frontend sesuai desain") == "figcraft-ui-sync"
+
+
 def test_skill_metadata_exposes_trust_and_resource_inventory():
     skill = get_skill("playwright")
     assert skill is not None
@@ -94,3 +105,33 @@ Use the reference only after inspecting the request.
     except SkillValidationError:
         return
     raise AssertionError("parent traversal resource should be rejected")
+
+
+def test_metadata_keywords_rank_like_description_terms(monkeypatch):
+    from xninetzy.skills.models import SkillDefinition
+
+    def make(name, description, metadata):
+        return SkillDefinition(
+            name=name, description=description, path="", source="builtin",
+            content_hash="", metadata=metadata,
+        )
+
+    in_description = make("alpha-skill", "Handles zebra quokka requests.", {})
+    in_keywords = make("beta-skill", "Handles requests.", {"keywords": "zebra quokka"})
+    monkeypatch.setattr(
+        "xninetzy.skills.registry.list_skills", lambda: [in_description, in_keywords]
+    )
+    matches = rank_skills("zebra quokka", limit=2)
+    assert [match.skill.name for match in matches] == ["alpha-skill", "beta-skill"]
+    assert matches[0].score == matches[1].score == 2
+    assert "description" in matches[1].selection_reasons
+
+
+def test_merged_skill_names_resolve_to_canonical_skills():
+    assert get_skill("memory-chat").name == "xninetzy-memory"
+    assert get_skill("memory-management").name == "xninetzy-memory"
+    assert get_skill("playwright-mcp-workflows").name == "playwright"
+    assert get_skill("consulting-pptx-skill").name == "consulting-pptx"
+    assert get_skill("pptx-skills").name == "consulting-pptx"
+    assert "references/layer-governance.md" in get_skill("xninetzy-memory").resource_paths
+    assert "references/mcp-workflows.md" in get_skill("playwright").resource_paths

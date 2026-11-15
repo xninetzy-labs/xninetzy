@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import pytest
+
 import json
 import os
 import time
@@ -71,7 +73,7 @@ def test_remotion_renderer_renders_short_video(tmp_path):
 
 def test_remotion_renderer_health_snapshot():
     from xninetzy.interfaces.media.video_backends.remotion import (
-        RemotionBackend, REMOTION_PROJECT_ROOT,
+        RemotionBackend,
     )
     backend = RemotionBackend()
     snap = backend.health_snapshot()

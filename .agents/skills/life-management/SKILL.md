@@ -1,6 +1,8 @@
 ---
-name: "life-management"
-description: "Personal operating system for goals, tasks, reminders, habits, routines, workouts, finances, check-ins, inbox capture, daily planning, and weekly reviews. Use when the user asks to capture a commitment, manage a goal or task, set a reminder, log a habit or workout, record a transaction, perform a check-in, or run a daily/weekly review."
+name: life-management
+description: Personal OS for goals, tasks, reminders, habits, routines, workouts, finances, check-ins, inbox capture and daily or weekly reviews. Use to capture a commitment, set a reminder, log a habit, workout or transaction, or run a review.
+metadata:
+  keywords: asks goal manage operating perform planning record system task user when
 ---
 
 # Life Management OS

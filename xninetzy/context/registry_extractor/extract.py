@@ -237,7 +237,6 @@ def extract_provider_registry() -> dict[str, list[dict[str, Any]]]:
 
 
 def _discover_research_source_modules() -> list[dict[str, Any]]:
-    import importlib
 
     import xninetzy.os.research.sources as sources_pkg
 

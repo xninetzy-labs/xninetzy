@@ -1,14 +1,15 @@
 ---
-name: "media-video-tutorial"
-description: "Build a deterministic tutorial video from a user's codebase + screenshots. Steps: hook → context → step 1 → step 2 → step 3 → result → summary. Highlights code via typed syntax highlighting, NEVER auto-generates code, and NEVER auto-transcribes audio. CPU-only."
+name: media-video-tutorial
+description: Builds a deterministic coding tutorial video from a codebase and screenshots (hook → context → steps → result → summary) with code highlighting; never generates code or transcribes audio. Use for tutorial videos.
 metadata:
-  scope: "media"
-  intent_class: "MEDIA"
-  consumes: "video_scene_create, video_motion_apply, video_text_add, video_render"
-  produces: "tutorial_mp4"
-  tier: "1"
-  engine: "ffmpeg,remotion"
-  template: "tutorial"
+  scope: media
+  intent_class: MEDIA
+  consumes: video_scene_create, video_motion_apply, video_text_add, video_render
+  produces: tutorial_mp4
+  tier: '1'
+  engine: ffmpeg,remotion
+  template: tutorial
+  keywords: auto build cpu highlights only step syntax typed user via
 ---
 
 # media-video-tutorial

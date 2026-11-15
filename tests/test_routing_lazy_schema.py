@@ -4,7 +4,6 @@ from xninetzy.context.routing.lazy_schema import (
     MAX_FULL_SCHEMA_BYTES,
     MAX_LIGHT_METADATA_BYTES,
     MAX_TOTAL_BUDGET_BYTES,
-    LazySchemaBundle,
     materialize_schemas,
 )
 

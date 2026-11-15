@@ -154,7 +154,7 @@ async def test_open_page_without_storage_state(monkeypatch, tmp_path):
 
 
 @pytest.mark.asyncio
-async def test_failed_submission_token_can_retry_upload(monkeypatch):
+async def test_failed_submission_token_still_requires_owner_approval(monkeypatch):
     from xninetzy.os.academic.hebat import tools as hebat_tools
 
     submission_row = {
@@ -186,13 +186,19 @@ async def test_failed_submission_token_can_retry_upload(monkeypatch):
         ],
     )
     monkeypatch.setattr(hebat_tools, "upload_submission_via_playwright", fake_upload)
+    monkeypatch.setattr(hebat_tools, "request_approval", lambda *args, **kwargs: 444)
+
+    async def notify(*args, **kwargs):
+        return False
+
+    monkeypatch.setattr(hebat_tools, "notify_admin_approval", notify)
 
     result = await hebat_tools.hebat_upload_submission.ainvoke(
         {"chat_id": "chat-owner", "confirmation_token": "HBT-ABC123"}
     )
 
-    assert "Berhasil upload" in result
-    assert captured["token"] == "HBT-ABC123"
+    assert "membutuhkan approval #444" in result
+    assert captured == {}
 
 
 def test_submission_module_exports_classifier_contract():

@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 from xninetzy.context.routing.pipeline import (
-    PIPELINE_VERSION,
     PipelineOutcome,
     load_pipeline_outcome,
     normalize_request,

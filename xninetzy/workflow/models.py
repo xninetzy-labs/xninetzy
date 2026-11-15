@@ -2,13 +2,13 @@
 
 A *workflow* decomposes one complex user request ("riset X lalu buat planning
 lalu simpan ke Obsidian") into ordered :class:`WorkflowAction`s that the
-executor runs one-by-one, sending short WA progress updates between them.
+executor runs one-by-one, sending short owner progress updates between them.
 """
 
 from __future__ import annotations
 
 from enum import Enum
-from typing import Any
+from typing import Any, Literal
 
 from pydantic import BaseModel, Field
 
@@ -40,6 +40,7 @@ class WorkflowActionStatus(str, Enum):
     SUCCESS = "success"
     FAILED = "failed"
     SKIPPED = "skipped"
+    CANCELLED = "cancelled"
 
 
 class WorkflowRunnerMode(str, Enum):
@@ -107,9 +108,19 @@ class WorkflowExecutionResult(BaseModel):
     status: WorkflowActionStatus
     final_response: str
     action_results: list[WorkflowActionResult] = Field(default_factory=list)
+    checkpoint: WorkflowCheckpoint | None = None
 
     def succeeded(self) -> list[WorkflowActionResult]:
         return [r for r in self.action_results if r.status == WorkflowActionStatus.SUCCESS]
 
     def failed(self) -> list[WorkflowActionResult]:
         return [r for r in self.action_results if r.status == WorkflowActionStatus.FAILED]
+
+
+class WorkflowCheckpoint(BaseModel):
+    version: Literal[1] = 1
+    plan_hash: str
+    state: WorkflowState
+
+
+WorkflowExecutionResult.model_rebuild()

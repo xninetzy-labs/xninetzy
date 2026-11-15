@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from langchain_core.tools import tool
 
-from xninetzy.os.hitl.approval_service import get_approval_status, list_pending, request_approval, set_approval_status
+from xninetzy.os.hitl.approval_service import get_approval_status, list_pending, request_approval, set_approval_status, approval_delivery_message
 from xninetzy.os.notifications.admin_notifier import notify_admin_approval
 from xninetzy.os.policy.action_policy import evaluate_action
 
@@ -56,19 +56,14 @@ async def hitl_request_plan_approval(
         composed_title,
         composed_summary,
     )
-    delivery = (
-        "Tombol approve/reject sudah dikirim ke  admin."
-        if delivered
-        else "Tombol gagal dikirim; periksa ADMIN_JID dan koneksi WA Engine."
-    )
+    delivery = approval_delivery_message(delivered)
     return (
         f"*Plan Approval Required #{approval_id}*\n\n"
         f"*Plan:* {plan_id}\n"
         f"*Policy:* {decision.mode.value} ({decision.risk.value})\n"
         f"*Steps:* {len(bounded_steps)}\n\n"
         f"{composed_summary}\n\n"
-        f"{delivery}\n\n"
-        f"Fallback:\n`/approve {approval_id}`\natau\n`/reject {approval_id}`"
+        f"{delivery}"
     )
 
 
@@ -92,19 +87,14 @@ async def hitl_request_approval(
         title,
         summary,
     )
-    delivery = (
-        "Tombol approve/reject sudah dikirim ke  admin."
-        if delivered
-        else "Tombol gagal dikirim; periksa ADMIN_JID dan koneksi WA Engine."
-    )
+    delivery = approval_delivery_message(delivered)
     return (
         f"*Approval Required #{approval_id}*\n\n"
         f"*Tipe:* {action_type}\n"
         f"*Policy:* {decision.mode.value} ({decision.risk.value})\n\n"
         f"*Judul:* {title}\n\n"
         f"{summary}\n\n"
-        f"{delivery}\n\n"
-        f"Fallback:\n`/approve {approval_id}`\natau\n`/reject {approval_id}`"
+        f"{delivery}"
     )
 
 
@@ -123,9 +113,12 @@ def hitl_list_pending() -> str:
 
 @tool
 def hitl_approve(approval_id: int, sender_id: str | None = None, sender_name: str | None = None) -> str:
-    """Approve request. Hanya admin."""
-    _, message = set_approval_status(approval_id, "approved", sender_id, sender_name)
-    return message
+    """Laporkan batas approval: tool agen tidak dapat menjadi bukti persetujuan owner."""
+    return (
+        f"approval_channel_unverified: Approval #{approval_id} tidak diubah. "
+        "Identitas owner yang diteruskan ke tool bukan bukti persetujuan manusia. "
+        "Kanal persetujuan owner yang independen belum terintegrasi; aksi tidak dijalankan."
+    )
 
 
 @tool

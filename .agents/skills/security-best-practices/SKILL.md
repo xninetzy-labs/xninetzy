@@ -1,6 +1,8 @@
 ---
-name: "security-best-practices"
-description: "Perform language and framework specific security best-practice reviews and suggest improvements. Trigger only when the user explicitly requests security best practices guidance, a security review/report, or secure-by-default coding help. Trigger only for supported languages (python, javascript/typescript, go). Do not trigger for general code review, debugging, or non-security tasks."
+name: security-best-practices
+description: Language- and framework-specific secure-coding review for Python, JavaScript/TypeScript and Go. Use only when security best practices, a security review or secure-by-default code is explicitly requested; not for general review or debugging.
+metadata:
+  keywords: guidance help improvements languages non perform practice report requests reviews suggest supported tasks trigger user
 ---
 
 # Security Best Practices

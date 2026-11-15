@@ -9,8 +9,6 @@ from xninetzy.context.media.video.models import (
     MotionPreset,
     VideoComposition,
     VideoProject,
-    VideoScene,
-    VideoTrack,
     Resolution,
 )
 from xninetzy.context.media.video.models import easing_value, interpolate_keyframes

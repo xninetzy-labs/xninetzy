@@ -8,16 +8,13 @@ via ``xninetzy.context.media.video.renderers.*``.
 
 from __future__ import annotations
 
-import json
 import time
 import uuid
 from typing import Any
 
 from xninetzy.context.media.video.models import (
     CompositionPreset,
-    Easing,
     Resolution,
-    RenderRequest,
     VideoAsset,
     VideoComposition,
     VideoProject,

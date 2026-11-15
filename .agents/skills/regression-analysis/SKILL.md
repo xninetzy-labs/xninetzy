@@ -1,15 +1,16 @@
 ---
 name: regression-analysis
-description: Diagnose regressions by diffing the pre/post behavior of a system, identifying
+description: Diagnoses regressions by diffing pre/post behavior, finding the introducing commit and proposing a minimal revert or fix. Use when a passing test fails, a metric regresses or behavior changes unexpectedly.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools: "'[\"repo_diff\",\"repo_search\",\"repo_symbol\",\"repo_test\",\"repo_risk\"]'"
-  optional_tools: "'[\"lightning_record_action\",\"observability_emit\",\"memory_failure_store\",\"hitl_request_approval\"]'"
-  trigger_conditions: "'[\"a previously-passing test now fails\",\"a metric regressed"
-  prerequisites: "'[\"failing test or metric trace reachable\",\"pre-regression baseline"
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '''["repo_diff","repo_search","repo_symbol","repo_test","repo_risk"]'''
+  optional_tools: '''["lightning_record_action","observability_emit","memory_failure_store","hitl_request_approval"]'''
+  trigger_conditions: '''["a previously-passing test now fails","a metric regressed'
+  prerequisites: '''["failing test or metric trace reachable","pre-regression baseline'
+  keywords: change changed diagnose identifying introduced now operator previously regressed reports system that
 ---
 
 

@@ -1,15 +1,16 @@
 ---
 name: repo-context-packaging
-description: Compact a code repository into a layered context bundle for the harness.
+description: Compacts a code repository into a layered context bundle for the harness. Use when a repository must be summarized into bounded context.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools: "'[\"read_file\",\"grep_search\",\"glob_files\",\"repo_search\",\"repo_symbol\",\"repo_dependency\",\"repo_architecture\",\"repo_test\"]'"
-  optional_tools: "'[\"knowledge_search\",\"memory_search\",\"lightning_record_action\"]'"
-  trigger_conditions: "'[\"the operator asks \\\"explain this codebase\\\"\",\"a structured-project-execution"
-  prerequisites: "'[\"repository root\",\"target intent\"]'"
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '''["read_file","grep_search","glob_files","repo_search","repo_symbol","repo_dependency","repo_architecture","repo_test"]'''
+  optional_tools: '''["knowledge_search","memory_search","lightning_record_action"]'''
+  trigger_conditions: '''["the operator asks \"explain this codebase\"","a structured-project-execution'
+  prerequisites: '''["repository root","target intent"]'''
+  keywords: compact
 ---
 
 

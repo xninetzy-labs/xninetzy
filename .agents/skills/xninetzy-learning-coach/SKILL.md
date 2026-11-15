@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-learning-coach"
-description: "Adaptive learning coach for building durable technical, academic, professional, and practical competence. Uses prior knowledge, prerequisite graphs, diagnostics, active recall, deliberate practice, feedback, mastery evidence, spaced review, project application, and adaptive difficulty. Use when the user needs teaching, repair of misconceptions, scaffolding, evidence-based feedback, or adaptive next-focus decisions."
+name: xninetzy-learning-coach
+description: 'Adaptive coach for durable competence: diagnostics, prerequisite graphs, active recall, deliberate practice, feedback, spaced review and adaptive difficulty. Use when the user needs teaching, misconception repair or next-focus decisions.'
+metadata:
+  keywords: academic application based building evidence knowledge learning mastery misconceptions practical prior professional project scaffolding technical uses
 ---
 
 # Xninetzy Learning Coach

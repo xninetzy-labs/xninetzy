@@ -1,15 +1,16 @@
 ---
 name: security-review
-description: Application and code-level security review for Xninetzy itself and the
+description: Code-level security review of Xninetzy or audited projects along asset → entry point → trust boundary → sink → control → impact, emitting SecurityFinding objects with evidence and remediation. Use to audit code changes, dependencies or MCP tool signatures.
 metadata:
-  author: "xninetzy"
-  version: "1.0.0"
-  scope: "domain"
-  priority: "P1"
-  required_tools: "'[\"repo_search\",\"repo_dependency\",\"grep_search\",\"read_file\",\"security_scope\",\"security_assets\",\"security_sast\",\"security_dependencies\",\"security_threat_model\",\"security_validate_finding\",\"security_regression\"]'"
-  optional_tools: "'[\"hitl_request_approval\",\"os_inbox\",\"lightning_record_action\",\"memory_security_store\"]'"
-  trigger_conditions: "'[\"the operator asks for a security audit\",\"a PR or branch is"
-  prerequisites: "'[\"explicit authorized scope (via `security_scope`)\",\"target surface"
+  author: xninetzy
+  version: 1.0.0
+  scope: domain
+  priority: P1
+  required_tools: '''["repo_search","repo_dependency","grep_search","read_file","security_scope","security_assets","security_sast","security_dependencies","security_threat_model","security_validate_finding","security_regression"]'''
+  optional_tools: '''["hitl_request_approval","os_inbox","lightning_record_action","memory_security_store"]'''
+  trigger_conditions: '''["the operator asks for a security audit","a PR or branch is'
+  prerequisites: '''["explicit authorized scope (via `security_scope`)","target surface'
+  keywords: application asks audits authorized change dependency drives emits exploitability failure for input inside itself mitigation mode new operates operator party pipeline processing rationale reproduction scope severity signature strictly structured surface third whenever
 ---
 
 
@@ -218,7 +219,7 @@ verdict: CLEAN | FINDINGS_PENDING_OWNER_DECISION | FINDINGS_REMEDIATED
 ## See also
 
 - `skill-security-review` — gates third-party skills; complementary surface
-- `playwright-mcp-workflows` — for browser-driven security verification
+- `playwright` (MCP workflows) — for browser-driven security verification
 - `tdd-workflow` — discipline for the remediation step
 - `multi-agent-orchestration` — distributes per-asset security review
 - `structured-project-execution` — durable spine for multi-week audits

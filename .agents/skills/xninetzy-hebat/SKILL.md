@@ -1,6 +1,8 @@
 ---
-name: "xninetzy-hebat"
-description: "Safely retrieve HEBAT/Moodle courses, assignments, deadlines, materials, and submission state, and prepare confirmed submissions."
+name: xninetzy-hebat
+description: Retrieves HEBAT/Moodle courses, assignments, deadlines, materials and submission state, and prepares confirmed submissions. Use for quick HEBAT lookups.
+metadata:
+  keywords: prepare retrieve safely
 ---
 
 # HEBAT

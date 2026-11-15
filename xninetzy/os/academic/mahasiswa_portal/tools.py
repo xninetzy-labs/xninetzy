@@ -45,7 +45,7 @@ from xninetzy.os.academic.mahasiswa_portal.runtime_analyzer import (
 from xninetzy.os.academic.mahasiswa_portal.session_watchdog import (
     format_session_age,
 )
-from xninetzy.os.hitl.approval_service import request_approval, validate_approval
+from xninetzy.os.hitl.approval_service import request_approval, validate_approval, approval_delivery_message
 from xninetzy.os.notifications.admin_notifier import owner_chat_id as _notification_jid, notify_admin_approval
 from xninetzy.os.research.permissions import is_owner_admin
 from xninetzy.os.policy.action_policy import evaluate_action
@@ -764,7 +764,7 @@ async def portal_krs_war_arm(
                 "Aktifkan KRS War",
                 f"{plan.semester_label or plan.source_path} ({_plan_summary(plan)})",
             )
-            delivery = "Tombol approval dikirim ke  admin." if delivered else "Tombol approval gagal dikirim."
+            delivery = approval_delivery_message(delivered)
             return f"KRS War membutuhkan approval #{requested_id}. {delivery}"
         try:
             validate_approval(approval_id, "portal_krs_war_arm", policy.action_hash)

@@ -44,12 +44,11 @@ class DeallsAdapter(BrowserScrapingAdapter):
             a = card if card.name == "a" else card.select_one("a[href*='/loker/']")
             if a is None:
                 continue
-            title = a.get_text(strip=True)
+            title_el = a.select_one("h1, h2, h3, h4, .job-title, .DeallsCardTitle")
+            title = (title_el or a).get_text(strip=True)
             href = a.get("href", "")
             if not title:
                 continue
-            # Dealls job URLs are like /loker/<slug>~<company>. Nav URLs are short like
-            # /loker/saved, /loker/applied. Require the ~ separator (or long slug).
             if not href or "~" not in href:
                 if href in ("/loker", "/loker/") or len(href.split("/")[-1]) < 15:
                     continue

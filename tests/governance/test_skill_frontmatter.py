@@ -51,7 +51,10 @@ def test_legacy_underscore_mirrors_are_rejected_with_canonical_replacements(
 ) -> None:
     legacy_path = ROOT / legacy / "SKILL.md"
     legacy_text = legacy_path.read_text(encoding="utf-8")
-    with pytest.raises(SkillValidationError, match="name harus lowercase kebab-case"):
+    with pytest.raises(
+        SkillValidationError,
+        match="name harus lowercase kebab-case|harus sama dengan folder",
+    ):
         parse_skill_markdown(legacy_text, path=legacy_path, source="builtin")
     canonical_path = ROOT / canonical / "SKILL.md"
     definition, _ = parse_skill_markdown(

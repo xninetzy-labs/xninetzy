@@ -1,5 +1,17 @@
 # Phase 0 / G0 execution checkpoint
 
+November16 continuation (not a restarted audit): prompt v2.3 is measured,
+hash-pinned and now installed after explicit owner approval. Nine installed
+hashes match; five changed files have private verified backups. Phase2 now
+records conditional domain loading, a smaller context-engineering entrypoint,
+optional compact/paged discovery and the repaired character-budget helper.
+162 related tests, native skill syntax validation and real source/frozen-install
+MCP smokes pass. All three edited runtime modules match the installed wheel;
+whole-package parity is not claimed because concurrent core/Kaggle changes
+occurred during installation. New cost evidence is CONTEXT_COST_RESULTS.json.
+No new tools/agents/providers were introduced. Global installation is verified;
+native client reload/evaluation remains a separate gate. Overall release remains NOT_READY.
+
 Latest continuation2026-11-15: Phase1 repairs three pure writing validators
 incorrectly held as WRITE (now READ;61 related tests and actual MCP under default
 approval mode pass). Phase3 adds checked/replay-safe FAISS snapshots, scoped model

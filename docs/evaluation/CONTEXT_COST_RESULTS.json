@@ -1,0 +1,277 @@
+{
+  "date": "2026-11-16",
+  "checkout": "a8d15a0 plus scoped candidate edits; concurrent Kaggle work excluded",
+  "before": {
+    "encoding": "cl100k_base",
+    "prompt_files": {
+      "docs/prompt-injection-core/CORE_PROMPT.md": {
+        "tokens": 517,
+        "sha256": "dcb1928f1eaa7533a7f4736580a1ddd9fc8472859eed71424558686f2df3c757"
+      },
+      "docs/prompt-injection-core/CORE_RULES.md": {
+        "tokens": 1049,
+        "sha256": "caab7092aaf14683dc3cde08469749343023dccb82d948ca385f2a5a414afa88"
+      },
+      "docs/prompt-injection-core/CLI_SHARED_INSTRUCTIONS.md": {
+        "tokens": 954,
+        "sha256": "30fdf68b5a44d65624b3fc6e18ce4be772b3adffbdd90caefde2d1e76f92a3c3"
+      },
+      "docs/prompt-injection-core/cli-overrides/arkcli-SKIPPED.md": {
+        "tokens": 91,
+        "sha256": "030de60e002bcbee3c796d5366f21ef75a905c8dfe3beb27ebce4cb2c054508c"
+      },
+      "docs/prompt-injection-core/cli-overrides/claude-CLAUDE.md": {
+        "tokens": 237,
+        "sha256": "2936ab78df32080b7f3dc5125f5404a295c51dc79a14e6170a5a46f87d98bd34"
+      },
+      "docs/prompt-injection-core/cli-overrides/codex-AGENTS.md": {
+        "tokens": 133,
+        "sha256": "8c50c6a8d7ddae4f612e454e72cab704f9973cb0f5f9f6c1bb98ab4c2bbc8ae0"
+      },
+      "docs/prompt-injection-core/cli-overrides/opencode-xninetzy-paksa.md": {
+        "tokens": 135,
+        "sha256": "e16874e6789a47c0258b00f88f0a44b76752d052862e78b6bc4a1a00a9821d80"
+      }
+    },
+    "referenced_client_compositions": {
+      "codex": 2653,
+      "claude": 2757,
+      "opencode": 2655
+    },
+    "skills": {
+      "full_list": 6863,
+      "valid_skills": 120,
+      "context_engineering_body": 1555,
+      "context_engineering_body_sha256": "1042e97728ccd8bcfd99efc0c63601108c37e88f2e44564d2d5231ff7ef17440"
+    },
+    "catalog": {
+      "full_250": 19426,
+      "rows": 250
+    },
+    "registry_schema_text_tokens": 103450,
+    "tool_count": 578,
+    "owner_data_used": false,
+    "limitations": "Registry schemas include server-side identity fields; this is not actual MCP wire or host billing. Full and filtered catalogs disclose different amounts of information. Prompt composition counts each referenced file once."
+  },
+  "after": {
+    "encoding": "cl100k_base",
+    "prompt_files": {
+      "docs/prompt-injection-core/CORE_PROMPT.md": {
+        "tokens": 418,
+        "sha256": "fce2289f1cafcfb674ab31c333a5ed562da35f8d1060c1be49713d7d711a3d19"
+      },
+      "docs/prompt-injection-core/CORE_RULES.md": {
+        "tokens": 1049,
+        "sha256": "caab7092aaf14683dc3cde08469749343023dccb82d948ca385f2a5a414afa88"
+      },
+      "docs/prompt-injection-core/CLI_SHARED_INSTRUCTIONS.md": {
+        "tokens": 509,
+        "sha256": "450fe5ca3b3e2e2311399aa5290b473154d94690857967836d946448d129bda8"
+      },
+      "docs/prompt-injection-core/cli-overrides/arkcli-SKIPPED.md": {
+        "tokens": 91,
+        "sha256": "030de60e002bcbee3c796d5366f21ef75a905c8dfe3beb27ebce4cb2c054508c"
+      },
+      "docs/prompt-injection-core/cli-overrides/claude-CLAUDE.md": {
+        "tokens": 237,
+        "sha256": "2936ab78df32080b7f3dc5125f5404a295c51dc79a14e6170a5a46f87d98bd34"
+      },
+      "docs/prompt-injection-core/cli-overrides/codex-AGENTS.md": {
+        "tokens": 133,
+        "sha256": "8c50c6a8d7ddae4f612e454e72cab704f9973cb0f5f9f6c1bb98ab4c2bbc8ae0"
+      },
+      "docs/prompt-injection-core/cli-overrides/opencode-xninetzy-paksa.md": {
+        "tokens": 135,
+        "sha256": "e16874e6789a47c0258b00f88f0a44b76752d052862e78b6bc4a1a00a9821d80"
+      },
+      "docs/prompt-injection-core/references/artifacts-and-design.md": {
+        "tokens": 283,
+        "sha256": "1f27a8ec246d02d9a69749f1610c2f63f64b6a77917c7a7bbb1d5b2f5ebe3734"
+      },
+      "docs/prompt-injection-core/references/product-videos.md": {
+        "tokens": 238,
+        "sha256": "26b16006632e5905fe426dc0fbfe0de93e128cc3bd00c106b450ea879722fb04"
+      },
+      "docs/prompt-injection-core/references/reverse-engineering.md": {
+        "tokens": 209,
+        "sha256": "a7982c66adcba8a56a2d799efda06d28536382c105c727e66724dc06a4f56c68"
+      }
+    },
+    "referenced_client_compositions": {
+      "codex": 2109,
+      "claude": 2213,
+      "opencode": 2111
+    },
+    "skills": {
+      "full_list": 6863,
+      "valid_skills": 120,
+      "context_engineering_body": 584,
+      "context_engineering_body_sha256": "1c038e749fd88d3676f03e5c24010d0b9914df78bb57367d33b3acebff906789",
+      "compact_same_catalog": 6515,
+      "compact_context_2": 124
+    },
+    "catalog": {
+      "full_250": 19426,
+      "rows": 250,
+      "compact_same_250": 10124,
+      "compact_memory_5": 195
+    },
+    "registry_schema_text_tokens": 103599,
+    "tool_count": 578,
+    "owner_data_used": false,
+    "limitations": "Registry schemas include server-side identity fields; this is not actual MCP wire or host billing. Full and filtered catalogs disclose different amounts of information. Prompt composition counts each referenced file once."
+  },
+  "regression": {
+    "red_failed": 7,
+    "red_passed": 4,
+    "green_passed": 162,
+    "green_seconds": 24.02,
+    "overlapping_earlier_passes": 84
+  },
+  "source_wire": {
+    "protocol": "2025-11-25",
+    "tools": 578,
+    "compact_catalog_policy_and_pagination": "passed",
+    "legacy_output": "passed",
+    "selected_skill_and_reference": "passed",
+    "consequential_effect_held": true,
+    "owner_data_used": false,
+    "host_configuration_changed": false,
+    "reviewed_skill_fixture_copied": true,
+    "limitations": "Isolated SDK client with one copied reviewed skill/reference. Does not prove wheel-bundled skill availability, native host reload, model quality or billed tokens."
+  },
+  "frozen_base_installed_wire": {
+    "protocol": "2025-11-25",
+    "tools": 578,
+    "compact_catalog_policy_and_pagination": "passed",
+    "legacy_output": "passed",
+    "selected_skill_and_reference": "passed",
+    "consequential_effect_held": true,
+    "owner_data_used": false,
+    "host_configuration_changed": false,
+    "reviewed_skill_fixture_copied": true,
+    "limitations": "Isolated SDK client with one copied reviewed skill/reference. Does not prove wheel-bundled skill availability, native host reload, model quality or billed tokens."
+  },
+  "runtime_parity": {
+    "selected_files": [
+      "skills/tools.py",
+      "skills/prompting.py",
+      "tools/ecosystem/tool_catalog_tools.py"
+    ],
+    "all_selected_match": true,
+    "whole_package_match": false,
+    "reason": "Concurrent edits to core/config.py and Kaggle files occurred after frozen wheel build; not hidden or repaired by this batch"
+  },
+  "full_original_skill_body_preserved": true,
+  "host_prompt_installation": "VERIFIED_NATIVE_INSTALLATION v2.3.0 after explicit owner approval",
+  "prompt_installed_comparison": "9/9 installed hashes match, checker remains read-only",
+  "rollout": "Approved bundle installed with private verified backups; existing client instruction/schema caches require normal reload; no processes restarted",
+  "sources": [
+    "https://github.com/modelcontextprotocol/modelcontextprotocol/blob/2025-11-25/docs/docs/learn/architecture.mdx"
+  ],
+  "limits": [
+    "Text token counts, not billed or actual model-host context",
+    "Same-250-row compact comparison preserves policy fields; filtered-five comparison intentionally omits irrelevant rows",
+    "Complete MCP tool enumeration remains exposed for compatibility; registry schema text grows by 149 tokens",
+    "Skill context builder enforces its existing character budget; no claim that all clients invoke it",
+    "No native-host behavioral A/B, latency benefit or all-project readiness claim"
+  ],
+  "pre_installation_checkpoint": {
+    "host_prompt_installation": "NOT_PERFORMED; installed 2.2 kept; 2.3 is repository candidate",
+    "prompt_installed_comparison": "Expected drift for L0/shared and missing new domain references; read-only",
+    "rollout": "Review complete candidate bundle and obtain owner approval before host installation; existing MCP sessions need reload for new optional parameters"
+  },
+  "global_installation": {
+    "date_local": "2026-11-16 Asia/Jakarta",
+    "authorization": "Explicit owner approval of the reviewed v2.3 bundle; native configuration installation only",
+    "mcp_action_approval_created": false,
+    "status": "VERIFIED",
+    "version": "2.3.0",
+    "changed": 5,
+    "verified": 9,
+    "backup": "/home/misbahul45/.xninetzy/backups/prompt-v2.3.0-20261115T191727Z-5753e6f8",
+    "receipt": "/home/misbahul45/.xninetzy/backups/prompt-v2.3.0-20261115T191727Z-5753e6f8/receipt.json",
+    "group_atomic": false,
+    "services_restarted": false,
+    "installed": [
+      {
+        "sha256": "fce2289f1cafcfb674ab31c333a5ed562da35f8d1060c1be49713d7d711a3d19",
+        "source": "CORE_PROMPT.md",
+        "status": "match"
+      },
+      {
+        "sha256": "caab7092aaf14683dc3cde08469749343023dccb82d948ca385f2a5a414afa88",
+        "source": "CORE_RULES.md",
+        "status": "match"
+      },
+      {
+        "sha256": "450fe5ca3b3e2e2311399aa5290b473154d94690857967836d946448d129bda8",
+        "source": "CLI_SHARED_INSTRUCTIONS.md",
+        "status": "match"
+      },
+      {
+        "sha256": "8c50c6a8d7ddae4f612e454e72cab704f9973cb0f5f9f6c1bb98ab4c2bbc8ae0",
+        "source": "cli-overrides/codex-AGENTS.md",
+        "status": "match"
+      },
+      {
+        "sha256": "2936ab78df32080b7f3dc5125f5404a295c51dc79a14e6170a5a46f87d98bd34",
+        "source": "cli-overrides/claude-CLAUDE.md",
+        "status": "match"
+      },
+      {
+        "sha256": "e16874e6789a47c0258b00f88f0a44b76752d052862e78b6bc4a1a00a9821d80",
+        "source": "cli-overrides/opencode-xninetzy-paksa.md",
+        "status": "match"
+      },
+      {
+        "sha256": "1f27a8ec246d02d9a69749f1610c2f63f64b6a77917c7a7bbb1d5b2f5ebe3734",
+        "source": "references/artifacts-and-design.md",
+        "status": "match"
+      },
+      {
+        "sha256": "a7982c66adcba8a56a2d799efda06d28536382c105c727e66724dc06a4f56c68",
+        "source": "references/reverse-engineering.md",
+        "status": "match"
+      },
+      {
+        "sha256": "26b16006632e5905fe426dc0fbfe0de93e128cc3bd00c106b450ea879722fb04",
+        "source": "references/product-videos.md",
+        "status": "match"
+      }
+    ],
+    "installer_fixture_groups": {
+      "groups": 5,
+      "results": {
+        "install_idempotent_rollback": "passed",
+        "local_modification_hold": "passed",
+        "post_replacement_rollback:references/artifacts-and-design.md": "passed",
+        "post_replacement_rollback:CLI_SHARED_INSTRUCTIONS.md": "passed",
+        "symlink_hold": "passed"
+      },
+      "owner_files_modified": false
+    },
+    "prompt_tests": {
+      "passed": 11,
+      "seconds": 1.58
+    },
+    "independently_measured_installed_composition_tokens": {
+      "codex": 2109,
+      "claude": 2213,
+      "opencode": 2111
+    },
+    "encoding": "cl100k_base",
+    "original_backups_and_file_modes_verified": true,
+    "unchanged": [
+      "CORE_RULES.md",
+      "cli-overrides/codex-AGENTS.md",
+      "cli-overrides/claude-CLAUDE.md",
+      "cli-overrides/opencode-xninetzy-paksa.md"
+    ],
+    "lock_scope": "cooperating local installers; per-file atomic replacement, not a nine-path filesystem transaction",
+    "native_client_context_reload": "NOT_VERIFIED",
+    "runtime_permissions_and_mcp_configuration_changed": false,
+    "rollback_preview": "passed; no actual owner rollback performed",
+    "test_owner_data_used": false
+  }
+}

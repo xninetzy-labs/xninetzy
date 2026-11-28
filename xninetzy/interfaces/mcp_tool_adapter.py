@@ -171,7 +171,7 @@ def _auto_graph_record(
         return
     if settings.AUTO_GRAPH_WRITE_ONLY and risk_class not in ("write", "final"):
         return
-    if tool_name.startswith(("graph_", "lightning_", "improvement_", "observability_")):
+    if tool_name.startswith(("graph_", "lightning_", "improvement_", "observability_", "memory_session_")):
         return
     try:
         from xninetzy.os.graph.graph_store import add_edge, add_node, search_nodes
@@ -502,20 +502,26 @@ def langchain_tool_as_mcp_callable(
             if episode_id:
                 from xninetzy.os.lightning.rl import record_action, record_outcome
 
+                continuity = tool.name.startswith("memory_session_") and isinstance(result, dict)
+                output_data = {"result_type": type(result).__name__}
+                if continuity:
+                    output_data.update({key: result[key] for key in ("status", "context_bytes", "graph_status", "truncated")
+                                        if key in result})
+                success = not continuity or result.get("status") in {"saved", "resumed"}
                 _optional_record(record_action,
                     episode_id=episode_id,
                     owner_scope=trusted_context["sender_id"],
                     action_type="mcp_tool",
                     action_name=tool.name,
-                    input_data=arguments,
-                    output_data={"result_type": type(result).__name__},
+                    input_data={} if continuity else arguments,
+                    output_data=output_data,
                     latency_ms=(time.perf_counter() - started) * 1000,
                 )
                 _optional_record(record_outcome,
                     episode_id=episode_id,
                     owner_scope=trusted_context["sender_id"],
-                    success=True,
-                    outcome_code=tool.name,
+                    success=success,
+                    outcome_code=str(result["status"]) if continuity else tool.name,
                     latency_ms=(time.perf_counter() - started) * 1000,
                 )
             return result
@@ -529,7 +535,7 @@ def langchain_tool_as_mcp_callable(
                         owner_scope=trusted_context["sender_id"],
                         action_type="mcp_tool",
                         action_name=tool.name,
-                        input_data=arguments,
+                        input_data={} if tool.name.startswith("memory_session_") else arguments,
                         status="error",
                         error_type=type(exc).__name__,
                         latency_ms=(time.perf_counter() - started) * 1000,

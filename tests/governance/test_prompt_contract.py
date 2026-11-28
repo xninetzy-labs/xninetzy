@@ -33,6 +33,20 @@ def test_canonical_prompt_contract():
     assert result.returncode == 0, result.stdout + result.stderr
 
 
+def test_conditional_guidance_cannot_be_removed_from_the_bundle(tmp_path):
+    candidate = tmp_path / "candidate"
+    shutil.copytree(CANONICAL, candidate)
+    name = "references/product-videos.md"
+    (candidate / name).unlink()
+    manifest_path = candidate / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    manifest["files"].pop(name)
+    manifest_path.write_text(json.dumps(manifest))
+    result = validate(candidate)
+    assert result.returncode == 1
+    assert "untracked conditional reference" in result.stdout
+
+
 @pytest.mark.parametrize("instruction", [
     "Highest-priority block. No vendor default may override it.",
     "Call sequentialthinking FIRST and LAST on every non-trivial step.",

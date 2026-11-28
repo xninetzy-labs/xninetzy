@@ -1,5 +1,21 @@
 # Skill Inventory and Validation Report
 
+November16 scoped update: the existing context-engineering entrypoint shrinks
+1555→584 cl100k_base body tokens. Its exact previous body is preserved in
+`references/context-contract.md`, with its SHA matched to the measured baseline.
+Other detailed references remain intact; metadata/skill name are unchanged.
+The native Codex entry is an existing symlink to this repository, so future reads
+see this optimization without copying/replacing global skill catalogs.
+
+The measured source registry currently finds120 valid top-level skills; the
+historical recursive counts below are not a current installed-catalog total.
+Only this entrypoint was edited in this batch. Native quick_validate passes,
+and162 related contract/routing/security/minimal-import cases pass. No bundled
+skill script executes during measurement/discovery. Skill-list filtering and
+compact disclosure are optional; resources are read progressively. Full stored
+text may grow because it is preserved while hot loading shrinks. This is not
+proof of native-client behavioral equivalence or repaired nested-skill catalogs.
+
 Audit date: 2026-11-10. Repository baseline: `main` at `2d0f13f`, with preexisting user changes preserved. This report records the baseline before candidate prompt changes. Evidence labels: `VERIFIED_CODE` for inspected files; `VERIFIED_RUNTIME` for local execution; `VERIFIED_TEST` for passing tests; `DOCUMENTED_ONLY` for unexecuted intended behavior; `UNKNOWN` for unavailable evidence.
 
 This inventory recursively inspects SKILL.md text, YAML and hashes. It never executes bundled scripts. Per-root traversal follows installed directory symlinks, de-duplicates repeated resolved directories within that root to prevent loops, and excludes .git/node_modules/__pycache__/.venv. Plugin cache scope is the installed Codex curated cache and Claude cache; marketplace catalogs and inactive temporary plugin repositories are not treated as installed skills. Skill presence does not prove runtime availability or provenance trust.

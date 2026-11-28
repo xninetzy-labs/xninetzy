@@ -372,6 +372,27 @@ def edges_for_keys(keys: list[str], limit: int = 60) -> list[dict]:
     return [dict(row) for row in rows]
 
 
+def active_links(keys: list[str], limit: int) -> list[dict]:
+    if not keys:
+        return []
+    placeholders = ",".join("?" for _ in keys)
+    with _connect() as conn:
+        rows = conn.execute(
+            f"""
+            SELECT e.canonical_key, e.edge_type, s.title AS source_title, t.title AS target_title
+              FROM graph_edges_v3 e
+              JOIN graph_nodes_v3 s ON s.canonical_key=e.source_key AND s.status='active'
+              JOIN graph_nodes_v3 t ON t.canonical_key=e.target_key AND t.status='active'
+             WHERE e.status='active'
+               AND (e.source_key IN ({placeholders}) OR e.target_key IN ({placeholders}))
+             ORDER BY e.weight DESC, e.canonical_key
+             LIMIT ?
+            """,
+            [*keys, *keys, limit],
+        ).fetchall()
+    return [dict(row) for row in rows]
+
+
 def set_faiss_row(key: str, faiss_row: int, *, version: int | None = None, content_hash: str | None = None) -> None:
     now = _now()
     with _connect() as conn:

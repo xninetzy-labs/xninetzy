@@ -3,8 +3,8 @@
 All source PDF acquisition, document parsing, Hugging Face inference, OCR,
 keyword matching and workbook generation execute in Kaggle. The worker exits
 before importing extraction libraries when `/kaggle/working` is absent.
-The local controller uploads source and reads bounded execution metadata/logs;
-it refuses to download reports, extracted text or workbooks.
+The native Xninetzy Kaggle tools upload source and read execution metadata.
+PDFs, extracted text and workbooks remain in Kaggle.
 
 The 59 source folders are in `seeds.json`. Inventory recursively discovers
 public descendants and deduplicates Drive IDs. Downloads retain original
@@ -31,28 +31,48 @@ Company names come from the PDF cover when recognized; otherwise the filename
 identifier is retained and explicitly marked for review. Years come from the
 filename, with a single-year source-folder fallback.
 
-## Control commands
+Plain pages with valid embedded text, no bitmap (including inline images),
+and no vector drawings use Docling's native pipeline through the same LangChain
+loader. Pages with images, vectors, or poor text retain the full layout/table/OCR
+path. Each page records its method. The spatial scoring is unchanged, so verified
+version-4 checkpoints remain compatible with the version-5 routing optimization.
 
-Run with the Python environment containing the official Kaggle CLI (`/usr/bin/python3`
-on this host). These commands control remote execution; they do not process PDFs locally.
+## Recovered native queue
+
+The legacy `control.py` supervisor is retired. Do not start it alongside the
+recovered native pipeline `biodiversity-recovered-20261116`. Its authoritative
+state is `~/.local/share/xninetzy/kaggle/pipelines/biodiversity-recovered-20261116.json`.
+The recovered worker, original checkpoint copy and tool plans are under
+`~/.local/share/xninetzy/kaggle/biodiversity-recovery/`.
+
+The owner explicitly enabled `kaggle_pipeline_tick=auto` in the repository
+`.env`. A user systemd timer invokes the existing native Xninetzy tool harness
+every two minutes, loading current settings on each invocation. The harness
+honors approval mode, revocation and the policy kill switch. It does not run
+PDF parsing, OCR or models locally. Pipeline concurrency is four CPU jobs and
+two GPU jobs, subject to Kaggle's live quotas and provider limits. Paid scaling
+is never enabled.
 
 ```bash
-python3 scripts/kaggle_biodiversity/control.py smoke biodiversity-pipeline-smoke
-python3 scripts/kaggle_biodiversity/control.py inventory biodiversity-drive-inventory
-python3 scripts/kaggle_biodiversity/control.py inspect biodiversity-pipeline-smoke
-python3 scripts/kaggle_biodiversity/control.py inspect biodiversity-drive-inventory
-# Only after the smoke test and inventory are verified:
-python3 scripts/kaggle_biodiversity/control.py campaign-init biodiversity-drive-inventory
-python3 scripts/kaggle_biodiversity/control.py tick campaign
-python3 scripts/kaggle_biodiversity/control.py supervise campaign
+systemctl --user status xninetzy-kaggle-biodiversity-recovery.timer
+systemctl --user status xninetzy-kaggle-biodiversity-recovery.service
 ```
 
-Repeated `tick` calls (or `supervise`) reconcile current remote state and submit ready jobs,
-with at most four CPU jobs and two GPU jobs owned by this campaign at once.
-They do not replay uncertain submissions. Partial/failed runs require diagnosis
-and a verified continuation before dependent jobs proceed. Kaggle resource
-limits or Drive access restrictions may require subsequent runs; the final
-workbook is complete only when every inventoried file is accounted for.
+Ordinary pipeline ticks reconcile remote state, reuse completed outputs and
+schedule continuations. They do not replay uncertain pushes or restart cancelled jobs.
+For an explicitly authorized repair, the existing `kaggle_pipeline_tick` accepts
+`reconcile_jobs` and `restart_cancelled`, each containing canonical job slugs.
+Reconciliation adopts an existing run, or queues a fresh attempt only after a
+complete authenticated owned-notebook listing confirms absence and an unused
+new slug. The listing must contain a known completed pipeline notebook as a
+witness. Network failures and incomplete listings leave delivery unresolved.
+An explicitly requested cancelled continuation preserves published checkpoint
+outputs; it never cancels a run. Recovery requests have persistent idempotency
+records and retain the original uncertain-push ledger for audit.
+The timer skips further calls after the pipeline writes its terminal marker
+on completion or when blocked. Partial/failed jobs still need diagnosis and
+a verified continuation. The final workbook is complete only when every
+inventoried file is accounted for.
 
 Transfers use Drive's regular public download URL and verify the response size.
 Only the ordinary large-file virus-scan confirmation falls back to gdown.

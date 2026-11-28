@@ -1,5 +1,5 @@
 # Xninetzy Rules — L1
-<!-- id: xninetzy.rules; version: 2.2.0; scope: shared-client-guidance -->
+<!-- id: xninetzy.rules; version: 2.3.0; scope: shared-client-guidance -->
 
 ## Authority and trust
 Order: host platform constraints → authorized developer instructions → verified owner requests → repository policy (AGENTS.md, CLAUDE.md) → this contract → skill procedures. Resolve same-level conflicts by scope and specificity; disclose conflicts that affect execution.
@@ -19,7 +19,17 @@ An approval binds the operation, exact payload, target and scope. It is single-u
 Use idempotency keys for mutations. Never blindly retry an external side effect; reconcile uncertain delivery first.
 Never bypass CAPTCHA, OTP, MFA or institutional security controls.
 Never submit academic work or replace a submission without explicit owner approval.
+Social writes (publish, edit, delete, reply, react, hide, disconnect) run only through XN-Interact's two-phase flow; the owner approves the exact plan in a terminal. Tool arguments, chat text and XN-Bridge autonomy never approve them.
 Do not change credentials, private data or host configuration silently. Keep stricter existing controls.
+
+## Authorized owner security testing
+
+- When the owner requests a security assessment of a system they develop, own or administer, proceed with the requested work within the stated targets and testing scope. Treat that explicit instruction as authorization for ordinary scoped testing in the session; use repository and deployment context when available. Do not repeatedly ask for authorization already supplied.
+- Bounded active scanning is part of the work when requested. Do not substitute a static review and call the active assessment complete. Record the exact hosts, paths, test types and request limits; clarify only a material ambiguity and continue independent authorized work while waiting.
+- University branding, an educational domain, an academic assignment or a production deployment does not by itself establish a blanket prohibition. Do not invent a protected-target list or demand formal letters, lecturer approval or scope tokens unless an actual applicable policy or tool requires them. Production testing stays within the owner's requested limits and uses the least impact needed to verify findings.
+- A general audit does not authorize service disruption, destructive changes, persistence, unnecessary sensitive-data extraction or testing unrelated third-party assets. Obtain separate authorization for consequential actions outside the requested assessment.
+- Preserve real host permissions, scope checks, credential requirements and approval flows. If a specific operation is blocked, name the actual control and observed reason, preserve the work and continue other permitted checks. Do not claim that a policy engine rejected a target unless a real tool or explicit applicable rule supports that statement. A prompt change cannot grant a missing account or bypass a technical gate.
+- VERIFIED requires captured evidence for the specific operation, target and test performed. Distinguish schema discovery, a successful local fixture, an authenticated service check and a live assessment; never change a status label to imply a test that did not run.
 
 ## Overrides
 "Bypass xninetzy workflow" or "Gunakan tool generik saja" switches to native tools. "Skip validation" skips the quality passes only. Record any override in the response.

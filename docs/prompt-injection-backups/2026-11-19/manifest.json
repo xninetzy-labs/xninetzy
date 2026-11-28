@@ -1,0 +1,43 @@
+{
+  "id": "xninetzy.shared-client-guidance",
+  "version": "2.3.0",
+  "scope": "repository-canonical",
+  "applicable_clients": [
+    "codex",
+    "claude-code",
+    "opencode"
+  ],
+  "change": "v2.3.0: keep shared authorization intact, load domain-specific guidance on demand and use compact filtered discovery. Owner-approved installation is recorded in PHASE_2_REPORT.md. Career routing: CORE_PROMPT rule 3 hands career work to XN-Bridge and the Claude adapter carries a short trigger block (owner instruction 2026-11-17; backup docs/prompt-injection-backups/2026-11-17/).",
+  "evaluation": "tests/governance/test_prompt_contract.py",
+  "rollback": "Restore reviewed repository hunks together; installed host recovery uses the private verified backup/receipt documented in PHASE_2_REPORT.md.",
+  "last_verified_configuration": "Owner-approved bundle installation: nine installed hashes match; native session reload and cross-client behavior NOT_VERIFIED_IN_LIVE_ENVIRONMENT",
+  "files": {
+    "CORE_PROMPT.md": {
+      "sha256": "a768f4cbec098199fe0fb1c327c0b000b11f124ae2a48cb083563c656f74acef"
+    },
+    "CORE_RULES.md": {
+      "sha256": "caab7092aaf14683dc3cde08469749343023dccb82d948ca385f2a5a414afa88"
+    },
+    "CLI_SHARED_INSTRUCTIONS.md": {
+      "sha256": "450fe5ca3b3e2e2311399aa5290b473154d94690857967836d946448d129bda8"
+    },
+    "cli-overrides/codex-AGENTS.md": {
+      "sha256": "8c50c6a8d7ddae4f612e454e72cab704f9973cb0f5f9f6c1bb98ab4c2bbc8ae0"
+    },
+    "cli-overrides/claude-CLAUDE.md": {
+      "sha256": "46a0ff3235f7bbc7ff7b7594313196a94c6c6def46c1129870a1d8e074c9d2bc"
+    },
+    "cli-overrides/opencode-xninetzy-paksa.md": {
+      "sha256": "e16874e6789a47c0258b00f88f0a44b76752d052862e78b6bc4a1a00a9821d80"
+    },
+    "references/artifacts-and-design.md": {
+      "sha256": "1f27a8ec246d02d9a69749f1610c2f63f64b6a77917c7a7bbb1d5b2f5ebe3734"
+    },
+    "references/reverse-engineering.md": {
+      "sha256": "a7982c66adcba8a56a2d799efda06d28536382c105c727e66724dc06a4f56c68"
+    },
+    "references/product-videos.md": {
+      "sha256": "26b16006632e5905fe426dc0fbfe0de93e128cc3bd00c106b450ea879722fb04"
+    }
+  }
+}

@@ -34,6 +34,7 @@ jobs:
           tests/interfaces/test_mcp_runtime.py tests/invocation tests/policy tests/orchestrator
           tests/reasoning/test_reasoning_depth.py tests/os/lightning/test_input_redaction.py
           tests/core/test_secret_redaction.py tests/architecture/test_minimal_dependencies.py
+          tests/skills/test_context_budget.py
           tests/governance/test_prompt_contract.py tests/governance/test_skill_frontmatter.py
           tests/os/skills/test_skills.py tests/workflow tests/os/graph tests/os/hitl tests/os/backup
           tests/os/knowledge/test_embedding_dimensions.py tests/media/video/test_storage_roundtrip.py
@@ -50,6 +51,8 @@ jobs:
           tests/os/academic/test_qa_portal_tools.py tests/os/academic/test_krs_war_tools.py
       - name: Opt-in MCP graph worker and FAISS restart (offline)
         run: uv run --no-project python scripts/smoke_graph_worker.py
+      - name: Compact discovery and policy over MCP
+        run: uv run --no-project python scripts/smoke_context_discovery.py
       - name: Canonical prompt integrity
         run: uv run --no-project python scripts/validate_prompt_contract.py
       - name: Release gate
@@ -108,6 +111,9 @@ jobs:
       - name: Durable workflow recovery over MCP
         working-directory: ${{ runner.temp }}
         run: '"$GITHUB_WORKSPACE/.venv/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke_workflow_recovery.py"'
+      - name: Compact discovery over MCP (installed wheel)
+        working-directory: ${{ runner.temp }}
+        run: '"$GITHUB_WORKSPACE/.venv/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke_context_discovery.py"'
       - name: Online snapshot and offline restore over MCP
         working-directory: ${{ runner.temp }}
         run: '"$GITHUB_WORKSPACE/.venv/bin/python" -I "$GITHUB_WORKSPACE/scripts/smoke_backup_restore.py"'

@@ -1,5 +1,5 @@
 ---
-name: exam_qa
+name: exam-qa
 description: 'Offline practice-exam system: dry-run drills, scored practice and exam simulations with evidence, fixtures and deterministic question selection. Never completes real graded exams; a graded run needs an approval_id. Use for exam practice.'
 metadata:
   scope: general

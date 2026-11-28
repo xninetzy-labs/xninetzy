@@ -19,7 +19,7 @@ host (Claude / Claude Code / Cursor / Codex / OpenCode)
   ▼
 xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
   │
-  ├── xninetzy.tools.registry.get_all_tools()   (578 tools)
+  ├── xninetzy.tools.registry.get_all_tools()   (587 tools)
   │     │
   │     └── xninetzy.tools.manifest.manifest_for(name)
   │           ├── feature_pack: core | academic-unair | research | coding
@@ -62,16 +62,16 @@ canonical FINAL-tool set drifts.
 
 | Metric | Value |
 |---|---|
-| Total tools | **578** |
-| Risk = `read` | 139 |
-| Risk = `draft` | 6 |
+| Total tools | **587** |
+| Risk = `read` | 147 |
+| Risk = `draft` | 7 |
 | Risk = `write` | 410 |
 | Risk = `final` | **23** |
-| Feature pack = `core` | 486 |
+| Feature pack = `core` | 495 |
 | Feature pack = `academic-unair` | 46 |
 | Feature pack = `research` | 43 |
 | Feature pack = `coding` | 3 |
-| Stability | 578/578 `stable` |
+| Stability | 587/587 `stable` |
 
 Registered tool risks come from the repository-owned
 `xninetzy/tools/execution_policies.json`, consumed by `manifest_for` and
@@ -240,7 +240,7 @@ Six checks must all PASS:
 
 | Check | Verifies |
 |---|---|
-| `tool_registry` | 578 tools classified, no unknown risk, no missing idempotency |
+| `tool_registry` | 587 tools classified, no unknown risk, no missing idempotency |
 | `secret_redaction` | `redact_secrets` strips sample OpenAI / GitHub / Google keys |
 | `safe_fetch` | SSRF guard rejects non-http(s), private/loopback, oversize |
 | `transport_config` | supported authenticated deployment boundary; current build uses STDIO |

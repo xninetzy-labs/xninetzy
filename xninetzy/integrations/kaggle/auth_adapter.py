@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import os
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any
 
 from xninetzy.os.auth.sessions.state import (
@@ -30,14 +32,39 @@ class KaggleAuthContext:
         }
 
 
+_CLI_CREDENTIAL_FILES: tuple[tuple[str, str], ...] = (
+    ("access_token", "cli_access_token"),
+    ("kaggle.json", "cli_kaggle_json"),
+    ("credentials.json", "cli_credentials"),
+)
+
+
+def kaggle_config_dir() -> Path:
+    override = os.environ.get("KAGGLE_CONFIG_DIR", "").strip()
+    return Path(override).expanduser() if override else Path.home() / ".kaggle"
+
+
+def local_credential_source() -> str | None:
+    if os.environ.get("KAGGLE_USERNAME") and os.environ.get("KAGGLE_KEY"):
+        return "env_credentials"
+    if os.environ.get("KAGGLE_API_TOKEN"):
+        return "env_token"
+    directory = kaggle_config_dir()
+    for filename, source in _CLI_CREDENTIAL_FILES:
+        try:
+            candidate = directory / filename
+            if candidate.is_file() and candidate.stat().st_size > 0:
+                return source
+        except OSError:
+            continue
+    return None
+
+
 def resolve_kaggle_auth(
     *,
     owner: str,
     account: str = "default",
 ) -> KaggleAuthContext:
-    """Resolve a Kaggle auth context by checking Xninetzy's active
-    auth session store first, then falling back to environment credentials.
-    """
     try:
         record = find_active_connection(owner, "kaggle", account)
     except Exception:
@@ -56,6 +83,16 @@ def resolve_kaggle_auth(
             provider="kaggle",
             account=account,
         )
+    local = local_credential_source()
+    if local is not None:
+        return KaggleAuthContext(
+            authenticated=True,
+            source=local,
+            bearer_token=None,
+            active_session_id=None,
+            provider="kaggle",
+            account=account,
+        )
     return KaggleAuthContext(
         authenticated=False,
         source="none",
@@ -70,11 +107,13 @@ def kaggle_auth_required_error() -> dict[str, Any]:
     return {
         "error_code": "KAGGLE_AUTH_REQUIRED",
         "message": (
-            "Kaggle authentication is required. Use auth_session_create "
-            "with provider='kaggle' to start an OAuth or browser login flow, "
-            "then retry. Never send username or password via tool arguments."
+            "Kaggle authentication is required. Run `kaggle auth login` or place "
+            "an access token in ~/.kaggle/access_token, set KAGGLE_API_TOKEN, or use "
+            "auth_session_create with provider='kaggle'. Never send username, "
+            "password or key via tool arguments."
         ),
         "next_steps": [
+            "kaggle_auth_status",
             "auth_capabilities",
             "auth_providers_list",
             "auth_session_create(provider='kaggle', method='auto', account='default')",
@@ -87,5 +126,7 @@ def kaggle_auth_required_error() -> dict[str, Any]:
 __all__ = [
     "KaggleAuthContext",
     "kaggle_auth_required_error",
+    "kaggle_config_dir",
+    "local_credential_source",
     "resolve_kaggle_auth",
 ]

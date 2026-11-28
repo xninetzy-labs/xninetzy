@@ -34,7 +34,7 @@ def validate(root: Path) -> dict:
         manifest = json.loads((root / "manifest.json").read_text(encoding="utf-8"))
         if not isinstance(manifest, dict) or not isinstance(manifest.get("files"), dict):
             raise ValueError("manifest must contain a files object")
-        if manifest.get("version") != "2.2.0":
+        if manifest.get("version") not in {"2.2.0", "2.3.0", "2.4.0"}:
             failures.append("unsupported prompt contract version")
     except (OSError, ValueError) as exc:
         return {"ok": False, "files": [], "failures": [f"manifest: {type(exc).__name__}"]}
@@ -66,6 +66,9 @@ def validate(root: Path) -> dict:
                 failures.append(f"known instruction conflict: {name}: {pattern}")
         if re.search(r"\{\{[^}]+\}\}|<YOUR_[A-Z_]+>", body):
             failures.append(f"unresolved placeholder: {name}")
+        for target in re.findall(r"\[[^\]]+\]\((references/[^)#]+)(?:#[^)]*)?\)", body):
+            if target not in manifest["files"]:
+                failures.append(f"untracked conditional reference: {name}: {target}")
         if name.startswith("cli-overrides/"):
             for reference in ("CORE_PROMPT.md", "CORE_RULES.md", "CLI_SHARED_INSTRUCTIONS.md"):
                 if reference not in body:
@@ -101,6 +104,8 @@ def main() -> int:
         report["installed"] = []
         for row in report["files"]:
             name = row["path"]
+            if name.startswith("references/"):
+                locations[name] = ".xninetzy/" + name
             if name not in locations:
                 continue
             path = args.home / locations[name]

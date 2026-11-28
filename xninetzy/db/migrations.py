@@ -1024,6 +1024,19 @@ def run_migrations() -> None:
         )
         """,
         "CREATE INDEX IF NOT EXISTS idx_memory_promotion_kind ON memory_promotion_log(source_kind, source_id)",
+        """
+        CREATE TABLE IF NOT EXISTS memory_session_checkpoints (
+          owner TEXT NOT NULL,
+          workspace TEXT NOT NULL,
+          task TEXT NOT NULL,
+          revision INTEGER NOT NULL,
+          request_key TEXT NOT NULL,
+          payload_json TEXT NOT NULL,
+          saved_at TEXT NOT NULL,
+          PRIMARY KEY (owner, workspace, task, revision),
+          UNIQUE (owner, workspace, task, request_key)
+        )
+        """,
     ]
     with connect() as conn:
         for statement in statements:

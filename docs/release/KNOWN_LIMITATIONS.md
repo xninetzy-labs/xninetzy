@@ -1,5 +1,17 @@
 # Known limitations at the current checkpoint
 
+November16: the v2.3 token-efficiency bundle is now owner-approved and installed,
+with private backups and9/9 matching hashes. Prompt/source/skill contracts and source/frozen-install
+SDK discovery tests pass; native-host behavior and billed token savings remain
+unmeasured. Conditional references were installed before the hot prompt; active
+sessions need their normal instruction/schema reload. Omitted optional discovery flags retain legacy output, including
+large catalogs. Actual MCP tools/list still exposes all578 tools; registry schema
+text grows149 tokens for the new arguments. The context helper honors characters,
+not model tokens, and is not asserted to run in every client. All three edited
+runtime modules match the wheel; concurrent unrelated core/Kaggle changes prevent
+a whole-package parity claim. No new tool/provider, owner data or account action
+was introduced. Exact measurements, fixture boundaries and rollback are in Phase2.
+
 Newest2026-11-15 checkpoint supersedes earlier FAISS/lint statements: checked
 two-slot FAISS publication, duplicate replay and opt-in MCP worker startup/restart
 are now tested with real CPU FAISS and cached offline MiniLM. Legacy projections

@@ -201,10 +201,17 @@ from xninetzy.os.inbox.tools import os_capture, os_inbox, os_today, os_triage
 from xninetzy.tools.ecosystem.kaggle_tools import (
     kaggle_auth_status,
     kaggle_capabilities,
+    kaggle_dataset_download,
     kaggle_dataset_get,
     kaggle_dataset_register,
     kaggle_dataset_search,
     kaggle_dataset_validate,
+    kaggle_kernel_output,
+    kaggle_kernel_push,
+    kaggle_kernel_status,
+    kaggle_pipeline_plan,
+    kaggle_pipeline_status,
+    kaggle_pipeline_tick,
 )
 from xninetzy.os.auth.tools.auth_tools import (
     auth_capabilities,
@@ -496,6 +503,7 @@ from xninetzy.os.memory.memory_tools import (
     memory_search,
     memory_update_tool,
 )
+from xninetzy.os.memory.session_tools import memory_session_checkpoint, memory_session_resume
 from xninetzy.os.lightning.tools import (
     lightning_approve,
     lightning_errors,
@@ -901,6 +909,13 @@ def get_all_tools() -> list[BaseTool]:
             kaggle_dataset_get,
             kaggle_dataset_register,
             kaggle_dataset_validate,
+            kaggle_dataset_download,
+            kaggle_kernel_push,
+            kaggle_kernel_status,
+            kaggle_kernel_output,
+            kaggle_pipeline_plan,
+            kaggle_pipeline_status,
+            kaggle_pipeline_tick,
             # Knowledge OS
             knowledge_ingest_text,
             knowledge_ingest_file,
@@ -1083,6 +1098,8 @@ def get_all_tools() -> list[BaseTool]:
             memory_update_tool,
             memory_forget,
             memory_get_context,
+            memory_session_checkpoint,
+            memory_session_resume,
             # Lightning self-improvement
             lightning_episode_start,
             lightning_episode_get,

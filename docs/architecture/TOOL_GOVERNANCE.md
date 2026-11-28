@@ -1,5 +1,22 @@
 # Canonical tool execution governance
 
+November16 compact-discovery continuation: `tool_catalog(query, offset, compact)`
+and `skill_list(query, limit, offset, compact)` extend existing tools with optional
+arguments. Omitted arguments retain previous output. Compact tool rows keep name,
+description, risk, requires_approval and requires_idempotency; filtering/pagination
+changes disclosure only, never the execution catalog or authorization. Names,
+descriptions and aliases remain untrusted as permission grants. Full578-tool MCP
+enumeration is retained for compatibility. Seven tools were added by prior owner
+work since the older571 snapshot; this batch adds no canonical tool.
+
+Use a small filtered metadata result before requesting relevant procedures or
+client tool schemas. Native clients may still inject the entire catalog; this
+server cannot claim a startup/context reduction from compact result support.
+The existing skill-context helper now honors its configured character budget
+while keeping the trust guard or returning no metadata. It is not a tokenizer or
+an independently enforced host context window. Runtime policy checks, trusted
+principal injection, exact approvals, write keys and kill switches are unchanged.
+
 Verified scope: local single-owner STDIO MCP, 2026-11-14. This document describes the current gateway, not a production authorization certification.
 
 `VERIFIED_CODE`: `tools/execution_policies.json` owns explicit risk classifications for all 571 registered names. `manifest_for` reads this packaged, versioned catalog; unknown names receive FINAL policy with `policy_known=False` and are denied. Tool descriptions, argument names, learned configuration, aliases and caller-selected side-effect declarations cannot lower canonical risk. Registration additions require a reviewed catalog entry and contract tests. The current distribution is READ133 / DRAFT6 / WRITE409 / FINAL23. Some stateful queries are conservatively WRITE; this inventory is not exhaustive proof of each handler's semantics.

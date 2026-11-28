@@ -293,6 +293,11 @@ class Settings(BaseSettings):
     ACADEMIC_SESSION_WATCHDOG_INTERVAL_SECONDS: int = 1800
     ACADEMIC_SESSION_WATCHDOG_NOTIFY_COOLDOWN_HOURS: int = 6
 
+    KAGGLE_PYTHON: str = ""
+    KAGGLE_WORKSPACE_DIR: str = "~/.local/share/xninetzy/kaggle"
+    KAGGLE_SOURCE_ROOTS: str = ""
+    KAGGLE_RUNNER_TIMEOUT_SECONDS: int = 180
+
     # HEBAT / Moodle integration
     HEBAT_BASE_URL: str = "https://hebat.elearning.unair.ac.id"
     HEBAT_LOGIN_URL: str = "https://hebat.elearning.unair.ac.id/login/index.php"
@@ -593,6 +598,7 @@ _PATH_KEYS = frozenset({
     "UNTRACKED_OUTPUT_DIR",
     "HEBAT_DATA_DIR",
     "HEBAT_DOWNLOAD_DIR",
+    "KAGGLE_WORKSPACE_DIR",
     "OBSIDIAN_VAULT_HOST_PATH",
     "WEB_ANALYSIS_DATA_DIR",
     "VECTOR_DATA_DIR",

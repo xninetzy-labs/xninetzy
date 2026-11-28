@@ -20,7 +20,7 @@ If the MCP server is unavailable for a workflow that needs Xninetzy state, retur
 
 # 3. No comments in code
 
-Strict: source files contain zero comments — no `#` line or trailing comments, no docstrings, no `//` or `/* */`, no HTML/JSX comments. Only required shebangs and upstream-mandated license headers at the top are allowed. Prose belongs in root `AGENTS.md`, `README.md`, `LICENSE`, `docs/**/*.md`, `.agents/skills/**/*.md`, and user-content payload schemas in `xninetzy/os/knowledge/extraction/**`. Refactor code instead of explaining it.
+Strict: source files contain zero comments — no `#` line or trailing comments, no docstrings, no `//` or `/* */`, no HTML/JSX comments. Only required shebangs and upstream-mandated license headers at the top are allowed. Prose belongs in root `AGENTS.md`, `README.md`, `LICENSE`, `docs/**/*.md`, `.agents/skills/**/*.md`, and user-content payload schemas in `xninetzy/os/knowledge/extraction/**`. Refactor code instead of explaining it. `tests/governance/test_no_new_comments.py` enforces this as a ratchet: `tests/governance/no_comment_baseline.json` records the legacy count per file and the test fails when any file gains a comment or docstring. Docstrings on `@tool` functions are the tool description and stay. Regenerate the baseline with `UPDATE_NO_COMMENT_BASELINE=1` only after removing violations, never to admit new ones. `scripts/kaggle_biodiversity/remote_worker.py` is hash-locked and keeps its comments.
 
 # 4. Paths
 
@@ -39,7 +39,7 @@ Token budget (client skill listings truncate past about 1% of context):
 
 # 6. MCP surface
 
-578 tools (count: `python -c "from xninetzy.tools.registry import get_tool_names; print(len(get_tool_names()))"`), resources `xninetzy://skills/index` and `xninetzy://tools/catalog`, and prompt `xninetzy-memory-checklist`, all in `xninetzy/interfaces/mcp_server.py`; drift test `tests/governance/test_mcp_surface.py`. Adding or removing a tool changes the totals here, in `README.md` and in `apps/docs/src/pages/docs/{architecture,mcp-system}.md` (in `mcp-system.md` also the risk table, feature-pack table and stability line). Take the numbers from `scripts/mcp_audit.py --json`. Every new tool needs a risk entry in `xninetzy/tools/execution_policies.json`; an unlisted tool fails closed as `final`.
+587 tools (count: `python -c "from xninetzy.tools.registry import get_tool_names; print(len(get_tool_names()))"`), resources `xninetzy://skills/index` and `xninetzy://tools/catalog`, and prompt `xninetzy-memory-checklist`, all in `xninetzy/interfaces/mcp_server.py`; drift test `tests/governance/test_mcp_surface.py`. Adding or removing a tool changes the totals here, in `README.md` and in `apps/docs/src/pages/docs/{architecture,mcp-system}.md` (in `mcp-system.md` also the risk table, feature-pack table and stability line). Take the numbers from `scripts/mcp_audit.py --json`. Every new tool needs a risk entry in `xninetzy/tools/execution_policies.json`; an unlisted tool fails closed as `final`.
 
 # 7. Domain conventions
 
@@ -48,6 +48,7 @@ Token budget (client skill listings truncate past about 1% of context):
 * Document Studio (`xninetzy/integrations/document_studio/`, tools `artifact_*`, skill `document-studio`) renders Markdown into DOCX, PDF and PPTX. Built-in themes are JSON in `xninetzy/templates/document_studio/themes/`; owner themes live under `DATA_DIR/document_studio/themes/`. Extend it rather than writing one-off python-docx or python-pptx generators. Decks (`pptx`, `slides_pdf`) return `awaiting_input` until `deck_brief_confirmed=true`: ask the owner for the brief and a reference (Canva MCP design → PPTX → `artifact_theme_from_file`) first.
 * UI work follows the owner's FigCraft file through the `figcraft` MCP (skill `figcraft-ui-sync`); the launcher `~/.local/bin/figcraft-mcp` attaches to the app on port 7979 and starts it when needed.
 * Career sources use legal free public APIs only (RemoteOK, ArbeitNow). Never scrape LinkedIn, Indeed, JobStreet, Glints or other walled gardens.
+* Kaggle (`xninetzy/integrations/kaggle/`, tools `kaggle_*`, skill `kaggle`): dataset search and download, kernel push, status and output, and dependent job pipelines all go through the tools. Never write a new controller, supervisor or polling script for Kaggle; the only code authored per task is the remote worker. `scripts/kaggle_biodiversity/` is the legacy controller of one running campaign: leave it and its `remote_worker.py` untouched (the controller hashes the worker). Kernel pushes go through the idempotency ledger and stay private; an unconfirmed push (`unknown_delivery`) is never replayed.
 * CLI orchestrator: `python -m xninetzy.cli.orchestrator validate|run <plan.yaml> [--approve <approval_id>]`. Tier 0 READ and tier 1 WRITE/DRAFT (needs `idempotency_key`) run automatically; tier 2 halts with a preview; tier 3 FINAL halts for `hitl_request_approval`. One `hitl_request_plan_approval(plan_id, final_steps)` covers several FINAL steps; record per-step receipts with `claim_ledger_record`.
 
 # 8. Authority

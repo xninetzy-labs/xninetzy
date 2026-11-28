@@ -1,5 +1,18 @@
 # Current release decision
 
+November16 token-efficiency continuation does not change the overall release
+decision below. Candidate global v2.3 reduces common hot prompt text by20.51%
+for Codex; the context-engineering body shrinks62.44%, and equal250-row tool
+metadata shrinks47.88% with opt-in compact output. These are named-tokenizer
+text measurements, not billing/quality/startup improvements.162 related tests
+and isolated source/frozen-base MCP smokes pass; consequential execution remains
+held. Whole-package parity is unresolved due concurrent outside-scope changes;
+only the three edited runtime files are verified equal. After explicit owner
+approval, global v2.3 is installed with private backups and9/9 matching file hashes;
+11 prompt tests and five isolated installer fixture groups pass. Native instruction
+and schema caches require their normal reload; no active job was restarted. See
+Phase2 and CONTEXT_COST_RESULTS.json for exact scope, commands and rollback.
+
 Updated: 2026-11-15. Decision: **PARTIAL / NOT_READY**. Scope: repository audit, local candidate patches and isolated container operation, not production deployment certification. Historical V1 checklists do not override this evidence.
 
 Newest checkpoint: the three `skill_validate_*` writing checks were incorrectly

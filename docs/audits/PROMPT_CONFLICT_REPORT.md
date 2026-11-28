@@ -1,5 +1,20 @@
 # Prompt Conflict Report
 
+November16 continuation (`VERIFIED_CODE/TEST/RUNTIME`): preserve the owner's
+v2.2 operating choices and remove repeated hot integration detail in a v2.3
+bundle, now installed after explicit owner approval. Conditional domain references retain the prior wording;
+the hot entrypoint requires them before work. Nine-file hashes, known unsafe
+policy regressions and untracked-reference deletion checks pass. CORE_RULES.md
+and actual host permissions are unchanged. L0/shared and three references were
+installed with private backups; installed comparison now reports9/9 matching
+hashes. The checker remains read-only and grants no permissions. Native loading
+and behavioral equivalence remain separate. Higher-priority developer reasoning rules
+still apply even when a candidate suggests fewer reasoning calls.
+
+Native context-engineering metadata is unchanged and its prior body is retained
+verbatim in a resource. No assurance of equivalent LLM behavior follows from
+structural tests. Cost and exact limits are in CONTEXT_COST_RESULTS.json / Phase2.
+
 Audit date: 2026-11-10. Repository baseline: `main` at `2d0f13f`, with preexisting user changes preserved. This report records the baseline before candidate prompt changes. Evidence labels: `VERIFIED_CODE` for inspected files; `VERIFIED_RUNTIME` for local execution; `VERIFIED_TEST` for passing tests; `DOCUMENTED_ONLY` for unexecuted intended behavior; `UNKNOWN` for unavailable evidence.
 
 Findings are baseline static instruction defects, not proof of an executed authorization bypass. Runtime enforcement must be tested separately. Repository candidates may resolve canonical text while owner-installed files remain unchanged.

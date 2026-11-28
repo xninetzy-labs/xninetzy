@@ -2,7 +2,7 @@
 
 > Local-first, MCP-only Personal Intelligence and Learning system. One
 > FastMCP server, stdio primary, Streamable HTTP loopback by default.
-> 578 tools under one canonical registry.
+> 587 tools under one canonical registry.
 
 ![Python](https://img.shields.io/badge/Python-3.11+-3776AB?logo=python&logoColor=white)
 ![MCP](https://img.shields.io/badge/MCP-stdio%20%2B%20Streamable%20HTTP-6C47FF)
@@ -27,7 +27,7 @@ host (Claude / Claude Code / Cursor / Codex / OpenCode)
   ▼
 xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
   │
-  ├── xninetzy.tools.registry.get_all_tools()   (578 tools)
+  ├── xninetzy.tools.registry.get_all_tools()   (587 tools)
   │     └── xninetzy.tools.manifest.manifest_for(name)
   │           ├── feature_pack: core | academic-unair | research | coding
   │           ├── risk:         read | draft | write | final
@@ -59,7 +59,7 @@ xninetzy.interfaces.mcp_server   ─── FastMCP("xninetzy", ...)
 | Area | Capabilities |
 |---|---|
 | MCP server | FastMCP("xninetzy", stateless_http, json_response) over stdio + Streamable HTTP on loopback |
-| Tool registry | 578 tools classified by risk (read/draft/write/final), feature pack (core/academic-unair/research/coding), idempotency, stability |
+| Tool registry | 587 tools classified by risk (read/draft/write/final), feature pack (core/academic-unair/research/coding), idempotency, stability |
 | Obsidian | list, search, read, create, append, frontmatter, tags, headings, backlinks, todos, MOC, daily note, vault init / organize / verify |
 | HEBAT / Moodle | login (Playwright Chromium), course sync, activity sync, material download, PDF read, assignment digest, submission with HITL approval |
 | Cyber Campus | profile, academic status, schedule, grades, KRS capabilities, KRS War arm/disarm/execute (FINAL), grade-token submission |
@@ -173,6 +173,28 @@ real use.
 
 ## Connect an MCP host
 
+### Continue work across tabs
+
+Save verified progress with `memory_session_checkpoint` at a milestone. Use the
+absolute workspace path, a stable task slug, a short summary, the next action,
+and source or artifact references. Start at revision 0. Each checkpoint needs a
+unique idempotency key. If another tab saves first, resume and reconcile its
+changes before writing again with the new revision and key.
+
+In another tab connected to the same Xninetzy owner and SQLite store, call
+`memory_session_resume` with the same workspace and task. Omit the task to find
+checkpoints in that workspace. The response defaults to a 4 KiB JSON budget and
+keeps the next action when it shortens the context. Optional GraphRAG anchors
+use `node_type` and `title` and return current relationship IDs from SQLite.
+With Lightning enabled, MCP records status, size and latency under its
+existing sampling policy. It does not record the checkpoint text in telemetry.
+
+Checkpoint writes use the standard MCP write policy. Deployments that hold
+writes for approval and want automatic local checkpointing can set the
+per-tool override `memory_session_checkpoint=auto` in their existing
+`ACTION_POLICY_OVERRIDES`. Restart the MCP connection after an authorized
+configuration change. Client tab events are not required to share checkpoints.
+
 ### Claude Code
 
 ```bash
@@ -259,7 +281,7 @@ the canonical tool registry and authorization model.
 │   │   ├── tasks_extension.py           # SEP-2663
 │   │   └── api/                         # FastAPI HTTP bridge (secondary)
 │   ├── tools/
-│   │   ├── registry.py                  # get_all_tools() — 578 tools
+│   │   ├── registry.py                  # get_all_tools() — 587 tools
 │   │   ├── manifest.py                  # risk + feature_pack + idempotency
 │   │   └── release_check.py             # 6 release-gate checks
 │   ├── os/
@@ -304,7 +326,7 @@ uv run python -m xninetzy.cli.supervisor release-check
 Expected output:
 
 ```text
-  [PASS   ] tool_registry            578 tools classified
+  [PASS   ] tool_registry            587 tools classified
   [PASS   ] secret_redaction         3/3 sample secrets redacted
   [PASS   ] safe_fetch               3/3 SSRF guard scenarios blocked
   [PASS   ] transport_config         transport=stdio host=127.0.0.1

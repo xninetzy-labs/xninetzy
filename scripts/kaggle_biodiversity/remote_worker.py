@@ -28,7 +28,10 @@ os.environ["TOKENIZERS_PARALLELISM"] = "false"
 os.environ["HF_HUB_DISABLE_TELEMETRY"] = "1"
 STARTED = time.monotonic()
 DEADLINE = STARTED + JOB.get("time_budget_seconds", 25_200)
-PIPELINE_VERSION = "2026-11-15.4"
+PIPELINE_VERSION = "2026-11-15.5"
+# Version 4 already used the same spatial scoring and complete page evidence.
+# Its full-model pages remain valid when introducing the native-only fast path.
+COMPATIBLE_CHECKPOINT_VERSIONS = {"2026-11-15.4", PIPELINE_VERSION}
 
 
 def stamp():
@@ -414,6 +417,38 @@ def convert_pages(pdf, start, end, converter):
     return pages
 
 
+def convert_adaptive(pdf_path, pdf, start, end, converter):
+    import itertools
+    global NATIVE_CONVERTER
+    kinds = []
+    for page_no in range(start, end + 1):
+        page = pdf[page_no - 1]
+        native = page.get_text()
+        clean = len(normalize(native)) >= 30 and "\ufffd" not in native and "(cid:" not in native
+        # Includes inline bitmaps, unlike get_images(). Never skip image OCR.
+        # Vector drawings can include outlined text or complex table geometry.
+        # Keep those pages on the structured path as well.
+        fast = clean and not page.get_image_info() and not page.get_drawings()
+        kinds.append((page_no, fast))
+    pages = {}
+    for fast, group in itertools.groupby(kinds, key=lambda item: item[1]):
+        numbers = [number for number, _ in group]
+        selected = converter
+        if fast:
+            if NATIVE_CONVERTER is None:
+                from docling.datamodel.base_models import InputFormat
+                from docling.datamodel.pipeline_options import NativePdfPipelineOptions
+                from docling.document_converter import DocumentConverter, NativePdfFormatOption
+                options = NativePdfPipelineOptions(generate_page_images=False, generate_picture_images=False, parser_threads=2)
+                NATIVE_CONVERTER = DocumentConverter(format_options={InputFormat.PDF: NativePdfFormatOption(pipeline_options=options)})
+            selected = NATIVE_CONVERTER
+        converted = convert_pages(pdf_path, numbers[0], numbers[-1], selected)
+        for page_no, conversion in converted.items():
+            conversion["method"] = "langchain_native_text" if fast else "docling_native_layout_tables_ocr"
+            pages[page_no] = conversion
+    return pages
+
+
 def metadata(item, cover):
     years = sorted(set(re.findall(r"(?<!\d)20(?:20|21|22|23|24|25)(?!\d)", item["name"])))
     year = int(years[0]) if len(years) == 1 else None
@@ -474,7 +509,7 @@ def resume_pages(item):
         try:
             with gzip.open(source, "rt", encoding="utf-8") as handle:
                 data = json.load(handle)
-            if not isinstance(data, dict) or data.get("pipeline_version") != PIPELINE_VERSION or data.get("sha256") != item.get("sha256"):
+            if not isinstance(data, dict) or data.get("pipeline_version") not in COMPATIBLE_CHECKPOINT_VERSIONS or data.get("sha256") != item.get("sha256"):
                 continue
             pages = data["pages"]
             if [p["page"] for p in pages] == list(range(1, len(pages)+1)) and len(pages) > len(best):
@@ -504,6 +539,8 @@ def extract_one(item, pdf_path, converter, page_limit=None):
         if page["page"] <= 2:
             cover.append(page["text"])
     record["pages_processed"] = len(page_records)
+    record["pages_resumed"] = len(page_records)
+    record["pipeline_version"] = PIPELINE_VERSION
     with fitz.open(pdf_path) as pdf:
         total_pages = len(pdf)
         end_page = min(total_pages, page_limit or total_pages)
@@ -513,12 +550,12 @@ def extract_one(item, pdf_path, converter, page_limit=None):
                 record["error"] = "Time budget reached; resume from saved pages"
                 break
             end = min(end_page, start + 7)
-            pages = convert_pages(pdf_path, start, end, converter)
+            pages = convert_adaptive(pdf_path, pdf, start, end, converter)
             for page_no, conversion in pages.items():
                 text = conversion["text"]
                 regions = conversion["regions"]
                 native = pdf[page_no - 1].get_text()
-                method = "docling_native_layout_tables_ocr"
+                method = conversion["method"]
                 if len(normalize(native)) >= 30 and len(normalize(text)) < min(30, len(normalize(native)) // 4):
                     if native.count("\ufffd") > max(5, len(native) * .02):
                         raise RuntimeError("Unresolved native and structured text quality at page " + str(page_no))
@@ -566,6 +603,7 @@ def extract_one(item, pdf_path, converter, page_limit=None):
         record["status"] = "complete" if record["pages_processed"] == total_pages else "partial"
         if record["status"] == "complete":
             record["score"] = int(record["total_hits"] >= 2)
+        record["page_methods"] = dict(collections.Counter(p["method"] for p in page_records))
         save_pages(item, page_records)
     return record, evidence
 
@@ -603,6 +641,7 @@ def workbook(records, path):
 
 
 VLM_CONVERTER = None
+NATIVE_CONVERTER = None
 
 
 def extraction(smoke=False, canary=False):
@@ -646,6 +685,7 @@ def extraction(smoke=False, canary=False):
             records.append(record)
             atomic_json(OUT / "results.json", {"records": records})
             workbook(records, OUT / "biodiversity_scores.xlsx")
+            emit(event="pdf_result", file_id=item["id"], status=record["status"], score=record.get("score"), pages_processed=record.get("pages_processed", 0), page_methods=record.get("page_methods", {}))
     if smoke:
         if any(record["status"] == "failed" for record in records):
             raise RuntimeError("Sample extraction failed: " + records[0].get("error", "unknown"))
@@ -671,8 +711,33 @@ def extraction(smoke=False, canary=False):
             pdf.save(mixed)
         mixed_result, _ = extract_one({"id": "mixed_fixture", "name": "MIXED_AR_2020.pdf", "folder_year": "2020"}, mixed, converter)
         assert mixed_result["counts"]["species"] == 2 and mixed_result["score"] == 1, mixed_result
+        native_fixture = OUT / "native_fixture.pdf"
+        with fitz.open() as pdf:
+            page = pdf.new_page()
+            page.insert_text((70, 90), "PT Example Tbk annual report: species species habitat", fontsize=16)
+            pdf.save(native_fixture)
+        native_result, _ = extract_one({"id": "native_fixture", "name": "NATIVE_AR_2020.pdf", "folder_year": "2020"}, native_fixture, converter)
+        with gzip.open(OUT / "texts/native_fixture.json.gz", "rt", encoding="utf-8") as handle:
+            native_pages = json.load(handle)["pages"]
+        assert native_result["score"] == 1 and native_result["counts"]["species"] == 2, native_result
+        assert native_pages[0]["method"] == "langchain_native_text", native_pages[0]["method"]
+        vector_fixture = OUT / "vector_fixture.pdf"
+        with fitz.open(native_fixture) as pdf:
+            pdf[0].draw_rect(fitz.Rect(60, 60, 540, 150))
+            pdf.save(vector_fixture)
+        vector_result, _ = extract_one({"id": "vector_fixture", "name": "VECTOR_AR_2020.pdf", "folder_year": "2020"}, vector_fixture, converter)
+        assert vector_result["score"] == 1 and vector_result["counts"]["species"] == 2, vector_result
+        assert vector_result["page_methods"] == {"docling_native_layout_tables_ocr": 1}, vector_result
         assert records and records[0]["status"] == "partial" and records[0]["score"] is None
+        if JOB.get("expect_resume"):
+            assert records[0]["pages_resumed"] == 3, records[0]
     summary = {"mode": "smoke" if smoke else "canary" if canary else "extract", "pipeline_version": PIPELINE_VERSION, "expected": len(items), "processed": len(records), "complete_pdfs": sum(r["status"] == "complete" for r in records), "failed": sum(r["status"] == "failed" for r in records), "partial": sum(r["status"] == "partial" for r in records), "pages_processed": sum(r.get("pages_processed", 0) for r in records), "elapsed_seconds": round(time.monotonic()-STARTED), "complete": (smoke and bool(records) and records[0]["status"] == "partial") or len(records) == len(items) and all(r["status"] in ("complete", "not_pdf") for r in records), "failures": [{"id": r["id"], "error": r.get("error")} for r in records if r["status"] == "failed"][:20], "versions": {p: importlib.metadata.version(p) for p in ("docling", "langchain-docling", "gdown", "rapidocr")}}
+    summary["worker_sha256"] = JOB.get("worker_sha256")
+    summary["pages_resumed"] = sum(r.get("pages_resumed", 0) for r in records)
+    methods = collections.Counter()
+    for record in records:
+        methods.update(record.get("page_methods", {}))
+    summary["page_methods"] = dict(methods)
     atomic_json(OUT / "summary.json", summary)
     emit(**summary)
 

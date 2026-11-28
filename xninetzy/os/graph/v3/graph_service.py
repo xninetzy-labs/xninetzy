@@ -89,6 +89,10 @@ def neighborhood(keys: list[str], *, depth: int = 1, limit: int = 60) -> list[di
     return neo4j_store.neighborhood(keys, depth=depth, limit=limit)
 
 
+def active_links(keys: list[str], *, limit: int = 6) -> list[dict]:
+    return sqlite_store.active_links(keys, limit)
+
+
 def shortest_path(source_key: str, target_key: str, *, max_hops: int = 5) -> list[dict]:
     return neo4j_store.shortest_path(source_key, target_key, max_hops=max_hops)
 

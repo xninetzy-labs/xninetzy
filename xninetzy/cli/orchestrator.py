@@ -12,7 +12,7 @@ from typing import Any
 import yaml
 
 from xninetzy.core.logging import logging
-from xninetzy.os.policy.action_policy import RiskClass
+from xninetzy.os.policy.action_policy import RiskClass, evaluate_action
 from xninetzy.os.research.sources.base import stable_idempotency_key
 from xninetzy.tools.manifest import manifest_for
 from xninetzy.tools.registry import get_all_tools
@@ -128,6 +128,17 @@ async def _run_step(step: dict[str, Any], plan_id: str, tool_map: dict[str, Any]
             tool=tool_name,
             status="halted",
             error=f"tier {effective} (declared={declared_tier}) requires explicit owner approval; run with --approve <approval_id> to execute",
+            idempotency_key=idempotency_key,
+            started_at=started_at,
+            finished_at=_now_iso(),
+        )
+    decision = evaluate_action(tool_name, args)
+    if not decision.allowed or decision.requires_approval:
+        return StepResult(
+            step_id=sid,
+            tool=tool_name,
+            status="halted",
+            error="POLICY_HELD: " + decision.mode.value + "; " + decision.reason,
             idempotency_key=idempotency_key,
             started_at=started_at,
             finished_at=_now_iso(),

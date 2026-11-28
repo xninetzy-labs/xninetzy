@@ -1,5 +1,29 @@
 # Candidate verification and recovery runbook
 
+## Installed global prompt v2.3, 2026-11-16
+
+Owner-approved rollout is complete:9/9 installed hashes match the canonical
+bundle. Five files changed under `~/.xninetzy` (L0, shared continuity, three
+conditional references). L1 and Codex/Claude/OpenCode adapters were already
+matching and were not rewritten. Permission/model/MCP configuration is untouched.
+Validate with `python scripts/validate_prompt_contract.py --installed` or the
+default read-only `scripts/verify_prompt_injection.sh`.
+
+Backup and receipt:
+`~/.xninetzy/backups/prompt-v2.3.0-20261115T191727Z-5753e6f8/` (timestamp UTC).
+The0700 directory contains0600 originals, approved sources, receipt and private
+installer. Source hashes, original modes, idempotent repeat and injected-failure
+rollback were verified. Publication is atomic per file, not as one filesystem
+transaction. Do not delete the backup or overwrite later owner additions.
+
+For an owner-requested rollback, use the archived installer's `--rollback`
+preview and add `--apply` only for actual recovery; exact commands are in Phase2.
+It refuses changed targets and restores only this installation. Do not revert
+unrelated application changes or user data. New sessions or a normal instruction
+reload are needed where clients cached v2.2; no active process/job was restarted.
+New optional MCP discovery parameters likewise require a normal schema reload.
+File verification does not prove every native client has reloaded its context.
+
 ## Current validator repair and graph-worker candidate
 
 The pure writing checks `skill_validate_anti_slop`, `skill_validate_output` and

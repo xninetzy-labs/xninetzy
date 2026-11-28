@@ -3,12 +3,21 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import time
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 OWNER = "misbahulmuttaqin"
+
+
+class SubmissionRejected(RuntimeError):
+    pass
+
+
+def worker_hash():
+    return hashlib.sha256((ROOT / "remote_worker.py").read_bytes()).hexdigest()
 
 
 def api():
@@ -21,7 +30,7 @@ def api():
 def build(slug, job, sources=(), gpu=False):
     target = ROOT / "jobs" / slug
     target.mkdir(parents=True, exist_ok=True)
-    source = "JOB = " + repr(job) + "\n" + (ROOT / "remote_worker.py").read_text()
+    source = "JOB = " + repr({**job, "worker_sha256": worker_hash()}) + "\n" + (ROOT / "remote_worker.py").read_text()
     (target / "worker.py").write_text(source)
     metadata = {"id": OWNER + "/" + slug, "title": slug.replace("-", " ").title(), "code_file": "worker.py", "language": "python", "kernel_type": "script", "is_private": True, "enable_gpu": gpu, "enable_internet": True, "dataset_sources": [], "competition_sources": [], "kernel_sources": list(sources), "model_sources": []}
     (target / "kernel-metadata.json").write_text(json.dumps(metadata, indent=2))
@@ -32,7 +41,7 @@ def push(slug, job, sources=(), gpu=False):
     target = build(slug, job, sources, gpu)
     result = api().kernels_push(str(target), timeout=str(job.get("time_budget_seconds", 25_200) + 240), acc=job.get("accelerator", "NvidiaTeslaT4") if gpu else None)
     if result.error or result.invalid_kernel_sources or result.invalid_dataset_sources:
-        raise RuntimeError("Kaggle did not accept the requested job or its sources: " + (result.error or "invalid input sources"))
+        raise SubmissionRejected("Kaggle did not accept the requested job or its sources: " + (result.error or "invalid input sources"))
     receipt = {"slug": OWNER + "/" + slug, "url": result.url, "version": result.version_number}
     print(json.dumps(receipt, default=str), flush=True)
     return receipt
@@ -139,16 +148,27 @@ def initialize_campaign(inventory_slug):
 def campaign_tick():
     state = json.loads((ROOT / "campaign_state.json").read_text())
     client = api()
-    if not state.get("smoke_verified"):
+    required_hash = worker_hash()
+    if state.get("smoke_verified_hash") != required_hash:
         proof = read_status_json(output_response("biodiversity-pipeline-cpu-smoke"))
-        state["smoke_verified"] = bool(proof and proof.get("complete") and proof.get("mode") == "smoke")
+        state["smoke_verified"] = bool(proof and proof.get("complete") and proof.get("mode") == "smoke" and proof.get("worker_sha256") == required_hash)
+        state["smoke_verified_hash"] = required_hash if state["smoke_verified"] else None
         save_state(state)
     by_slug = {j["slug"]: j for j in state["jobs"]}
     for job in state["jobs"]:
         if job["state"] not in {"submitted", "submitting"}:
             continue
         run_slug = job.get("run_slug", job["slug"])
-        response = client.kernels_status(OWNER + "/" + run_slug)
+        try:
+            response = client.kernels_status(OWNER + "/" + run_slug)
+        except Exception as exc:
+            if getattr(getattr(exc, "response", None), "status_code", None) == 404 and job.get("rejection", {}).get("run_slug") == run_slug:
+                job["state"] = "pending"
+                job["gpu"] = False
+                job["not_before"] = time.time() + 60
+                save_state(state)
+                continue
+            raise  # Unknown delivery is reconciled, never blindly replayed.
         status = getattr(response.status, "name", str(response.status)).upper()
         job["remote_status"] = status
         if status == "COMPLETE":
@@ -175,7 +195,7 @@ def campaign_tick():
                 job["state"] = "review_required"
             else:
                 job["state"] = "partial"
-        elif status in {"ERROR", "CANCELLED", "CANCELED"}:
+        elif status in {"ERROR", "CANCELLED", "CANCELED", "CANCEL_ACKNOWLEDGED"}:
             job["state"] = "failed"
             job["failure"] = response.failure_message
         save_state(state)
@@ -192,11 +212,15 @@ def campaign_tick():
     for job in state["jobs"]:
         if job["state"] != "pending" or not all(by_slug[s]["state"] in {"complete", "review_required"} for s in job["depends"]):
             continue
+        if time.time() < job.get("not_before", 0):
+            continue
         if job["mode"] == "extract" and not state.get("smoke_verified"):
             continue
         if job["mode"] == "download" and time.time() < state.get("download_not_before", 0):
             continue
-        use_gpu = bool(job["gpu"] and remaining_gpu >= 900 and active_gpu < 2)
+        use_gpu = bool(job["gpu"] and remaining_gpu >= 900 and active_gpu < 1 and time.time() >= state.get("gpu_not_before", 0))
+        if not use_gpu and time.time() < state.get("cpu_not_before", 0):
+            continue
         if not use_gpu and active_cpu >= 4:
             continue
         if not use_gpu and job["mode"] == "extract" and active_cpu_extract >= 2 and any(j["mode"] == "download" and j["state"] == "pending" for j in state["jobs"]):
@@ -212,9 +236,26 @@ def campaign_tick():
             config["expected_files"] = job["expected"]
         sources = [by_slug[s].get("run_slug", s) if s in by_slug else s for s in job["sources"]]
         sources += job.get("previous_sources", [])
-        receipt = push(job.get("run_slug", job["slug"]), config, [OWNER + "/" + s for s in sources], use_gpu)
+        try:
+            receipt = push(job.get("run_slug", job["slug"]), config, [OWNER + "/" + s for s in sources], use_gpu)
+        except SubmissionRejected as exc:
+            job["rejection"] = {"reason": str(exc)[:400], "at": time.time(), "run_slug": job.get("run_slug", job["slug"])}
+            if not any(marker in str(exc).lower() for marker in ("maximum batch", "quota")):
+                job["state"] = "failed"
+            save_state(state)
+            if use_gpu:
+                remaining_gpu = 0
+                state["gpu_not_before"] = time.time() + 300
+                save_state(state)
+            else:
+                state["cpu_not_before"] = time.time() + 60
+                save_state(state)
+                break
+            continue
         job["receipt"] = receipt
+        job.pop("rejection", None)
         job["state"] = "submitted"
+        job["submitted_at"] = time.time()
         save_state(state)
         active_gpu += int(job["gpu"])
         active_cpu += int(not job["gpu"])

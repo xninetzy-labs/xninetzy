@@ -6,13 +6,16 @@ from xninetzy.tools.manifest import manifest_for
 
 
 @tool
-def tool_catalog(feature_pack: str = "", risk: str = "", limit: int = 250) -> list[dict]:
-    """List shared Xninetzy tool metadata for routing and operator inspection."""
+def tool_catalog(feature_pack: str = "", risk: str = "", limit: int = 250,
+                 query: str = "", offset: int = 0, compact: bool = False) -> list[dict]:
+    """List tool metadata; use query, compact and a small limit for discovery, then offset for more. No execution or permission grant."""
     from xninetzy.tools.registry import get_all_tools
 
     bounded_limit = max(1, min(limit, 500))
     normalized_pack = feature_pack.strip().lower()
     normalized_risk = risk.strip().lower()
+    terms = query.casefold().split()
+    skip = max(0, offset)
     results: list[dict] = []
     for current in get_all_tools():
         manifest = manifest_for(current.name)
@@ -20,8 +23,15 @@ def tool_catalog(feature_pack: str = "", risk: str = "", limit: int = 250) -> li
             continue
         if normalized_risk and manifest.risk.value != normalized_risk:
             continue
+        if terms and not all(term in f"{current.name} {current.description}".casefold() for term in terms):
+            continue
+        if skip:
+            skip -= 1
+            continue
         item = manifest.as_dict()
         item["description"] = (current.description or "").split("\n", 1)[0]
+        if compact:
+            item = {key: item[key] for key in ("name", "description", "risk", "requires_approval", "requires_idempotency")}
         results.append(item)
         if len(results) >= bounded_limit:
             break

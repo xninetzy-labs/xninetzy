@@ -68,8 +68,11 @@ mcp = FastMCP(
     "xninetzy",
     instructions=(
         "Akses Xninetzy OS milik owner lokal: Obsidian, knowledge, learning, HEBAT, "
-        "life OS, task, reminder, research, dan workflow. Gunakan knowledge_answer "
-        "untuk jawaban tersintesis dan tersitasi; knowledge_search hanya untuk inspeksi "
+        "life OS, task, reminder, research, dan workflow. "
+        "Saat pindah tab atau melanjutkan tugas, panggil memory_session_resume dengan path workspace "
+        "absolut dan task slug jika diketahui. Simpan kemajuan terverifikasi dengan "
+        "memory_session_checkpoint pada akhir milestone. "
+        "Gunakan knowledge_answer untuk jawaban tersintesis dan tersitasi; knowledge_search hanya untuk inspeksi "
         "bukti. Gunakan skill_suggest_for_request lalu skill_get untuk memuat workflow "
         "dinamis; gunakan skill_resource_list/read untuk progressive disclosure. Skill baru "
         "dipasang owner melalui skill_validate dan skill_install, "

@@ -1,5 +1,50 @@
 # Global Agentic Context and Routing Baseline
 
+## Current token-efficiency candidate, 2026-11-16
+
+Named tokenizer: cl100k_base. [Raw before/after results](CONTEXT_COST_RESULTS.json)
+come from `scripts/measure_context_cost.py` using disposable configuration and
+no owner stores. Baseline is the owner's current v2.2 sources, not the historical
+5268-token installation below. After explicit owner approval, bundle v2.3 is now
+installed:9/9 file hashes match, with five changes and private rollback backups.
+
+| Text surface | Before | Candidate | Interpretation |
+|---|---:|---:|---|
+| Codex referenced hot instructions |2653|2109|20.51% less; conditional references loaded when needed |
+| Claude referenced hot instructions |2757|2213|19.73% less |
+| OpenCode referenced hot instructions |2655|2111|20.49% less |
+| Context-engineering selected body |1555|584|62.44% less; previous text preserved as reference |
+| Same250 tool rows |19426|10124|47.88% less in opt-in compact output; policy fields retained |
+| Same120 skill rows |6863|6515|5.07% less in opt-in compact output |
+| Full registry schemas |103450|103599|149 more tokens for optional parameters; not an initialization reduction |
+
+Five filtered memory-tool rows cost195 tokens; up to two filtered context-skill
+rows124. Those disclose less information and are not full-catalog compression.
+Loading all three conditional domain references adds730 tokens: the Codex
+composition becomes2839, exceeding the old hot baseline for a task needing all
+three domains. This is selected loading, not universal reduction or deleted policy.
+Actual billed tokens, host tool injection, latency and model outcome quality are
+NOT_MEASURED. The skill-context helper's configured limit is characters, not tokens;
+no claim is made that every host invokes that helper.
+
+Tests:7 failed/4 passed before the runtime fix; final expanded162 pass in24.02s,
+overlapping the earlier84-case run. Routing/progressive disclosure, known unsafe
+prompt changes, missing/untracked conditional policy, explicit approvals and
+minimal-import contracts pass. Real SDK STDIO checks pass from source and a
+fresh frozen base install. One reviewed skill fixture is copied into isolated
+state; complete wheel-bundled skill availability and native host rollout are not
+proved. All three edited runtime modules match the installed wheel. Whole-package
+parity failed because concurrent unrelated core/Kaggle files changed during
+installation; that failure is retained in the evidence rather than excluded.
+
+Owner review/approval and nine-file installation are complete; native-client
+reload/evaluation remains a separate gate. Installed file compositions independently
+measure2109/2213/2111 cl100k_base tokens for Codex/Claude/OpenCode. Eleven prompt
+tests and five installer fixture groups pass. No agent process was restarted and
+no runtime permission/configuration was changed. No owner data mutation was
+introduced by the fixtures. Phase2
+records exact files, commands, safeguards and rollback.
+
 Audit date: 2026-11-10. Repository baseline: `main` at `2d0f13f`, with preexisting user changes preserved. This report records the baseline before candidate prompt changes. Evidence labels: `VERIFIED_CODE` for inspected files; `VERIFIED_RUNTIME` for local execution; `VERIFIED_TEST` for passing tests; `DOCUMENTED_ONLY` for unexecuted intended behavior; `UNKNOWN` for unavailable evidence.
 
 ## Measurement method

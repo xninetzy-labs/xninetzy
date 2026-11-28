@@ -28,14 +28,25 @@ def _trusted_installer(
 
 
 @tool
-def skill_list() -> str:
-    """Daftar skill Xninetzy yang ditemukan secara dinamis."""
-    skills = list_skills()
+def skill_list(query: str = "", limit: int = 0, offset: int = 0, compact: bool = False) -> str:
+    """List skill metadata. Filter query and use a small limit/compact for discovery; limit=0 keeps the legacy full list. Load selected bodies with skill_get."""
+    terms = query.casefold().split()
+    skills = [skill for skill in list_skills() if all(
+        term in f"{skill.name} {skill.description} {skill.metadata.get('keywords', '')}".casefold()
+        for term in terms)]
+    skills = skills[max(0, offset):]
+    if limit > 0:
+        skills = skills[:min(limit, 500)]
     if not skills:
         return "Belum ada skill Xninetzy yang valid."
     lines = ["*Xninetzy Skills*"]
+    if compact:
+        lines.append("Metadata only; skill_get(name) loads the selected procedure.")
     for skill in skills:
         warning = f" warnings={len(skill.quality_warnings)}" if skill.quality_warnings else ""
+        if compact:
+            lines.append(f"• `{skill.name}` [{skill.trust_level}]{warning} — {skill.description}")
+            continue
         lines.append(
             f"• `{skill.name}` [{skill.trust_level}] resources={len(skill.resource_paths)}{warning} — "
             f"{skill.description}"

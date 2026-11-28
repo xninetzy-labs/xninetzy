@@ -1,5 +1,5 @@
 ---
-name: process_engineering
+name: process-engineering
 description: 'Models, validates and exchanges process diagrams (BPMN 2.0, swimlanes, approval workflows): drafts from text, checks structural soundness, renders BPMN XML and stores reusable artifacts. Use to model a workflow or review a BPMN file.'
 metadata:
   scope: general

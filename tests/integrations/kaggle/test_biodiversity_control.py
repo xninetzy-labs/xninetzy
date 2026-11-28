@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import ast
 import json
 from pathlib import Path
 from types import SimpleNamespace
@@ -26,7 +27,9 @@ def test_generated_remote_job_is_private_and_has_only_declared_inputs(controller
     assert metadata["enable_gpu"] is True
     assert metadata["kernel_sources"] == ["owner/raw-source"]
     source = (folder / metadata["code_file"]).read_text()
-    assert source.startswith("JOB = {'mode': 'extract'}\n")
+    config = ast.literal_eval(source.splitlines()[0].removeprefix("JOB = "))
+    assert config["mode"] == "extract"
+    assert config["worker_sha256"] == controller.worker_hash()
     assert "Kaggle only" in source
 
 
@@ -51,6 +54,18 @@ def test_incomplete_inventory_cannot_start_campaign(controller, monkeypatch):
     assert not (controller.ROOT / "campaign_state.json").exists()
 
 
+def test_acknowledged_cancellation_is_terminal_and_never_replayed(controller, monkeypatch):
+    job = {"slug": "cancelled-job", "mode": "extract", "state": "submitted", "gpu": True, "depends": []}
+    controller.save_state({"jobs": [job], "smoke_verified_hash": controller.worker_hash(), "smoke_verified": True})
+    response = SimpleNamespace(status=SimpleNamespace(name="CANCEL_ACKNOWLEDGED"), failure_message="")
+    monkeypatch.setattr(controller, "api", lambda: SimpleNamespace(kernels_status=lambda slug: response))
+    monkeypatch.setattr(controller, "push", lambda *a, **kw: pytest.fail("cancelled job was replayed"))
+    controller.campaign_tick()
+    state = json.loads((controller.ROOT / "campaign_state.json").read_text())
+    assert state["jobs"][0]["state"] == "failed"
+    assert state["jobs"][0]["remote_status"] == "CANCEL_ACKNOWLEDGED"
+
+
 def test_bounded_live_log_timeout_closes_stream_without_transport_error(controller, monkeypatch):
     import signal
     from requests.exceptions import ConnectionError
@@ -64,7 +79,6 @@ def test_bounded_live_log_timeout_closes_stream_without_transport_error(controll
             try:
                 handlers[0]()
             except Exception as exc:
-                # urllib3/requests wrap OSError-derived timeouts in ConnectionError.
                 raise ConnectionError("read timed out") from exc
             yield {"data": "unreachable"}
         finally:

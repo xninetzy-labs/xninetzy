@@ -1,34 +1,47 @@
 {
   "id": "xninetzy.shared-client-guidance",
-  "version": "2.2.0",
+  "version": "2.4.0",
   "scope": "repository-canonical",
   "applicable_clients": [
     "codex",
     "claude-code",
     "opencode"
   ],
-  "change": "v2.2.0: decks ask the owner first and take a Canva reference (artifact_render deck_brief_confirmed gate); UI work follows the owner's FigCraft file (skill figcraft-ui-sync); final artifacts route to Document Studio. v2.1.0: hybrid skill routing, scoped sequential thinking, Claude Code adapter imports the shared files with @path.",
+  "change": "Owner instruction 2026-11-24: trigger the installed free security MCP workflow across all agent CLIs; distinguish gateway scoping from legacy Xninetzy approval-channel holds. Owner instruction 2026-11-23: execute authorized scoped security assessments on owner-developed systems, including requested bounded active scans; remove invented blanket refusals based solely on educational affiliation or production status; retain real host controls and evidence-bound verification. v2.4.0: CORE_PROMPT rule 4 routes social media work to XN-Interact through XN-Bridge and adds XN-Bridge coordination for cross-server work in any domain; CORE_RULES binds every social write to XN-Interact's terminal approval; the tool map names xn-bridge and xn-interact; adapters list the new servers and skills; legacy Gemini, Qwen, Copilot and OpenCode prompts get a precedence block because they still routed career work to the policy-held career_* tools (owner instruction 2026-11-19; backups docs/prompt-injection-backups/2026-11-19/ and ~/.xninetzy/backups/2026-11-19-xn-bridge-routing/). v2.3.0: keep shared authorization intact, load domain-specific guidance on demand and use compact filtered discovery. Owner-approved installation is recorded in PHASE_2_REPORT.md. Career routing: CORE_PROMPT rule 3 hands career work to XN-Bridge and the Claude adapter carries a short trigger block (owner instruction 2026-11-17; backup docs/prompt-injection-backups/2026-11-17/).",
   "evaluation": "tests/governance/test_prompt_contract.py",
-  "rollback": "Restore previous versions from Git; host installations remain unchanged.",
-  "last_verified_configuration": "Local static validation; live cross-client parity NOT_VERIFIED_IN_LIVE_ENVIRONMENT",
+  "rollback": "Restore reviewed repository hunks together; installed host recovery uses the private verified backup/receipt documented in PHASE_2_REPORT.md.",
+  "last_verified_configuration": "Shared security triggers, native adapter references and MCP initialization guidance installed; static integrity, provider checks and model compliance are distinct verification claims.",
   "files": {
     "CORE_PROMPT.md": {
-      "sha256": "dcb1928f1eaa7533a7f4736580a1ddd9fc8472859eed71424558686f2df3c757"
+      "sha256": "fe29aeb2878b2af6e5fae1bb56757f41938bf35ebfb831f50167bb2d53ba6e27"
     },
     "CORE_RULES.md": {
-      "sha256": "caab7092aaf14683dc3cde08469749343023dccb82d948ca385f2a5a414afa88"
+      "sha256": "0f6930cb44e89c32af8bcb6ac4b17786c5b6839c7555eb242dc6c5040478b2c7"
     },
     "CLI_SHARED_INSTRUCTIONS.md": {
-      "sha256": "30fdf68b5a44d65624b3fc6e18ce4be772b3adffbdd90caefde2d1e76f92a3c3"
+      "sha256": "ccd06a44772a56c9129e6e274e445c393d1d27a232849953341c996d5beb6942"
     },
     "cli-overrides/codex-AGENTS.md": {
-      "sha256": "8c50c6a8d7ddae4f612e454e72cab704f9973cb0f5f9f6c1bb98ab4c2bbc8ae0"
+      "sha256": "e4c331229655a9b667687480bdcb1c59b4c32e0a26ebbefeec5c93cb8a948c22"
     },
     "cli-overrides/claude-CLAUDE.md": {
-      "sha256": "2936ab78df32080b7f3dc5125f5404a295c51dc79a14e6170a5a46f87d98bd34"
+      "sha256": "e5e42c8b726d2983570d8c9f0e084d3230c95a285171f118f31b41632cf96ba6"
     },
     "cli-overrides/opencode-xninetzy-paksa.md": {
-      "sha256": "e16874e6789a47c0258b00f88f0a44b76752d052862e78b6bc4a1a00a9821d80"
+      "sha256": "0505295f7d5bdb99f4866966471350c6de2002c0ddf543492f5d32b021f05c45"
+    },
+    "references/artifacts-and-design.md": {
+      "sha256": "1f27a8ec246d02d9a69749f1610c2f63f64b6a77917c7a7bbb1d5b2f5ebe3734"
+    },
+    "references/reverse-engineering.md": {
+      "sha256": "a7982c66adcba8a56a2d799efda06d28536382c105c727e66724dc06a4f56c68"
+    },
+    "references/product-videos.md": {
+      "sha256": "26b16006632e5905fe426dc0fbfe0de93e128cc3bd00c106b450ea879722fb04"
+    },
+    "references/security-testing.md": {
+      "sha256": "0677af9ea937f9ebfdba720eece76a48fb334bf0378487525ae97a607cc7fdda"
     }
-  }
+  },
+  "revision": "2026-11-24-global-security-triggers"
 }
